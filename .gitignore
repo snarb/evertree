@@ -1,0 +1,34 @@
+# Python environments, caches and build output
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Mutable runtime state and scratch work (not versioned artifacts)
+/.state/
+/tmp/
+*.log
+
+# Editor/OS state and generated documentation
+.vscode/
+.idea/
+.obsidian/
+.DS_Store
+Thumbs.db
+combined_docs.md
