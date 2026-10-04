@@ -10,6 +10,8 @@ from types import MappingProxyType
 from typing import Any
 from uuid import uuid4
 
+from .memory import TraceOutputRef
+
 
 def freeze_json(value: Any) -> Any:
     """Copy JSON data into immutable containers; reject non-JSON values and NaN."""
@@ -50,6 +52,7 @@ class EvaluationCase:
     independence_group: str | None = None
     weight: float = 1.0
     name: str | None = None
+    source_refs: tuple[TraceOutputRef, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id or not self.evaluation_rule or not self.source_ids:
@@ -63,6 +66,9 @@ class EvaluationCase:
         object.__setattr__(self, "inputs", freeze_json(thaw_json(self.inputs)))
         object.__setattr__(self, "outcomes", freeze_json(thaw_json(self.outcomes)))
         object.__setattr__(self, "source_ids", tuple(dict.fromkeys(self.source_ids)))
+        if any(not isinstance(ref, TraceOutputRef) for ref in self.source_refs):
+            raise TypeError("Internal dataset sources must be TraceOutputRef values")
+        object.__setattr__(self, "source_refs", tuple(dict.fromkeys(self.source_refs)))
 
     @property
     def revision(self) -> str:
@@ -71,6 +77,7 @@ class EvaluationCase:
     @property
     def independence_keys(self) -> frozenset[str]:
         keys = {"source:" + source for source in self.source_ids}
+        keys.update("trace:" + str(ref.event_ref) for ref in self.source_refs)
         if self.independence_group:
             keys.add("group:" + self.independence_group)
         return frozenset(keys)
@@ -80,7 +87,7 @@ class EvaluationCase:
         return thaw_json(self.inputs)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "id": self.id,
             "inputs": thaw_json(self.inputs),
             "outcomes": thaw_json(self.outcomes),
@@ -90,10 +97,20 @@ class EvaluationCase:
             "weight": self.weight,
             "name": self.name,
         }
+        if self.source_refs:
+            result["source_refs"] = [
+                {"event_ref": ref.event_ref, "output_path": list(ref.output_path)}
+                for ref in self.source_refs
+            ]
+        return result
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> EvaluationCase:
-        return cls(**dict(data))
+        values = dict(data)
+        values["source_refs"] = tuple(
+            TraceOutputRef(**ref) for ref in values.get("source_refs", ())
+        )
+        return cls(**values)
 
 
 @dataclass(frozen=True)
@@ -103,7 +120,6 @@ class DatasetRevision:
     purpose: str
     cases: tuple[EvaluationCase, ...]
     target_metrics: tuple[str, ...] = ()
-    aggregation_policy: str = "weighted_mean"
     description: str | None = None
 
     def __post_init__(self) -> None:
@@ -111,8 +127,6 @@ class DatasetRevision:
             raise ValueError("Dataset purpose must be training or evaluation")
         if not self.dataset_id or not self.name:
             raise ValueError("Dataset identity and name are required")
-        if self.aggregation_policy != "weighted_mean":
-            raise ValueError("Unsupported aggregation policy")
         object.__setattr__(self, "cases", tuple(self.cases))
         object.__setattr__(self, "target_metrics", tuple(self.target_metrics))
         if len({case.id for case in self.cases}) != len(self.cases):
@@ -129,15 +143,29 @@ class DatasetRevision:
             "purpose": self.purpose,
             "cases": [case.to_dict() for case in self.cases],
             "target_metrics": list(self.target_metrics),
-            "aggregation_policy": self.aggregation_policy,
+            "aggregation_policy": "weighted_mean",
             "description": self.description,
         }
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> DatasetRevision:
         values = dict(data)
+        if values.pop("aggregation_policy", "weighted_mean") != "weighted_mean":
+            raise ValueError("Dataset aggregation must be weighted_mean")
         values["cases"] = tuple(EvaluationCase.from_dict(case) for case in values["cases"])
         return cls(**values)
+
+
+def validate_holdout(dataset: DatasetRevision) -> None:
+    if dataset.purpose != "evaluation":
+        raise ValueError("A holdout must be an evaluation dataset")
+    if not dataset.cases:
+        raise ValueError("An empty dataset supplies no independent evidence")
+    if any(case.source_refs for case in dataset.cases):
+        raise ValueError(
+            "Holdout sources are already accessible through agent memory; "
+            "use private evaluation sources, or keep this dataset for training/replay"
+        )
 
 
 class DatasetStore:
@@ -207,10 +235,7 @@ class DatasetStore:
 
     def require_holdout(self, candidate_lineage: str, revision: str) -> DatasetRevision:
         dataset = self.get(revision)
-        if dataset.purpose != "evaluation":
-            raise ValueError("A holdout must be an evaluation dataset")
-        if not dataset.cases:
-            raise ValueError("An empty dataset supplies no independent evidence")
+        validate_holdout(dataset)
         if len(self.independent_cases(candidate_lineage, revision)) != len(dataset.cases):
             raise ValueError("Evaluation sources overlap material used for training or refinement")
         return dataset

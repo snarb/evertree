@@ -22,6 +22,7 @@ SDK работает в доверенном процессе с локальн�
 | --- | --- | --- |
 | Идентичность, типизированный гипермультиграф, атомарные дельты, taxonomy, слоты, AccessView, Facets, UNKNOWN | `core/graph.py` | `test_graph.py` |
 | Атрибуция, интервалы, нормализация, структурные сигналы | `core/attribution.py`, `core/topology.py` | `test_attribution.py`, `test_graph.py` |
+| Единые доменные операции и права model/exec в live и evaluation, защита Program bindings | `core/operations.py`, `core/experiments.py` | `test_core_operations.py`, `test_operations_experiment.py` |
 | Неизменяемые traces, provenance, output refs, retention closure, retrieval, отложенное удаление | `core/memory.py` | `test_memory.py` |
 | Binary/categorical beliefs, зависимые источники, пересмотр и отзыв evidence, ограниченное неподтверждённое влияние | `core/beliefs.py` | `test_beliefs.py` |
 | AppContainer, приватный Python, JSON IPC, Job Object, commit-код | `core/sandbox.py`, `core/runtime.py`, `core/worker.py` | `test_runtime.py` |
@@ -39,6 +40,8 @@ SDK работает в доверенном процессе с локальн�
 | Bernoulli, категории, числовые моменты, линейная регрессия; prediction без изменения параметров | `core/learning.py` | `test_cognition_learning.py` |
 | Неизменяемые datasets, версии, source/episode independence, exposure lineage | `core/datasets.py` | `test_cognition_learning.py` |
 | Claim, candidate clone, фиксированные проверки, exact commit, EvaluationChoice, активация | `core/lifecycle.py`, `core/experiments.py`, `application.py` | `test_lifecycle_backup.py`, `test_experiments.py`, `test_demo.py` |
+| Запуск committed unittest suite кандидата в sandbox, отсутствие тестов, падение, timeout | `core/program_tests.py` | `test_program_tests.py` |
+| Подписки событий без скрытой очереди, контекст без дублирования SDK-сессии, начальный бюджет и ResourceControl | `application.py` | `test_application_flow.py` |
 | CLI и асинхронный API, новые входы во время выполнения, отдельные формирование/доставка/завершение | `cli.py`, `application.py` | `test_cli.py`, `test_application.py`, `test_application_guards.py` |
 
 ## Воспроизводимость
@@ -51,7 +54,19 @@ Trace хранит переданный EverTree контекст, схему, �
 
 DBOS повторно выдаёт результат завершённого step при продолжении с прежней identity. Смена commit требует нового запуска. Внешний action ledger сначала сохраняет потенциально неизвестный исход; повтор с той же identity возвращает этот исход и не вызывает adapter снова. Гарантия относится к последнему согласованному backup, а не к произвольному моменту аварии хоста.
 
-Каждый evaluator получает отдельные graph/memory/learning snapshots, рабочую область и DBOS. Реестр вызываемых Programs фиксируется до исполнения обеих сторон. Исходы holdout остаются в core; в Program передаются только входы. Одинаковая версия dataset используется для baseline и candidate. Точное сравнение JSON различает boolean и число, включая вложенные значения. Для новой Program отсутствие baseline обозначается явно, и применяются абсолютные критерии. Повторное обучение или переработка по уже раскрытым исходам не создаёт независимого evidence.
+Каждый evaluator получает отдельные graph/memory/beliefs/attribution/evaluation/learning snapshots, рабочую область и DBOS. Доменные операции выполняет тот же `CoreOperations`, что и рабочий агент; внешние действия и планирование live-задач evaluator не получает. Реестр вызываемых Programs фиксируется до исполнения обеих сторон. Исходы holdout остаются в core; в Program передаются только входы. Одинаковая версия dataset используется для baseline и candidate. Точное сравнение JSON различает boolean и число, включая вложенные значения. Для новой Program отсутствие baseline обозначается явно, и применяются абсолютные критерии. Повторное обучение или переработка по уже раскрытым исходам не создаёт независимого evidence.
+
+`checks.tests` подтверждает реальный запуск `unittest` из committed `tests/test_*.py` кандидата: требуется хотя бы один исполненный и не пропущенный тест, нулевой exit code и отсутствие failures/errors. Компиляция сама по себе не устанавливает этот флаг. Receipt сохраняет SHA, список тестовых файлов, счётчики и вывод процесса. Candidate-owned тесты являются проверкой разработки; независимым критерием качества остаётся отдельный holdout. Интерпретаторы кешируются в общей неизменяемой области агента; mutable state и DBOS сторон не объединяются.
+
+`checks.contracts` проверяет успешное связывание аргументов с Python signature, оболочку `ProgramResult`/`{result, feedback}` и JSON-совместимость результата. Предметная правильность значения проверяется отдельно по правилам dataset; этот флаг не заменяет такую оценку.
+
+Provider выдаёт единые `tool_call`, `tool_result`, `file_change` и `usage` payloads. Usage содержит накопленные счётчики только текущего вызова, поэтому повторные события не суммируются. Неизвестный расход обозначается `available=False` и `None`, а не нулём; при явном пользовательском token limit ядро прекращает такой вызов. Raw SDK-события остаются отдельным audit-потоком. Контроллер не возобновляет SDK-сессию поверх полного контекста; адаптер отдельно поддерживает продолжение сессий.
+
+`PREDICTS(target, assignment_ref)` ссылается на единственное неизменяемое назначение в trace. Контекст, горизонт, calibration и исходный output reference читаются оттуда, не копируются в граф. `LearningSignal` не получает собственного неиспользуемого ID; идентификаторы credit, запросов обновления и источников сохраняются.
+
+Dataset `source_ids` обозначают внешнее происхождение и независимость; цифровая строка не превращается в ID события памяти. Внутренние зависимости задаются явно через `source_refs: tuple[TraceOutputRef, ...]`, включая output path. Поскольку проверяемая Program получает копию памяти, такой источник уже доступен ей: dataset с `source_refs` сохраняется для training/replay/диагностики, но не допускается как независимый holdout. Для активации нужны приватные исходы, не раскрытые в памяти или контексте кандидата; прежний учёт exposure по внешним source IDs также сохраняется. Единственное правило агрегации v1 — weighted mean; оно зафиксировано в содержимом версии dataset, а не настраивается отдельным полем конструктора.
+
+Восстановлением всех каталогов и core/runtime состояния владеет `BackupManager.restore`: комплект проверяется один раз, все копии подготавливаются до переключения, отказ откатывает весь набор. Application обеспечивает запрет активного исполнения и проверку версии runtime.
 
 `bind_evaluation(..., criteria=AcceptanceCriteria(...))` фиксирует критерии разработчика для конкретной Program. По умолчанию требуется accuracy 1.0; набор с правилом `prediction` поддерживает Brier score, log loss, squared/absolute error, residual и exact match. Cases агрегируются взвешенным средним по неизменяемому dataset. Отсутствующие или бесконечные обязательные оценки блокируют принятие. Изменение criteria или привязанной версии dataset после проверки требует новой независимой Evaluation; обязательные проверки contracts/tests/holdout сохраняются при любой политике.
 
@@ -88,7 +103,14 @@ uv run python -m evertree.demo --home C:\agents\live-demo --live
 
 Эти команды задают способ проверки; успешность конкретного live-запуска устанавливается его результатами. Offline-демонстрация с явно указанным fake provider проверяет lifecycle и повторное использование после перезапуска, но не подтверждает доступность модели.
 
-### Проверенный прогон 4 октября 2026
+### Проверка после архитектурного упрощения, 4 октября 2026
+
+- Полный offline-набор: **273 passed, 2 skipped**, 300.30 секунды. Включены настоящие AppContainer, DBOS, rollback восстановления и демонстрация lifecycle после перезапуска.
+- Настоящий Codex SDK: **2 passed**, 63.41 секунды. Проверены Luna/high, structured output, dynamic tools, продолжение сессии, native coding, запрещённый доступ к соседнему файлу, единые tool payloads и накопленный usage текущего вызова.
+- Отдельная нативная демонстрация с fake provider: **1 passed**, 55.95 секунды. Кандидаты проходят новый обязательный запуск committed unittest suite и используются после восстановления.
+- Ruff, форматирование, `git diff --check` и `uv sync --frozen` проходят.
+
+### Исходный прогон v1, 4 октября 2026
 
 - Полный offline-набор: **228 passed, 2 skipped** за 285.57 секунды. Две пропущенные SDK-интеграции запущены отдельно с настоящей моделью и прошли.
 - `doctor`: `ready: true`, текущая авторизация доступна, `gpt-6-luna` / `high`, SDK `0.160.0`, native executor в AppContainer подключён. Проверки чтения, записи и разрешённого scratch прошли.

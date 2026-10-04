@@ -74,6 +74,76 @@ def test_multiple_predictions_use_original_payload_and_restore(evaluator):
     assert restored.memory.resolve(type(first)(first.event_ref, ("result",))) == 0.8
 
 
+def test_prediction_graph_indexes_one_immutable_assignment_and_retains_its_sources(evaluator):
+    forecast = record(evaluator.memory, "prediction", {"value": 0.8})
+    reference = type(forecast)(forecast.event_ref, ("value",))
+    fact = evaluator.save_prediction("temperature", reference, CONTEXT)
+    assert set(fact.args) == {"target", "assignment_ref"}
+    assignment = evaluator.memory.get_event(fact.args["assignment_ref"])
+    assert assignment.output["reference"]["output_path"] == ("value",)
+    assert "assignment" not in assignment.output
+    assert assignment.dependencies == (reference,)
+    event_count = len(evaluator.memory.events)
+    assert evaluator.save_prediction("temperature", reference, CONTEXT) == fact
+    assert len(evaluator.memory.events) == event_count
+    assert {forecast.event_ref, assignment.id} <= evaluator.memory.retention_closure()
+
+
+def test_isolated_prediction_operations_keep_evaluation_run_mode(evaluator):
+    isolated = PredictionEvaluator(
+        evaluator.graph, evaluator.memory, evaluator.evaluations, run_mode="evaluation"
+    )
+    forecast = record(isolated.memory, "prediction", 1)
+    isolated.save_prediction("temperature", forecast, CONTEXT)
+    isolated.record_decision(
+        "pressure", CONTEXT, required=False, reason="Not needed", revision="commit"
+    )
+    observation = observe(isolated, 1, {"temperature": {"value": []}})
+    isolated.evaluate([observation.event_ref], CONTEXT, ["exact_match"])
+    generated = [
+        run
+        for run in isolated.memory.runs
+        if run.program in {"PredictionAssignment", "PredictionDecision", "PredictionEvaluator"}
+    ]
+    assert len(generated) == 3
+    assert {run.run_mode for run in generated} == {"evaluation"}
+
+
+@pytest.mark.parametrize("wrong_target", [False, True])
+def test_assignment_reference_rejects_missing_dependency_or_wrong_target(evaluator, wrong_target):
+    forecast = record(evaluator.memory, "prediction", 1)
+    fact = evaluator.save_prediction("temperature", forecast, CONTEXT)
+    definition = evaluator.memory.get_event(fact.args["assignment_ref"]).output
+    run = evaluator.memory.start_run("PredictionAssignment", "commit", {})
+    forged = evaluator.memory.record(
+        run,
+        "prediction_assignment",
+        arguments={"target": evaluator.target("pressure") if wrong_target else fact.args["target"]},
+        output=definition,
+        dependencies=(forecast,) if wrong_target else (),
+    )
+    evaluator.memory.finish_run(run)
+    if not wrong_target:
+        # record() discovers the nested reference automatically. Simulate a
+        # corrupted persisted dependency list, not an ordinary legitimate write.
+        snapshot = evaluator.memory.snapshot()
+        next(event for event in snapshot["events"] if event["id"] == forged.id)["dependencies"] = []
+        evaluator.memory = TraceStore.from_snapshot(snapshot)
+    evaluator.graph.apply(
+        GraphDelta(
+            updates=(
+                NodeUpdate(
+                    fact.id, {"args": {"target": fact.args["target"], "assignment_ref": forged.id}}
+                ),
+            )
+        ),
+        provenance=evaluator.memory.output_ref(forged),
+    )
+    observed = observe(evaluator, 1, {"temperature": {"value": []}})
+    with pytest.raises(PermissionError, match="authentic assignment"):
+        evaluator.evaluate([observed.event_ref], CONTEXT, ["exact_match"])
+
+
 def test_composite_outcomes_join_old_parts_and_preserve_unmatched_part(evaluator):
     forecast = record(evaluator.memory, "prediction", {"minimum": 10, "maximum": 20})
     evaluator.save_prediction("temperature", forecast, CONTEXT, parts=("minimum", "maximum"))
@@ -187,20 +257,25 @@ def test_boolean_conditions_do_not_match_numbers(evaluator):
 def test_forged_assignment_event_has_no_core_authority(evaluator):
     prediction = record(evaluator.memory, "prediction", 20)
     fact = evaluator.save_prediction("temperature", prediction, CONTEXT)
-    definition = json_value(fact.args["prediction"])
+    definition = json_value(evaluator.memory.get_event(fact.args["assignment_ref"]).output)
     definition["reference"] = json_value(record(evaluator.memory, "prediction", 21))
     assignment = record(
         evaluator.memory,
         "prediction_assignment",
-        {key: value for key, value in definition.items() if key != "assignment"},
+        definition,
         {"target": fact.args["target"]},
     )
-    definition["assignment"] = assignment.event_ref
     evaluator.graph.apply(
         GraphDelta(
             updates=(
                 NodeUpdate(
-                    fact.id, {"args": {"target": fact.args["target"], "prediction": definition}}
+                    fact.id,
+                    {
+                        "args": {
+                            "target": fact.args["target"],
+                            "assignment_ref": assignment.event_ref,
+                        }
+                    },
                 ),
             )
         ),
@@ -242,7 +317,7 @@ async def test_application_feedback_value_scoring_and_real_evaluator_child_workf
         predicted = record(app.memory, "prediction", 2.0)
         app.save_prediction(target.id, predicted, context)
         relation = app.graph.find("PREDICTS")
-        forged_fact = app.graph.new_fact(relation.id, {"target": target.id, "prediction": {}})
+        forged_fact = app.graph.new_fact(relation.id, {"target": target.id, "assignment_ref": 1})
         with pytest.raises(PermissionError, match="evaluation.save_prediction"):
             app._apply_delta(task.id, GraphDelta(creates=(forged_fact,)))
         feedback = app.supervisor_feedback(

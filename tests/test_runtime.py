@@ -281,6 +281,58 @@ async def run(ctx):
     await runtime.close()
 
 
+async def test_gateway_uses_registered_metadata_and_rejects_later_program_fields(tmp_path):
+    from dataclasses import asdict
+
+    requests = []
+    revision = commit_programs(
+        tmp_path / "repo",
+        {
+            "program.py": "async def run(ctx):\n    return {'result': await ctx.step('read_value')}\n"
+        },
+    )
+    spec = ProgramSpec("program", "program.py", revision, role="model")
+
+    class RecordingRuntime(Runtime):
+        async def _dispatch(self, request):
+            requests.append(dict(request))
+            return await super()._dispatch(request)
+
+    async def gateway(method, payload):
+        assert payload["_runtime"]["program"] == asdict(spec)
+        assert payload["_runtime"]["task_id"] == "task"
+        return 7
+
+    runtime = RecordingRuntime(
+        tmp_path / "runtime", tmp_path / "repo", gateway, process_factory=TestProcess
+    )
+    assert (await runtime.execute("task", spec, {})).result == 7
+    assert "program" in requests[0] and requests[0]["method"] == "run_started"
+    assert all("program" not in request for request in requests[1:])
+    runtime._active = {
+        "task_id": "task",
+        "program": spec,
+        "run_id": "root",
+        "run_mode": "evaluation",
+        "cancelled": False,
+        "known_runs": {"root": asdict(spec)},
+    }
+    try:
+        with pytest.raises(PermissionError, match="only accepted when registering"):
+            await runtime._dispatch(
+                {
+                    "run_id": "root",
+                    "method": "read_value",
+                    "program": {**asdict(spec), "role": "exec"},
+                }
+            )
+        with pytest.raises(PermissionError, match="not admitted"):
+            await runtime._dispatch({"run_id": "unregistered", "method": "read_value"})
+    finally:
+        runtime._active = None
+        await runtime.close()
+
+
 async def test_cancelled_startup_acquires_handles_and_stops_late_process(tmp_path):
     import threading
 
@@ -416,7 +468,9 @@ async def run(ctx):
     await runtime.cancel("task", finalize=False)
     with pytest.raises(ProgramExecutionError):
         await first
-    await backups.restore(runtime, lambda _: None, backup=saved)
+    await backups.restore(
+        runtime, lambda _: None, snapshot_core=lambda: {"test": True}, backup=saved
+    )
     second = asyncio.create_task(runtime.execute("task", spec, {}, run_id="waiting"))
     await wait_for_boundary()
     await runtime.deliver(

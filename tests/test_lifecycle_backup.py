@@ -360,7 +360,12 @@ async def run(ctx):
     saved = await backups.create(runtime, lambda: dict(state))
     await runtime.execute("task", spec, {}, run_id="second")
     assert state["count"] == 2
-    await backups.restore(runtime, lambda restored: state.update(restored), backup=saved)
+    await backups.restore(
+        runtime,
+        lambda restored: state.update(restored),
+        snapshot_core=lambda: dict(state),
+        backup=saved,
+    )
     assert state["count"] == 1
     assert not (runtime.state_dir / "runs" / "second").exists()
     first = await runtime.execute("task", spec, {}, run_id="first")

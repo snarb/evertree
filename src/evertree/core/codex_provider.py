@@ -244,6 +244,89 @@ def _json(value: Any) -> Any:
     return value
 
 
+_TOKEN_FIELDS = {
+    "total_tokens": "totalTokens",
+    "input_tokens": "inputTokens",
+    "cached_input_tokens": "cachedInputTokens",
+    "cache_write_input_tokens": "cacheWriteInputTokens",
+    "output_tokens": "outputTokens",
+    "reasoning_output_tokens": "reasoningOutputTokens",
+}
+
+
+def _usage(total, baseline):
+    required = set(_TOKEN_FIELDS.values()) - {"cacheWriteInputTokens"}
+    available = (
+        baseline is not None
+        and required <= total.keys()
+        and all(
+            isinstance(total.get(key, 0), int)
+            and not isinstance(total.get(key, 0), bool)
+            and total.get(key, 0) >= baseline.get(key, 0)
+            for key in _TOKEN_FIELDS.values()
+        )
+    )
+    return {
+        "available": available,
+        **{
+            normalized: total.get(raw, 0) - baseline.get(raw, 0) if available else None
+            for normalized, raw in _TOKEN_FIELDS.items()
+        },
+    }
+
+
+def _native_tool_events(item, *, completed):
+    """Map supported SDK items once; dynamic calls use the callback path instead."""
+    kind, call_id = item.get("type"), item["id"]
+    if kind == "commandExecution":
+        name = "shell"
+        arguments = {"command": item["command"], "cwd": item["cwd"]}
+        result = {"output": item.get("aggregatedOutput"), "exit_code": item.get("exitCode")}
+    elif kind == "fileChange":
+        name = "file_patch"
+        changes = [
+            {
+                "path": change["path"],
+                "operation": change["kind"]["type"],
+                "diff": change["diff"],
+                "moved_to": change["kind"].get("move_path"),
+            }
+            for change in item["changes"]
+        ]
+        arguments = {"changes": changes}
+        result = arguments
+    elif kind == "mcpToolCall":
+        name = item["server"] + "." + item["tool"]
+        arguments, result = item["arguments"], item.get("result")
+    else:
+        return ()
+    if not completed:
+        return (
+            AgentEvent("tool_call", {"call_id": call_id, "name": name, "arguments": arguments}),
+        )
+    status = item.get("status", "completed")
+    status = {"interrupted": "cancelled", "inProgress": "failed"}.get(status, status)
+    if status not in {"completed", "failed", "declined", "cancelled"}:
+        raise ProviderError("Unknown native tool completion status: " + str(status))
+    error = item.get("error")
+    if error is not None and not isinstance(error, str):
+        error = json.dumps(error, ensure_ascii=False)
+    if status != "completed" and error is None:
+        error = f"{name}: {status}"
+    events = [
+        AgentEvent(
+            "tool_result",
+            {"call_id": call_id, "name": name, "status": status, "result": result, "error": error},
+        )
+    ]
+    if kind == "fileChange":
+        events.extend(
+            AgentEvent("file_change", {"call_id": call_id, "status": status, **change})
+            for change in changes
+        )
+    return tuple(events)
+
+
 class CodexProvider:
     name = "codex"
 
@@ -260,6 +343,7 @@ class CodexProvider:
         self._client_factory = client_factory
         self._executor_factory = executor_factory
         self._active: dict[str, _Invocation] = {}
+        self._thread_usage: dict[str, dict[str, int]] = {}
 
     def _client(self, *, request: AgentRequest | None = None, handler=None, model_catalog=None):
         from codex_cli_bin import bundled_codex_path
@@ -473,8 +557,10 @@ class CodexProvider:
 
         async def dispatch_server_request(method, params):
             params = params or {}
+            await queue.put(AgentEvent("provider_event", {"method": method, "payload": params}))
             if method == "item/tool/call":
                 name = params.get("tool", "")
+                call_id = params.get("callId") or uuid.uuid4().hex
                 arguments = params.get("arguments", {})
                 if isinstance(arguments, str):
                     arguments = json.loads(arguments)
@@ -488,7 +574,7 @@ class CodexProvider:
                 await queue.put(
                     AgentEvent(
                         "tool_call",
-                        {"name": name, "arguments": arguments, "call_id": params.get("callId")},
+                        {"name": name, "arguments": arguments, "call_id": call_id},
                     )
                 )
                 try:
@@ -497,12 +583,43 @@ class CodexProvider:
                     await queue.put(
                         AgentEvent(
                             "tool_result",
-                            {"name": name, "result": result, "call_id": params.get("callId")},
+                            {
+                                "name": name,
+                                "result": result,
+                                "call_id": call_id,
+                                "status": "completed",
+                                "error": None,
+                            },
                         )
                     )
                     return {"success": True, "contentItems": [{"type": "inputText", "text": text}]}
+                except asyncio.CancelledError:
+                    await queue.put(
+                        AgentEvent(
+                            "tool_result",
+                            {
+                                "name": name,
+                                "call_id": call_id,
+                                "result": None,
+                                "status": "cancelled",
+                                "error": "Tool call cancelled",
+                            },
+                        )
+                    )
+                    raise
                 except Exception as exc:  # noqa: BLE001 -- return tool failures to the agent protocol
-                    await queue.put(AgentEvent("tool_result", {"name": name, "error": str(exc)}))
+                    await queue.put(
+                        AgentEvent(
+                            "tool_result",
+                            {
+                                "name": name,
+                                "call_id": call_id,
+                                "result": None,
+                                "status": "failed",
+                                "error": str(exc),
+                            },
+                        )
+                    )
                     return {
                         "success": False,
                         "contentItems": [{"type": "inputText", "text": str(exc)}],
@@ -545,6 +662,15 @@ class CodexProvider:
             process_tree = None
             executor = None
             client = None
+            usage_seen = False
+            baseline = self._thread_usage.get(request.session.id) if request.session else {}
+
+            async def report_missing_usage():
+                nonlocal usage_seen
+                if invocation.turn_id and not usage_seen:
+                    await queue.put(AgentEvent("usage", _usage({}, None)))
+                    usage_seen = True
+
             try:
                 async with asyncio.timeout(request.timeout_seconds):
                     catalog, catalog_digest = (
@@ -671,7 +797,10 @@ class CodexProvider:
                         event = await asyncio.to_thread(
                             client.next_turn_notification, invocation.turn_id
                         )
+                        # The pinned SDK wraps newer notifications as UnknownNotification.
                         data = _json(event.payload)
+                        if type(event.payload).__name__ == "UnknownNotification":
+                            data = data["params"]
                         method = event.method
                         await queue.put(
                             AgentEvent("provider_event", {"method": method, "payload": data})
@@ -689,20 +818,31 @@ class CodexProvider:
                                 "mcpToolCall",
                                 "fileChange",
                             }:
-                                await queue.put(AgentEvent("tool_call", item))
+                                for normalized in _native_tool_events(item, completed=False):
+                                    await queue.put(normalized)
                         elif method == "item/completed":
                             item = data.get("item", {})
                             if item.get("type") == "agentMessage":
                                 final_text = item.get("text", final_text)
-                            elif item.get("type") == "fileChange":
-                                await queue.put(AgentEvent("file_change", item))
-                            elif item.get("type") in {"commandExecution", "mcpToolCall"}:
-                                await queue.put(AgentEvent("tool_result", item))
+                            elif item.get("type") in {
+                                "commandExecution",
+                                "mcpToolCall",
+                                "fileChange",
+                            }:
+                                for normalized in _native_tool_events(item, completed=True):
+                                    await queue.put(normalized)
                         elif method == "thread/tokenUsage/updated":
-                            await queue.put(AgentEvent("usage", data.get("tokenUsage", {})))
+                            total = data["tokenUsage"]["total"]
+                            usage = _usage(total, baseline)
+                            if not usage["available"]:
+                                baseline = None
+                            self._thread_usage[invocation.thread_id] = dict(total)
+                            usage_seen = True
+                            await queue.put(AgentEvent("usage", usage))
                         elif method == "model/rerouted" and data.get("toModel") != MODEL:
                             raise ProviderError("Codex rerouted the explicitly requested model")
                         elif method == "turn/completed":
+                            await report_missing_usage()
                             status = data["turn"]["status"]
                             if status == "completed":
                                 parsed = None
@@ -720,9 +860,11 @@ class CodexProvider:
                                 raise ProviderError(str(data["turn"].get("error") or status))
                             break
             except asyncio.CancelledError:
+                await report_missing_usage()
                 await queue.put(AgentEvent("cancelled"))
                 raise
             except Exception as exc:  # noqa: BLE001 -- normalize SDK and transport failures
+                await report_missing_usage()
                 await queue.put(
                     AgentEvent("error", {"message": str(exc), "type": type(exc).__name__})
                 )

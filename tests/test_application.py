@@ -63,9 +63,11 @@ def native_python_cache(monkeypatch):
 
 async def wait_for_event(agent, kind, *, timeout=45):
     seen = []
+    if not hasattr(agent, "_test_event_stream"):
+        agent._test_event_stream = agent.events()
     async with asyncio.timeout(timeout):
         while True:
-            event = await agent._events.get()
+            event = await anext(agent._test_event_stream)
             seen.append(event)
             if event.kind in {"task_failed", "task_cancelled"} and event.kind != kind:
                 pytest.fail(f"Task ended before {kind}: {event.data}")

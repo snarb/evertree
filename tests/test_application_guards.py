@@ -112,7 +112,12 @@ async def test_close_wakes_a_waiting_event_consumer(agent):
 def runtime_payload(task, **data):
     return {
         **data,
-        "_runtime": {"task_id": task.id, "run_mode": "live", "program": {"role": "exec"}},
+        "_runtime": {
+            "task_id": task.id,
+            "run_id": "run",
+            "run_mode": "live",
+            "program": {"role": "exec", "revision": "commit"},
+        },
     }
 
 

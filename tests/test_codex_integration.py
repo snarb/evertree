@@ -21,6 +21,15 @@ async def collect(provider, request, **kwargs):
     assert not errors, errors
     completed = [event for event in events if event.kind == "completed"]
     assert len(completed) == 1
+    usage = [event.data for event in events if event.kind == "usage"]
+    assert usage and all(item["available"] and type(item["total_tokens"]) is int for item in usage)
+    totals = [item["total_tokens"] for item in usage]
+    assert totals == sorted(totals) and totals[-1] > 0
+    for event in events:
+        if event.kind == "tool_call":
+            assert set(event.data) == {"call_id", "name", "arguments"}
+        elif event.kind == "tool_result":
+            assert set(event.data) == {"call_id", "name", "status", "result", "error"}
     return events, completed[0].data
 
 
@@ -123,8 +132,7 @@ async def test_live_native_coding_tools(tmp_path):
         assert (workspace / "test_add.py").is_file()
         assert canary.read_text(encoding="utf-8") == "integration canary"
         assert any(
-            event.kind == "tool_result" and event.data.get("type") == "commandExecution"
-            for event in events
+            event.kind == "tool_result" and event.data["name"] == "shell" for event in events
         )
     finally:
         await provider.close()

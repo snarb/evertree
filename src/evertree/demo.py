@@ -64,6 +64,24 @@ class DemoProvider:
                 f'    return {{"result": {expression}, "feedback": None}}\n'
             )
             destination.write_text(source, encoding="utf-8")
+            tests = request.workspace / "tests"
+            tests.mkdir(exist_ok=True)
+            examples = [([9, 2, 5], [2, 5, 9]), ([], [])]
+            if self.stage != "initial":
+                examples.append(([3, 1, 3], [1, 3, 3]))
+            (tests / "test_sort_values.py").write_text(
+                "import importlib.util, pathlib, unittest\n"
+                f"path = pathlib.Path(__file__).parents[1] / {self.git_path!r}\n"
+                "spec = importlib.util.spec_from_file_location('sorting', path)\n"
+                "program = importlib.util.module_from_spec(spec)\n"
+                "spec.loader.exec_module(program)\n"
+                "class SortTests(unittest.TestCase):\n"
+                "    def test_examples(self):\n"
+                f"        for values, expected in {examples!r}:\n"
+                "            with self.subTest(values=values):\n"
+                "                self.assertEqual(program.run(values)['result'], expected)\n",
+                encoding="utf-8",
+            )
             yield AgentEvent("file_change", {"path": str(destination), "kind": "candidate"})
             yield AgentEvent(
                 "completed",

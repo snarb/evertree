@@ -5,10 +5,55 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, TypedDict
 
 type ToolHandler = Callable[[str, dict[str, Any]], Awaitable[Any]]
 type ApprovalHandler = Callable[[dict[str, Any]], Awaitable[bool]]
+type ToolStatus = Literal["completed", "failed", "declined", "cancelled"]
+
+
+class UsageData(TypedDict):
+    """Cumulative counters for this run, never a session total or an event delta.
+
+    Consumers replace the previous snapshot, never sum these events. None means
+    the provider cannot attribute usage to this invocation; it does not mean zero.
+    Cached/reasoning counters are subsets of input/output, not additional tokens.
+    """
+
+    available: bool
+    total_tokens: int | None
+    input_tokens: int | None
+    cached_input_tokens: int | None
+    cache_write_input_tokens: int | None
+    output_tokens: int | None
+    reasoning_output_tokens: int | None
+
+
+class ToolCallData(TypedDict):
+    """Same envelope for native and declared tools; arguments are tool-specific."""
+
+    call_id: str
+    name: str
+    arguments: Any
+
+
+class ToolResultData(TypedDict):
+    call_id: str
+    name: str
+    status: ToolStatus
+    result: Any
+    error: str | None
+
+
+class FileChangeData(TypedDict):
+    """One proposed/applied path change, correlated with its tool result."""
+
+    call_id: str
+    path: str
+    operation: Literal["add", "update", "delete"]
+    status: ToolStatus
+    diff: str
+    moved_to: str | None
 
 
 @dataclass(frozen=True)
@@ -45,6 +90,8 @@ class AgentRequest:
 
 @dataclass(frozen=True)
 class AgentEvent:
+    """Normalized payloads above; provider_event alone contains SDK-specific data."""
+
     kind: Literal[
         "session",
         "message",
@@ -99,7 +146,7 @@ class ScriptedProvider:
         if not self.scripts:
             raise ProviderError("Offline provider has no remaining script")
         yield AgentEvent("session", {"provider": self.name, "id": request_id})
-        for event in self.scripts.pop(0):
+        for index, event in enumerate(self.scripts.pop(0)):
             if request_id in self.cancelled:
                 yield AgentEvent("cancelled")
                 return
@@ -108,9 +155,36 @@ class ScriptedProvider:
                     raise ProviderError("Tool execution is not permitted")
                 if event.data["name"] not in {tool.name for tool in request.tools}:
                     raise ProviderError("Tool was not declared")
-                yield event
-                result = await tool_handler(event.data["name"], event.data.get("arguments", {}))
-                yield AgentEvent("tool_result", {"name": event.data["name"], "result": result})
+                call = {
+                    "call_id": event.data.get("call_id") or f"{request_id}:{index}",
+                    "name": event.data["name"],
+                    "arguments": event.data.get("arguments", {}),
+                }
+                yield AgentEvent("tool_call", call)
+                try:
+                    result = await tool_handler(call["name"], call["arguments"])
+                except Exception as exc:
+                    yield AgentEvent(
+                        "tool_result",
+                        {
+                            "call_id": call["call_id"],
+                            "name": call["name"],
+                            "status": "failed",
+                            "result": None,
+                            "error": str(exc),
+                        },
+                    )
+                    raise
+                yield AgentEvent(
+                    "tool_result",
+                    {
+                        "call_id": call["call_id"],
+                        "name": call["name"],
+                        "status": "completed",
+                        "result": result,
+                        "error": None,
+                    },
+                )
             elif event.kind == "approval":
                 allowed = bool(approval_handler and await approval_handler(event.data))
                 yield AgentEvent("approval", {**event.data, "approved": allowed})

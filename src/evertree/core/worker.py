@@ -114,7 +114,7 @@ class Context:
         ):
             source_line = frame.f_lineno
         del frame
-        return await gateway_step(self.run_id, self.program, method, payload or {}, source_line)
+        return await gateway_step(self.run_id, method, payload or {}, source_line)
 
     async def call(self, program, arguments: dict | None = None):
         """A child workflow, deliberately called outside a DBOS step."""
@@ -198,17 +198,16 @@ async def _main(configuration):
     evertree.__path__.insert(0, str(Path(configuration["checkout"]) / "src" / "evertree"))
 
     @DBOS.step()
-    async def gateway_step(run_id, spec, method, payload, source_line=None):
-        return await rpc(
-            "gateway",
-            {
-                "run_id": run_id,
-                "program": spec,
-                "method": method,
-                "payload": json_value(payload),
-                "source_line": source_line,
-            },
-        )
+    async def gateway_step(run_id, method, payload, source_line=None, *, program=None):
+        request = {
+            "run_id": run_id,
+            "method": method,
+            "payload": json_value(payload),
+            "source_line": source_line,
+        }
+        if program is not None:
+            request["program"] = program
+        return await rpc("gateway", request)
 
     @DBOS.workflow()
     async def program_workflow(spec, arguments, parent_run_id=None):
@@ -218,9 +217,9 @@ async def _main(configuration):
         try:
             await gateway_step(
                 run_id,
-                spec,
                 "run_started",
                 {"arguments": arguments, "parent_run_id": parent_run_id},
+                program=spec,
             )
             function = load_program(spec)
             kwargs = dict(arguments)
@@ -246,13 +245,11 @@ async def _main(configuration):
             if result["feedback"] is not None and not isinstance(result["feedback"], str):
                 raise TypeError("ProgramResult.feedback must be a string or None")
             result = json_value(result)
-            await gateway_step(run_id, spec, "run_finished", {"result": result})
+            await gateway_step(run_id, "run_finished", {"result": result})
             return result
         except BaseException as exc:
             if not isinstance(exc, asyncio.CancelledError):
-                await gateway_step(
-                    run_id, spec, "run_failed", {"error": f"{type(exc).__name__}: {exc}"}
-                )
+                await gateway_step(run_id, "run_failed", {"error": f"{type(exc).__name__}: {exc}"})
             raise
         finally:
             _current.reset(token)

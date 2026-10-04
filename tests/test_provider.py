@@ -707,3 +707,213 @@ async def test_model_resume_explicitly_clears_previous_dynamic_tools(tmp_path):
     ]
     assert events[-1].kind == "completed"
     assert clients[0].turn_params["effort"] == "high"
+
+
+def token_notification(total, *, last=None):
+    def counters(number):
+        return {
+            "totalTokens": number,
+            "inputTokens": number - 2,
+            "outputTokens": 2,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 1,
+        }
+
+    return SimpleNamespace(
+        method="thread/tokenUsage/updated",
+        payload={"tokenUsage": {"total": counters(total), "last": counters(last or total)}},
+    )
+
+
+async def test_usage_counts_all_responses_and_excludes_known_resumed_history(tmp_path):
+    from evertree.core.provider import SessionRef
+
+    totals = iter(((12, 12, 32), (42, 42, 72)))
+
+    class UsageClient(FakeClient):
+        def request(self, method, params, response_model):
+            if method == "thread/resume":
+                return response_model.model_validate(self.thread_start(params))
+            return super().request(method, params, response_model)
+
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            self.events = [
+                token_notification(total, last=12) for total in next(totals)
+            ] + self.events
+            return result
+
+    provider = CodexProvider(client_factory=UsageClient)
+    first = [e async for e in provider.run("first", AgentRequest("first", tmp_path))]
+    second = [
+        e
+        async for e in provider.run(
+            "second", AgentRequest("second", tmp_path, session=SessionRef("codex", "thread1"))
+        )
+    ]
+    assert [e.data["total_tokens"] for e in first if e.kind == "usage"] == [12, 12, 32]
+    assert [e.data["total_tokens"] for e in second if e.kind == "usage"] == [10, 10, 40]
+    assert all(e.data["available"] for e in first + second if e.kind == "usage")
+    assert first[-1].kind == second[-1].kind == "completed"
+
+
+@pytest.mark.parametrize("reported", [True, False])
+async def test_unknown_resume_baseline_or_missing_usage_is_explicitly_unavailable(
+    tmp_path, reported
+):
+    from evertree.core.provider import SessionRef
+
+    class UsageClient(FakeClient):
+        def request(self, method, params, response_model):
+            if method == "thread/resume":
+                return response_model.model_validate(self.thread_start(params))
+            return super().request(method, params, response_model)
+
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            if reported:
+                self.events.insert(0, token_notification(9000, last=20))
+            return result
+
+    events = [
+        e
+        async for e in CodexProvider(client_factory=UsageClient).run(
+            "unknown",
+            AgentRequest(
+                "resume", tmp_path, session=SessionRef("codex", "old") if reported else None
+            ),
+        )
+    ]
+    usage = [e.data for e in events if e.kind == "usage"]
+    assert len(usage) == 1
+    assert usage[0]["available"] is False
+    assert all(value is None for key, value in usage[0].items() if key != "available")
+    assert events[-1].kind == "completed"
+
+
+async def test_native_and_dynamic_tools_share_event_contract_and_raw_audit(tmp_path):
+    class EventClient(FakeClient):
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            self.handler(
+                "item/tool/call", {"tool": "lookup", "callId": "dynamic1", "arguments": {"id": 2}}
+            )
+            shell = {
+                "id": "shell1",
+                "type": "commandExecution",
+                "command": "python script.py",
+                "cwd": str(tmp_path),
+                "status": "inProgress",
+            }
+            patch = {
+                "id": "patch1",
+                "type": "fileChange",
+                "status": "inProgress",
+                "changes": [
+                    {
+                        "path": "script.py",
+                        "kind": {"type": "update", "move_path": "renamed.py"},
+                        "diff": "example diff",
+                    }
+                ],
+            }
+            self.events = [
+                SimpleNamespace(method="item/started", payload={"item": shell}),
+                SimpleNamespace(
+                    method="item/completed",
+                    payload={
+                        "item": {
+                            **shell,
+                            "status": "failed",
+                            "exitCode": 1,
+                            "aggregatedOutput": "test failure",
+                        }
+                    },
+                ),
+                SimpleNamespace(method="item/started", payload={"item": patch}),
+                SimpleNamespace(
+                    method="item/completed", payload={"item": {**patch, "status": "completed"}}
+                ),
+                # Callback owns normalized dynamic events; SDK echoes stay audit-only.
+                SimpleNamespace(
+                    method="item/completed",
+                    payload={
+                        "item": {"type": "dynamicToolCall", "id": "dynamic1", "tool": "lookup"}
+                    },
+                ),
+            ] + self.events
+            return result
+
+    async def lookup(_name, arguments):
+        return {"found": arguments["id"]}
+
+    request = AgentRequest(
+        "code",
+        tmp_path,
+        mode="exec",
+        native_coding=True,
+        tools=(ToolDefinition("lookup", "lookup", {}),),
+    )
+    events = [
+        e
+        async for e in CodexProvider(client_factory=EventClient, executor_factory=FakeExecutor).run(
+            "tools", request, tool_handler=lookup
+        )
+    ]
+    calls = [e.data for e in events if e.kind == "tool_call"]
+    results = [e.data for e in events if e.kind == "tool_result"]
+    assert len(calls) == len(results) == 3
+    assert all(set(call) == {"call_id", "name", "arguments"} for call in calls)
+    assert all(
+        set(result) == {"call_id", "name", "status", "result", "error"} for result in results
+    )
+    assert [call["call_id"] for call in calls] == [result["call_id"] for result in results]
+    shell = next(result for result in results if result["call_id"] == "shell1")
+    assert shell["status"] == "failed"
+    assert shell["result"] == {"output": "test failure", "exit_code": 1}
+    assert next(result for result in results if result["call_id"] == "dynamic1")["result"] == {
+        "found": 2
+    }
+    changed = next(e.data for e in events if e.kind == "file_change")
+    assert changed == {
+        "call_id": "patch1",
+        "path": "script.py",
+        "operation": "update",
+        "status": "completed",
+        "diff": "example diff",
+        "moved_to": "renamed.py",
+    }
+    assert any(
+        e.kind == "provider_event" and e.data["payload"].get("item", {}).get("exitCode") == 1
+        for e in events
+    )
+
+
+async def test_failed_dynamic_tool_result_keeps_call_identity(tmp_path):
+    class ToolClient(FakeClient):
+        def turn_start(self, *args):
+            self.handler(
+                "item/tool/call", {"tool": "lookup", "callId": "failure1", "arguments": {}}
+            )
+            return super().turn_start(*args)
+
+    async def failure(*_):
+        raise ValueError("Missing observation")
+
+    request = AgentRequest(
+        "call", tmp_path, mode="exec", tools=(ToolDefinition("lookup", "lookup", {}),)
+    )
+    events = [
+        e
+        async for e in CodexProvider(client_factory=ToolClient).run(
+            "failure", request, tool_handler=failure
+        )
+    ]
+    result = next(e.data for e in events if e.kind == "tool_result")
+    assert result == {
+        "call_id": "failure1",
+        "name": "lookup",
+        "status": "failed",
+        "result": None,
+        "error": "Missing observation",
+    }

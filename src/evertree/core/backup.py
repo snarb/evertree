@@ -14,6 +14,7 @@ import time
 import uuid
 from collections.abc import Callable, Mapping
 from contextlib import closing
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,22 @@ from typing import Any
 
 class BackupError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class VerifiedBackup:
+    """A manifest verified once while the caller owns the recovery boundary."""
+
+    path: Path
+    state: dict
+
+    def dependency(self, name: str) -> Path:
+        if not name.isidentifier():
+            raise ValueError("Invalid dependency name")
+        path = self.path / "dependencies" / name
+        if not path.is_dir():
+            raise BackupError(f"Backup dependency not found: {name}")
+        return path
 
 
 def _extended(path: Path) -> Path:
@@ -109,6 +126,17 @@ def source_file_uri(path: Path) -> str:
     return Path(text).as_uri() + "?mode=ro"
 
 
+async def _restore_io(function, *arguments):
+    # A cancelled to_thread call keeps running. Own its completion before
+    # rollback can inspect or move the same directories.
+    operation = asyncio.create_task(asyncio.to_thread(function, *arguments))
+    try:
+        return await asyncio.shield(operation)
+    except asyncio.CancelledError:
+        await operation
+        raise
+
+
 class BackupManager:
     def __init__(self, root: Path):
         self.root = Path(root).resolve()
@@ -178,7 +206,7 @@ class BackupManager:
             reverse=True,
         )
 
-    def read(self, backup: Path | None = None) -> dict:
+    def verify(self, backup: Path | None = None) -> VerifiedBackup:
         if backup is None:
             available = self.list()
             if not available:
@@ -206,50 +234,118 @@ class BackupManager:
                 or _checksum(path) != digest
             ):
                 raise BackupError(f"Backup dependency is missing or changed: {relative}")
-        return json.loads((backup / "state.json").read_text(encoding="utf-8"))
+        return VerifiedBackup(
+            backup, json.loads((backup / "state.json").read_text(encoding="utf-8"))
+        )
+
+    def read(self, backup: Path | None = None) -> dict:
+        return self.verify(backup).state
 
     async def restore(
         self,
         runtime,
         restore_core: Callable[[dict], None],
         *,
+        snapshot_core: Callable[[], Mapping[str, Any]],
         backup: Path | None = None,
+        dependencies: Mapping[str, Path] | None = None,
+        validate: Callable[[VerifiedBackup], Any] | None = None,
     ) -> dict:
+        """Restore all roots and both state owners as one rollback transaction.
+
+        The application holds its admission lock throughout this call. Validation
+        and all staging finish before the first live directory is replaced.
+        """
         async with self._lock:
             if runtime.is_running():
                 raise BackupError("Stop all workers before restoring an agent")
-            if backup is None:
-                choices = self.list()
-                if not choices:
-                    raise BackupError("No completed backup exists")
-                backup = choices[0]
-            backup = Path(backup).resolve()
-            state = self.read(backup)
-            staging = runtime.state_dir / ("restored-" + uuid.uuid4().hex)
-            await asyncio.to_thread(copy_state, backup / "runs", staging)
-            current = runtime.state_dir / "runs"
-            old = runtime.state_dir / ("previous-runs-" + uuid.uuid4().hex)
-            if current.exists():
-                await asyncio.to_thread(rename_state, current, old)
+            verified = await asyncio.to_thread(self.verify, backup)
+            if validate:
+                validation = validate(verified)
+                if inspect.isawaitable(validation):
+                    await validation
+            roots = [(verified.path / "runs", runtime.state_dir / "runs")]
+            roots.extend(
+                (verified.dependency(name), Path(path).resolve())
+                for name, path in (dependencies or {}).items()
+            )
+            destinations = [destination.resolve() for _, destination in roots]
+            for index, destination in enumerate(destinations):
+                if verified.path.is_relative_to(destination) or destination.is_relative_to(
+                    verified.path
+                ):
+                    raise BackupError("Restore destination overlaps its backup")
+                if any(
+                    destination.is_relative_to(other) or other.is_relative_to(destination)
+                    for other in destinations[:index]
+                ):
+                    raise BackupError("Restore destinations overlap")
+            previous_core = snapshot_core()
+            if inspect.isawaitable(previous_core):
+                previous_core = await previous_core
+            previous_core = json.loads(json.dumps(previous_core, allow_nan=False))
+            previous_runtime = runtime.snapshot()
+            prepared, swapped = [], []
             try:
-                await asyncio.to_thread(rename_state, staging, current)
-                result = restore_core(state["core"])
+                for source, destination in roots:
+                    destination = Path(destination).resolve()
+                    staging = destination.with_name(
+                        destination.name + ".restoring-" + uuid.uuid4().hex
+                    )
+                    previous = destination.with_name(
+                        destination.name + ".previous-" + uuid.uuid4().hex
+                    )
+                    prepared.append((destination, previous, staging))
+                    await _restore_io(copy_state, source, staging)
+                for destination, previous, staging in prepared:
+                    # Register before I/O: cancellation can arrive after the
+                    # rename's OS operation completed but before its await returns.
+                    swapped.append((destination, previous, staging))
+                    if destination.exists():
+                        await _restore_io(rename_state, destination, previous)
+                    await _restore_io(rename_state, staging, destination)
+                result = restore_core(verified.state["core"])
                 if inspect.isawaitable(result):
                     await result
-                runtime.restore(state["runtime"])
-            except BaseException:
-                if current.exists():
-                    await asyncio.to_thread(rename_state, current, staging)
-                if old.exists():
-                    await asyncio.to_thread(rename_state, old, current)
+                runtime.restore(verified.state["runtime"])
+            except BaseException as error:
+                failures = []
+                for destination, previous, staging in reversed(swapped):
+                    try:
+                        if previous.exists():
+                            if destination.exists():
+                                await _restore_io(rename_state, destination, staging)
+                            await _restore_io(rename_state, previous, destination)
+                        elif not staging.exists() and destination.exists():
+                            await _restore_io(rename_state, destination, staging)
+                    except BaseException as failure:  # noqa: BLE001 -- continue every rollback
+                        failures.append(failure)
+                if swapped:
+                    try:
+                        result = restore_core(previous_core)
+                        if inspect.isawaitable(result):
+                            await result
+                    except BaseException as failure:  # noqa: BLE001 -- preserve rollback evidence
+                        failures.append(failure)
+                    try:
+                        runtime.restore(previous_runtime)
+                    except BaseException as failure:  # noqa: BLE001 -- attempt each state owner
+                        failures.append(failure)
+                if failures:
+                    raise BaseExceptionGroup(
+                        "Restore failed and rollback is incomplete", [error, *failures]
+                    ) from error
                 raise
-            return state
+            finally:
+                # Only private staging trees are removed after failure. Previous
+                # directories remain recoverable if any rollback was incomplete.
+                for destination, previous, staging in prepared:
+                    if staging.exists():
+                        await _restore_io(safe_remove_tree, staging, staging.parent)
+            for destination, previous, staging in prepared:
+                if previous.exists():
+                    await _restore_io(safe_remove_tree, previous, previous.parent)
+            return verified.state
 
     def dependency(self, backup: Path, name: str) -> Path:
-        self.read(backup)
-        if not name.isidentifier():
-            raise ValueError("Invalid dependency name")
-        path = Path(backup).resolve() / "dependencies" / name
-        if not path.is_dir():
-            raise BackupError(f"Backup dependency not found: {name}")
-        return path
+        return self.verify(backup).dependency(name)

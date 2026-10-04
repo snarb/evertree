@@ -158,6 +158,19 @@ def test_only_one_task_executes_and_false_cancellation_ack_does_not_switch():
         attention.admit(two.id)
 
 
+def test_usage_does_not_erase_an_explicit_budget_review_request():
+    tasks = TaskStore()
+    task = tasks.create_task("Reassess after new information")
+    tasks.assign_budget(task.id, {"active_time_minutes": 3}, 0, reason="Initial decision")
+    task.review_required = True
+    tasks.record_usage(task.id, "active_time_minutes", 0.1, operation_id="inflight")
+    assert task.review_required
+    assert not task.budget_exhausted
+    tasks.assign_budget(task.id, {"active_time_minutes": 4}, 0, reason="Reassessment")
+    assert not task.review_required
+    assert task.spent == {"active_time_minutes": 0.1}
+
+
 def test_nested_task_usage_is_accounted_once_at_each_owner_and_restored():
     tasks = TaskStore()
     parent = tasks.create_task("Build a skill")

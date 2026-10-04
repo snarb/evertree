@@ -296,7 +296,7 @@ class TaskStore:
                 raise ValueError("Budget exceeds a user-defined hard limit")
         state.execution_budget = budget
         state.self_improvement_budget = fraction
-        state.review_required = state.budget_exhausted
+        state.review_required = False
         state.budget_history.append(
             {
                 "budget": budget.to_dict(),
@@ -345,7 +345,6 @@ class TaskStore:
                     state.self_improvement_spent[resource] = (
                         state.self_improvement_spent.get(resource, 0) + amount
                     )
-                state.review_required = state.budget_exhausted or state.hard_limit_reached
             self._usage_operations[operation_id] = record
 
     def set_waiting(

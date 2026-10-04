@@ -15,21 +15,18 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from .datasets import DatasetRevision, content_revision, thaw_json
+from .attribution import AttributionRuntime
+from .beliefs import BeliefStore
+from .datasets import DatasetRevision, content_revision, thaw_json, validate_holdout
 from .evaluation import EvaluationStore, evaluate_prediction, exact_json_equal
-from .graph import GraphDelta, GraphStore, json_value
+from .graph import GraphStore, json_value
 from .learning import (
-    CreditAssignmentProgram,
-    LearningCoordinator,
-    LearningCredit,
-    LearningObjective,
-    LearningSignal,
     LearningStore,
-    UpdatePlanner,
 )
 from .lifecycle import EvaluationReport, ProgramBranch
-from .memory import TraceOutputRef, TraceStore
-from .predictions import PredictionEvaluator, protect_prediction_delta
+from .memory import TraceStore
+from .operations import CoreOperations, authorize_operation
+from .program_tests import run_candidate_tests
 from .runtime import ProgramExecutionError, ProgramSpec, Runtime, _git
 
 
@@ -40,7 +37,6 @@ class ExperimentContext:
     learning: LearningStore
     workspace: Path
     revision: str
-    label: str
 
 
 @dataclass(frozen=True)
@@ -76,9 +72,15 @@ async def evaluate_pair(
     resolve_program,
     *,
     runtime_factory=Runtime,
+    test_process_factory=None,
+    python_cache: Path | None = None,
     model_call=None,
     observation_ids: frozenset[int] = frozenset(),
     timeout: float = 300,
+    beliefs: BeliefStore | None = None,
+    attribution: AttributionRuntime | None = None,
+    evaluations: EvaluationStore | None = None,
+    protected_nodes: frozenset[int] = frozenset(),
 ) -> EvaluationExperiment:
     """Run a holdout without giving Programs labels, live state, or live effects.
 
@@ -88,8 +90,7 @@ async def evaluate_pair(
     ``runtime_factory`` is an injection point for deterministic runtime tests;
     production callers use Runtime, which requires the native OS sandbox.
     """
-    if dataset.purpose != "evaluation" or not dataset.cases:
-        raise ValueError("A nonempty, independent evaluation dataset is required")
+    validate_holdout(dataset)
     rules = {case.evaluation_rule for case in dataset.cases}
     if rules not in ({"exact"}, {"prediction"}):
         raise ValueError("Use one fixed evaluation rule per dataset: exact or prediction")
@@ -114,10 +115,17 @@ async def evaluate_pair(
         raise ValueError("Evaluation Program does not match candidate identity")
     root = Path(root).resolve() / uuid4().hex
     root.mkdir(parents=True)
+    python_cache = Path(python_cache) if python_cache else root.parent / "python"
+    beliefs = beliefs if beliefs is not None else BeliefStore()
+    attribution = attribution if attribution is not None else AttributionRuntime(graph, beliefs)
+    evaluations = evaluations if evaluations is not None else EvaluationStore()
     snapshots = {
         "graph": graph.snapshot(),
         "memory": memory.snapshot(),
         "learning": learning.snapshot(),
+        "beliefs": beliefs.snapshot(),
+        "attribution": attribution.snapshot(),
+        "evaluations": evaluations.snapshot(),
     }
     # A serialization round trip rejects incidental shared mutable references.
     snapshots = json.loads(json.dumps(snapshots, allow_nan=False))
@@ -152,6 +160,15 @@ async def evaluate_pair(
     traces: list[dict[str, Any]] = [
         {"kind": "static_checks", "revision": revision, "errors": syntax_errors}
     ]
+    test_outcome = await run_candidate_tests(
+        candidate_repository,
+        revision,
+        root / "candidate-tests",
+        python_cache=python_cache,
+        process_factory=test_process_factory,
+        timeout=timeout,
+    )
+    traces.append(test_outcome)
     try:
         _git(Path(repository), "cat-file", "-e", f"{branch.base_revision}:{program.git_path}")
         has_baseline = True
@@ -176,10 +193,19 @@ async def evaluate_pair(
             LearningStore.from_snapshot(snapshots["learning"]),
             side / "model-workspace",
             commit,
-            label,
         )
         context.workspace.mkdir()
-        evaluations = EvaluationStore()
+        side_beliefs = BeliefStore.from_snapshot(snapshots["beliefs"])
+        operations = CoreOperations(
+            context.graph,
+            context.memory,
+            side_beliefs,
+            AttributionRuntime.from_snapshot(snapshots["attribution"], context.graph, side_beliefs),
+            EvaluationStore.from_snapshot(snapshots["evaluations"]),
+            context.learning,
+            observation_ids,
+            protected_nodes,
+        )
         run_map: dict[str, int] = {}
         side_events: list[dict[str, Any]] = []
 
@@ -216,25 +242,10 @@ async def evaluate_pair(
                         run, status="completed" if kind == "run_finished" else "failed"
                     )
 
-        async def gateway(
-            method, payload, *, context=context, run_map=run_map, evaluations=evaluations
-        ):
+        async def gateway(method, payload, *, context=context, operations=operations):
+            payload = dict(payload)
             metadata = payload.pop("_runtime")
-            model_reads = {
-                "resolve_program",
-                "agent.run",
-                "graph.read",
-                "graph.get",
-                "graph.query",
-                "memory.retrieve",
-                "memory.rank",
-                "memory.resolve",
-                "learning.predict",
-                "learning.prepare",
-                "evaluation.predict",
-            }
-            if metadata["program"]["role"] == "model" and method not in model_reads:
-                raise PermissionError("A model Program cannot mutate evaluation state")
+            authorize_operation(method, metadata["program"]["role"])
             if method == "resolve_program":
                 resolved = registry[payload["program_id"]]
                 return asdict(replace(resolved, revision=context.revision))
@@ -242,99 +253,12 @@ async def evaluate_pair(
                 if model_call is None:
                     raise PermissionError("No isolated model adapter was supplied")
                 payload["mode"] = "model"
-                result = await model_call(payload, context)
-            elif method in {"graph.get", "graph.read"}:
-                result = context.graph.get(payload["id"])
-            elif method == "graph.query":
-                result = context.graph.query_view(
-                    payload["relation"], payload["view"], **payload.get("inputs", {})
-                )
-            elif method == "graph.apply":
-                delta = GraphDelta.from_dict(payload)
-                protect_prediction_delta(context.graph, delta)
-                event = context.memory.record(
-                    run_map[metadata["run_id"]], "graph_delta", output=payload
-                )
-                result = context.graph.apply(delta, provenance=context.memory.output_ref(event))
-            elif method in {"memory.retrieve", "memory.rank"}:
-                result = context.memory.retrieve(
-                    payload.get("query", ""), limit=payload.get("limit", 10)
-                )
-            elif method == "memory.resolve":
-                result = context.memory.resolve(TraceOutputRef(**payload["reference"]))
-            elif method == "learning.predict":
-                result = context.learning.predict(payload["state_id"], payload.get("inputs"))
-            elif method == "learning.learn":
-                result = LearningCoordinator(context.learning).learn(
-                    LearningSignal.from_dict(payload["signal"]),
-                    payload["target"],
-                    context=payload.get("context"),
-                    attribution_weight=payload.get("attribution_weight", 1),
-                    ambiguous=payload.get("ambiguous", False),
-                )
-            elif method == "learning.credit":
-                signal = (
-                    LearningSignal.from_dict(payload["signal"]) if payload.get("signal") else None
-                )
-                result = CreditAssignmentProgram(context.learning).assign(
-                    payload["target"],
-                    signal,
-                    observation_ids=payload.get("observation_ids", ()),
-                    context=payload.get("context"),
-                    ambiguous=payload.get("ambiguous", False),
-                )
-            elif method == "learning.prepare":
-                result = UpdatePlanner(context.learning).prepare(
-                    LearningCredit.from_dict(payload["credit"])
-                )
-            elif method == "learning.coordinate":
-                signal = LearningSignal(
-                    evaluations.get(payload["evaluation_id"]),
-                    LearningObjective(**payload["objective"]),
-                    payload["outcome_values"],
-                )
-                result = LearningCoordinator(context.learning).learn(
-                    signal, payload["target"], context=payload.get("context")
-                )
-            elif method == "evaluation.predict":
-                result = evaluations.add(evaluate_prediction(**payload))
-            elif method in {
-                "evaluation.save_prediction",
-                "evaluation.match",
-                "evaluation.decide_prediction",
-            }:
-                evaluator = PredictionEvaluator(
-                    context.graph, context.memory, evaluations, observation_ids=observation_ids
-                )
-                if method == "evaluation.save_prediction":
-                    reference = TraceOutputRef(**payload.pop("reference"))
-                    result = evaluator.save_prediction(reference=reference, **payload)
-                elif method == "evaluation.match":
-                    result = evaluator.evaluate(**payload, revision=context.revision)
-                else:
-                    result = evaluator.record_decision(**payload, revision=context.revision)
-            elif method == "evaluation.review":
-                # Reviews in an experiment belong to its own memory; they must
-                # never schedule attention in the live agent.
-                cases = payload["cases"]
-                event = context.memory.record(
-                    run_map[metadata["run_id"]],
-                    "prediction_review",
-                    output=payload,
-                    dependencies=tuple(
-                        TraceOutputRef(int(identity))
-                        for case in cases
-                        for identity in case["observation_ids"]
-                    ),
-                )
-                context.memory.request_review(event.id, "Unmatched prediction experience")
-                result = {"queued": sorted(case["id"] for case in cases)}
-            else:
-                raise PermissionError("Operation unavailable in isolated evaluation: " + method)
-            result = json_value(result)
-            return result
+                return json_value(await model_call(payload, context))
+            return operations.execute(method, payload, metadata=metadata)
 
-        runtime = runtime_factory(side / "runtime", source, gateway, record)
+        runtime = runtime_factory(
+            side / "runtime", source, gateway, record, python_cache=python_cache
+        )
         totals = {metric: 0.0 for metric in requested_metrics}
         measured = {metric: 0 for metric in requested_metrics}
         all_valid = True
@@ -408,6 +332,9 @@ async def evaluate_pair(
                     "graph": context.graph.snapshot(),
                     "memory": context.memory.snapshot(),
                     "learning": context.learning.snapshot(),
+                    "beliefs": operations.beliefs.snapshot(),
+                    "attribution": operations.attribution.snapshot(),
+                    "evaluations": operations.evaluations.snapshot(),
                 },
                 allow_nan=False,
             ),
@@ -418,7 +345,7 @@ async def evaluate_pair(
         dataset.revision,
         {
             "contracts": valid["candidate"],
-            "tests": not syntax_errors and valid["candidate"],
+            "tests": not syntax_errors and test_outcome["passed"],
             "holdout": True,
         },
         metrics["candidate"],

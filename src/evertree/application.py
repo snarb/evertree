@@ -8,6 +8,8 @@ import dataclasses
 import json
 import os
 import time
+import weakref
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
@@ -17,7 +19,7 @@ from pydantic import BaseModel, ConfigDict
 from .core.actions import ActionGateway
 from .core.anchors import AnchorResolver, parse_anchors
 from .core.attribution import AttributionRuntime
-from .core.backup import BackupManager, copy_state, rename_state, safe_remove_tree
+from .core.backup import BackupManager, safe_remove_tree
 from .core.beliefs import BeliefStore
 from .core.codex_provider import CodexProvider
 from .core.cognition import (
@@ -46,7 +48,7 @@ from .core.learning import (
 )
 from .core.lifecycle import ProgramLifecycleRuntime, git, initialize_seed_repository
 from .core.memory import MemoryQuery, TraceOutputRef, TraceStore
-from .core.provider import AgentProvider, AgentRequest, SessionRef, ToolDefinition
+from .core.provider import AgentProvider, AgentRequest, ToolDefinition
 from .core.runtime import ProgramSpec, Runtime, _git
 
 
@@ -68,6 +70,45 @@ class EverTreeEvent:
     kind: str
     task_id: str | None
     data: dict[str, Any]
+
+
+class EventSubscription:
+    """A live event consumer; leaving its context releases its queue."""
+
+    def __init__(self, owner):
+        self._owner = owner
+        self._queue: asyncio.Queue[EverTreeEvent | None] = asyncio.Queue()
+        self._closed = False
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self._closed and self._queue.empty():
+            raise StopAsyncIteration
+        try:
+            event = await self._queue.get()
+        except asyncio.CancelledError:
+            self.close()
+            raise
+        if event is None:
+            raise StopAsyncIteration
+        return event
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_):
+        self.close()
+
+    async def aclose(self):
+        self.close()
+
+    def close(self):
+        if not self._closed:
+            self._closed = True
+            self._owner._subscribers.discard(self)
+            self._queue.put_nowait(None)
 
 
 class EverTree:
@@ -92,8 +133,7 @@ class EverTree:
         self.provider = provider or CodexProvider(state_dir=self.state_dir / "codex-runtime")
         self.approval_handler = approval_handler
         self._runtime_factory = runtime_factory
-        self._events: asyncio.Queue[EverTreeEvent] = asyncio.Queue()
-        self._task_events: dict[str, asyncio.Queue] = {}
+        self._subscribers: weakref.WeakSet[EventSubscription] = weakref.WeakSet()
         self._accounting = contextvars.ContextVar("evertree_accounting", default=None)
         self._improvement = contextvars.ContextVar("evertree_improvement", default=False)
         self._operations = 0
@@ -109,8 +149,6 @@ class EverTree:
         self._closed = False
         self._started = False
         self._state_lock = asyncio.Lock()
-        self._safe_boundary = asyncio.Event()
-        self._safe_boundary.set()
         self._lock_file = None
         self.runtime = None
         self.lifecycle = None
@@ -172,7 +210,11 @@ class EverTree:
                 initialize_seed_repository, Path(__file__).parent, self.repository
             )
             self.runtime = self._runtime_factory(
-                self.state_dir / "runtime", self.repository, self._gateway, self._runtime_trace
+                self.state_dir / "runtime",
+                self.repository,
+                self._gateway,
+                self._runtime_trace,
+                python_cache=self.state_dir / "python",
             )
             self.backups = BackupManager(self.state_dir / "backups")
             if self.backups.list():
@@ -561,21 +603,48 @@ class EverTree:
 
     async def _publish(self, kind, task_id=None, data=None):
         event = EverTreeEvent(kind, task_id, data or {})
-        await self._events.put(event)
-        if task_id in self._task_events:
-            await self._task_events[task_id].put(event)
+        for subscriber in tuple(self._subscribers):
+            subscriber._queue.put_nowait(event)
 
-    async def events(self):
-        while not self._closed or not self._events.empty():
-            yield await self._events.get()
+    def events(self) -> EventSubscription:
+        """Subscribe to future events and any answer still awaiting delivery.
+
+        Subscribe before submitting work, preferably with ``async with``. Past
+        progress lives in memory; it is not buffered for absent consumers.
+        """
+        subscriber = EventSubscription(self)
+        if self._closed:
+            subscriber.close()
+            return subscriber
+        self._subscribers.add(subscriber)
+        for delivery_id, (task_id, future) in self._delivery.items():
+            if not future.done():
+                subscriber._queue.put_nowait(
+                    EverTreeEvent(
+                        "answer",
+                        task_id,
+                        {
+                            "text": self._results.get(task_id, {}).get("answer", ""),
+                            "delivery_id": delivery_id,
+                        },
+                    )
+                )
+        return subscriber
 
     async def run(self, text: str, **kwargs) -> dict:
         """Convenience transport: return the answer and acknowledge its delivery."""
-        state = await self.submit(text, **kwargs)
-        queue = self._task_events.setdefault(state.id, asyncio.Queue())
-        try:
-            while True:
-                event = await queue.get()
+        async with self.events() as stream:
+            state = await self.submit(text, **kwargs)
+            if state.terminal or state.status == "waiting":
+                return {
+                    "task_id": state.id,
+                    "status": state.status,
+                    "answer": self._results.get(state.id, {}).get("answer", ""),
+                    "reason": state.outcome_reason,
+                }
+            async for event in stream:
+                if event.task_id != state.id:
+                    continue
                 if event.kind == "answer":
                     await self.acknowledge_delivery(event.data["delivery_id"])
                 if event.kind in {
@@ -590,8 +659,7 @@ class EverTree:
                         "answer": self._results.get(state.id, {}).get("answer", ""),
                         **event.data,
                     }
-        finally:
-            self._task_events.pop(state.id, None)
+        raise RuntimeError("Agent closed before delivering a task outcome")
 
     async def _run_queue(self):
         while not self._closed and (identity := self.attention.next_task()) is not None:
@@ -599,43 +667,25 @@ class EverTree:
             self._current_task = identity
             self._task_stopped[identity] = asyncio.Event()
             try:
-                if state.execution_budget is None:
-                    if state.hard_limit_reached:
-                        self.tasks.set_waiting(
-                            identity,
-                            waiting_for=["user_limit_change"],
-                            reason="User-defined resource limit reached",
-                            execution_stopped=True,
-                        )
-                        await self._publish("task_waiting", identity, {"reason": state.progress})
-                        self.attention._queue.pop(identity, None)
-                        continue
-                    self.tasks.assign_budget(
-                        identity,
-                        {
-                            "active_time_minutes": min(
-                                5.0, state.hard_limits.get("active_time_minutes", 5.0)
-                            )
-                        },
-                        0,
-                        reason="Bounded initial framing, not the task budget",
-                    )
                 pending = self._pending_programs.get(identity)
                 if pending:
-                    recovered = await self._run_program(
-                        identity, pending["identity"], pending["arguments"]
-                    )
-                    if pending["identity"] == "task_framing":
-                        self._accept_frame(state, recovered)
+                    if pending["identity"] in {"task_framing", "resource_control"}:
+                        if not await self._ensure_budget(state):
+                            self.attention._queue.pop(identity, None)
+                            continue
                     else:
+                        recovered = await self._run_program(
+                            identity, pending["identity"], pending["arguments"]
+                        )
                         self._inputs[identity].append(
                             {
                                 "role": "assistant",
                                 "content": json.dumps({"recovered_program_result": recovered}),
                             }
                         )
-                if state.review_required:
-                    await self._frame(state)
+                if not await self._ensure_budget(state):
+                    self.attention._queue.pop(identity, None)
+                    continue
                 self.attention.admit(identity)
                 await self._publish("task_started", identity)
                 await self._execute_task(state)
@@ -662,7 +712,6 @@ class EverTree:
                         "Cancelled by user" if cancelled else str(exc),
                     )
             finally:
-                self._safe_boundary.set()
                 if self.attention.running_task == identity:
                     self.attention.release(
                         identity,
@@ -676,18 +725,47 @@ class EverTree:
                 except Exception as exc:  # noqa: BLE001 -- failed maintenance must not stop queued work
                     await self._publish("maintenance_error", identity, {"message": str(exc)})
 
+    async def _ensure_budget(self, state):
+        if state.hard_limit_reached:
+            self.tasks.set_waiting(
+                state.id,
+                waiting_for=["user_limit_change"],
+                reason="User-defined resource limit reached",
+                execution_stopped=True,
+            )
+            await self._publish("task_waiting", state.id, {"reason": state.progress})
+            return False
+        pending = self._pending_programs.get(state.id)
+        if (
+            state.execution_budget is None
+            or state.budget_exhausted
+            or state.review_required
+            or pending
+            and pending["identity"] in {"task_framing", "resource_control"}
+        ):
+            await self._frame(state)
+            if state.hard_limit_reached:
+                return await self._ensure_budget(state)
+        return True
+
     async def _frame(self, state):
-        context = state.to_dict()
+        context = {**state.to_dict(), "inputs": list(self._inputs[state.id])}
         hard_remaining = state.hard_limits.get(
             "active_time_minutes", float("inf")
         ) - state.spent.get("active_time_minutes", 0)
         if hard_remaining <= 0:
             raise RuntimeError("User-defined resource limit reached")
+        pending = self._pending_programs.get(state.id)
+        if pending and pending["identity"] in {"task_framing", "resource_control"}:
+            identity, arguments = pending["identity"], pending["arguments"]
+        elif state.execution_budget is None:
+            identity = "task_framing"
+            arguments = {"request": self._inputs[state.id][-1]["content"], "context": context}
+        else:
+            identity = "resource_control"
+            arguments = {"task_state": context, "evidence": {"trace": self._recent_trace(state.id)}}
         result = await self._run_program(
-            state.id,
-            "task_framing",
-            {"request": self._inputs[state.id][-1]["content"], "context": context},
-            timeout=min(300, hard_remaining * 60),
+            state.id, identity, arguments, timeout=min(300, hard_remaining * 60)
         )
         self._accept_frame(state, result)
         await self._publish(
@@ -722,20 +800,9 @@ class EverTree:
             )
 
     async def _execute_task(self, state):
-        if len(state.budget_history) == 1:
-            await self._frame(state)
         while not state.terminal:
-            if state.hard_limit_reached:
-                self.tasks.set_waiting(
-                    state.id,
-                    waiting_for=["user_limit_change"],
-                    reason="User-defined resource limit reached",
-                    execution_stopped=True,
-                )
-                await self._publish("task_waiting", state.id, {"reason": state.progress})
+            if not await self._ensure_budget(state):
                 return
-            if state.budget_exhausted or state.review_required:
-                await self._frame(state)
             inputs = self._inputs[state.id]
             input_count = len(inputs)
             context = prepare_context(
@@ -751,6 +818,7 @@ class EverTree:
             )
             context["memory_review"] = [event.id for event in self.memory.review_batch(limit=10)]
             context["verification_rate"] = self.learning.predict("verified_task_rate")
+            context["recent_results"] = self._recent_trace(state.id)
             result = await self._invoke(
                 state.id,
                 AgentRequest(
@@ -760,9 +828,6 @@ class EverTree:
                     mode="exec",
                     output_schema=Decision.model_json_schema(),
                     tools=self._tools(),
-                    session=SessionRef(**self._sessions[state.id])
-                    if self._sessions.get(state.id, {}).get("provider") == self.provider.name
-                    else None,
                     timeout_seconds=self._remaining_seconds(state),
                 ),
                 conversation=True,
@@ -856,11 +921,44 @@ class EverTree:
             raise RuntimeError("Consciousness must reassess the task's finite time budget")
         return remaining * 60
 
+    @contextmanager
+    def _meter(self, task_id, *, improvement=False, operation_id=None):
+        """Charge the outer scope, and explicitly attributed nested improvement, once."""
+        owner = self._accounting.get() is None
+        meter = self._accounting.get() or {
+            "charged_seconds": 0.0,
+            "waiting_seconds": 0.0,
+            "approvals": 0,
+        }
+        started = time.monotonic()
+        charged_before, waiting_before = meter["charged_seconds"], meter["waiting_seconds"]
+        token = self._accounting.set(meter)
+        try:
+            yield meter
+        finally:
+            self._accounting.reset(token)
+            if owner or improvement:
+                seconds = max(
+                    0,
+                    time.monotonic()
+                    - started
+                    - (meter["waiting_seconds"] - waiting_before)
+                    - (meter["charged_seconds"] - charged_before),
+                )
+                self.tasks.record_usage(
+                    task_id,
+                    "active_time_minutes",
+                    seconds / 60,
+                    operation_id=operation_id or uuid4().hex,
+                    self_improvement=improvement,
+                )
+                if improvement:
+                    meter["charged_seconds"] += seconds
+
     async def _invoke(self, task_id, request: AgentRequest, *, run_ref=None, conversation=False):
         request_id = uuid4().hex
         async with self._state_lock:
             self._active_requests[request_id] = task_id
-        self._safe_boundary.clear()
         own_run = run_ref is None
         run = (
             self.memory.start_run(
@@ -884,85 +982,79 @@ class EverTree:
                 "session": dataclasses.asdict(request.session) if request.session else None,
             },
         )
-        started = time.monotonic()
-        accounting = self._accounting.get() is None
-        meter = self._accounting.get() or {
-            "charged_seconds": 0.0,
-            "waiting_seconds": 0.0,
-            "approvals": 0,
-        }
-        token = self._accounting.set(meter)
-        used_tokens = 0
-        result = None
-        session = None
-        try:
+        with self._meter(task_id, operation_id=request_id + ":active_time") as meter:
+            used_tokens = 0
+            usage_known = False
+            result = None
+            session = None
+            try:
 
-            async def handle_tool(name, args):
-                inherited = self._accounting.set(meter)
-                try:
-                    return await self._tool(task_id, name, args)
-                finally:
-                    self._accounting.reset(inherited)
+                async def handle_tool(name, args):
+                    inherited = self._accounting.set(meter)
+                    try:
+                        return await self._tool(task_id, name, args)
+                    finally:
+                        self._accounting.reset(inherited)
 
-            async def handle_approval(data):
-                inherited = self._accounting.set(meter)
-                try:
-                    return await self._approve(task_id, data)
-                finally:
-                    self._accounting.reset(inherited)
+                async def handle_approval(data):
+                    inherited = self._accounting.set(meter)
+                    try:
+                        return await self._approve(task_id, data)
+                    finally:
+                        self._accounting.reset(inherited)
 
-            async for event in self.provider.run(
-                request_id, request, tool_handler=handle_tool, approval_handler=handle_approval
-            ):
-                self.memory.record(
-                    run, "provider_event", output={"kind": event.kind, "data": event.data}
-                )
-                if event.kind == "session":
-                    session = {"provider": event.data["provider"], "id": event.data["id"]}
-                    if conversation:
-                        self._sessions[task_id] = session
-                elif event.kind == "completed":
-                    result = {**event.data, "session": session}
-                elif event.kind == "error":
-                    raise RuntimeError(event.data["message"])
-                elif event.kind == "cancelled":
-                    raise asyncio.CancelledError()
-                elif event.kind == "usage":
-                    used_tokens = max(used_tokens, event.data.get("last", {}).get("totalTokens", 0))
-                if event.kind in {"message", "tool_call", "tool_result", "approval", "file_change"}:
-                    await self._publish(event.kind, task_id, event.data)
-            if result is None:
-                raise RuntimeError("Provider ended without a completed result")
-            return result
-        finally:
-            self._active_requests.pop(request_id, None)
-            if own_run:
-                self.memory.finish_run(run, status="completed" if result else "failed")
-            self._accounting.reset(token)
-            if accounting:
-                self.tasks.record_usage(
-                    task_id,
-                    "active_time_minutes",
-                    max(
-                        0,
-                        time.monotonic()
-                        - started
-                        - meter["charged_seconds"]
-                        - meter["waiting_seconds"],
+                async for event in self.provider.run(
+                    request_id, request, tool_handler=handle_tool, approval_handler=handle_approval
+                ):
+                    self.memory.record(
+                        run, "provider_event", output={"kind": event.kind, "data": event.data}
                     )
-                    / 60,
-                    operation_id=request_id + ":active_time",
-                )
-            if used_tokens:
-                self.tasks.record_usage(
-                    task_id,
-                    "tokens",
-                    used_tokens,
-                    operation_id=request_id + ":tokens",
-                    self_improvement=self._improvement.get(),
-                )
-            if not self._active_requests:
-                self._safe_boundary.set()
+                    if event.kind == "session":
+                        session = {"provider": event.data["provider"], "id": event.data["id"]}
+                        if conversation:
+                            self._sessions[task_id] = session
+                    elif event.kind == "completed":
+                        result = {**event.data, "session": session}
+                    elif event.kind == "error":
+                        raise RuntimeError(event.data["message"])
+                    elif event.kind == "cancelled":
+                        raise asyncio.CancelledError()
+                    elif event.kind == "usage":
+                        total = event.data.get("total_tokens")
+                        usage_known = event.data.get("available", False) and type(total) is int
+                        if usage_known:
+                            used_tokens = max(used_tokens, total)
+                        elif "tokens" in self.tasks.get(task_id).hard_limits:
+                            raise RuntimeError(
+                                "Provider usage is unknown; cannot enforce the user token limit"
+                            )
+                    if event.kind in {
+                        "message",
+                        "tool_call",
+                        "tool_result",
+                        "approval",
+                        "file_change",
+                    }:
+                        await self._publish(event.kind, task_id, event.data)
+                if result is None:
+                    raise RuntimeError("Provider ended without a completed result")
+                if not usage_known and "tokens" in self.tasks.get(task_id).hard_limits:
+                    raise RuntimeError(
+                        "Provider usage is unknown; cannot enforce the user token limit"
+                    )
+                return result
+            finally:
+                self._active_requests.pop(request_id, None)
+                if own_run:
+                    self.memory.finish_run(run, status="completed" if result else "failed")
+                if used_tokens:
+                    self.tasks.record_usage(
+                        task_id,
+                        "tokens",
+                        used_tokens,
+                        operation_id=request_id + ":tokens",
+                        self_improvement=self._improvement.get(),
+                    )
 
     async def _approve(self, task_id, data):
         if self.approval_handler is None:
@@ -1082,41 +1174,19 @@ class EverTree:
             self._pending_programs[task_id] = pending
             spec = ProgramSpec(**pending["spec"])
             self._operations += 1
-        started = time.monotonic()
-        accounting = self._accounting.get() is None
-        meter = self._accounting.get() or {
-            "charged_seconds": 0.0,
-            "waiting_seconds": 0.0,
-            "approvals": 0,
-        }
-        token = self._accounting.set(meter)
         try:
-            result = await self.runtime.execute(
-                task_id,
-                spec,
-                arguments,
-                run_id=pending["run_id"],
-                timeout=timeout or self._remaining_seconds(self.tasks.get(task_id)),
-            )
+            with self._meter(task_id):
+                result = await self.runtime.execute(
+                    task_id,
+                    spec,
+                    arguments,
+                    run_id=pending["run_id"],
+                    timeout=timeout or self._remaining_seconds(self.tasks.get(task_id)),
+                )
             self._pending_programs.pop(task_id, None)
             return dataclasses.asdict(result)
         finally:
             self._operations -= 1
-            self._accounting.reset(token)
-            if accounting:
-                self.tasks.record_usage(
-                    task_id,
-                    "active_time_minutes",
-                    max(
-                        0,
-                        time.monotonic()
-                        - started
-                        - meter["charged_seconds"]
-                        - meter["waiting_seconds"],
-                    )
-                    / 60,
-                    operation_id=uuid4().hex,
-                )
 
     async def _runtime_trace(self, event):
         kind, identity = event["type"], event.get("run_id")
@@ -1306,43 +1376,31 @@ class EverTree:
                 or (self._pump and not self._pump.done())
             ):
                 raise RuntimeError("Stop the agent's tasks before restoring")
-            chosen = Path(backup) if backup else self.backups.list()[0]
-            saved = self.backups.read(chosen)
-            await asyncio.to_thread(
-                validate_runtime_bundle,
-                self.backups.dependency(chosen, "core_runtime"),
-                saved["core"].get("environment"),
-                Path(__file__).parent,
-            )
-            previous_core = self.snapshot()
-            swapped = []
-            try:
-                for name, destination in (
-                    ("program_repository", self.repository),
-                    ("lifecycle", self.state_dir / "lifecycle"),
-                    ("workspaces", self.state_dir / "workspaces"),
-                ):
-                    source = self.backups.dependency(chosen, name)
-                    staging = destination.with_name(destination.name + ".restoring-" + uuid4().hex)
-                    await asyncio.to_thread(copy_state, source, staging)
-                    previous = destination.with_name(destination.name + ".previous-" + uuid4().hex)
-                    if destination.exists():
-                        await asyncio.to_thread(rename_state, destination, previous)
-                    swapped.append((destination, previous, staging))
-                    await asyncio.to_thread(rename_state, staging, destination)
-                await self.backups.restore(self.runtime, self._restore_core, backup=chosen)
+
+            async def validate(verified):
+                await asyncio.to_thread(
+                    validate_runtime_bundle,
+                    verified.dependency("core_runtime"),
+                    verified.state["core"].get("environment"),
+                    Path(__file__).parent,
+                )
+
+            def restore_core(data):
+                self._restore_core(data)
                 self._make_lifecycle()
-            except BaseException:
-                for destination, previous, staging in reversed(swapped):
-                    if destination.exists():
-                        await asyncio.to_thread(rename_state, destination, staging)
-                    if previous.exists():
-                        await asyncio.to_thread(rename_state, previous, destination)
-                self._restore_core(previous_core)
-                raise
-            for _, previous, _ in swapped:
-                if previous.exists() and previous.resolve().is_relative_to(self.state_dir):
-                    safe_remove_tree(previous, self.state_dir)
+
+            await self.backups.restore(
+                self.runtime,
+                restore_core,
+                snapshot_core=self.snapshot,
+                backup=Path(backup) if backup else None,
+                dependencies={
+                    "program_repository": self.repository,
+                    "lifecycle": self.state_dir / "lifecycle",
+                    "workspaces": self.state_dir / "workspaces",
+                },
+                validate=validate,
+            )
 
     async def _periodic_maintenance(self):
         while not self._closed:
@@ -1375,7 +1433,9 @@ class EverTree:
                 if self._lock_file:
                     self._lock_file.close()
                     self._lock_file = None
-                await self._events.put(EverTreeEvent("closed", None, {}))
+                await self._publish("closed")
+                for subscriber in tuple(self._subscribers):
+                    subscriber.close()
 
     def _activated(self, branch, revision):
         node = self.graph.get(int(branch.program_id))
@@ -1543,41 +1603,15 @@ class EverTree:
             )
         callback = asyncio.current_task()
         self._tool_tasks.setdefault(task_id, set()).add(callback)
-        started = time.monotonic()
         token = self._improvement.set(improvement)
-        accounting = self._accounting.get() is None
-        meter = self._accounting.get() or {
-            "charged_seconds": 0.0,
-            "waiting_seconds": 0.0,
-            "approvals": 0,
-        }
-        accounting_token = self._accounting.set(meter)
-        charged_before, waiting_before = meter["charged_seconds"], meter["waiting_seconds"]
         try:
-            remaining = state.remaining("active_time_minutes", self_improvement=improvement)
-            async with asyncio.timeout(remaining * 60 if remaining else None):
-                return await self._dispatch_tool(task_id, name, args)
+            with self._meter(task_id, improvement=improvement):
+                remaining = state.remaining("active_time_minutes", self_improvement=improvement)
+                async with asyncio.timeout(remaining * 60 if remaining else None):
+                    return await self._dispatch_tool(task_id, name, args)
         finally:
             self._tool_tasks[task_id].discard(callback)
             self._improvement.reset(token)
-            self._accounting.reset(accounting_token)
-            if improvement or accounting:
-                seconds = max(
-                    0,
-                    time.monotonic()
-                    - started
-                    - (meter["waiting_seconds"] - waiting_before)
-                    - (meter["charged_seconds"] - charged_before),
-                )
-                self.tasks.record_usage(
-                    task_id,
-                    "active_time_minutes",
-                    seconds / 60,
-                    operation_id=uuid4().hex,
-                    self_improvement=improvement,
-                )
-                if improvement:
-                    meter["charged_seconds"] += seconds
 
     async def _dispatch_tool(self, task_id, name, args):
         state = self.tasks.get(task_id)
@@ -1641,7 +1675,8 @@ class EverTree:
                         "parameter provides runtime access. Return a mapping with result and feedback (string or null), "
                         "or ProgramResult. Calls to other Programs must go through ctx.call. "
                         "Preserve all Program contracts. Do not modify trusted core or acceptance rules. "
-                        "Run appropriate local tests. Core commits your completed changes and performs protected "
+                        "Add and run a committed unittest suite in tests/test_*.py; at least one non-skipped test must pass. "
+                        "Core commits your completed changes and performs protected "
                         "evaluation separately. Do not activate or claim acceptance of the candidate."
                     ),
                     timeout_seconds=self._remaining_seconds(self.tasks.get(task_id)),
@@ -1682,98 +1717,46 @@ class EverTree:
             )
         raise ValueError("Unknown EverTree tool: " + name)
 
-    def _apply_delta(self, task_id, delta):
-        from .core.predictions import protect_prediction_delta
+    def _core_operations(self):
+        from .core.operations import CoreOperations
 
-        protect_prediction_delta(self.graph, delta)
-        if (
-            any(update.id in self._protected_nodes for update in delta.updates)
-            or set(delta.deletes) & self._protected_nodes
-        ):
-            raise PermissionError("Protected Self/Values are not autonomously mutable")
-        # Program bindings and active slots belong exclusively to lifecycle.
-        if any(
-            node.kind in {"program", "process"}
-            or node.properties.get("process")
-            or any(key.startswith("active_") for key in node.properties)
-            for node in delta.creates
-        ):
-            raise PermissionError("Program bindings can only be created through lifecycle")
-        for update in delta.updates:
-            node = self.graph.get(update.id)
-            if node.kind in {"program", "process"} or node.properties.get("process"):
-                raise PermissionError("Program bindings can only change through lifecycle")
-            if update.changes.get("kind") in {"program", "process"} or any(
-                key.startswith("active_") or key == "process"
-                for key in update.changes.get("properties", {})
-            ):
-                raise PermissionError("Semantic edits cannot create executable authority")
-        if any(
-            self.graph.get(identity).kind in {"program", "process"}
-            or self.graph.get(identity).properties.get("process")
-            for identity in delta.deletes
-        ):
-            raise PermissionError("Programs cannot be removed through graph tools")
-        run = self.memory.start_run(
-            "GraphMutation", git(self.repository, "rev-parse", "main"), {"task_id": task_id}
+        return CoreOperations(
+            self.graph,
+            self.memory,
+            self.beliefs,
+            self.attribution,
+            self.evaluations,
+            self.learning,
+            self._observations,
+            self._protected_nodes,
         )
-        event = self.memory.record(run, "graph_delta", output=json_value(delta))
-        ref = self.memory.output_ref(event)
-        try:
-            result = self.graph.apply(delta, provenance=ref)
-            for node in (*delta.creates, *delta.updates):
-                self.memory.retain(ref, "graph:" + str(node.id))
-            return result
-        finally:
-            self.memory.finish_run(run)
+
+    def _apply_delta(self, task_id, delta):
+        return self._core_operations().apply_delta(
+            delta, task_id=task_id, revision=git(self.repository, "rev-parse", "main")
+        )
 
     async def _gateway(self, method, payload):
+        from .core.operations import authorize_operation
+
+        payload = dict(payload)
         metadata = payload.pop("_runtime", {})
         task_id = metadata.get("task_id", self.attention.running_task)
         if task_id is None:
             raise PermissionError("No admitted Task")
-        if self.tasks.get(task_id).terminal or self.tasks.get(task_id).hard_limit_reached:
+        state = self.tasks.get(task_id)
+        if state.terminal or state.hard_limit_reached:
             raise PermissionError("Task is stopped or its explicit resource limit was reached")
-        model_reads = {
-            "resolve_program",
-            "agent.run",
-            "graph.read",
-            "graph.get",
-            "graph.query",
-            "memory.retrieve",
-            "memory.rank",
-            "memory.resolve",
-            "belief.read",
-            "learning.predict",
-            "learning.prepare",
-            "evaluation.predict",
-            "attribution.read",
-            "attribution.measure",
-            "attribution.normalize",
-            "topology.inspect",
-        }
-        if metadata.get("program", {}).get("role") == "model" and method not in model_reads:
-            raise PermissionError(
-                "A model Program cannot perform effects or obtain new observations"
-            )
-        if method.startswith("learning.") and method != "learning.predict":
-            target = payload.get("target", payload.get("credit", {}).get("target"))
-            if target == "verified_task_rate":
-                raise PermissionError(
-                    "Runtime verification statistics can only learn from core task outcomes"
-                )
+        authorize_operation(method, metadata["program"]["role"])
         if method == "resolve_program":
             spec = self._program(payload["program_id"])
-            # Nested calls stay at the immutable commit of their parent.
-            revision = metadata.get("program", {}).get("revision", spec.revision)
+            revision = metadata["program"]["revision"]
             return dataclasses.asdict(dataclasses.replace(spec, revision=revision))
         if method == "agent.run":
-            state = self.tasks.get(task_id)
-            framing = (
-                metadata.get("program", {})
-                .get("git_path", "")
-                .endswith("/task_framing/_programs/default/implementation.py")
-            )
+            budget_policy = self._pending_programs.get(task_id, {}).get("identity") in {
+                "task_framing",
+                "resource_control",
+            }
             seconds = (
                 min(
                     300,
@@ -1783,7 +1766,7 @@ class EverTree:
                     )
                     * 60,
                 )
-                if framing
+                if budget_policy
                 else self._remaining_seconds(state)
             )
             request = AgentRequest(
@@ -1797,205 +1780,13 @@ class EverTree:
             return await self._invoke(
                 task_id, request, run_ref=self._run_map.get(metadata.get("run_id"))
             )
-        if method in {"graph.read", "graph.get"}:
-            return json_value(self.graph.get(payload["id"]))
-        if method == "graph.query":
-            return json_value(
-                self.graph.query_view(
-                    payload["relation"], payload["view"], **payload.get("inputs", {})
-                )
-            )
-        if method == "graph.apply":
-            if metadata.get("program", {}).get("role") == "model":
-                raise PermissionError("Model cannot mutate graph")
-            return json_value(self._apply_delta(task_id, GraphDelta.from_dict(payload)))
-        if method in {"memory.retrieve", "memory.rank"}:
-            return json_value(
-                self.memory.retrieve(payload.get("query", ""), limit=payload.get("limit", 10))
-            )
-        if method == "memory.resolve":
-            return json_value(self.memory.resolve(TraceOutputRef(**payload["reference"])))
-        if method == "memory.review":
-            return json_value(self.memory.review_batch(limit=payload.get("limit", 100)))
-        if method == "memory.complete_review":
-            self.memory.complete_review(payload["event_id"])
-            return {"reviewed": payload["event_id"]}
-        if method == "memory.compact":
-            return json_value(self.memory.compact(payload["run_id"], tuple(payload["keep_events"])))
-        if method == "memory.delete":
-            self.memory.delete(payload["event_id"])
-            return {"pending_deletion": payload["event_id"]}
-        if method == "belief.read":
-            return json_value(self.beliefs.read(payload["target"]))
-        if method in {"attribution.read", "attribution.measure"}:
-            return json_value(self.attribution.read_property(**payload))
-        if method == "attribution.normalize":
-            return json_value(self.attribution.normalize(**payload))
-        if method == "topology.inspect":
-            from .core.topology import inspect_topology
-
-            return json_value(inspect_topology(self.graph, **payload))
-        if method == "evidence.assess":
-            if metadata.get("program", {}).get("role") == "model":
-                raise PermissionError("Assessment storage is an effect")
-            target = payload["target"]
-            try:
-                self.beliefs.target(target)
-            except KeyError:
-                self.beliefs.register_binary(target)
-            source = TraceOutputRef(**payload["source_ref"])
-            self.memory.resolve(source)
-            assignment = self.beliefs.assess_likelihoods(
-                target,
-                source,
-                payload["likelihoods"],
-                backed=source.event_ref in self._observations,
-                dependency_root=payload.get("dependency_root"),
-                created_by=metadata.get("run_id"),
-            )
-            self.memory.retain(source, "evidence:" + target)
-            return json_value(assignment)
-        if method == "learning.predict":
-            return self.learning.predict(payload["state_id"], payload.get("inputs"))
-        if method == "learning.learn":
-            from .core.learning import LearningSignal
-
-            signal = LearningSignal.from_dict(payload["signal"])
-            if self.evaluations.get(signal.evaluation.id).to_dict() != signal.evaluation.to_dict():
-                raise PermissionError("Learning needs the retained original Evaluation")
-            return json_value(
-                LearningCoordinator(self.learning).learn(
-                    signal,
-                    payload["target"],
-                    context=payload.get("context"),
-                    attribution_weight=payload.get("attribution_weight", 1),
-                    ambiguous=payload.get("ambiguous", False),
-                )
-            )
-        if method == "learning.credit":
-            from .core.learning import CreditAssignmentProgram, LearningSignal
-
-            signal = LearningSignal.from_dict(payload["signal"]) if payload.get("signal") else None
-            if (
-                signal
-                and self.evaluations.get(signal.evaluation.id).to_dict()
-                != signal.evaluation.to_dict()
-            ):
-                raise PermissionError("Credit needs the retained original Evaluation")
-            return json_value(
-                CreditAssignmentProgram(self.learning).assign(
-                    payload["target"],
-                    signal,
-                    observation_ids=payload.get("observation_ids", ()),
-                    context=payload.get("context"),
-                    ambiguous=payload.get("ambiguous", False),
-                )
-            )
-        if method == "learning.prepare":
-            from .core.learning import LearningCredit, UpdatePlanner
-
-            return json_value(
-                UpdatePlanner(self.learning).prepare(LearningCredit.from_dict(payload["credit"]))
-            )
-        if method == "learning.coordinate":
-            from .core.learning import LearningObjective, LearningSignal
-
-            evaluation = self.evaluations.get(payload["evaluation_id"])
-            signal = LearningSignal(
-                evaluation, LearningObjective(**payload["objective"]), payload["outcome_values"]
-            )
-            return json_value(
-                LearningCoordinator(self.learning).learn(
-                    signal, payload["target"], context=payload.get("context")
-                )
-            )
-        if method == "evaluation.predict":
-            from .core.evaluation import evaluate_prediction
-
-            for reference in payload.get("provenance", ()):
-                event = self.memory.get_event(int(reference))
-                self.memory.retain(event.id, "evaluation_source")
-            result = evaluate_prediction(**payload)
-            return self.evaluations.add(result).to_dict()
-        if method == "evaluation.save_prediction":
-            reference = TraceOutputRef(**payload.pop("reference"))
-            return json_value(self.save_prediction(reference=reference, **payload))
-        if method == "evaluation.match":
-            return self.prediction_evaluator().evaluate(
-                **payload, revision=metadata.get("program", {}).get("revision", "core")
-            )
-        if method == "evaluation.decide_prediction":
-            return json_value(
-                self.prediction_evaluator().record_decision(
-                    **payload, revision=metadata.get("program", {}).get("revision", "core")
-                )
-            )
-        if method == "evaluation.review":
-            original_cases = {
-                case["id"]: json_value(case)
-                for event in self.memory.events
-                if event.operator == "prediction_evaluation"
-                and self.memory.get_run(event.program_run).program == "PredictionEvaluator"
-                for case in event.output["unmatched"]
-            }
-            if any(
-                not exact_json_equal(original_cases.get(case["id"]), case)
-                for case in payload["cases"]
-            ):
-                raise PermissionError("Prediction review requires original evaluator cases")
-            case_ids = {case["id"] for case in payload["cases"]}
-            for event in self.memory.events:
-                if (
-                    event.operator == "prediction_review"
-                    and event.arguments.get("task_id") == task_id
-                ):
-                    case_ids.difference_update(case["id"] for case in event.output["cases"])
-            cases = [case for case in payload["cases"] if case["id"] in case_ids]
-            if not cases:
-                return {"queued": []}
-            run = self.memory.start_run(
-                "PredictionReview",
-                metadata.get("program", {}).get("revision", "core"),
-                {"task_id": task_id},
-            )
-            dependencies = tuple(
-                TraceOutputRef(int(identity))
-                for case in cases
-                for identity in case["observation_ids"]
-            )
-            event = self.memory.record(
-                run,
-                "prediction_review",
-                arguments={"task_id": task_id},
-                output={"cases": cases, "credits": payload["credits"]},
-                dependencies=dependencies,
-            )
-            self.memory.finish_run(run)
-            self.memory.retain(event.id, "prediction_review:" + task_id)
-            self.memory.request_review(
-                event.id, "Unmatched prediction experience requires conscious analysis"
-            )
-            self._inputs.setdefault(task_id, []).append(
-                {
-                    "role": "observation",
-                    "content": json.dumps(
-                        {"prediction_review": json_value(event.output), "event_id": event.id}
-                    ),
-                }
-            )
-            self.attention.request_attention(
-                task_id,
-                self.tasks.get(task_id).attention_priority,
-                reason="Unmatched prediction experience",
-            )
-            return {"queued": sorted(case_ids)}
         if method in {"actions.list", "list_actions"}:
             return await self.actions.list(
                 payload["session"], task_id=task_id, run_mode=metadata["run_mode"]
             )
         if method in {"actions.take", "take_action"}:
             approved = await self._approve(task_id, {"method": "external_action", **payload})
-            if self.tasks.get(task_id).terminal or self._closed:
+            if state.terminal or self._closed:
                 raise PermissionError("Task stopped while waiting for approval")
             return await self.actions.take(
                 payload["session"],
@@ -2005,7 +1796,24 @@ class EverTree:
                 run_mode=metadata["run_mode"],
                 approved=approved,
             )
-        raise ValueError("Unsupported core operation: " + method)
+        result = self._core_operations().execute(method, payload, metadata=metadata)
+        if method == "evaluation.review" and result["queued"]:
+            reference = TraceOutputRef(**result["review_ref"])
+            self._inputs.setdefault(task_id, []).append(
+                {
+                    "role": "observation",
+                    "content": json.dumps(
+                        {
+                            "prediction_review": json_value(self.memory.resolve(reference)),
+                            "event_id": reference.event_ref,
+                        }
+                    ),
+                }
+            )
+            self.attention.request_attention(
+                task_id, state.attention_priority, reason="Unmatched prediction experience"
+            )
+        return result
 
     def bind_evaluation(
         self,
@@ -2040,9 +1848,11 @@ class EverTree:
         if required_metrics - metrics:
             raise ValueError("Acceptance metrics must be fixed in the evaluation dataset")
         for case in dataset.cases:
-            for source in case.source_ids:
-                if source.isdecimal():
-                    self.memory.retain(int(source), "dataset:" + dataset_revision)
+            for reference in case.source_refs:
+                self.memory.resolve(reference)
+        for case in dataset.cases:
+            for reference in case.source_refs:
+                self.memory.retain(reference, "dataset:" + dataset_revision)
         self._evaluation_bindings[str(program_id)] = {
             "dataset_revision": dataset_revision,
             "criteria": dataclasses.asdict(criteria),
@@ -2087,8 +1897,13 @@ class EverTree:
                 self.learning,
                 self._program,
                 runtime_factory=self._runtime_factory,
+                python_cache=self.state_dir / "python",
                 model_call=model_call,
                 observation_ids=frozenset(self._observations),
+                beliefs=self.beliefs,
+                attribution=self.attribution,
+                evaluations=self.evaluations,
+                protected_nodes=frozenset(self._protected_nodes),
                 timeout=self._remaining_seconds(self.tasks.get(task_id)),
             )
             trace_run = self.memory.start_run(

@@ -58,9 +58,12 @@ def protect_prediction_delta(graph, delta):
 
 
 class PredictionEvaluator:
-    def __init__(self, graph, memory, evaluations: EvaluationStore, *, observation_ids=None):
+    def __init__(
+        self, graph, memory, evaluations: EvaluationStore, *, observation_ids=None, run_mode="live"
+    ):
         self.graph, self.memory, self.evaluations = graph, memory, evaluations
         self.observation_ids = observation_ids
+        self.run_mode = run_mode
 
     def target(self, target: str | int) -> int:
         node = self.graph.get(target) if isinstance(target, int) else self.graph.find(target)
@@ -115,8 +118,7 @@ class PredictionEvaluator:
             "comparison_key": comparison_key,
         }
         for existing in self.graph.facts("PREDICTS"):
-            previous = json_value(existing.args["prediction"])
-            previous.pop("assignment", None)
+            _, previous = self._assignment(existing)
             if existing.args["target"] == target and exact_json_equal(previous, definition):
                 return existing
         run = self.memory.start_run(
@@ -125,6 +127,7 @@ class PredictionEvaluator:
                 self.memory.get_event(reference.event_ref).program_run
             ).base_commit_sha,
             {},
+            run_mode=self.run_mode,
         )
         assignment = self.memory.record(
             run,
@@ -134,27 +137,44 @@ class PredictionEvaluator:
             dependencies=(reference,),
         )
         self.memory.finish_run(run)
-        definition["assignment"] = assignment.id
         relation = self.graph.find("PREDICTS")
         if relation is None:
             relation = RelationType(
                 self.graph.reserve_id(),
                 "PREDICTS",
-                signature=(Slot("target"), Slot("prediction", "any")),
+                signature=(Slot("target"), Slot("assignment_ref", "integer")),
             )
             self.graph.apply(
                 GraphDelta(creates=(relation,)), provenance=self.memory.output_ref(assignment)
             )
         if not isinstance(relation, RelationType) or relation.signature != (
             Slot("target"),
-            Slot("prediction", "any"),
+            Slot("assignment_ref", "integer"),
         ):
             raise ValueError("PREDICTS has an incompatible semantic contract")
-        fact = self.graph.new_fact("PREDICTS", {"target": target, "prediction": definition})
+        fact = self.graph.new_fact("PREDICTS", {"target": target, "assignment_ref": assignment.id})
         self.graph.apply(GraphDelta(creates=(fact,)), provenance=self.memory.output_ref(assignment))
         self.memory.retain(reference, "prediction:" + str(fact.id))
         self.memory.retain(assignment.id, "prediction:" + str(fact.id))
         return fact
+
+    def _assignment(self, fact):
+        """Resolve the immutable assignment; the semantic graph is only its index."""
+        identity = fact.args["assignment_ref"]
+        if type(identity) is not int or identity <= 0:
+            raise PermissionError("Prediction assignment reference must be a positive event ID")
+        assignment = self.memory.get_event(identity)
+        saved = json_value(assignment.output)
+        if (
+            assignment.operator != "prediction_assignment"
+            or self.memory.get_run(assignment.program_run).program != "PredictionAssignment"
+            or assignment.arguments.get("target") != fact.args["target"]
+            or not isinstance(saved, dict)
+            or "reference" not in saved
+            or TraceOutputRef(**saved["reference"]) not in assignment.dependencies
+        ):
+            raise PermissionError("Prediction projection lacks an authentic assignment")
+        return assignment, saved
 
     def _observations(self, context):
         for event in self.memory.events:
@@ -191,21 +211,11 @@ class PredictionEvaluator:
         matched = set()
         matches = []
         for fact in self.graph.facts("PREDICTS"):
-            saved = json_value(fact.args["prediction"])
+            assignment, saved = self._assignment(fact)
             if not exact_json_equal(saved["context"], context):
                 continue
             reference = TraceOutputRef(**saved["reference"])
             prediction_event = self.memory.get_event(reference.event_ref)
-            assignment = self.memory.get_event(saved["assignment"])
-            original = {key: value for key, value in saved.items() if key != "assignment"}
-            if (
-                assignment.operator != "prediction_assignment"
-                or self.memory.get_run(assignment.program_run).program != "PredictionAssignment"
-                or assignment.arguments.get("target") != fact.args["target"]
-                or not exact_json_equal(json_value(assignment.output), original)
-                or reference not in assignment.dependencies
-            ):
-                raise PermissionError("Prediction projection lacks an authentic assignment")
             related = [
                 piece
                 for piece in pieces
@@ -214,6 +224,7 @@ class PredictionEvaluator:
                 and prediction_event.occurred_at < piece["event"].occurred_at
                 and prediction_event.id < piece["event"].id
                 and assignment.id < piece["event"].id
+                and assignment.occurred_at < piece["event"].occurred_at
                 and (
                     saved["period"] is None
                     or timestamp(saved["period"][0])
@@ -252,7 +263,7 @@ class PredictionEvaluator:
             part: [piece for piece in pieces if piece["part"] == part] for part in saved["parts"]
         }
         sources = tuple(dict.fromkeys(str(piece["event"].id) for piece in pieces))
-        provenance = (str(reference.event_ref), str(saved["assignment"]), *sources)
+        provenance = (str(reference.event_ref), str(fact.args["assignment_ref"]), *sources)
         missing = tuple(part for part, values in grouped.items() if not values)
         ambiguous = tuple(part for part, values in grouped.items() if len(values) > 1)
         if missing or ambiguous:
@@ -295,7 +306,7 @@ class PredictionEvaluator:
             "required": required,
             "reason": reason,
         }
-        run = self.memory.start_run("PredictionDecision", revision, {})
+        run = self.memory.start_run("PredictionDecision", revision, {}, run_mode=self.run_mode)
         event = self.memory.record(run, "prediction_decision", output=value)
         self.memory.retain(event.id, "prediction_decision")
         self.memory.finish_run(run)
@@ -349,7 +360,9 @@ class PredictionEvaluator:
         cases = self.handle_unmatched_observations(unmatched, context, selected_targets)
         for case in cases:
             case["id"] = content_revision(case)
-        run = self.memory.start_run("PredictionEvaluator", revision, {"context": context})
+        run = self.memory.start_run(
+            "PredictionEvaluator", revision, {"context": context}, run_mode=self.run_mode
+        )
         dependencies = tuple(
             TraceOutputRef(int(source)) for result in results for source in result.provenance
         )

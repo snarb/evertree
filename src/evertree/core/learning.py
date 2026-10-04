@@ -44,7 +44,6 @@ class LearningSignal:
     evaluation: EvaluationResult
     objective: LearningObjective
     outcome_values: Mapping[str, Any]
-    id: str = field(default_factory=lambda: str(uuid4()))
 
     def __post_init__(self) -> None:
         if self.evaluation.status != "evaluated":
@@ -70,7 +69,6 @@ class LearningSignal:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "id": self.id,
             "evaluation": self.evaluation.to_dict(),
             "objective": self.objective.to_dict(),
             "outcome_values": thaw_json(self.outcome_values),

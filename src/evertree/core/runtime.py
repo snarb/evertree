@@ -228,12 +228,16 @@ class Runtime:
         *,
         limits: SandboxLimits | None = None,
         process_factory: Callable[..., Any] | None = None,
+        python_cache: Path | None = None,
     ) -> None:
         self.state_dir = Path(state_dir).resolve()
         self.repository = Path(repository).resolve()
         self.gateway, self.trace, self.limits = gateway, trace, limits or SandboxLimits()
         self._factory = process_factory or SandboxedProcess
         self._native = process_factory is None
+        self.python_cache = (
+            Path(python_cache).resolve() if python_cache else self.state_dir / "python"
+        )
         self._admission = asyncio.Lock()
         self._active: dict[str, Any] | None = None
         self._final_tasks: set[str] = set()
@@ -330,7 +334,7 @@ class Runtime:
             reader_task = stderr_task = None
             try:
                 if self._native:
-                    executable = await asyncio.to_thread(prepare_python, self.state_dir / "python")
+                    executable = await asyncio.to_thread(prepare_python, self.python_cache)
                 else:
                     executable = Path(sys.executable)
                 if self._active["cancelled"]:
@@ -450,10 +454,17 @@ class Runtime:
         if not isinstance(request, dict):
             raise TypeError("Gateway request must be an object")
         active["waiting"] = False
-        spec = ProgramSpec(**request["program"])
-        if spec.revision != active["program"].revision:
-            raise PermissionError("Worker requested another executable revision")
         method, run_id = request["method"], request["run_id"]
+        if method == "run_started":
+            spec = ProgramSpec(**request["program"])
+            if spec.revision != active["program"].revision:
+                raise PermissionError("Worker requested another executable revision")
+        else:
+            if "program" in request:
+                raise PermissionError("Program metadata is only accepted when registering a run")
+            if run_id not in active["known_runs"]:
+                raise PermissionError("Workflow is not admitted by protected core")
+            spec = ProgramSpec(**active["known_runs"][run_id])
         payload = dict(request.get("payload", {}))
         trace_arguments = json.loads(
             json.dumps(
@@ -532,6 +543,8 @@ class Runtime:
                     and spec.role != "model"
                 ):
                     raise PermissionError("A model Program cannot call exec")
+                if run_id in active["known_runs"] and active["known_runs"][run_id] != asdict(spec):
+                    raise PermissionError("Worker changed an already registered Program")
                 active["known_runs"][run_id] = asdict(spec)
                 (active["run_dir"] / "core_runs.json").write_text(
                     json.dumps(active["known_runs"]), encoding="utf-8"
@@ -545,10 +558,6 @@ class Runtime:
                     }
                 )
                 return None
-            if run_id not in active["known_runs"]:
-                raise PermissionError("Workflow is not admitted by protected core")
-            if spec != ProgramSpec(**active["known_runs"][run_id]):
-                raise PermissionError("Worker changed its admitted Program contract")
             if method in ("run_finished", "run_failed", "trace"):
                 fields = {
                     "run_finished": ("result",),

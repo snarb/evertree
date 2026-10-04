@@ -9,7 +9,7 @@ from test_runtime import TestProcess, commit_programs
 
 from evertree.core.datasets import DatasetRevision, EvaluationCase
 from evertree.core.evaluation import AcceptanceCriteria, EvaluationStore, assess_candidate
-from evertree.core.experiments import evaluate_pair
+from evertree.core.experiments import evaluate_pair as core_evaluate_pair
 from evertree.core.graph import GraphDelta, GraphStore, Node
 from evertree.core.learning import LearningStore
 from evertree.core.lifecycle import ProgramLifecycleRuntime
@@ -21,9 +21,31 @@ PATH = "src/evertree/processes/example.py"
 TEST_RUNTIME = partial(Runtime, process_factory=TestProcess)
 
 
+async def evaluate_pair(*args, **kwargs):
+    kwargs.setdefault(
+        "test_process_factory", None if kwargs.get("runtime_factory") is Runtime else TestProcess
+    )
+    return await core_evaluate_pair(*args, **kwargs)
+
+
 def prepare(tmp_path, source="def run(value): return {'result': value}\n", helpers=None):
     repo = tmp_path / "repo"
-    revision = commit_programs(repo, {PATH: source, **(helpers or {})})
+    local_tests = """
+import importlib.util
+from pathlib import Path
+import unittest
+
+class EntrypointTest(unittest.TestCase):
+    def test_declared_entrypoint_imports(self):
+        path = Path(__file__).parents[1] / 'src/evertree/processes/example.py'
+        spec = importlib.util.spec_from_file_location('example_under_test', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertTrue(callable(module.run))
+"""
+    revision = commit_programs(
+        repo, {PATH: source, "tests/test_entrypoint.py": local_tests, **(helpers or {})}
+    )
     lifecycle = ProgramLifecycleRuntime(
         repo,
         tmp_path / "lifecycle",
@@ -304,7 +326,9 @@ async def test_invalid_contract_or_live_effect_cannot_pass(tmp_path, candidate_s
         runtime_factory=TEST_RUNTIME,
     )
     assert result.report.checks["contracts"] is False
-    assert result.report.checks["tests"] is False
+    # The committed import test succeeds; the independent contract gate rejects the run.
+    assert result.report.checks["tests"] is True
+    assert not all(result.report.checks.values())
     assert expected in next(
         trace["error"] for trace in result.traces if trace.get("side") == "candidate"
     )
