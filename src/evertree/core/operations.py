@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from .attribution import AttributionRuntime
 from .beliefs import BeliefStore
 from .evaluation import EvaluationStore, evaluate_prediction, exact_json_equal
-from .graph import GraphDelta, GraphStore, json_value
+from .graph import GraphDelta, GraphStore
 from .learning import (
     CreditAssignmentProgram,
     LearningCoordinator,
@@ -22,6 +22,7 @@ from .learning import (
 from .memory import TraceOutputRef, TraceStore
 from .predictions import PredictionEvaluator, protect_prediction_delta
 from .topology import inspect_topology
+from .values import json_value
 
 MODEL_OPERATIONS = frozenset(
     {

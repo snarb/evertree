@@ -9,7 +9,8 @@ from __future__ import annotations
 import dataclasses
 from collections import defaultdict
 
-from .graph import ContractError, GraphDelta, GraphStore, Node
+from .graph import GraphDelta, GraphStore, Node
+from .values import ContractError
 
 
 @dataclasses.dataclass(frozen=True)

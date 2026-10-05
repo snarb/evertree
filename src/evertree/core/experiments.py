@@ -21,7 +21,7 @@ from .backup import _restore_io, safe_remove_tree
 from .beliefs import BeliefStore
 from .datasets import DatasetRevision, content_revision, thaw_json, validate_holdout
 from .evaluation import EvaluationStore, evaluate_prediction, exact_json_equal
-from .graph import GraphStore, json_value
+from .graph import GraphStore
 from .learning import (
     LearningStore,
 )
@@ -31,6 +31,7 @@ from .operations import CoreOperations, authorize_operation
 from .program_tests import run_candidate_tests
 from .runtime import ProgramExecutionError, ProgramSpec, Runtime, _git
 from .serialization import decode_snapshot, encode_snapshot
+from .values import json_value
 
 
 @dataclass(frozen=True)

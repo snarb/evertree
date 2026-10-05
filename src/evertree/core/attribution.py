@@ -9,19 +9,8 @@ from datetime import datetime
 from typing import Any
 
 from .beliefs import BeliefData, BeliefReading, BeliefStore
-from .graph import (
-    UNKNOWN,
-    ContractError,
-    Facet,
-    GraphStore,
-    Node,
-    RelationInstance,
-    freeze,
-    json_value,
-    restore_value,
-    timestamp,
-    utcnow,
-)
+from .graph import Facet, GraphStore, Node, RelationInstance
+from .values import UNKNOWN, ContractError, freeze, json_value, restore_value, timestamp, utcnow
 
 
 @dataclasses.dataclass(frozen=True)

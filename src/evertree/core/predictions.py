@@ -16,8 +16,9 @@ from .evaluation import (
     evaluate_prediction,
     exact_json_equal,
 )
-from .graph import GraphDelta, RelationType, Slot, json_value, timestamp
+from .graph import GraphDelta, RelationType, Slot
 from .memory import TraceOutputRef
+from .values import json_value, timestamp
 
 
 def prediction_context(value: Mapping[str, Any]) -> dict[str, Any]:

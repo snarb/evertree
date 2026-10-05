@@ -8,7 +8,8 @@ import re
 import tokenize
 from dataclasses import dataclass
 
-from .graph import ContractError, GraphDelta, GraphStore, Node
+from .graph import GraphDelta, GraphStore, Node
+from .values import ContractError
 
 
 @dataclass(frozen=True)

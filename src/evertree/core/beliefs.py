@@ -15,7 +15,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
 
-from .graph import UNKNOWN, ContractError, freeze, json_value, restore_value, timestamp, utcnow
+from .values import UNKNOWN, ContractError, freeze, json_value, restore_value, timestamp, utcnow
 
 
 def _source_key(source: Any) -> str:

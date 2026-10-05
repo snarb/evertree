@@ -1,13 +1,20 @@
 """Compressed snapshots preserve persistent values and reject invalid data."""
 
+import importlib
 import math
+import pickle
 from datetime import UTC, datetime
+from typing import get_type_hints
 
 import msgpack
 import pytest
 import zstandard
 
+from evertree.application import AnswerVerification, Decision
+from evertree.core.cognition import TaskSpecification
+from evertree.core.evaluation import SupervisorFeedback
 from evertree.core.graph import UNKNOWN, GraphDelta, GraphStore, Node
+from evertree.core.learning import LearningObjective
 from evertree.core.memory import TraceStore
 from evertree.core.serialization import decode_snapshot, encode_snapshot
 
@@ -101,3 +108,51 @@ def test_unknown_or_empty_extensions_are_rejected(extension):
     encoded = zstandard.ZstdCompressor().compress(msgpack.packb(extension))
     with pytest.raises(ValueError, match="snapshot extension"):
         decode_snapshot(encoded)
+
+
+@pytest.mark.parametrize(
+    ("module_name", "name"),
+    [
+        ("evertree.core.graph", "Node"),
+        ("evertree.core.memory", "TraceEvent"),
+        ("evertree.core.memory", "RetentionPolicy"),
+        ("evertree.core.cognition", "TaskState"),
+        ("evertree.core.learning", "LearningSignal"),
+        ("evertree.core.evaluation", "EvaluationResult"),
+        ("evertree.core.evaluation", "AcceptanceCriteria"),
+        ("evertree.core.sandbox", "SandboxLimits"),
+        ("evertree.application", "Decision"),
+        ("evertree.application", "AnswerVerification"),
+    ],
+)
+def test_public_type_identities_and_annotations_survive_module_refactoring(module_name, name):
+    public_type = getattr(importlib.import_module(module_name), name)
+    assert public_type.__module__ == module_name
+    assert pickle.loads(pickle.dumps(public_type)) is public_type
+    assert get_type_hints(public_type)
+
+
+@pytest.mark.parametrize(
+    ("value", "type_name"),
+    [
+        (Node(1, "Knowledge"), "evertree.core.graph.Node"),
+        (TaskSpecification("Read a source"), "evertree.core.cognition.TaskSpecification"),
+        (SupervisorFeedback(1), "evertree.core.evaluation.SupervisorFeedback"),
+        (LearningObjective(("brier",), "minimize"), "evertree.core.learning.LearningObjective"),
+        (
+            Decision(status="completed", answer="Done", progress="Verified"),
+            "evertree.application.Decision",
+        ),
+        (
+            AnswerVerification(verified=True, reason="Checked"),
+            "evertree.application.AnswerVerification",
+        ),
+    ],
+)
+def test_trace_output_type_names_remain_stable_after_module_refactoring(value, type_name):
+    memory = TraceStore()
+    run = memory.start_run("program", "commit", {})
+    event = memory.record(run, "result", output=value)
+    assert event.output_type == type_name
+    restored = TraceStore.from_snapshot(decode_snapshot(encode_snapshot(memory.snapshot())))
+    assert restored.get_event(event.id).output_type == type_name

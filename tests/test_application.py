@@ -28,11 +28,12 @@ async def test_busy_agent_still_prunes_temporary_files(tmp_path, monkeypatch):
     from unittest.mock import Mock
 
     from evertree import application
+    from evertree._application import persistence
 
     agent = EverTree(tmp_path, provider=ScriptedProvider([]))
     agent._active_requests["busy"] = "request"
     prune = Mock()
-    monkeypatch.setattr(application, "prune", prune)
+    monkeypatch.setattr(persistence, "prune", prune)
 
     async def tick(_):
         agent._closed = True  # Execute one maintenance iteration, without a real timer.

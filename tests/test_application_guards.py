@@ -417,11 +417,11 @@ class VirtualClock:
 async def test_nested_sdk_approval_wait_is_excluded_once_from_both_budget_buckets(
     agent, monkeypatch, purpose
 ):
-    from evertree import application
+    from evertree._application import execution
 
     clock = VirtualClock()
     monkeypatch.setattr(
-        application, "time", SimpleNamespace(monotonic=clock.monotonic, time=time.time)
+        execution, "time", SimpleNamespace(monotonic=clock.monotonic, time=time.time)
     )
     task = prepared_task(agent)
     agent.tasks.assign_budget(
@@ -475,11 +475,11 @@ async def test_nested_sdk_approval_wait_is_excluded_once_from_both_budget_bucket
 
 
 async def test_program_gateway_approval_wait_is_excluded_from_parent_run_meter(agent, monkeypatch):
-    from evertree import application
+    from evertree._application import execution
 
     clock = VirtualClock()
     monkeypatch.setattr(
-        application, "time", SimpleNamespace(monotonic=clock.monotonic, time=time.time)
+        execution, "time", SimpleNamespace(monotonic=clock.monotonic, time=time.time)
     )
     task = prepared_task(agent)
 
@@ -504,11 +504,11 @@ async def test_program_gateway_approval_wait_is_excluded_from_parent_run_meter(a
 
 
 async def test_technical_timeout_during_approval_does_not_consume_task_budget(agent, monkeypatch):
-    from evertree import application
+    from evertree._application import execution
 
     clock = VirtualClock()
     monkeypatch.setattr(
-        application, "time", SimpleNamespace(monotonic=clock.monotonic, time=time.time)
+        execution, "time", SimpleNamespace(monotonic=clock.monotonic, time=time.time)
     )
     task = prepared_task(agent)
 

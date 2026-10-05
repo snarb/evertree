@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from evertree.core import cache, sandbox
+from evertree.core import cache, python_environment, sandbox
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Private Windows Python distribution")
@@ -18,7 +18,7 @@ def test_python_shares_dependencies_and_collects_old_source_environments(tmp_pat
     (source / "core/__init__.py").write_text("")
     (source / "core/contracts.py").write_text("VERSION = 1")
     (source / "core/private.py").write_text("PROTECTED = True")
-    monkeypatch.setattr(sandbox, "__file__", str(source / "core/sandbox.py"))
+    monkeypatch.setattr(python_environment, "__file__", str(source / "core/python_environment.py"))
 
     with sandbox.prepare_python(include_core=False) as (coding, (base, public)):
         packages = base / "Lib/site-packages"

@@ -305,7 +305,7 @@ def test_missing_candidate_metadata_cannot_discover_or_modify_parent_repository(
 
 @pytest.mark.parametrize("section", ["include", 'includeIf "gitdir:**"', "Include"])
 def test_git_rejects_external_includes_before_invoking_git(tmp_path, monkeypatch, section):
-    from evertree.core import runtime
+    from evertree.core import program_repository
 
     repo = seed_repository(tmp_path)
     private = tmp_path / "private-canary"
@@ -316,7 +316,7 @@ def test_git_rejects_external_includes_before_invoking_git(tmp_path, monkeypatch
     def forbidden_subprocess(*args, **kwargs):
         pytest.fail("Git was invoked before its external include was rejected")
 
-    monkeypatch.setattr(runtime.subprocess, "run", forbidden_subprocess)
+    monkeypatch.setattr(program_repository.subprocess, "run", forbidden_subprocess)
     with pytest.raises(LifecycleError, match="includes are not allowed") as error:
         git(repo, "status", "--porcelain")
     assert "private-value" not in str(error.value)
@@ -324,14 +324,16 @@ def test_git_rejects_external_includes_before_invoking_git(tmp_path, monkeypatch
 
 @pytest.mark.parametrize("relative", ["objects/info/alternates", "commondir", "info/grafts"])
 def test_git_rejects_external_metadata_redirects(tmp_path, monkeypatch, relative):
-    from evertree.core import runtime
+    from evertree.core import program_repository
 
     repo = seed_repository(tmp_path)
     redirect = repo / ".git" / relative
     redirect.parent.mkdir(parents=True, exist_ok=True)
     redirect.write_text(str(tmp_path / "private-objects"), encoding="utf-8")
     monkeypatch.setattr(
-        runtime.subprocess, "run", lambda *a, **kw: pytest.fail("Git read a metadata redirect")
+        program_repository.subprocess,
+        "run",
+        lambda *a, **kw: pytest.fail("Git read a metadata redirect"),
     )
     with pytest.raises(LifecycleError, match="redirect objects"):
         git(repo, "rev-parse", "HEAD")
@@ -341,7 +343,7 @@ def test_git_rejects_gitfile_and_nested_metadata_links(tmp_path, monkeypatch):
     import os
     import subprocess
 
-    from evertree.core import runtime
+    from evertree.core import program_repository
 
     repo = seed_repository(tmp_path)
     outside = tmp_path / "outside-metadata"
@@ -356,7 +358,9 @@ def test_git_rejects_gitfile_and_nested_metadata_links(tmp_path, monkeypatch):
     else:
         link.symlink_to(outside, target_is_directory=True)
     with monkeypatch.context() as patch:
-        patch.setattr(runtime.subprocess, "run", lambda *a, **kw: pytest.fail("Git read a link"))
+        patch.setattr(
+            program_repository.subprocess, "run", lambda *a, **kw: pytest.fail("Git read a link")
+        )
         with pytest.raises(LifecycleError, match="reparse points"):
             git(repo, "status", "--porcelain")
     if os.name == "nt":

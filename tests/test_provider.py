@@ -637,7 +637,7 @@ async def test_absent_catalog_bootstrap_is_nonbilled_and_owns_process_tree(
         trees.append(tree)
         return tree
 
-    monkeypatch.setattr("evertree.core.codex_provider._attach_process_tree", attach)
+    monkeypatch.setattr("evertree.core.codex_configuration._attach_process_tree", attach)
     events = [
         e
         async for e in CodexProvider(client_factory=factory).run(
