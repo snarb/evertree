@@ -710,8 +710,24 @@ class GraphStore:
                 else:
                     if self.belief_reader is None or fact.belief_target is None:
                         return UNKNOWN
-                    belief = self.belief_reader(fact.belief_target)
-                    value = getattr(getattr(belief, "data", belief), clause.field)
+                    try:
+                        belief = self.belief_reader(
+                            fact.belief_target, valid_at=valid_at, known_at=known_at
+                        )
+                    except KeyError:
+                        return UNKNOWN
+                    if belief is UNKNOWN:
+                        return UNKNOWN
+                    profile = getattr(belief, "profile", None)
+                    if clause.field == "strength" and profile is not None:
+                        if relation.name != "CLASSIFIED_AS":
+                            return UNKNOWN
+                        alternative = str(fact.args["class"])
+                        if alternative not in profile:
+                            return UNKNOWN
+                        value = profile[alternative]
+                    else:
+                        value = getattr(getattr(belief, "data", belief), clause.field)
                 if not _compare_clause(value, clause):
                     accepted = False
                     break

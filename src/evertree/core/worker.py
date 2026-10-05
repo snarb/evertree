@@ -48,7 +48,9 @@ def json_value(value):
 
 def send(message):
     with _send_lock:
-        _wire.write(json.dumps(json_value(message), ensure_ascii=False, allow_nan=False) + "\n")
+        # Isolated Windows pipe streams can use a legacy code page. ASCII JSON
+        # escapes preserve Unicode without relying on the process locale.
+        _wire.write(json.dumps(json_value(message), ensure_ascii=True, allow_nan=False) + "\n")
         _wire.flush()
 
 

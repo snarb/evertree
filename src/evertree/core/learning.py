@@ -675,8 +675,13 @@ class UpdateTransactionManager:
         revision: int | None = None,
     ) -> UpdateReceipt:
         receipt = UpdateReceipt(request.id, request.state, status, reason, revision)
-        self.store._receipts[request.id] = receipt
-        self.store._requests[request.id] = fingerprint
+        try:
+            self.store._receipts[request.id] = receipt
+            self.store._requests[request.id] = fingerprint
+        except BaseException:
+            self.store._receipts.pop(request.id, None)
+            self.store._requests.pop(request.id, None)
+            raise
         return receipt
 
     def _retry(self, identity: str, fingerprint: str) -> UpdateReceipt | None:
@@ -685,6 +690,38 @@ class UpdateTransactionManager:
                 raise ValueError("Update request identity reused with different parameters")
             return self.store._receipts[identity]
         return None
+
+    def _commit(
+        self,
+        request: PreparedUpdate | CreditRetraction,
+        state: dict[str, Any],
+        entries: dict[str, dict[str, Any]],
+        status: str,
+        fingerprint: str,
+    ) -> UpdateReceipt:
+        """Publish one update together, restoring affected entries if commit fails."""
+        old_state = self.store._states[request.state]
+        old_entries = {key: self.store._ledger.get(key) for key in entries}
+        credit = request.source_credit if isinstance(request, PreparedUpdate) else None
+        credit_existed = credit is not None and credit.id in self.store._credits
+        try:
+            self.store._states[request.state] = state
+            self.store._ledger.update(entries)
+            if credit is not None:
+                self.store._credits.setdefault(credit.id, credit)
+            return self._receipt(request, status, None, fingerprint, state["revision"])
+        except BaseException:
+            self.store._states[request.state] = old_state
+            for key, previous in old_entries.items():
+                if previous is None:
+                    self.store._ledger.pop(key, None)
+                else:
+                    self.store._ledger[key] = previous
+            if credit is not None and not credit_existed:
+                self.store._credits.pop(credit.id, None)
+            self.store._receipts.pop(request.id, None)
+            self.store._requests.pop(request.id, None)
+            raise
 
     def apply(self, update: PreparedUpdate) -> UpdateReceipt:
         if not isinstance(update, PreparedUpdate):
@@ -741,14 +778,12 @@ class UpdateTransactionManager:
                 }
                 for sample in samples
             }
-            self.store._states[update.state] = {
+            new_state = {
                 **state,
                 "parameters": new_parameters,
                 "revision": revision,
             }
-            self.store._ledger.update(entries)
-            self.store._credits.setdefault(update.source_credit.id, update.source_credit)
-            return self._receipt(update, "applied", None, fingerprint, revision)
+            return self._commit(update, new_state, entries, "applied", fingerprint)
 
     def retract(self, retraction: CreditRetraction) -> UpdateReceipt:
         if not isinstance(retraction, CreditRetraction):
@@ -783,18 +818,20 @@ class UpdateTransactionManager:
                 )
             new_parameters = thaw_json(freeze_json(new_parameters))
             revision = state["revision"] + 1
-            self.store._states[retraction.state] = {
+            new_state = {
                 **state,
                 "parameters": new_parameters,
                 "revision": revision,
             }
-            for key, entry in entries:
-                self.store._ledger[key] = {
+            retracted = {
+                key: {
                     **entry,
                     "status": "retracted",
                     "retraction_id": retraction.id,
                 }
-            return self._receipt(retraction, "retracted", None, fingerprint, revision)
+                for key, entry in entries
+            }
+            return self._commit(retraction, new_state, retracted, "retracted", fingerprint)
 
 
 class LearningCoordinator:

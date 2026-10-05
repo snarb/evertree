@@ -10,6 +10,7 @@ from __future__ import annotations
 import inspect
 import json
 import math
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,8 @@ class ExperimentContext:
     learning: LearningStore
     workspace: Path
     revision: str
+    label: str
+    beliefs: BeliefStore
 
 
 @dataclass(frozen=True)
@@ -113,6 +116,18 @@ async def evaluate_pair(
         raise ValueError("Dataset requests metrics unsupported by its evaluation rule")
     if program.program_id != branch.program_id:
         raise ValueError("Evaluation Program does not match candidate identity")
+    # A case source already accessible through initial memory compromises the
+    # holdout even when its outcome is hidden from the case inputs.
+    heldout_sources = {source for case in dataset.cases for source in case.source_ids}
+    memory_sources = {str(event.id) for event in memory.events}
+    memory_sources.update(
+        event.arguments["source_id"]
+        for event in memory.events
+        if isinstance(event.arguments, Mapping)
+        and isinstance(event.arguments.get("source_id"), str)
+    )
+    if heldout_sources & memory_sources:
+        raise ValueError("Evaluation sources are already accessible in initial memory")
     root = Path(root).resolve() / uuid4().hex
     root.mkdir(parents=True)
     python_cache = Path(python_cache) if python_cache else root.parent / "python"
@@ -187,15 +202,18 @@ async def evaluate_pair(
             continue
         side = root / label
         side.mkdir()
+        side_beliefs = BeliefStore.from_snapshot(snapshots["beliefs"])
         context = ExperimentContext(
             GraphStore.from_snapshot(snapshots["graph"]),
             TraceStore.from_snapshot(snapshots["memory"]),
             LearningStore.from_snapshot(snapshots["learning"]),
             side / "model-workspace",
             commit,
+            label,
+            side_beliefs,
         )
+        context.graph.belief_reader = side_beliefs.read
         context.workspace.mkdir()
-        side_beliefs = BeliefStore.from_snapshot(snapshots["beliefs"])
         operations = CoreOperations(
             context.graph,
             context.memory,
@@ -245,6 +263,9 @@ async def evaluate_pair(
         async def gateway(method, payload, *, context=context, operations=operations):
             payload = dict(payload)
             metadata = payload.pop("_runtime")
+            # The default ready-model protocol must not train on held-out cases.
+            if method in {"learning.learn", "learning.coordinate"}:
+                raise PermissionError("Learning is disabled during ready-model evaluation")
             authorize_operation(method, metadata["program"]["role"])
             if method == "resolve_program":
                 resolved = registry[payload["program_id"]]

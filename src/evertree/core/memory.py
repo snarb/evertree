@@ -215,6 +215,10 @@ class TraceStore:
             self._runs[run.id] = run
             self._traces[run.id] = []
             self._next_run += 1
+            for reference in _references(arguments):
+                self._restore_provenance(reference.event_ref)
+            if caller_event is not None:
+                self._restore_provenance(caller_event)
             return run
 
     def record(
@@ -258,6 +262,7 @@ class TraceStore:
             self._events[event.id] = event
             self._traces[run_id].append(event.id)
             self._next_event += 1
+            self._restore_provenance(event.id)
             return event
 
     def finish_run(
@@ -391,21 +396,37 @@ class TraceStore:
         if not reason.strip():
             raise ContractError("retention requires a reason")
         identity = reference.event_ref if isinstance(reference, TraceOutputRef) else reference
-        if isinstance(reference, TraceOutputRef):
-            self.resolve(reference)
-        else:
-            self.get_event(identity)
-        self._protections.setdefault(identity, set()).add(reason)
-        if identity in self._deleted:
-            self.restore_deleted(identity)
+        with self._lock:
+            if isinstance(reference, TraceOutputRef):
+                self.resolve(reference)
+            else:
+                self.get_event(identity)
+            self._protections.setdefault(identity, set()).add(reason)
+            self._restore_provenance(identity)
+
+    def _restore_provenance(self, event_id: int) -> None:
+        # A new obligation protects required inputs and call context immediately,
+        # including dependencies previously compacted or queued for deletion.
+        for event in self._walk(event_id, downstream=False):
+            self.restore_deleted(event.id)
 
     def release(self, reference: TraceOutputRef | int, reason: str) -> None:
         identity = reference.event_ref if isinstance(reference, TraceOutputRef) else reference
         self._protections.get(identity, set()).discard(reason)
 
     def retain_run(self, run_id: int, reason: str) -> None:
-        self.get_run(run_id)
-        self._run_protections.setdefault(run_id, set()).add(reason)
+        if not reason.strip():
+            raise ContractError("retention requires a reason")
+        with self._lock:
+            run = self.get_run(run_id)
+            self._run_protections.setdefault(run_id, set()).add(reason)
+            for event in self._events.values():
+                if event.program_run == run_id:
+                    self._restore_provenance(event.id)
+            for reference in _references(run.arguments):
+                self._restore_provenance(reference.event_ref)
+            if run.caller_event is not None:
+                self._restore_provenance(run.caller_event)
 
     def release_run(self, run_id: int, reason: str) -> None:
         self._run_protections.get(run_id, set()).discard(reason)
@@ -638,6 +659,10 @@ class TraceStore:
                 raise ContractError("SemanticTrace must contain unique ordered events")
             if any(self._events[identity].program_run != run_id for identity in identities):
                 raise ContractError("SemanticTrace contains another run's event")
+        for identity in self.retention_closure():
+            event = self._events[identity]
+            if identity in self._deleted or identity not in self._traces[event.program_run]:
+                raise ContractError("SemanticTrace must preserve the active retention closure")
 
     def snapshot(self) -> dict:
         with self._lock:

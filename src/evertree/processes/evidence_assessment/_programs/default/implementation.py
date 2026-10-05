@@ -1,4 +1,8 @@
-"""Submit explicit source-likelihood evidence; core retains dependency semantics."""
+"""Submit source likelihoods keyed by scope alternatives or binary false/true.
+
+The keys identify the target state; dictionary insertion order has no meaning.
+Core retains dependency semantics.
+"""
 
 
 async def run(

@@ -158,6 +158,7 @@ class EverTree:
 
     def _reset_stores(self):
         self.graph, self.memory, self.beliefs = GraphStore(), TraceStore(), BeliefStore()
+        self.graph.belief_reader = self.beliefs.read
         self.attribution = AttributionRuntime(self.graph, self.beliefs)
         self.tasks = TaskStore()
         self.attention = AttentionRuntime(self.tasks)
@@ -1311,6 +1312,7 @@ class EverTree:
             BeliefStore.from_snapshot(data["beliefs"]),
             TaskStore.from_snapshot(data["tasks"]),
         )
+        self.graph.belief_reader = self.beliefs.read
         self.attribution = AttributionRuntime.from_snapshot(
             data["attribution"], self.graph, self.beliefs
         )

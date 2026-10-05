@@ -252,7 +252,7 @@ class BeliefStore:
                 if any(existing == component for existing in old.components):
                     return old
             assignment = self._make_assignment(target, (component,), created_by)
-            self._current[target][key] = assignment.id
+            self._replace_current(target, {key}, assignment, created_by)
             return assignment
 
     def revise(
@@ -267,8 +267,36 @@ class BeliefStore:
             key = _source_key(source_ref)
             if key not in self._current[target]:
                 raise ContractError("cannot retract missing evidence")
-            self._current[target][key] = None
+            self._replace_current(target, {key}, None, None)
             self._last_changed = utcnow()
+
+    def _replace_current(
+        self,
+        target: str,
+        keys: set[str],
+        replacement: EvidenceAssignment | None,
+        created_by: Any,
+    ) -> None:
+        """Replace complete aggregates while retaining unaffected logical evidence.
+
+        Called under the store lock after validating the replacement. A current
+        aggregate must never still contain a revised, retracted or moved component.
+        """
+        current = self._current[target]
+        previous_ids = {current[key] for key in keys if current.get(key) is not None}
+        for identity in sorted(previous_ids):
+            remainder = tuple(
+                component
+                for component in self._assignments[identity].components
+                if component.source_key not in keys
+                and current.get(component.source_key) == identity
+            )
+            if remainder:
+                residual = self._make_assignment(target, remainder, created_by)
+                for component in remainder:
+                    current[component.source_key] = residual.id
+        for key in keys:
+            current[key] = replacement.id if replacement is not None else None
 
     def _make_assignment(
         self, target: str, components: tuple[EvidenceComponent, ...], created_by: Any
@@ -322,8 +350,9 @@ class BeliefStore:
             # Keeping per-source sufficient contributions permits exact retraction,
             # dependency filtering, and shared-cap recomputation after raw deletion.
             assignment = self._make_assignment(target, components, created_by)
-            for component in components:
-                self._current[target][component.source_key] = assignment.id
+            self._replace_current(
+                target, {component.source_key for component in components}, assignment, created_by
+            )
             return assignment
 
     def _gather(self, target: str, scale: float = 1.0) -> list[tuple[EvidenceComponent, float]]:
@@ -450,6 +479,11 @@ class BeliefStore:
         likelihoods: Mapping[str, float] | Sequence[float],
         **kwargs: Any,
     ) -> EvidenceAssignment:
+        """Assess likelihoods keyed by alternatives, or by ``false``/``true``.
+
+        A binary sequence is ordered as [P(observation|false), P(observation|true)].
+        Mapping insertion order never determines the state of a likelihood.
+        """
         contract = self.target(target)
         if contract.alternatives:
             if not isinstance(likelihoods, Mapping) or set(likelihoods) != set(
@@ -458,11 +492,12 @@ class BeliefStore:
                 raise ContractError("scope likelihoods must identify every alternative")
             values = [float(likelihoods[key]) for key in contract.alternatives]
         else:
-            values = (
-                list(likelihoods.values())
-                if isinstance(likelihoods, Mapping)
-                else list(likelihoods)
-            )
+            if isinstance(likelihoods, Mapping):
+                if set(likelihoods) != {"false", "true"}:
+                    raise ContractError("binary likelihoods must identify false and true")
+                values = [float(likelihoods[state]) for state in ("false", "true")]
+            else:
+                values = list(likelihoods)
             if len(values) != 2:
                 raise ContractError(
                     "binary likelihoods are [P(observation|false), P(observation|true)]"

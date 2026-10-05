@@ -189,7 +189,11 @@ class CoreOperations:
             result = self.graph.get(payload["id"])
         elif method == "graph.query":
             result = self.graph.query_view(
-                payload["relation"], payload["view"], **payload.get("inputs", {})
+                payload["relation"],
+                payload["view"],
+                valid_at=payload.get("valid_at"),
+                known_at=payload.get("known_at"),
+                **payload.get("inputs", {}),
             )
         elif method == "graph.apply":
             result = self.apply_delta(
@@ -229,7 +233,9 @@ class CoreOperations:
                 target,
                 source,
                 payload["likelihoods"],
-                backed=source.event_ref in self.observation_ids,
+                # A stored observation does not validate the Program's supplied
+                # likelihood model. Keep the unsupported-influence cap.
+                backed=False,
                 dependency_root=payload.get("dependency_root"),
                 created_by=metadata["run_id"],
             )

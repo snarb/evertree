@@ -140,11 +140,14 @@ class AttributionRuntime:
         self._rules[(rule.property_id, rule.domain)] = rule
 
     def _belief(
-        self, fact: RelationInstance, known_at: datetime | None
+        self, fact: RelationInstance, valid_at: datetime, known_at: datetime | None
     ) -> BeliefData | BeliefReading | None | Any:
         if fact.belief_target is None:
             return None
-        reading = self.beliefs.read(fact.belief_target, known_at=known_at)
+        try:
+            reading = self.beliefs.read(fact.belief_target, valid_at=valid_at, known_at=known_at)
+        except KeyError:
+            return UNKNOWN
         if reading is UNKNOWN:
             return UNKNOWN
         return reading if reading.profile is not None else reading.data
@@ -160,7 +163,9 @@ class AttributionRuntime:
     ) -> PropertyReading | Any:
         subject_id = subject.id if isinstance(subject, Node) else subject
         property_id = property.id if isinstance(property, Node) else property
-        definition = self._properties[property_id]
+        definition = self._properties.get(property_id)
+        if definition is None:
+            return UNKNOWN
         at = timestamp(valid_at or utcnow())
         if known_at is not None:
             known = timestamp(known_at)
@@ -184,7 +189,10 @@ class AttributionRuntime:
         if any(parameter not in parameters for parameter in definition.required_parameters):
             return UNKNOWN
         subjects = [subject_id]
-        node = self.graph.get(subject_id)
+        try:
+            node = self.graph.get(subject_id)
+        except KeyError:
+            return UNKNOWN
         if isinstance(node, Facet):
             if at < node.valid_from or node.valid_until is not None and at >= node.valid_until:
                 return UNKNOWN
@@ -199,7 +207,10 @@ class AttributionRuntime:
         for identity in subjects:
             target = self._scopes.get(self._binding_key(identity, property_id, parameters))
             if target:
-                reading = self.beliefs.read(target, valid_at=at, known_at=known_at)
+                try:
+                    reading = self.beliefs.read(target, valid_at=at, known_at=known_at)
+                except KeyError:
+                    return UNKNOWN
                 if reading is UNKNOWN:
                     return UNKNOWN
                 scope_readings.append(
@@ -258,7 +269,7 @@ class AttributionRuntime:
         if definition.selection == "max_support":
             ranked = []
             for fact, value in candidates:
-                belief = self._belief(fact, known_at)
+                belief = self._belief(fact, at, known_at)
                 if belief is UNKNOWN:
                     return UNKNOWN
                 support = getattr(belief, "support", 0.0) if belief is not None else 0.0
@@ -268,7 +279,7 @@ class AttributionRuntime:
             fact, value = max(
                 candidates, key=lambda item: (self.graph.created_at(item[0].id), item[0].id)
             )
-        belief = self._belief(fact, known_at)
+        belief = self._belief(fact, at, known_at)
         if belief is UNKNOWN:
             return UNKNOWN
         return PropertyReading(value, belief, (fact.id,), at, known_at, freeze(parameters))
