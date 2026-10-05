@@ -1,45 +1,99 @@
-"""Worker and coding interpreters expose different core authority surfaces."""
+"""Source changes must not duplicate dependencies or broaden sandbox access."""
 
-import importlib.metadata
+import json
 import os
-import sysconfig
-from types import SimpleNamespace
+from pathlib import Path
 
 import pytest
 
-from evertree.core import sandbox
+from evertree.core import cache, sandbox
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Private Windows Python distribution")
-def test_native_python_contains_only_public_contracts_and_keeps_third_party(tmp_path, monkeypatch):
-    base = tmp_path / "base"
-    (base / "Lib").mkdir(parents=True)
-    (base / "python.exe").write_bytes(b"fixture interpreter; never executed")
-    (base / "Lib" / "stdlib.py").write_text("stdlib = True\n", encoding="utf-8")
-    site = tmp_path / "site"
-    (site / "third_party").mkdir(parents=True)
-    (site / "third_party" / "__init__.py").write_text("value = 1\n", encoding="utf-8")
-    (site / "evertree").mkdir()
-    (site / "evertree" / "private.py").write_text("protected = True\n", encoding="utf-8")
-    (site / "evertree.pth").write_text("outside path\n", encoding="utf-8")
-    monkeypatch.setattr(sandbox.sys, "base_prefix", str(base))
-    monkeypatch.setattr(sysconfig, "get_paths", lambda: {"purelib": str(site)})
-    monkeypatch.setattr(
-        importlib.metadata,
-        "distributions",
-        lambda: [SimpleNamespace(metadata={"Name": "third-party"}, version="1")],
-    )
-    coding = sandbox.prepare_python(tmp_path / "cache", include_core=False)
-    packages = coding.parent / "Lib" / "site-packages"
-    assert (packages / "third_party" / "__init__.py").is_file()
-    assert not (packages / "evertree.pth").exists()
-    assert {
-        path.relative_to(packages / "evertree").as_posix()
-        for path in (packages / "evertree").rglob("*")
-        if path.is_file()
-    } == {"__init__.py", "core/__init__.py", "core/contracts.py"}
-    assert (packages / "evertree" / "__init__.py").read_text() == ""
-    worker = sandbox.prepare_python(tmp_path / "cache")
-    assert worker != coding
-    assert (worker.parent / "Lib" / "site-packages" / "evertree" / "core" / "runtime.py").is_file()
-    assert sandbox.prepare_python(tmp_path / "cache", include_core=False) == coding
+def test_python_shares_dependencies_and_collects_old_source_environments(tmp_path, monkeypatch):
+    monkeypatch.setattr(cache, "cache_root", lambda: tmp_path / "cache")
+    source = tmp_path / "evertree"
+    (source / "core").mkdir(parents=True)
+    (source / "__init__.py").write_text("")
+    (source / "core/__init__.py").write_text("")
+    (source / "core/contracts.py").write_text("VERSION = 1")
+    (source / "core/private.py").write_text("PROTECTED = True")
+    monkeypatch.setattr(sandbox, "__file__", str(source / "core/sandbox.py"))
+
+    with sandbox.prepare_python(include_core=False) as (coding, (base, public)):
+        packages = base / "Lib/site-packages"
+        assert (packages / "dbos").is_dir()
+        assert (packages / "pydantic").is_dir()
+        assert not (packages / "codex_cli_bin").exists()
+        assert not (packages / "pytest").exists()
+        assert not list(packages.glob("*.pth"))
+        assert {
+            p.relative_to(public / "Lib/site-packages/evertree").as_posix()
+            for p in (public / "Lib/site-packages/evertree").rglob("*.py")
+        } == {"__init__.py", "core/__init__.py", "core/contracts.py"}
+        with sandbox.prepare_python() as (worker, (worker_base, worker_source)):
+            assert worker_base == base and worker != coding
+            assert (worker_source / "Lib/site-packages/evertree/core/private.py").is_file()
+            assert not (worker_source / "DLLs").exists()
+            with sandbox.prepare_python(include_core=False) as (again, _):
+                assert again == coding
+
+        (source / "core/contracts.py").write_text("VERSION = 2")
+        with sandbox.prepare_python(include_core=False) as (updated, (same_base, new_source)):
+            assert same_base == base and updated != coding
+            assert public.exists()  # Still leased by this process.
+            scratch = tmp_path / "scratch"
+            scratch.mkdir()
+            code = """
+import json, dbos, pydantic
+from pathlib import Path
+from evertree.core.contracts import VERSION
+try:
+    Path(dbos.__file__).write_text('must not change a shared library')
+except PermissionError:
+    pass
+else:
+    raise AssertionError('shared libraries are writable')
+print(json.dumps([VERSION, str(Path.home())]))
+"""
+            with sandbox.SandboxedProcess(
+                None,
+                ["-I", "-c", code],
+                workdir=scratch,
+                readable=(),
+                writable=(scratch,),
+                include_core=False,
+            ) as process:
+                profile = Path(process.command_environment["USERPROFILE"])
+                assert process.wait(timeout=30) == 0, process.stderr.read().decode()
+                assert json.loads(process.stdout.read())[0] == 2
+            assert not profile.exists()
+        assert public.exists()
+    assert not public.exists()
+    assert new_source.exists() and base.exists()
+    assert len(list((tmp_path / "cache/python").glob("*/python.exe"))) == 1
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Shared Windows AppContainer ACLs")
+def test_parallel_sandboxes_keep_access_to_shared_python(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+
+    monkeypatch.setattr(cache, "cache_root", lambda: tmp_path / "cache")
+
+    def run(index):
+        scratch = tmp_path / str(index)
+        scratch.mkdir()
+        with sandbox.SandboxedProcess(
+            None,
+            ["-I", "-c", "import dbos, pydantic, time; time.sleep(0.1); print('ready')"],
+            workdir=scratch,
+            readable=(),
+            writable=(scratch,),
+        ) as process:
+            assert process.wait(timeout=30) == 0, process.stderr.read().decode()
+            assert process.stdout.read().strip() == b"ready"
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(run, range(8)))
+    assert not list((tmp_path / "cache/.leases").iterdir())
+    assert not list((tmp_path / "cache/temporary").iterdir())

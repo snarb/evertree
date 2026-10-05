@@ -99,7 +99,7 @@ async def doctor(home: Path) -> tuple[dict[str, Any], int]:
     finally:
         await provider.close()
     try:
-        sandbox_status = await asyncio.to_thread(check_sandbox, home / ".state" / "doctor")
+        sandbox_status = await asyncio.to_thread(check_sandbox)
         required = ("app_container", "read_denied", "write_denied", "scratch_writable")
         sandbox_status = {
             "available": all(sandbox_status.get(name) is True for name in required),

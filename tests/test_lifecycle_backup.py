@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,8 @@ from evertree.core.lifecycle import (
     ProgramLifecycleRuntime,
     git,
     initialize_seed_repository,
+    publish_programs,
+    remote_git,
     validate_program_imports,
 )
 from evertree.core.runtime import ProgramSpec, Runtime
@@ -40,6 +43,102 @@ def change(
     git(workspace, "add", ".")
     git(workspace, "commit", "-m", "Candidate")
     return git(workspace, "rev-parse", "HEAD")
+
+
+def test_amending_candidate_keeps_both_committed_revisions(tmp_path):
+    repo = seed_repository(tmp_path)
+    lifecycle = ProgramLifecycleRuntime(
+        repo, tmp_path / "lifecycle", AcceptanceCriteria(("tests",))
+    )
+    candidate = lifecycle.create_candidate("program", "Improve result")
+    original = change(candidate)
+    lifecycle.retain_candidate(candidate.id)
+    workspace = Path(candidate.workspace)
+    git(workspace, "commit", "--amend", "-m", "Revised candidate")
+    amended = lifecycle.retain_candidate(candidate.id)
+    assert original != amended
+    lifecycle.discard_candidates([candidate.id])
+    assert not workspace.exists()
+    for revision in (original, amended):
+        assert git(repo, "rev-parse", "refs/heads/candidates/" + revision) == revision
+
+
+def test_single_remote_branch_keeps_history_after_rollback_and_candidate_changes(
+    tmp_path, program_remote
+):
+    repo = seed_repository(tmp_path)
+    initial = git(repo, "rev-parse", "main")
+    publish_programs(repo, program_remote)
+    publish_programs(repo, program_remote)
+    assert git(repo, "rev-parse", "evertree/programs") == initial
+
+    git(repo, "commit", "--allow-empty", "-m", "Later version")
+    later = git(repo, "rev-parse", "main")
+    publish_programs(repo, program_remote)
+    git(repo, "reset", "--hard", initial)
+    git(repo, "commit", "--allow-empty", "-m", "New work after restore")
+    current = git(repo, "rev-parse", "main")
+    lifecycle = ProgramLifecycleRuntime(
+        repo, tmp_path / "lifecycle", AcceptanceCriteria(("tests",))
+    )
+    candidate = lifecycle.create_candidate("program", "Unapproved change")
+    candidate_revision = change(candidate)
+    lifecycle.discard_candidates([candidate.id])
+    publish_programs(repo, program_remote)
+    published = git(repo, "rev-parse", "evertree/programs")
+    publish_programs(repo, program_remote)
+    assert git(repo, "rev-parse", "evertree/programs") == published
+    assert git(repo, "rev-parse", "main") == current
+
+    remote = Path(program_remote)
+    assert remote_git(remote, "for-each-ref", "--format=%(refname)", "refs/heads") == (
+        "refs/heads/evertree/programs"
+    )
+    recovered = tmp_path / "recovered"
+    remote_git(
+        tmp_path,
+        "clone",
+        "--single-branch",
+        "--branch",
+        "evertree/programs",
+        program_remote,
+        str(recovered),
+    )
+    for revision in (initial, later, current, candidate_revision):
+        assert git(recovered, "merge-base", "--is-ancestor", revision, "HEAD") == ""
+    assert git(recovered, "rev-parse", "HEAD^{tree}") == git(repo, "rev-parse", "main^{tree}")
+
+
+@pytest.mark.parametrize("server_accepted", [False, True])
+def test_program_publication_can_retry_after_interrupted_push(
+    tmp_path, program_remote, monkeypatch, server_accepted
+):
+    from evertree.core import lifecycle as module
+
+    repo = seed_repository(tmp_path)
+    publish_programs(repo, program_remote)
+    previous = git(repo, "rev-parse", "evertree/programs")
+    git(repo, "commit", "--allow-empty", "-m", "New version")
+    revision = git(repo, "rev-parse", "main")
+
+    def interrupted(repository, *arguments):
+        if arguments[0] == "push":
+            if server_accepted:
+                remote_git(repository, *arguments)
+            raise LifecycleError("Connection interrupted")
+        return remote_git(repository, *arguments)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(module, "remote_git", interrupted)
+        with pytest.raises(LifecycleError, match="Connection interrupted"):
+            publish_programs(repo, program_remote)
+    assert git(repo, "rev-parse", "evertree/programs") == previous
+    publish_programs(repo, program_remote)
+    remote = Path(program_remote)
+    assert remote_git(remote, "rev-parse", "evertree/programs") == revision
+    assert remote_git(remote, "for-each-ref", "--format=%(refname)", "refs/heads") == (
+        "refs/heads/evertree/programs"
+    )
 
 
 async def test_activation_requires_independent_exact_commit_and_fixed_checks(tmp_path):
@@ -325,11 +424,11 @@ async def test_backup_and_cleanup_support_long_paths_and_readonly_git_objects(tm
 
     runtime = Runtime(tmp_path / "runtime", tmp_path, gateway, process_factory=TestProcess)
     backups = BackupManager(tmp_path / "backups")
-    saved = await backups.create(
-        runtime, lambda: {"stable": True}, dependencies={"repository": dependency}
-    )
+    saved = await backups.create(runtime, lambda: {"stable": True})
     assert backups.read(saved)["core"] == {"stable": True}
-    assert _extended(saved / "dependencies" / "repository" / relative).read_text() == "fixed object"
+    assert not (saved / "dependencies").exists()
+    safe_remove_tree(dependency, tmp_path)
+    assert not dependency.exists()
     safe_remove_tree(saved, backups.root)
     assert not saved.exists()
     with pytest.raises(BackupError, match="outside"):
@@ -367,11 +466,29 @@ async def run(ctx):
         backup=saved,
     )
     assert state["count"] == 1
-    assert not (runtime.state_dir / "runs" / "second").exists()
+    assert not (runtime.state_dir / "journals" / "second").exists()
     first = await runtime.execute("task", spec, {}, run_id="first")
     assert first.result == 1
     assert state["count"] == 1
-    (saved / "state.json").write_text("{}", encoding="utf-8")
+    (saved / "state.msgpack.zst").write_bytes(b"corrupted")
     with pytest.raises(BackupError, match="changed"):
         backups.read(saved)
     await runtime.close()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows Git long paths")
+def test_managed_git_reads_revision_paths_under_long_temporary_root(tmp_path):
+    root = tmp_path / ("nested-" + "a" * 100)
+    _extended(root).mkdir(parents=True)
+    git(root, "init", "-b", "main")
+    git(root, "config", "user.name", "Test")
+    git(root, "config", "user.email", "test@localhost")
+    relative = "src/evertree/processes/example/_programs/default/implementation.py"
+    target = _extended(root / relative)
+    target.parent.mkdir(parents=True)
+    target.write_text("value = 3\n")
+    assert len(str(root / relative)) > 260
+    git(root, "add", ".")
+    git(root, "commit", "-m", "Long path fixture")
+    revision = git(root, "rev-parse", "HEAD")
+    assert git(root, "show", f"{revision}:{relative}") == "value = 3"

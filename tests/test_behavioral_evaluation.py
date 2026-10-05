@@ -6,7 +6,6 @@ activation and use, not autonomous discovery of the proposed rule.
 
 from __future__ import annotations
 
-import json
 import math
 from dataclasses import replace
 from functools import partial
@@ -24,7 +23,7 @@ from evertree.core.evaluation import (
     evaluate_prediction,
 )
 from evertree.core.graph import AccessView, Clause, GraphDelta, Predicate, RelationType, Slot
-from evertree.core.learning import LearningBinding, LearningObjective, LearningSignal
+from evertree.core.learning import LearningBinding, LearningObjective, LearningSignal, LearningStore
 from evertree.core.lifecycle import LifecycleError, git
 from evertree.core.runtime import Runtime
 
@@ -73,7 +72,9 @@ def test_eva03_binary_log_loss_is_not_entropy_subtracted():
 
 
 @pytest.mark.parametrize("operation", ["learning.learn", "learning.coordinate"])
-async def test_eva02_ready_model_cannot_change_parameters_in_isolated_state(tmp_path, operation):
+async def test_eva02_ready_model_cannot_change_parameters_in_isolated_state(
+    tmp_path, operation, monkeypatch
+):
     """EVA-02: isolation alone is insufficient; ready-model parameters must stay frozen."""
     repo, _, branch, spec, graph, memory, learning = prepare(
         tmp_path, "def run(signal): return {'result': 0.5}\n"
@@ -111,6 +112,15 @@ async def test_eva02_ready_model_cannot_change_parameters_in_isolated_state(tmp_
 """
     revision = change(branch, PATH, source)
     initial = learning.snapshot()
+    isolated = []
+    from_snapshot = LearningStore.from_snapshot
+
+    def capture(snapshot):
+        state = from_snapshot(snapshot)
+        isolated.append(state)
+        return state
+
+    monkeypatch.setattr(LearningStore, "from_snapshot", capture)
     experiment = await evaluate_pair(
         branch,
         revision,
@@ -127,8 +137,9 @@ async def test_eva02_ready_model_cannot_change_parameters_in_isolated_state(tmp_
     assert experiment.report.checks["contracts"] is False
     failed = next(trace for trace in experiment.traces if trace.get("side") == "candidate")
     assert "Learning is disabled" in failed["error"]
-    for path in (tmp_path / "evaluation").glob("*/candidate/final-state.json"):
-        assert json.loads(path.read_text())["learning"] == initial
+    assert len(isolated) == 2
+    assert all(state.snapshot() == initial for state in isolated)
+    assert not list((tmp_path / "evaluation").iterdir())
     assert learning.snapshot() == initial
 
 

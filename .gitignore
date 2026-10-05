@@ -23,6 +23,7 @@ CLAUDE.local.md
 # Mutable runtime state and scratch work (not versioned artifacts)
 /.state/
 /tmp/
+/temp/
 *.log
 
 # Editor/OS state and generated documentation

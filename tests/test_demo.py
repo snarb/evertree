@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 import pytest
 
@@ -9,11 +8,7 @@ from evertree.demo import run_demo
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Lifecycle demonstration uses native Windows workers")
-async def test_full_program_improvement_and_restart_demo(tmp_path, monkeypatch):
-    from evertree.core import runtime, sandbox
-
-    cache = Path(__file__).resolve().parents[1] / ".state" / "test-demo-python"
-    monkeypatch.setattr(runtime, "prepare_python", lambda _: sandbox.prepare_python(cache))
+async def test_full_program_improvement_and_restart_demo(tmp_path):
     result = await run_demo(tmp_path / "demo")
     assert result["provider"] == "demo-scripted"
     assert result["incident"] == [1, 3]

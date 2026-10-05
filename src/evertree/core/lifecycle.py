@@ -5,12 +5,15 @@ from __future__ import annotations
 import ast
 import asyncio
 import json
+import os
 import shutil
+import subprocess
 import uuid
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from .backup import safe_remove_tree
 from .evaluation import AcceptanceCriteria, assess_candidate
 from .runtime import ProgramExecutionError, _git
 
@@ -59,6 +62,75 @@ def git(repository: Path, *arguments: str) -> str:
         return _git(repository, *arguments).decode("utf-8", errors="replace").strip()
     except ProgramExecutionError as error:
         raise LifecycleError(str(error)) from error
+
+
+def remote_git(repository: Path, *arguments: str) -> str:
+    """Network Git only for the trusted repository, never candidate-controlled config."""
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repository),
+            "-c",
+            "core.hooksPath=",
+            "-c",
+            "core.longpaths=true",
+            *arguments,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+        env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
+    )
+    if result.returncode:
+        raise LifecycleError(result.stderr.strip())
+    return result.stdout.strip()
+
+
+def resolve_program_remote(source: Path, remote: str | None = None) -> str:
+    if remote is None:
+        remote = os.environ.get("EVERTREE_PROGRAM_REMOTE")
+    if remote is None:
+        remote = remote_git(source, "remote", "get-url", "origin")
+    return remote
+
+
+def publish_programs(repository: Path, remote: str) -> None:
+    """Keep saved revisions reachable through one append-only Git branch."""
+    branch = "refs/heads/evertree/programs"
+    if remote_git(repository, "ls-remote", "--heads", remote, branch):
+        remote_git(repository, "fetch", "--no-tags", remote, f"{branch}:{branch}")
+    revisions = sorted(
+        set(git(repository, "for-each-ref", "--format=%(objectname)", "refs/heads").splitlines())
+    )
+    parents = git(repository, "merge-base", "--independent", *revisions).splitlines()
+    revision = parents[0]
+    tree = git(repository, "rev-parse", "main^{tree}")
+    if len(parents) > 1 or git(repository, "rev-parse", revision + "^{tree}") != tree:
+        # Link divergent candidates and history after a restore without merging
+        # unapproved code into main or rewriting already published history.
+        revision = git(
+            repository,
+            "commit-tree",
+            tree,
+            *(argument for parent in parents for argument in ("-p", parent)),
+            "-m",
+            "Preserve program revisions",
+        )
+    remote_git(repository, "push", remote, f"{revision}:{branch}")
+    git(repository, "update-ref", branch, revision)
+
+
+def fetch_programs(repository: Path, remote: str, revision: str) -> None:
+    remote_git(
+        repository,
+        "fetch",
+        "--no-tags",
+        remote,
+        "refs/heads/evertree/programs:refs/heads/evertree/programs",
+    )
+    git(repository, "cat-file", "-e", revision + "^{commit}")
 
 
 def _save(path: Path, data) -> None:
@@ -202,6 +274,33 @@ class ProgramLifecycleRuntime:
         except KeyError as exc:
             raise LifecycleError("Unknown candidate") from exc
 
+    def retain_candidate(self, candidate_id: str) -> str:
+        self.candidate(candidate_id)
+        workspace = self.state_dir / "candidates" / candidate_id
+        revision = git(workspace, "rev-parse", "HEAD")
+        git(
+            self.repository,
+            "fetch",
+            "--no-tags",
+            str(workspace),
+            f"{revision}:refs/heads/candidates/{revision}",
+        )
+        return revision
+
+    def discard_candidates(self, identities=None) -> None:
+        """Keep decisions and committed history; discard candidate working directories."""
+        for identity in identities if identities is not None else self._data["branches"]:
+            candidate = self._data["branches"][identity]
+            workspace = self.state_dir / "candidates" / identity
+            if workspace.exists():
+                self.retain_candidate(identity)
+                safe_remove_tree(workspace, self.state_dir / "candidates")
+            if candidate["status"] == "active":
+                candidate["status"] = "abandoned"
+        if identities is None:
+            safe_remove_tree(self.state_dir / "candidates", self.state_dir)
+        self._persist()
+
     def _validate_candidate(self, candidate: ProgramBranch) -> str:
         if candidate.status != "active":
             raise LifecycleError("Candidate is no longer active")
@@ -241,6 +340,7 @@ class ProgramLifecycleRuntime:
             candidate = self.candidate(candidate_id)
             criteria = self.criteria(candidate) if callable(self.criteria) else self.criteria
             revision = self._validate_candidate(candidate)
+            self.retain_candidate(candidate_id)
             report = await evaluator(candidate, revision)
             if (
                 report.subject_revision != revision
@@ -282,6 +382,7 @@ class ProgramLifecycleRuntime:
             candidate = self.candidate(candidate_id)
             if candidate.status != "active":
                 raise LifecycleError("Candidate is no longer active")
+            self.retain_candidate(candidate_id)
             if decision != "merge_branch":
                 if decision != "continue_branch":
                     self._data["branches"][candidate_id]["status"] = (
@@ -291,6 +392,8 @@ class ProgramLifecycleRuntime:
                     {"candidate_id": candidate_id, "decision": decision, "reason": reason}
                 )
                 self._persist()
+                if decision != "continue_branch":
+                    self.discard_candidates([candidate_id])
                 return None
             revision = self._validate_candidate(candidate)
             receipt = self._data["evaluations"].get(candidate_id)
@@ -359,6 +462,7 @@ class ProgramLifecycleRuntime:
                 }
             )
             self._persist()
+            self.discard_candidates([candidate_id])
             return revision
 
     def snapshot(self):

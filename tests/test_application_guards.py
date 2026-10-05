@@ -341,7 +341,7 @@ async def test_switching_provider_does_not_resume_another_providers_session(tmp_
         assert app._sessions[identity]["provider"] == "other-provider"
 
 
-async def test_restart_resumes_pending_program_with_original_run_identity(tmp_path):
+async def test_restart_discards_pending_program_and_starts_a_new_run(tmp_path):
     home = tmp_path / "agent"
     blocked = BlockingModelProvider()
     first = EverTree(home, provider=blocked, runtime_factory=TEST_RUNTIME)
@@ -356,11 +356,12 @@ async def test_restart_resumes_pending_program_with_original_run_identity(tmp_pa
     assert first.backups.list()
     provider = ScriptedProvider([framing(), decision(), verification()])
     async with EverTree(home, provider=provider, runtime_factory=TEST_RUNTIME) as restored:
-        assert restored._pending_programs[task.id] == saved
+        assert task.id not in restored._pending_programs
         result = await asyncio.wait_for(restored.run("Continue", task_id=task.id), 45)
         assert result["status"] == "succeeded", result
         assert result["answer"] == "3"
         assert restored.tasks.get(task.id).program_run_ids.count(saved["run_id"]) == 1
+        assert len(restored.tasks.get(task.id).program_run_ids) > 1
         assert task.id not in restored._pending_programs
         assert provider.requests[0].mode == "model"
         assert len(provider.requests) == 3
@@ -570,7 +571,7 @@ async def test_failed_boundary_backup_does_not_stop_the_next_queued_task(agent, 
     assert agent.backups.list()
 
 
-async def test_restore_copies_long_dependency_paths_through_backup_helper(agent):
+async def test_backup_does_not_copy_uncommitted_repository_files(agent):
     from evertree.core.backup import _extended
 
     asset = agent.repository / "assets" / ("a" * 80) / ("b" * 80) / "saved-state.txt"
@@ -580,7 +581,8 @@ async def test_restore_copies_long_dependency_paths_through_backup_helper(agent)
     backup = await agent.backup()
     extended.write_text("changed later", encoding="utf-8")
     await agent.restore(backup)
-    assert _extended(asset).read_text(encoding="utf-8") == "saved content"
+    assert _extended(asset).read_text(encoding="utf-8") == "changed later"
+    assert not (backup / "dependencies").exists()
 
 
 async def test_shutdown_backup_failure_still_closes_provider_and_releases_home_lock(
@@ -616,9 +618,8 @@ async def test_backup_runtime_bundle_rejects_incompatible_restore_before_swaps(a
 
     backup = await agent.backup()
     saved = agent.backups.read(backup)["core"]["environment"]
-    bundle = agent.backups.dependency(backup, "core_runtime")
-    assert (bundle / "src/evertree/core/environment.py").is_file()
-    assert (bundle / "requirements.txt").is_file()
+    assert not (backup / "dependencies").exists()
+    assert not (agent.state_dir / "core-runtime").exists()
     assert "websockets" in saved["packages"]
     assert saved["fingerprint"] == agent._environment["fingerprint"]
     changed = dict(saved["packages"])

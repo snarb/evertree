@@ -151,9 +151,7 @@ def test_doctor_reports_exact_provider_or_sandbox_failure(monkeypatch, capsys):
             pass
 
     monkeypatch.setattr(cli, "CodexProvider", Provider)
-    monkeypatch.setattr(
-        cli, "check_sandbox", lambda _: {"app_container": True, "read_denied": False}
-    )
+    monkeypatch.setattr(cli, "check_sandbox", lambda: {"app_container": True, "read_denied": False})
     assert cli.main(["doctor"]) == 1
     data = json.loads(capsys.readouterr().out)
     assert data["provider"]["available"] is True

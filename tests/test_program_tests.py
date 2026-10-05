@@ -29,10 +29,10 @@ async def run_suite(tmp_path, source, test=SUITE, *, timeout=30, process_factory
         repo,
         revision,
         tmp_path / "run",
-        python_cache=tmp_path / "python",
         process_factory=process_factory,
         timeout=timeout,
     )
+    assert not (tmp_path / "run").exists()
     assert report["revision"] == revision
     return report
 

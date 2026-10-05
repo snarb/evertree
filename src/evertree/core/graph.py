@@ -1,6 +1,6 @@
 """Identity-preserving semantic graph and its atomic mutation boundary.
 
-The graph is deliberately an in-memory store.  Its JSON snapshot is included in
+The graph is deliberately an in-memory store. Its snapshot is included in
 the runtime's coordinated backup rather than being a second database.
 """
 

@@ -19,8 +19,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from .backup import _extended
-from .sandbox import SandboxedProcess, SandboxLimits, prepare_python
+from .backup import _extended, _restore_io, safe_remove_tree
+from .sandbox import SandboxedProcess, SandboxLimits
 
 Gateway = Callable[[str, dict[str, Any]], Awaitable[Any]]
 TraceCallback = Callable[[dict[str, Any]], Awaitable[None]]
@@ -123,6 +123,8 @@ def _git(repository: Path, *arguments: str) -> bytes:
         "core.hooksPath=",
         "-c",
         "core.fsmonitor=false",
+        "-c",
+        "core.longpaths=true",
         "-c",
         "core.pager=",
         "-c",
@@ -228,16 +230,12 @@ class Runtime:
         *,
         limits: SandboxLimits | None = None,
         process_factory: Callable[..., Any] | None = None,
-        python_cache: Path | None = None,
     ) -> None:
         self.state_dir = Path(state_dir).resolve()
         self.repository = Path(repository).resolve()
         self.gateway, self.trace, self.limits = gateway, trace, limits or SandboxLimits()
         self._factory = process_factory or SandboxedProcess
         self._native = process_factory is None
-        self.python_cache = (
-            Path(python_cache).resolve() if python_cache else self.state_dir / "python"
-        )
         self._admission = asyncio.Lock()
         self._active: dict[str, Any] | None = None
         self._final_tasks: set[str] = set()
@@ -248,6 +246,7 @@ class Runtime:
         self._paused = asyncio.Event()
         self._gateway_active = 0
         self.state_dir.mkdir(parents=True, exist_ok=True)
+        safe_remove_tree(self.state_dir / "runs", self.state_dir)
 
     def is_running(self, task_id: str | None = None) -> bool:
         active = self._active
@@ -280,111 +279,116 @@ class Runtime:
             run_id = run_id or uuid.uuid4().hex
             if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", run_id):
                 raise ValueError("Invalid run ID")
-            run_dir = self.state_dir / "runs" / run_id
-            source_dir, scratch_dir = _extended(run_dir / "source"), run_dir / "scratch"
-            if not source_dir.exists():
-                await asyncio.to_thread(
-                    extract_revision, self.repository, program.revision, source_dir
-                )
-            scratch_dir.mkdir(parents=True, exist_ok=True)
-            journal = scratch_dir / "dbos.sqlite"
-            configuration = {
-                "task_id": task_id,
-                "run_id": run_id,
-                "run_mode": run_mode,
-                "revision": program.revision,
-                "program": asdict(program),
-                "arguments": dict(arguments),
-                "checkout": str(source_dir),
-                "journal": str(journal),
-                "executor_id": "run-" + run_id,
-            }
-            configuration_path = run_dir / "worker.json"
-            if configuration_path.exists():
-                previous = json.loads(configuration_path.read_text(encoding="utf-8"))
-                if previous != configuration:
-                    raise ProgramExecutionError(
-                        "Resume must preserve code, arguments, task and mode"
-                    )
-            else:
-                configuration_path.write_text(
-                    json.dumps(configuration, allow_nan=False), encoding="utf-8"
-                )
-            worker_source = run_dir / "worker.py"
-            if not worker_source.exists():
-                shutil.copy2(Path(__file__).with_name("worker.py"), worker_source)
-            known_runs_path = run_dir / "core_runs.json"
-            known_runs = (
-                json.loads(known_runs_path.read_text(encoding="utf-8"))
-                if known_runs_path.exists()
-                else {}
-            )
-            self._active = {
-                "task_id": task_id,
-                "run_id": run_id,
-                "journal": journal,
-                "program": program,
-                "run_mode": run_mode,
-                "process": None,
-                "known_runs": known_runs,
-                "cancelled": False,
-                "run_dir": run_dir,
-            }
-            process = None
-            reader_task = stderr_task = None
+            run_dir = self.state_dir / "journals" / run_id
+            run_dir.mkdir(parents=True, exist_ok=True)
+            files = self.state_dir / "runs" / run_id
             try:
-                if self._native:
-                    executable = await asyncio.to_thread(prepare_python, self.python_cache)
-                else:
-                    executable = Path(sys.executable)
-                if self._active["cancelled"]:
-                    raise ProgramExecutionError("Task cancelled before worker startup")
-                startup = asyncio.create_task(
-                    asyncio.to_thread(
-                        self._factory,
-                        executable,
-                        ["-I", "-u", str(worker_source), str(configuration_path)],
-                        workdir=scratch_dir,
-                        readable=(executable.parent, run_dir),
-                        writable=(scratch_dir,),
-                        limits=self.limits,
+                source_dir, scratch_dir = _extended(files / "source"), files / "scratch"
+                if not source_dir.exists():
+                    await _restore_io(
+                        extract_revision, self.repository, program.revision, source_dir
                     )
+                scratch_dir.mkdir(parents=True, exist_ok=True)
+                journal_dir = run_dir / "dbos"
+                journal_dir.mkdir(exist_ok=True)
+                journal = journal_dir / "dbos.sqlite"
+                configuration = {
+                    "task_id": task_id,
+                    "run_id": run_id,
+                    "run_mode": run_mode,
+                    "revision": program.revision,
+                    "program": asdict(program),
+                    "arguments": dict(arguments),
+                    "checkout": str(source_dir),
+                    "journal": str(journal),
+                    "executor_id": "run-" + run_id,
+                }
+                configuration_path = run_dir / "worker.json"
+                if configuration_path.exists():
+                    previous = json.loads(configuration_path.read_text(encoding="utf-8"))
+                    if previous != configuration:
+                        raise ProgramExecutionError(
+                            "Resume must preserve code, arguments, task and mode"
+                        )
+                else:
+                    configuration_path.write_text(
+                        json.dumps(configuration, allow_nan=False), encoding="utf-8"
+                    )
+                worker_source = files / "worker.py"
+                if not worker_source.exists():
+                    shutil.copy2(Path(__file__).with_name("worker.py"), worker_source)
+                known_runs_path = run_dir / "core_runs.json"
+                known_runs = (
+                    json.loads(known_runs_path.read_text(encoding="utf-8"))
+                    if known_runs_path.exists()
+                    else {}
                 )
+                self._active = {
+                    "task_id": task_id,
+                    "run_id": run_id,
+                    "journal": journal,
+                    "program": program,
+                    "run_mode": run_mode,
+                    "process": None,
+                    "known_runs": known_runs,
+                    "cancelled": False,
+                    "run_dir": run_dir,
+                    "source_dir": source_dir,
+                }
+                process = None
+                reader_task = stderr_task = None
                 try:
-                    process = await asyncio.shield(startup)
-                except asyncio.CancelledError:
-                    # to_thread cannot cancel CreateProcess. Acquire the returned
-                    # handles so finally always owns and stops that worker.
-                    process = await startup
+                    executable = None if self._native else Path(sys.executable)
+                    if self._active["cancelled"]:
+                        raise ProgramExecutionError("Task cancelled before worker startup")
+                    startup = asyncio.create_task(
+                        asyncio.to_thread(
+                            self._factory,
+                            executable,
+                            ["-I", "-u", str(worker_source), str(configuration_path)],
+                            workdir=scratch_dir,
+                            readable=(run_dir, files),
+                            writable=(scratch_dir, journal_dir),
+                            limits=self.limits,
+                        )
+                    )
+                    try:
+                        process = await asyncio.shield(startup)
+                    except asyncio.CancelledError:
+                        # to_thread cannot cancel CreateProcess. Acquire the returned
+                        # handles so finally always owns and stops that worker.
+                        process = await startup
+                        raise
+                    self._active["process"] = process
+                    if self._active["cancelled"]:
+                        await asyncio.to_thread(process.terminate)
+                        raise ProgramExecutionError("Task cancelled during worker startup")
+                    stderr_task = asyncio.create_task(
+                        self._read_stderr(process, run_dir / "stderr.log")
+                    )
+                    reader_task = asyncio.create_task(self._read_protocol(process))
+                    self._active["reader_task"] = reader_task
+                    result = await asyncio.wait_for(asyncio.shield(reader_task), timeout)
+                    return RunResult(run_id, result["result"], result.get("feedback"))
+                except TimeoutError as exc:
+                    raise ProgramExecutionError(f"Execution exceeded {timeout:g} seconds") from exc
+                except asyncio.CancelledError as exc:
+                    if self._active and self._active["cancelled"]:
+                        raise ProgramExecutionError("Task execution cancelled") from exc
                     raise
-                self._active["process"] = process
-                if self._active["cancelled"]:
-                    await asyncio.to_thread(process.terminate)
-                    raise ProgramExecutionError("Task cancelled during worker startup")
-                stderr_task = asyncio.create_task(
-                    self._read_stderr(process, run_dir / "stderr.log")
-                )
-                reader_task = asyncio.create_task(self._read_protocol(process))
-                self._active["reader_task"] = reader_task
-                result = await asyncio.wait_for(asyncio.shield(reader_task), timeout)
-                return RunResult(run_id, result["result"], result.get("feedback"))
-            except TimeoutError as exc:
-                raise ProgramExecutionError(f"Execution exceeded {timeout:g} seconds") from exc
-            except asyncio.CancelledError as exc:
-                if self._active and self._active["cancelled"]:
-                    raise ProgramExecutionError("Task execution cancelled") from exc
-                raise
+                finally:
+                    if process is not None:
+                        await asyncio.to_thread(process.close)
+                    if reader_task:
+                        reader_task.cancel()
+                        await asyncio.gather(reader_task, return_exceptions=True)
+                    if stderr_task:
+                        await asyncio.gather(stderr_task, return_exceptions=True)
+                    self._active = None
+                    if self._pause_requested:
+                        self._paused.set()
             finally:
-                if process is not None:
-                    await asyncio.to_thread(process.close)
-                if reader_task:
-                    reader_task.cancel()
-                    await asyncio.gather(reader_task, return_exceptions=True)
-                if stderr_task:
-                    await asyncio.gather(stderr_task, return_exceptions=True)
-                self._active = None
-                if self._pause_requested:
-                    self._paused.set()
+                await _restore_io(safe_remove_tree, files, self.state_dir / "runs")
 
     async def _read_stderr(self, process, destination):
         with destination.open("wb") as output:
@@ -490,9 +494,7 @@ class Runtime:
 
             cache = active.setdefault("anchors", {})
             if spec.git_path not in cache:
-                source = (_extended(active["run_dir"] / "source") / spec.git_path).read_text(
-                    encoding="utf-8"
-                )
+                source = (active["source_dir"] / spec.git_path).read_text(encoding="utf-8")
                 cache[spec.git_path] = parse_anchors(
                     source,
                     code_node_id=spec.program_id,

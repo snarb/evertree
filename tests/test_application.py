@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from pathlib import Path
 
 import pytest
 
@@ -23,6 +22,24 @@ pytestmark = pytest.mark.skipif(
 
 def completed(data):
     return [AgentEvent("completed", {"text": json.dumps(data), "parsed": data})]
+
+
+async def test_busy_agent_still_prunes_temporary_files(tmp_path, monkeypatch):
+    from unittest.mock import Mock
+
+    from evertree import application
+
+    agent = EverTree(tmp_path, provider=ScriptedProvider([]))
+    agent._active_requests["busy"] = "request"
+    prune = Mock()
+    monkeypatch.setattr(application, "prune", prune)
+
+    async def tick(_):
+        agent._closed = True  # Execute one maintenance iteration, without a real timer.
+
+    monkeypatch.setattr(application.asyncio, "sleep", tick)
+    await agent._periodic_maintenance()
+    prune.assert_called_once_with(tmp_path)
 
 
 def framing(objective="Count r in strawberry", minutes=3, improvement=0):
@@ -52,15 +69,6 @@ def verification(verified=True):
     )
 
 
-@pytest.fixture
-def native_python_cache(monkeypatch):
-    """Reuse only the interpreter copy, keeping actual OS isolation for every run."""
-    from evertree.core import runtime, sandbox
-
-    root = Path(__file__).resolve().parents[1] / ".state" / "test-application-python"
-    monkeypatch.setattr(runtime, "prepare_python", lambda _: sandbox.prepare_python(root))
-
-
 async def wait_for_event(agent, kind, *, timeout=45):
     seen = []
     if not hasattr(agent, "_test_event_stream"):
@@ -75,7 +83,7 @@ async def wait_for_event(agent, kind, *, timeout=45):
                 return event, seen
 
 
-async def test_native_framing_verification_delivery_and_budget(tmp_path, native_python_cache):
+async def test_native_framing_verification_delivery_and_budget(tmp_path):
     provider = ScriptedProvider([framing(minutes=4, improvement=15), decision(), verification()])
     async with EverTree(tmp_path / "agent", provider=provider) as agent:
         result = await asyncio.wait_for(agent.run("Count the r characters in strawberry"), 60)
@@ -94,7 +102,7 @@ async def test_native_framing_verification_delivery_and_budget(tmp_path, native_
         assert any(event.operator == "run_finished" for event in agent.memory.events)
 
 
-async def test_final_answer_waits_for_delivery_acknowledgement(tmp_path, native_python_cache):
+async def test_final_answer_waits_for_delivery_acknowledgement(tmp_path):
     provider = ScriptedProvider([framing(), decision(), verification()])
     async with EverTree(tmp_path / "agent", provider=provider) as agent:
         task = await agent.submit("Count r in strawberry")
@@ -107,9 +115,7 @@ async def test_final_answer_waits_for_delivery_acknowledgement(tmp_path, native_
         assert task.status == "succeeded"
 
 
-async def test_clarification_continues_same_task_with_previous_context(
-    tmp_path, native_python_cache
-):
+async def test_clarification_continues_same_task_with_previous_context(tmp_path):
     provider = ScriptedProvider(
         [
             framing("Count a requested letter"),
@@ -135,9 +141,7 @@ async def test_clarification_continues_same_task_with_previous_context(
         assert "strawberry" in provider.requests[2].prompt
 
 
-async def test_incomplete_verification_returns_to_work_instead_of_success(
-    tmp_path, native_python_cache
-):
+async def test_incomplete_verification_returns_to_work_instead_of_success(tmp_path):
     provider = ScriptedProvider(
         [framing(), decision("2"), verification(False), decision("3"), verification(True)]
     )
@@ -149,7 +153,7 @@ async def test_incomplete_verification_returns_to_work_instead_of_success(
         assert "Verification requires correction" in provider.requests[3].prompt
 
 
-async def test_delivery_failure_leaves_task_waiting(tmp_path, native_python_cache):
+async def test_delivery_failure_leaves_task_waiting(tmp_path):
     provider = ScriptedProvider([framing(), decision(), verification()])
     async with EverTree(tmp_path / "agent", provider=provider) as agent:
         state = await agent.submit("Count r in strawberry")
@@ -160,9 +164,7 @@ async def test_delivery_failure_leaves_task_waiting(tmp_path, native_python_cach
         assert state.waiting_for == ["delivery"]
 
 
-async def test_queue_does_not_start_second_task_before_first_delivery(
-    tmp_path, native_python_cache
-):
+async def test_queue_does_not_start_second_task_before_first_delivery(tmp_path):
     provider = ScriptedProvider(
         [
             framing("First"),
@@ -190,9 +192,7 @@ async def test_queue_does_not_start_second_task_before_first_delivery(
         assert first.status == second.status == "succeeded"
 
 
-async def test_backup_restart_preserves_waiting_task_and_original_budget(
-    tmp_path, native_python_cache
-):
+async def test_backup_restart_preserves_waiting_task_and_original_budget(tmp_path):
     home = tmp_path / "agent"
     first_provider = ScriptedProvider(
         [
@@ -221,7 +221,7 @@ async def test_backup_restart_preserves_waiting_task_and_original_budget(
         assert len(second_provider.requests) == 2  # No reset or repeated framing.
 
 
-async def test_duplicate_input_source_does_not_create_another_task(tmp_path, native_python_cache):
+async def test_duplicate_input_source_does_not_create_another_task(tmp_path):
     provider = ScriptedProvider([framing(), decision(), verification()])
     async with EverTree(tmp_path / "agent", provider=provider) as agent:
         one = await agent.submit("Count r in strawberry", source_id="source-1")

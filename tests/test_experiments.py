@@ -297,6 +297,9 @@ async def run(value, ctx):
     assert contexts[0].learning is not contexts[1].learning
     assert contexts[0].workspace != contexts[1].workspace
     assert graph.get(1).name == "original"
+    assert experiment.traces
+    assert not list((tmp_path / "evaluations").iterdir())
+    assert all(not context.workspace.exists() for context in contexts)
 
 
 @pytest.mark.parametrize(

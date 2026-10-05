@@ -16,9 +16,13 @@ import sys
 import threading
 import time
 import uuid
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
+
+from . import cache
+from .backup import _extended
 
 
 class SandboxUnavailable(RuntimeError):
@@ -135,112 +139,77 @@ class SandboxLimits:
     process_count: int = 32
 
 
-def _publish_cache(staging: Path, target: Path) -> None:
-    """Publish an owned immutable cache despite transient Windows file scanners."""
-    from .backup import _extended, safe_remove_tree
-
-    if (
-        staging.parent.resolve() != _extended(target.parent).resolve()
-        or ".preparing-" not in staging.name
-    ):
-        raise ValueError("Unexpected private cache staging path")
-    deadline = time.monotonic() + 2
-    while True:
-        try:
-            staging.rename(target)
-            return
-        except OSError as error:
-            if (target / ".complete").is_file():
-                safe_remove_tree(staging, staging.parent)
-                return
-            if getattr(error, "winerror", None) not in (5, 32) or time.monotonic() >= deadline:
-                raise
-            time.sleep(0.05)
+def _key(value) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()[:16]
 
 
-def prepare_exec_server(state_dir: Path) -> tuple[Path, Path, Path]:
-    """Private native tool binaries, with no login files or host configuration."""
+def start_exec_server(state_dir: Path, workspace: Path) -> SandboxedProcess:
+    """Share immutable tools; only this workspace and a temporary profile are writable."""
     from codex_cli_bin import bundled_codex_path
 
-    from .backup import _extended
-
-    state_dir = Path(state_dir).resolve()
-    python = prepare_python(state_dir / "python", include_core=False)
+    state_dir, workspace = Path(state_dir).resolve(), Path(workspace).resolve()
+    if state_dir.is_relative_to(workspace) or cache.cache_root().resolve().is_relative_to(
+        workspace
+    ):
+        raise ValueError("Executor binaries and private state must be outside the coding workspace")
     codex = Path(bundled_codex_path()).resolve()
     git = shutil.which("git")
     if git is None:
         raise SandboxUnavailable("Native coding requires an installed Git distribution")
     git_root = Path(git).resolve().parent.parent
-    if not (git_root / "mingw64" / "bin" / "git.exe").is_file():
+    git_exe = git_root / "mingw64" / "bin" / "git.exe"
+    if not git_exe.is_file():
         raise SandboxUnavailable("Native Windows coding requires Git for Windows")
-    key = hashlib.sha256(
-        json.dumps(
-            [
-                str(codex),
-                codex.stat().st_size,
-                codex.stat().st_mtime_ns,
-                str(git_root),
-                (git_root / "mingw64" / "bin" / "git.exe").stat().st_mtime_ns,
-            ]
-        ).encode()
-    ).hexdigest()[:16]
-    target = state_dir / "native" / key
-    if not (target / ".complete").is_file():
-        staging = _extended(target.with_name(key + ".preparing-" + uuid.uuid4().hex))
-        staging.mkdir(parents=True)
-        try:
-            shutil.copytree(codex.parent, staging / "codex")
-            for relative in (
-                "cmd",
-                "mingw64/bin",
-                "mingw64/libexec/git-core",
-                "mingw64/share/git-core/templates",
-            ):
-                shutil.copytree(git_root / relative, staging / "git" / relative)
-            (staging / ".complete").write_text(key, encoding="utf-8")
-            _publish_cache(staging, target)
-        except BaseException:
-            if staging.exists():
-                shutil.rmtree(staging)
-            raise
-    return target / "codex" / codex.name, python, target / "git"
+
+    def version(path):
+        return _key([str(path), path.stat().st_size, path.stat().st_mtime_ns])
+
+    def copy_git(destination):
+        for relative in (
+            "cmd",
+            "mingw64/bin",
+            "mingw64/libexec/git-core",
+            "mingw64/share/git-core/templates",
+        ):
+            shutil.copytree(git_root / relative, _extended(destination / relative))
+
+    with ExitStack() as resources:
+        python, python_roots = resources.enter_context(prepare_python(include_core=False))
+        codex_dir = resources.enter_context(
+            cache.acquire(
+                "codex",
+                version(codex),
+                lambda target: shutil.copytree(codex.parent, _extended(target), dirs_exist_ok=True),
+            )
+        )
+        git_dir = resources.enter_context(cache.acquire("git", version(git_exe), copy_git))
+        profile = resources.enter_context(cache.temporary_directory())
+        workspace.mkdir(parents=True, exist_ok=True)
+        process = SandboxedProcess(
+            codex_dir / codex.name,
+            ["exec-server", "--listen", "stdio"],
+            workdir=workspace,
+            readable=(*python_roots, codex_dir, git_dir),
+            writable=(workspace, profile),
+            path_entries=(python.parent, git_dir / "cmd"),
+            profile_dir=profile,
+            limits=SandboxLimits(memory_bytes=1024 * 1024 * 1024),
+        )
+        process._resources.enter_context(resources.pop_all())
+        process.shell_python = python
+        return process
 
 
-def start_exec_server(state_dir: Path, workspace: Path) -> SandboxedProcess:
-    """Own the SDK's native executor inside AppContainer; stdin/stdout are RPC.
-
-    Only the selected coding workspace and fresh temporary profile are writable.
-    The authenticated SDK app-server stays in core and connects via a pipe bridge.
-    """
-    state_dir, workspace = Path(state_dir).resolve(), Path(workspace).resolve()
-    if state_dir == workspace or state_dir.is_relative_to(workspace):
-        raise ValueError("Executor binaries and private state must be outside the coding workspace")
-    workspace.mkdir(parents=True, exist_ok=True)
-    executable, python, git = prepare_exec_server(state_dir)
-    profile = state_dir / "profiles" / uuid.uuid4().hex
-    profile.mkdir(parents=True)
-    process = SandboxedProcess(
-        executable,
-        ["exec-server", "--listen", "stdio"],
-        workdir=workspace,
-        readable=(executable.parent, python.parent, git),
-        writable=(workspace, profile),
-        path_entries=(python.parent, git / "cmd"),
-        profile_dir=profile,
-        limits=SandboxLimits(memory_bytes=1024 * 1024 * 1024),
-    )
-    process.shell_python = python
-    return process
-
-
-def check_sandbox(state_dir: Path) -> dict[str, bool]:
+def check_sandbox() -> dict[str, bool]:
     """Run a native token/filesystem probe for ``evertree doctor``.
 
     This launches only the fixed diagnostic below, with no model or network call.
     """
-    state_dir = Path(state_dir).resolve()
-    executable = prepare_python(state_dir / "python")
-    probe = state_dir / ("sandbox-probe-" + uuid.uuid4().hex)
+    with cache.temporary_directory() as probe:
+        return _check_sandbox(probe)
+
+
+def _check_sandbox(probe: Path) -> dict[str, bool]:
     scratch = probe / "scratch"
     scratch.mkdir(parents=True)
     protected = probe / "protected.txt"
@@ -269,129 +238,133 @@ Path('allowed.txt').write_text('allowed')
 result['scratch_writable'] = True
 print(json.dumps(result), flush=True)
 """
-    try:
-        with SandboxedProcess(
-            executable,
-            ["-I", "-c", code],
-            workdir=scratch,
-            readable=(executable.parent,),
-            writable=(scratch,),
-        ) as process:
-            code = process.wait(timeout=30)
-            if code:
-                raise SandboxUnavailable(process.stderr.read(8192).decode(errors="replace"))
-            result = json.loads(process.stdout.read())
-            if not all(result.values()):
-                raise SandboxUnavailable("Native sandbox probe did not enforce its boundaries")
-            return result
-    finally:
-        shutil.rmtree(probe)
+    with SandboxedProcess(
+        None,
+        ["-I", "-c", code],
+        workdir=scratch,
+        readable=(),
+        writable=(scratch,),
+    ) as process:
+        code = process.wait(timeout=30)
+        if code:
+            raise SandboxUnavailable(process.stderr.read(8192).decode(errors="replace"))
+        result = json.loads(process.stdout.read())
+        if not all(result.values()):
+            raise SandboxUnavailable("Native sandbox probe did not enforce its boundaries")
+        return result
 
 
-def prepare_python(destination: Path, *, include_core: bool = True) -> Path:
-    """Copy the running Python and dependencies into a private, ACL-able tree.
+@contextmanager
+def prepare_python(*, include_core: bool = True):
+    """One dependency installation, plus a small venv containing only EverTree sources."""
+    from importlib import metadata
 
-    The source interpreter installation is never modified. The cache key changes
-    when installed distributions change, avoiding a stale dependency snapshot.
-    Only Program workers receive protected core; coding tools get public contracts.
-    """
-    import importlib.metadata
-    import sysconfig
+    from .environment import _installed_packages
 
-    packages = sorted(
-        (d.metadata.get("Name", ""), d.version) for d in importlib.metadata.distributions()
-    )
-    package_root = Path(__file__).resolve().parents[1]
-    source_hash = hashlib.sha256()
-    if include_core:
-        for file in sorted(package_root.rglob("*.py")):
-            source_hash.update(file.relative_to(package_root).as_posix().encode())
-            source_hash.update(file.read_bytes())
-    else:
-        source_hash.update((package_root / "core" / "contracts.py").read_bytes())
-    key = hashlib.sha256(
-        json.dumps([sys.version, packages, include_core, source_hash.hexdigest()]).encode()
-    ).hexdigest()[:16]
-    target = destination / key
-    executable = target / "python.exe"
-    if (target / ".complete").is_file():
-        return executable
     if os.name != "nt":
         raise SandboxUnavailable("Generated programs currently require Windows AppContainer.")
-    destination.mkdir(parents=True, exist_ok=True)
-    staging = destination / (key + ".preparing-" + uuid.uuid4().hex)
-    # CPython's CopyFile2 fast path still needs an extended destination when
-    # dependency subdirectories push a perfectly valid state path past 260.
-    if os.name == "nt" and not str(staging).startswith("\\\\?\\"):
-        value = str(staging.resolve())
-        staging = Path(
-            "\\\\?\\UNC\\" + value[2:] if value.startswith("\\\\") else "\\\\?\\" + value
-        )
-    staging.mkdir()
-    base = Path(sys.base_prefix)
-    try:
-        for name in ("python.exe", "pythonw.exe", "python3.dll", "LICENSE.txt"):
+    # These are the worker's declared dependencies, not the developer's entire environment.
+    packages = _installed_packages(("dbos", "pydantic"))
+    base_key = _key([1, sys.version, packages])
+
+    def build_base(destination):
+        destination = _extended(destination)
+        base = Path(sys.base_prefix)
+        for name in ("python.exe", "pythonw.exe", "LICENSE.txt"):
             if (base / name).is_file():
-                shutil.copy2(base / name, staging / name)
-        for item in base.glob("*.dll"):
-            shutil.copy2(item, staging / item.name)
+                shutil.copy2(base / name, destination / name)
+        for path in base.glob("*.dll"):
+            shutil.copy2(path, destination / path.name)
         for name in ("Lib", "DLLs"):
             if (base / name).is_dir():
                 shutil.copytree(
                     base / name,
-                    staging / name,
+                    destination / name,
                     ignore=shutil.ignore_patterns("__pycache__", "site-packages", "test", "tests"),
                 )
-        site = Path(sysconfig.get_paths()["purelib"])
-        shutil.copytree(
-            site,
-            staging / "Lib" / "site-packages",
-            ignore=shutil.ignore_patterns("__pycache__", "*.pth", "*.egg-link", "evertree"),
-            dirs_exist_ok=True,
-        )
-        if include_core:
-            shutil.copytree(
-                package_root,
-                staging / "Lib" / "site-packages" / "evertree",
-                ignore=shutil.ignore_patterns("__pycache__", "processes", "common"),
-                dirs_exist_ok=True,
+        site = destination / "Lib" / "site-packages"
+        for name in packages:
+            distribution = metadata.distribution(name)
+            if distribution.files is None:
+                raise SandboxUnavailable(f"Installed dependency has no file manifest: {name}")
+            for relative in distribution.files:
+                if (
+                    relative.is_absolute()
+                    or ".." in relative.parts
+                    or "__pycache__" in relative.parts
+                    or relative.suffix in (".pth", ".pyc", ".egg-link")
+                ):
+                    continue
+                target = site / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(distribution.locate_file(relative), target)
+
+    package_root = Path(__file__).resolve().parents[1]
+    if include_core:
+        sources = {
+            path.relative_to(package_root): path.read_bytes()
+            for path in package_root.rglob("*.py")
+            if not set(path.relative_to(package_root).parts)
+            & {"processes", "common", "__pycache__"}
+        }
+    else:
+        sources = {
+            Path("__init__.py"): b"",
+            Path("core/__init__.py"): b"",
+            Path("core/contracts.py"): (package_root / "core" / "contracts.py").read_bytes(),
+        }
+    source_key = _key(
+        [base_key, {str(path): hashlib.sha256(data).hexdigest() for path, data in sources.items()}]
+    )
+    with cache.acquire("python", base_key, build_base) as base:
+
+        def build_sources(destination):
+            subprocess.run(
+                [
+                    str(base / "python.exe"),
+                    "-I",
+                    "-m",
+                    "venv",
+                    "--without-pip",
+                    "--system-site-packages",
+                    str(destination),
+                ],
+                check=True,
+                capture_output=True,
+                creationflags=0x08000000,
             )
-        else:
-            public_package = staging / "Lib" / "site-packages" / "evertree"
-            (public_package / "core").mkdir(parents=True)
-            (public_package / "__init__.py").write_text("", encoding="utf-8")
-            (public_package / "core" / "__init__.py").write_text("", encoding="utf-8")
-            shutil.copy2(
-                package_root / "core" / "contracts.py", public_package / "core" / "contracts.py"
-            )
-        (staging / ".complete").write_text(key, encoding="utf-8")
-        _publish_cache(staging, target)
-        return executable
-    except BaseException:
-        if staging.exists():
-            shutil.rmtree(staging)
-        raise
+            for relative, data in sources.items():
+                target = _extended(destination / "Lib/site-packages/evertree" / relative)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+
+        kind = "worker" if include_core else "public"
+        with cache.acquire(kind, source_key, build_sources) as environment:
+            yield environment / "Scripts/python.exe", (base, environment)
 
 
 def _grant(path: Path, sid: str, rights: str) -> None:
-    result = subprocess.run(
-        ["icacls.exe", str(path), "/grant", f"*{sid}:(OI)(CI){rights}", "/Q"],
-        capture_output=True,
-        text=True,
-        creationflags=0x08000000,
-        check=False,
-    )
+    # icacls reads and replaces the ACL: concurrent grants/revocations can lose entries.
+    with cache._lock(cache.cache_root() / ".acl.lock"):
+        result = subprocess.run(
+            ["icacls.exe", str(path), "/grant", f"*{sid}:(OI)(CI){rights}", "/Q"],
+            capture_output=True,
+            text=True,
+            creationflags=0x08000000,
+            check=False,
+        )
     if result.returncode:
         raise SandboxUnavailable(f"Could not grant sandbox access to {path}: {result.stderr}")
 
 
 def _revoke(path: Path, sid: str) -> None:
-    subprocess.run(
-        ["icacls.exe", str(path), "/remove:g", "*" + sid, "/Q"],
-        capture_output=True,
-        creationflags=0x08000000,
-        check=False,
-    )
+    with cache._lock(cache.cache_root() / ".acl.lock"):
+        subprocess.run(
+            ["icacls.exe", str(path), "/remove:g", "*" + sid, "/Q"],
+            capture_output=True,
+            creationflags=0x08000000,
+            check=False,
+        )
 
 
 class SandboxedProcess:
@@ -399,7 +372,7 @@ class SandboxedProcess:
 
     def __init__(
         self,
-        executable: Path,
+        executable: Path | None,
         arguments: list[str],
         *,
         workdir: Path,
@@ -408,6 +381,7 @@ class SandboxedProcess:
         limits: SandboxLimits | None = None,
         path_entries: tuple[Path, ...] = (),
         profile_dir: Path | None = None,
+        include_core: bool = True,
     ) -> None:
         if os.name != "nt":
             raise SandboxUnavailable("Windows AppContainer is required; no unsafe fallback exists.")
@@ -421,16 +395,29 @@ class SandboxedProcess:
         self.stdin: BinaryIO
         self.stdout: BinaryIO
         self.stderr: BinaryIO
-        self._launch(
-            executable,
-            arguments,
-            workdir,
-            readable,
-            writable,
-            limits or SandboxLimits(),
-            path_entries,
-            profile_dir,
-        )
+        self._resources = ExitStack()
+        try:
+            if executable is None:
+                executable, python_roots = self._resources.enter_context(
+                    prepare_python(include_core=include_core)
+                )
+                readable = (*readable, *python_roots)
+            if profile_dir is None:
+                profile_dir = self._resources.enter_context(cache.temporary_directory())
+                writable = (*writable, profile_dir)
+            self._launch(
+                executable,
+                arguments,
+                workdir,
+                readable,
+                writable,
+                limits or SandboxLimits(),
+                path_entries,
+                profile_dir,
+            )
+        except BaseException:
+            self._resources.close()
+            raise
 
     def _launch(
         self, executable, arguments, workdir, readable, writable, limits, path_entries, profile_dir
@@ -684,7 +671,6 @@ class SandboxedProcess:
                 set_job(self._job, 9, ctypes.byref(job_limits), ctypes.sizeof(job_limits)),
                 "Set job limits",
             )
-            profile_dir = profile_dir or workdir / "profile"
             local_data, roaming_data = (
                 profile_dir / "AppData" / "Local",
                 profile_dir / "AppData" / "Roaming",
@@ -700,8 +686,8 @@ class SandboxedProcess:
                 "LOCALAPPDATA": str(local_data),
                 "APPDATA": str(roaming_data),
                 "USERNAME": "EverTree",
-                "HOMEDRIVE": workdir.anchor.rstrip("\\"),
-                "HOMEPATH": str(profile_dir)[len(workdir.anchor) - 1 :],
+                "HOMEDRIVE": profile_dir.anchor.rstrip("\\"),
+                "HOMEPATH": str(profile_dir)[len(profile_dir.anchor) - 1 :],
                 "COMSPEC": str(Path(windows) / "System32" / "cmd.exe"),
                 "TEMP": str(profile_dir),
                 "TMP": str(profile_dir),
@@ -855,6 +841,7 @@ class SandboxedProcess:
             self._grants.clear()
             if hasattr(self, "_userenv") and self._profile_created:
                 self._userenv.DeleteAppContainerProfile(self._profile)
+            self._resources.close()
             self._closed = True
 
     def __enter__(self):

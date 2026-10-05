@@ -1,4 +1,4 @@
-"""Coding outputs recover with the same task state and durable journal boundary."""
+"""Working files are disposable; backups retain state and execution history only."""
 
 import asyncio
 import json
@@ -11,7 +11,7 @@ import pytest
 from test_runtime import TestProcess
 
 from evertree.application import EverTree
-from evertree.core.backup import BackupError, _extended, safe_remove_tree
+from evertree.core.backup import _extended, safe_remove_tree
 from evertree.core.provider import AgentEvent, ScriptedProvider
 from evertree.core.runtime import Runtime
 
@@ -56,16 +56,16 @@ async def test_work_on_code_files_and_long_paths_restore_with_task_state(agent, 
     workspace = agent.state_dir / "workspaces" / task.id
     assert len(str(workspace / deep)) > 260
     saved = await agent.backup()
-    dependency = agent.backups.dependency(saved, "workspaces")
-    assert _extended(dependency / task.id / deep).read_text() == "version = 1\n"
+    assert not (saved / "dependencies").exists()
+    assert not list(saved.rglob("*.py"))
     await write_code(agent, task, {"answer.py": "answer = 0\n", deep.as_posix(): "version = 2\n"})
     later = task_for(agent)
     await write_code(agent, later, {"later.txt": "not in this backup"})
     if current_missing:
         safe_remove_tree(agent.state_dir / "workspaces", agent.state_dir)
     await agent.restore(saved)
-    assert (workspace / "answer.py").read_text() == "answer = 42\n"
-    assert _extended(workspace / deep).read_text() == "version = 1\n"
+    assert not workspace.exists()
+    assert any("Temporary files" in item["content"] for item in agent._inputs[task.id])
     assert not (agent.state_dir / "workspaces" / later.id).exists()
     assert [state.id for state in agent.tasks.all()] == [task.id]
 
@@ -78,7 +78,7 @@ async def test_restore_backup_before_any_workspace_removes_later_outputs(agent):
     await write_code(agent, task, {"later.py": "created after backup\n"})
     assert (root / task.id / "later.py").exists()
     await agent.restore(saved)
-    assert not list(root.iterdir())
+    assert not root.exists()
     assert not agent.tasks.all()
 
 
@@ -118,11 +118,88 @@ async def test_workspace_links_cannot_make_backup_read_outside_content(agent, tm
     else:
         link.symlink_to(external, target_is_directory=True)
     try:
-        with pytest.raises(BackupError, match="symbolic links or junctions"):
-            await agent.backup()
-        assert agent.backups.list() == [saved]
+        newer = await agent.backup()
+        assert agent.backups.list() == [newer, saved]
         assert not any(
             path.name == "canary.txt" for path in _extended(agent.backups.root).rglob("*")
         )
     finally:
         link.rmdir() if os.name == "nt" else link.unlink()
+
+
+@pytest.mark.parametrize("status", ["succeeded", "failed", "cancelled"])
+async def test_terminal_task_discards_its_workspace(agent, status):
+    from evertree.core.cognition import VerificationResult
+
+    task = task_for(agent)
+    await write_code(agent, task, {"temporary.txt": "discard me"})
+    workspace = agent.state_dir / "workspaces" / task.id
+    await agent._stop_task(task, status, "finished", VerificationResult("verified"))
+    assert not workspace.exists()
+    assert agent.tasks.get(task.id).status == status
+
+
+async def test_restore_fetches_committed_artifact_after_local_repository_is_lost(agent):
+    from evertree.core.lifecycle import git, remote_git
+
+    artifact = agent.repository / "artifacts/result.txt"
+    artifact.parent.mkdir()
+    artifact.write_text("saved in Git")
+    git(agent.repository, "add", "artifacts")
+    git(agent.repository, "commit", "-m", "Keep useful result")
+    revision = git(agent.repository, "rev-parse", "HEAD")
+    await agent.close()
+    remote = agent._program_remote
+    assert remote_git(Path(remote), "rev-parse", "refs/heads/evertree/programs") == revision
+    saved = agent.backups.list()[0]
+    assert not list(saved.rglob("result.txt"))
+    safe_remove_tree(agent.repository, agent.state_dir)
+    async with EverTree(
+        agent.directory,
+        provider=WorkspaceProvider([]),
+        runtime_factory=partial(Runtime, process_factory=TestProcess),
+    ) as restored:
+        assert git(restored.repository, "rev-parse", "main") == revision
+        assert (restored.repository / "artifacts/result.txt").read_text() == "saved in Git"
+
+
+async def test_failed_git_publication_keeps_previous_completed_backup(agent, tmp_path):
+    from evertree.core.lifecycle import LifecycleError
+
+    saved = await agent.backup()
+    remote = agent._program_remote
+    agent._program_remote = str(tmp_path / "missing-remote")
+    try:
+        with pytest.raises(LifecycleError):
+            await agent.backup()
+        assert agent.backups.list() == [saved]
+        assert agent.backups.read(saved)["core"]["program_remote"] == remote
+    finally:
+        agent._program_remote = remote
+
+
+async def test_restore_discards_candidate_ownership_from_later_work(agent):
+    task = task_for(agent)
+    saved = await agent.backup()
+    candidate = agent.lifecycle.create_candidate("program", "Disposable experiment")
+    agent._candidate_owners[candidate.id] = task.id
+    await agent.restore(saved)
+    assert not agent._candidate_owners
+    assert not Path(candidate.workspace).exists()
+    await agent._stop_task(agent.tasks.get(task.id), "cancelled", "No longer needed")
+
+
+async def test_provider_close_failure_still_discards_workspaces(agent, monkeypatch):
+    task = task_for(agent)
+    await write_code(agent, task, {"temporary.txt": "discard me"})
+    candidate = agent.lifecycle.create_candidate("program", "Disposable work")
+
+    async def fail():
+        raise RuntimeError("Provider close failed")
+
+    monkeypatch.setattr(agent.provider, "close", fail)
+    with pytest.raises(RuntimeError, match="Provider close failed"):
+        await agent.close()
+    assert not (agent.state_dir / "workspaces").exists()
+    assert not Path(candidate.workspace).exists()
+    assert agent._lock_file is None

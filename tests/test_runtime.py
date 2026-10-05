@@ -10,12 +10,11 @@ from pathlib import Path
 import pytest
 
 from evertree.core.runtime import ProgramExecutionError, ProgramSpec, Runtime, RuntimeBusy
-from evertree.core.sandbox import SandboxedProcess, WindowsProcessTree, prepare_python
+from evertree.core.sandbox import SandboxedProcess, WindowsProcessTree
 
 
 def test_private_cache_publication_retries_sharing_violation(tmp_path, monkeypatch):
-    from evertree.core.backup import _extended
-    from evertree.core.sandbox import _publish_cache
+    from evertree.core.backup import _extended, rename_state
 
     target = tmp_path / "cache-key"
     staging = _extended(tmp_path / "cache-key.preparing-test")
@@ -35,7 +34,7 @@ def test_private_cache_publication_retries_sharing_violation(tmp_path, monkeypat
         return rename(path, destination)
 
     monkeypatch.setattr(Path, "rename", temporarily_locked)
-    _publish_cache(staging, target)
+    rename_state(staging, target)
     assert attempts == 2 and (target / ".complete").read_text() == "verified-cache"
 
 
@@ -125,7 +124,6 @@ def commit_programs(root: Path, files: dict[str, str]) -> str:
 
 @pytest.mark.skipif(os.name != "nt", reason="Native Windows AppContainer smoke test")
 def test_appcontainer_denies_core_files_and_owns_process(tmp_path):
-    executable = prepare_python(Path(__file__).resolve().parents[1] / ".state" / "test-python")
     secret = tmp_path / "protected-secret.txt"
     secret.write_text("must remain outside worker", encoding="utf-8")
     scratch = tmp_path / "scratch"
@@ -148,10 +146,10 @@ Path('allowed.txt').write_text('allowed')
 print(json.dumps(checks), flush=True)
 """
     with SandboxedProcess(
-        executable,
+        None,
         ["-I", "-c", code],
         workdir=scratch,
-        readable=(executable.parent,),
+        readable=(),
         writable=(scratch,),
     ) as process:
         assert process.wait(timeout=30) == 0, process.stderr.read().decode(errors="replace")
@@ -211,6 +209,8 @@ async def run(ctx, value):
     )
     result = await runtime.execute("task", parent, {"child": child.program_id}, run_id="durable")
     assert result.result == 2
+    assert not list((runtime.state_dir / "runs").iterdir())
+    assert (runtime.state_dir / "journals/durable/dbos/dbos.sqlite").exists()
     assert calls == [1, 2]
     assert len([t for t in traces if t["type"] == "run_started"]) == 2
     assert next(t for t in traces if t.get("operator") == "counter")["anchor"] == "first_counter"
