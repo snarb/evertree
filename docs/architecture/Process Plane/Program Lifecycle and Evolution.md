@@ -656,7 +656,7 @@ Evaluation finds mismatch
 
 ```text
 main branch = текущая активная версия всех программ
-feature/fix branch = кандидат изменения
+codex/program/<process-graph-path>/<role>/<candidate-name> = кандидат изменения
 ```
 
 `Program` задаёт стабильную идентичность программы, а Git хранит её версии. Epistemic belief относится к конкретной revision, а не безусловно ко всей истории стабильной identity `Program`.
@@ -675,7 +675,7 @@ Branch технически относится ко всему репозито�
 ```python
 ProgramBranch: Node {
   program: <Program>
-  git_ref: <string> # e.g. feature/add_price_sensitivity
+  git_ref: <string> # e.g. codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget
 
     change_claim: <Claim>
     "Проверяемое утверждение о том, почему предлагаемый подход должен улучшить программу."
@@ -692,7 +692,7 @@ ProgramBranch: Node {
 Примеры branch:
 
 ```text
-feature/add_price_sensitivity
+codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget
 fix/enterprise_edge_cases
 refactor/negotiation_state_tracking
 ```

@@ -98,32 +98,72 @@ class ProgramsMixin:
         return [json_value(node) for node in self.graph.nodes(kind="program")]
 
     def propose_program(
-        self, name: str, *, role: str, claim: str, description="", candidate_name: str | None = None
+        self,
+        name: str,
+        *,
+        role: str,
+        claim: str,
+        description="",
+        candidate_name: str | None = None,
+        parent: int | str | None = None,
     ):
-        """Create an inactive definition and candidate; activation still requires evaluation."""
-        if role not in {"exec", "model"} or not name.isidentifier() or self.graph.find(name):
-            raise ValueError("A new Program requires a unique identifier name and model/exec role")
+        """Propose a role for an existing process or a new subtype of parent."""
+        if role not in {"exec", "model"} or not name.isidentifier():
+            raise ValueError("A Program requires an identifier name and model/exec role")
+        process = self.graph.find(name)
+        creates = []
         slug = process_slug(name)
-        directory = process_directory(self.graph, self.graph.find("SelfProcess").id).rstrip("/")
-        if slug.startswith("_") or any(
-            process_directory(self.graph, node.id).rstrip("/") == directory + "/" + slug
-            for node in self.graph.descendants(self.graph.find("SelfProcess").id)
-        ):
-            raise ValueError("Process name collides with an existing or reserved directory")
+        if process is not None:
+            if parent is not None:
+                raise ValueError("parent is only used when creating a new process")
+            if process.properties.get("process") is not True:
+                raise ValueError("The existing name must identify a process in Self/Process")
+            directory = process_directory(self.graph, process.id).rstrip("/")
+            if any(
+                node.properties.get("process") == process.id and node.properties.get("role") == role
+                for node in self.graph.nodes(kind="program")
+            ):
+                raise ValueError("Process already has this Program role; use create_candidate")
+        else:
+            parent_node = (
+                self.graph.find("SelfProcess")
+                if parent is None
+                else self.graph.get(parent)
+                if isinstance(parent, int)
+                else self.graph.find(parent)
+            )
+            if parent_node is None or parent_node.properties.get("process") is not True:
+                raise ValueError("parent must identify a process in Self/Process")
+            directory = process_directory(self.graph, parent_node.id).rstrip("/") + "/" + slug
+            if slug.startswith("_") or any(
+                process_directory(self.graph, node.id).rstrip("/") == directory
+                for node in self.graph.descendants(self.graph.find("SelfProcess").id)
+            ):
+                raise ValueError("Process name collides with an existing or reserved directory")
+            process = Prototype(self.graph.reserve_id(), name, properties={"process": True})
+            creates.extend(
+                (
+                    process,
+                    self.graph.new_fact(
+                        "SUBTYPE_OF", {"type": process.id, "supertype": parent_node.id}
+                    ),
+                )
+            )
+        if self.graph.find(name + "." + role):
+            raise ValueError("Program name is already registered")
         run = self.memory.start_run(
             "ProgramProposal", git(self.repository, "rev-parse", "main"), {"name": name}
         )
         event = self.memory.record(
             run, "propose_program", output={"claim": claim, "description": description}
         )
-        process = Prototype(self.graph.reserve_id(), name, properties={"process": True})
         program = Node(
             self.graph.reserve_id(),
             name + "." + role,
             kind="program",
             description=description,
             properties={
-                "git_path": f"{directory}/{slug}/_{role}.py",
+                "git_path": f"{directory}/_{role}.py",
                 "process": process.id,
                 "role": role,
                 "roles": (role,),
@@ -134,12 +174,8 @@ class ProgramsMixin:
         )
         delta = GraphDelta(
             creates=(
-                process,
+                *creates,
                 program,
-                self.graph.new_fact(
-                    "SUBTYPE_OF",
-                    {"type": process.id, "supertype": self.graph.find("SelfProcess").id},
-                ),
                 self.graph.new_fact(
                     "PROGRAM_FOR_PROCESS", {"program": program.id, "process": process.id}
                 ),

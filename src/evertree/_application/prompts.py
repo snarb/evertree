@@ -133,13 +133,14 @@ def consciousness_tools():
         ),
         tool(
             "propose_program",
-            "Define a new inactive reusable Program and create its candidate. Independent evidence is required before activation.",
+            "Propose a missing role for an existing process by name, or create a new process under parent (ID or name; defaults to SelfProcess). Omit parent for existing processes. Give candidate_name a specific label of one to three words. Independent evidence is required before activation.",
             {
                 "name": string,
                 "role": {"enum": ["model", "exec"], "type": "string"},
                 "claim": string,
                 "description": string,
                 "candidate_name": string,
+                "parent": {"type": ["integer", "string", "null"]},
             },
             ("name", "role", "claim", "description", "candidate_name"),
         ),

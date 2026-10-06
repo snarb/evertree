@@ -81,11 +81,18 @@ def validate_process_layout(
     inactive_processes = {node.properties["process"] for node in programs} - {
         node.properties["process"] for node in selected
     }
-    directories = {
-        process_directory(graph, identity).rstrip("/")
-        for identity in own_processes - inactive_processes
+    required_processes = own_processes - inactive_processes
+    # A parent's own Program may be inactive while its subtype needs the directory.
+    required_processes |= {
+        ancestor.id
+        for identity in tuple(required_processes)
+        for ancestor in graph.ancestors(identity)
+        if ancestor.id in own_processes
     }
-    if len(directories) != len(own_processes - inactive_processes):
+    directories = {
+        process_directory(graph, identity).rstrip("/") for identity in required_processes
+    }
+    if len(directories) != len(required_processes):
         raise ValueError("Process taxonomy has colliding directory names")
 
     entrypoints = {}
@@ -144,7 +151,7 @@ def validate_process_layout(
             marker = PREFIX + "/".join((*parts[:role_index], parts[role_index].removesuffix(".py")))
             if marker not in entrypoints:
                 raise ValueError(f"Unregistered Program code: {path}")
-            if entrypoints[marker] == marker + ".py" and path != entrypoints[marker]:
+            if (entrypoints[marker] == marker + ".py") != (path == marker + ".py"):
                 raise ValueError(f"Program role cannot be both a file and a package: {marker}")
             process_parts = parts[:role_index]
         elif relative.name == "__init__.py":

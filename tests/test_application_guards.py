@@ -82,6 +82,65 @@ async def test_developer_binds_prediction_criteria_without_weakening_core_checks
     assert agent._acceptance_criteria(candidate) == policy
 
 
+@pytest.mark.parametrize("parent_by_id", [False, True])
+async def test_program_proposal_uses_selected_taxonomy_parent(agent, parent_by_id):
+    parent = agent.graph.find("Planning")
+    proposal = agent.propose_program(
+        "BudgetPlanning",
+        parent=parent.id if parent_by_id else parent.name,
+        role="exec",
+        claim="Plan within the available budget",
+        candidate_name="respect budget",
+    )
+    program = proposal["program"]
+    assert program["properties"]["git_path"] == (
+        "src/evertree/processes/task_management/planning/budget_planning/_exec.py"
+    )
+    assert agent.graph.ancestors(program["properties"]["process"])[0].id == parent.id
+    assert proposal["candidate"]["git_ref"] == (
+        "codex/program/Self/Process/TaskManagement/Planning/BudgetPlanning/exec/respect-budget"
+    )
+
+
+async def test_program_proposal_adds_missing_role_without_replacing_process(agent):
+    process = agent.graph.find("Planning")
+    active_exec = process.properties["active_exec"]
+    ancestors = agent.graph.ancestors(process.id)
+    proposal = agent.propose_program(
+        "Planning", role="model", claim="Predict plan cost", candidate_name="predict cost"
+    )
+    props = proposal["program"]["properties"]
+    assert props["process"] == process.id
+    assert props["git_path"] == "src/evertree/processes/task_management/planning/_model.py"
+    assert props["active"] is False
+    assert agent.graph.ancestors(process.id) == ancestors
+    assert agent.graph.get(process.id).properties["active_exec"] == active_exec
+    assert agent.graph.get(process.id).properties.get("active_model") is None
+    assert proposal["candidate"]["git_ref"] == (
+        "codex/program/Self/Process/TaskManagement/Planning/model/predict-cost"
+    )
+    # An inactive proposal reserves its role too; improve it through a candidate.
+    with pytest.raises(ValueError, match="already has this Program role"):
+        agent.propose_program("Planning", role="model", claim="Another model")
+
+
+@pytest.mark.parametrize(
+    ("name", "role", "parent"),
+    [
+        ("Planning", "exec", None),
+        ("Planning", "model", "Learning"),
+        ("NewProcess", "exec", "Process"),
+        ("NewProcess", "exec", "Self"),
+        ("NewProcess", "exec", "MissingParent"),
+    ],
+)
+async def test_invalid_program_proposals_do_not_change_graph(agent, name, role, parent):
+    identities = {node.id for node in agent.graph.nodes()}
+    with pytest.raises(ValueError):
+        agent.propose_program(name, role=role, parent=parent, claim="Improve behavior")
+    assert {node.id for node in agent.graph.nodes()} == identities
+
+
 async def test_verification_retains_tool_evidence_after_long_stream(agent):
     task = prepared_task(agent)
     run = agent.memory.start_run("Consciousness", "commit", {"task_id": task.id})

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from evertree.core.graph import GraphDelta, GraphStore, Node, NodeUpdate
+from evertree.core.graph import GraphDelta, GraphStore, Node, NodeUpdate, Prototype
 from evertree.core.programs.bootstrap import seed_process_delta
 from evertree.core.programs.layout import PREFIX, process_directory, validate_process_layout
 
@@ -133,6 +133,48 @@ def test_role_package_allows_helpers_and_inactive_proposal_does_not_require_main
         validate_process_layout(
             graph, sources, sources.__getitem__, candidate_program_id=program.id
         )
+
+
+@pytest.mark.parametrize("registered_package", [False, True])
+def test_role_cannot_have_both_file_and_package(seed_tree, registered_package):
+    graph, sources = seed_tree
+    program = graph.find("Planning.exec")
+    path = program.properties["git_path"]
+    package_entrypoint = path.removesuffix(".py") + "/implementation.py"
+    sources[package_entrypoint] = sources[path]
+    if registered_package:
+        update(graph, program, git_path=package_entrypoint)
+    with pytest.raises(ValueError, match="both a file and a package"):
+        validate_process_layout(graph, sources, sources.__getitem__)
+
+
+def test_candidate_subtype_keeps_parent_directory_with_inactive_parent_program(seed_tree):
+    graph, sources = seed_tree
+    parent = graph.find("Planning")
+    parent_program = graph.find("Planning.exec")
+    update(graph, parent_program, active=False)
+    sources.pop(parent_program.properties["git_path"])
+    child = Prototype(graph.reserve_id(), "BudgetPlanning", properties={"process": True})
+    path = process_directory(graph, parent.id) + "/budget_planning/_exec.py"
+    program = Node(
+        graph.reserve_id(),
+        "BudgetPlanning.exec",
+        kind="program",
+        properties={"process": child.id, "role": "exec", "git_path": path, "active": False},
+    )
+    graph.apply(
+        GraphDelta(
+            creates=(
+                child,
+                program,
+                graph.new_fact("SUBTYPE_OF", {"type": child.id, "supertype": parent.id}),
+                graph.new_fact("PROGRAM_FOR_PROCESS", {"program": program.id, "process": child.id}),
+            )
+        ),
+        provenance={"test": True},
+    )
+    sources[path] = "def run(): return 1"
+    validate_process_layout(graph, sources, sources.__getitem__, candidate_program_id=program.id)
 
 
 def test_independent_layout_gate_runs_before_candidate_evaluator(tmp_path):
