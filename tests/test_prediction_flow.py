@@ -368,7 +368,7 @@ async def test_application_feedback_value_scoring_and_real_evaluator_child_workf
             len([event for event in app.memory.events if event.operator == "prediction_review"])
             == 1
         )
-        credit_id = app.graph.find("CreditAssignment.default").id
+        credit_id = app.graph.find("CreditAssignment.exec").id
         assert any(run.program == credit_id for run in app.memory.runs)
         assert app.learning.state("verified_task_rate")["parameters"]["observed_count"] == 0
         forged = record(

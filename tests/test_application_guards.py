@@ -49,6 +49,10 @@ async def test_developer_binds_prediction_criteria_without_weakening_core_checks
         description="Predict a binary probability",
     )
     program = proposal["program"]["id"]
+    assert (
+        proposal["candidate"]["git_ref"]
+        == "codex/program/Self/Process/Probability/model/learn-a-binary"
+    )
     dataset = agent.datasets.create(
         "Independent probabilities",
         [EvaluationCase("case", {}, True, "prediction", ("heldout-episode",))],

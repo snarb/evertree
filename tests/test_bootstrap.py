@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from evertree.processes.bootstrap import bootstrap_catalog
-from evertree.processes.episode_step_selection._programs.default.implementation import (
+from evertree.core.programs.bootstrap import bootstrap_catalog
+from evertree.processes.memory_processing.experience_compaction._exec import run as compact
+from evertree.processes.task_management.episode_step_selection._exec import (
     run as episode_step,
 )
-from evertree.processes.experience_compaction._programs.default.implementation import run as compact
-from evertree.processes.task_framing._programs.default.implementation import run as frame
+from evertree.processes.task_management.task_framing._exec import run as frame
 
 
 class Context:

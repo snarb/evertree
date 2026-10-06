@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from evertree.core.codex_provider import CodexProvider
+from evertree.core.codex import CodexProvider
 from evertree.core.provider import (
     AgentEvent,
     AgentRequest,
@@ -322,7 +322,7 @@ def test_launcher_drops_host_permissions_and_secrets(monkeypatch):
     import subprocess
     import sys
 
-    from evertree.core.codex_provider import _LAUNCHER
+    from evertree.core.codex import _LAUNCHER
 
     monkeypatch.setenv("CODEX_PERMISSION_PROFILE", ":danger-full-access")
     monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
@@ -637,7 +637,7 @@ async def test_absent_catalog_bootstrap_is_nonbilled_and_owns_process_tree(
         trees.append(tree)
         return tree
 
-    monkeypatch.setattr("evertree.core.codex_configuration._attach_process_tree", attach)
+    monkeypatch.setattr("evertree.core.codex.configuration._attach_process_tree", attach)
     events = [
         e
         async for e in CodexProvider(client_factory=factory).run(

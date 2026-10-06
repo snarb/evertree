@@ -175,7 +175,7 @@ async def test_explicit_reassessment_uses_resource_control_and_preserves_spendin
     assert len(task.budget_history) == 2
     assert task.execution_budget.resources["active_time_minutes"] == 4
     assert task.spent["active_time_minutes"] >= spent
-    resource_control = app.graph.find("ResourceControl.default")
+    resource_control = app.graph.find("ResourceControl.exec")
     assert any(run.program == resource_control.id for run in app.memory.runs)
     assert "task_state" in json.loads(app.provider.requests[2].prompt)
 

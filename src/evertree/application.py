@@ -26,11 +26,11 @@ from ._application.prompts import (  # noqa: F401 -- preserve existing imports f
 from ._application.tools import ToolsMixin
 from .core.backup import BackupManager
 from .core.cache import prune
-from .core.codex_provider import CodexProvider
+from .core.codex import CodexProvider
 from .core.environment import capture_runtime, require_committed_runtime
 from .core.evaluation import SupervisorFeedback, exact_json_equal
-from .core.lifecycle import git, initialize_seed_repository, resolve_program_remote
 from .core.memory import TraceOutputRef
+from .core.programs.lifecycle import git, initialize_seed_repository, resolve_program_remote
 from .core.provider import AgentProvider
 from .core.runtime import Runtime
 from .core.values import json_value

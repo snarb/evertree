@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import dataclasses
 import json
 import os
 from pathlib import Path
@@ -17,10 +16,10 @@ from ..core.cognition import AttentionRuntime, TaskSpecification, TaskStore
 from ..core.datasets import DatasetStore
 from ..core.environment import validate_runtime
 from ..core.evaluation import EvaluationStore
-from ..core.graph import GraphDelta, GraphStore, Node, Prototype
+from ..core.graph import GraphDelta, GraphStore, Node
 from ..core.learning import LearningBinding, LearningStore
-from ..core.lifecycle import fetch_programs, git, publish_programs
 from ..core.memory import TraceStore
+from ..core.programs.lifecycle import fetch_programs, git, publish_programs
 
 
 class PersistenceMixin:
@@ -49,7 +48,7 @@ class PersistenceMixin:
         self._predictions: dict[str, float] = {}
 
     def _bootstrap(self):
-        from ..processes.bootstrap import INITIAL_PRINCIPLES, bootstrap_catalog
+        from ..core.programs.bootstrap import INITIAL_PRINCIPLES, seed_process_delta
 
         revision = git(self.repository, "rev-parse", "main")
         run = self.memory.start_run("bootstrap", revision, {})
@@ -72,44 +71,11 @@ class PersistenceMixin:
             )
             creates.append(node)
             self._protected_nodes.add(node.id)
-        for descriptor in bootstrap_catalog():
-            descriptor = (
-                descriptor if isinstance(descriptor, dict) else dataclasses.asdict(descriptor)
-            )
-            name = descriptor["name"]
-            role = descriptor.get("role", "exec")
-            process = Prototype(self.graph.reserve_id(), name, properties={"process": True})
-            program = Node(
-                self.graph.reserve_id(),
-                name + ".default",
-                kind="program",
-                properties={
-                    "git_path": descriptor["git_path"],
-                    "role": role,
-                    "revision": revision,
-                    "process": process.id,
-                    "slug": descriptor["slug"],
-                    "roles": descriptor["roles"],
-                    "entrypoint": descriptor.get("entrypoint", "run"),
-                    "active": True,
-                },
-            )
-            process = dataclasses.replace(
-                process, properties={"process": True, "active_" + role: program.id}
-            )
-            creates.extend(
-                (
-                    process,
-                    program,
-                    self.graph.new_fact(
-                        "SUBTYPE_OF", {"type": process.id, "supertype": ids["Process"]}
-                    ),
-                    self.graph.new_fact(
-                        "PROGRAM_FOR_PROCESS", {"program": program.id, "process": process.id}
-                    ),
-                )
-            )
+        self_id = next(node.id for node in creates if node.name == "Self")
+        creates.extend(seed_process_delta(self.graph, self_id=self_id, revision=revision).creates)
         self.graph.apply(GraphDelta(creates=tuple(creates)), provenance=ref)
+        self._validate_program_layout(None, revision)
+        self._protected_nodes.add(self.graph.find("SelfProcess").id)
         principles = tuple(
             Node(self.graph.reserve_id(), name, kind="principle", description=description)
             for name, description in INITIAL_PRINCIPLES.items()

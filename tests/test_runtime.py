@@ -174,24 +174,30 @@ async def test_nested_programs_and_durable_steps(tmp_path, process_factory):
         repository,
         {
             "src/evertree/processes/__init__.py": "",
-            "src/evertree/processes/calculation.py": "def bump(value): return value + 1\n",
-            "src/evertree/processes/parent.py": """
+            "src/evertree/processes/calculation/__init__.py": "",
+            "src/evertree/processes/calculation/parent/__init__.py": "",
+            "src/evertree/processes/calculation/child/__init__.py": "",
+            "src/evertree/processes/calculation/child/_exec/__init__.py": "",
+            "src/evertree/processes/calculation/child/_exec/helpers.py": "def bump(value): return value + 1\n",
+            "src/evertree/processes/calculation/parent/_exec.py": """
 async def run(ctx, child):
     # et:op=first_counter
     first = await ctx.step('counter', {'value': 1})
     result = await ctx.call(child, {'value': first})
     return {'result': result.result, 'feedback': 'nested complete'}
 """,
-            "src/evertree/processes/child.py": """
-from .calculation import bump
+            "src/evertree/processes/calculation/child/_exec/implementation.py": """
+from .helpers import bump
 async def run(ctx, value):
     result = await ctx.step('counter', {'value': bump(value)})
     return {'result': result}
 """,
         },
     )
-    parent = ProgramSpec("parent", "src/evertree/processes/parent.py", revision)
-    child = ProgramSpec(2, "src/evertree/processes/child.py", revision)
+    parent = ProgramSpec("parent", "src/evertree/processes/calculation/parent/_exec.py", revision)
+    child = ProgramSpec(
+        2, "src/evertree/processes/calculation/child/_exec/implementation.py", revision
+    )
     calls, traces = [], []
 
     async def gateway(method, payload):

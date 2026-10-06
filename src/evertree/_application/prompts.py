@@ -127,9 +127,9 @@ def consciousness_tools():
         ),
         tool(
             "create_candidate",
-            "Create an isolated candidate branch for a reusable Program change.",
-            {"program": integer, "claim": string},
-            ("program", "claim"),
+            "Create an isolated candidate branch for a reusable Program change. Give candidate_name a specific change label of one to three words.",
+            {"program": integer, "claim": string, "candidate_name": string},
+            ("program", "claim", "candidate_name"),
         ),
         tool(
             "propose_program",
@@ -139,8 +139,9 @@ def consciousness_tools():
                 "role": {"enum": ["model", "exec"], "type": "string"},
                 "claim": string,
                 "description": string,
+                "candidate_name": string,
             },
-            ("name", "role", "claim", "description"),
+            ("name", "role", "claim", "description", "candidate_name"),
         ),
         tool(
             "develop_candidate",

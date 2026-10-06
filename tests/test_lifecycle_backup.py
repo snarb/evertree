@@ -8,7 +8,7 @@ from test_runtime import TestProcess, commit_programs
 
 from evertree.core.backup import BackupError, BackupManager, _extended, safe_remove_tree
 from evertree.core.evaluation import AcceptanceCriteria
-from evertree.core.lifecycle import (
+from evertree.core.programs.lifecycle import (
     EvaluationReport,
     LifecycleError,
     ProgramLifecycleRuntime,
@@ -60,7 +60,27 @@ def test_amending_candidate_keeps_both_committed_revisions(tmp_path):
     lifecycle.discard_candidates([candidate.id])
     assert not workspace.exists()
     for revision in (original, amended):
-        assert git(repo, "rev-parse", "refs/heads/candidates/" + revision) == revision
+        assert git(repo, "rev-parse", "refs/tags/" + candidate.git_ref + "/" + revision) == revision
+    assert git(repo, "rev-parse", "refs/heads/" + candidate.git_ref) == amended
+
+
+def test_candidate_branch_names_use_graph_path_role_and_readable_unique_labels(tmp_path):
+    repo = seed_repository(tmp_path)
+    lifecycle = ProgramLifecycleRuntime(
+        repo,
+        tmp_path / "lifecycle",
+        AcceptanceCriteria(("tests",)),
+        program_path=lambda _: "Self/Process/TaskManagement/Planning/exec",
+    )
+    first = lifecycle.create_candidate(42, "Reduce planning cost", candidate_name="Refine Budget")
+    second = lifecycle.create_candidate(42, "Try another approach", candidate_name="refine-budget")
+    assert first.git_ref == "codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget"
+    assert second.git_ref == first.git_ref + "-2"
+    assert first.id != second.id and first.program_id == second.program_id == 42
+    for name in ("", "four words are invalid", "!!!"):
+        with pytest.raises(ValueError, match="one to three"):
+            lifecycle.create_candidate(42, "Improve result", candidate_name=name)
+    assert len(lifecycle.snapshot()["branches"]) == 2
 
 
 def test_single_remote_branch_keeps_history_after_rollback_and_candidate_changes(
@@ -113,7 +133,7 @@ def test_single_remote_branch_keeps_history_after_rollback_and_candidate_changes
 def test_program_publication_can_retry_after_interrupted_push(
     tmp_path, program_remote, monkeypatch, server_accepted
 ):
-    from evertree.core import lifecycle as module
+    from evertree.core.programs import lifecycle as module
 
     repo = seed_repository(tmp_path)
     publish_programs(repo, program_remote)
@@ -226,7 +246,9 @@ async def test_lifecycle_rejects_acceptance_dependency_and_changed_commit(tmp_pa
         repo, tmp_path / "lifecycle", AcceptanceCriteria(("checks",))
     )
     protected = lifecycle.create_candidate("program", "Replace acceptance")
-    change(protected, "src/evertree/core/evaluation.py", "def always_pass(): return True\n")
+    change(
+        protected, "src/evertree/core/evaluation/__init__.py", "def always_pass(): return True\n"
+    )
 
     async def evaluate(branch, revision):
         return EvaluationReport(
@@ -305,7 +327,7 @@ def test_missing_candidate_metadata_cannot_discover_or_modify_parent_repository(
 
 @pytest.mark.parametrize("section", ["include", 'includeIf "gitdir:**"', "Include"])
 def test_git_rejects_external_includes_before_invoking_git(tmp_path, monkeypatch, section):
-    from evertree.core import program_repository
+    from evertree.core.runtime import repository as program_repository
 
     repo = seed_repository(tmp_path)
     private = tmp_path / "private-canary"
@@ -324,7 +346,7 @@ def test_git_rejects_external_includes_before_invoking_git(tmp_path, monkeypatch
 
 @pytest.mark.parametrize("relative", ["objects/info/alternates", "commondir", "info/grafts"])
 def test_git_rejects_external_metadata_redirects(tmp_path, monkeypatch, relative):
-    from evertree.core import program_repository
+    from evertree.core.runtime import repository as program_repository
 
     repo = seed_repository(tmp_path)
     redirect = repo / ".git" / relative
@@ -343,7 +365,7 @@ def test_git_rejects_gitfile_and_nested_metadata_links(tmp_path, monkeypatch):
     import os
     import subprocess
 
-    from evertree.core import program_repository
+    from evertree.core.runtime import repository as program_repository
 
     repo = seed_repository(tmp_path)
     outside = tmp_path / "outside-metadata"
@@ -399,13 +421,16 @@ def test_git_ignores_replacement_objects_and_candidate_integrity_is_checked(tmp_
 
 
 def test_cross_program_imports_require_runtime_but_own_helpers_are_allowed():
-    path = "src/evertree/processes/task/_programs/default/implementation.py"
-    validate_program_imports(
-        "from evertree.processes.task._programs.default.helper import useful", path
-    )
+    path = "src/evertree/processes/task/_exec/implementation.py"
+    validate_program_imports("from evertree.processes.task._exec.helper import useful", path)
+    validate_program_imports("from .helper import useful", path)
+    validate_program_imports("from . import helper", path)
     for source in (
-        "from evertree.processes.other._programs.default import run",
-        "importlib.import_module('evertree.processes.other._programs.default')",
+        "from evertree.processes.other._exec import run",
+        "from .._model import run",
+        "from ...other._exec import run",
+        "importlib.import_module('evertree.processes.other._exec')",
+        "from evertree.processes import other",
     ):
         with pytest.raises(LifecycleError, match="cross-Program"):
             validate_program_imports(source, path)
@@ -487,7 +512,7 @@ def test_managed_git_reads_revision_paths_under_long_temporary_root(tmp_path):
     git(root, "init", "-b", "main")
     git(root, "config", "user.name", "Test")
     git(root, "config", "user.email", "test@localhost")
-    relative = "src/evertree/processes/example/_programs/default/implementation.py"
+    relative = "src/evertree/processes/task_management/example_process_with_long_name/_exec.py"
     target = _extended(root / relative)
     target.parent.mkdir(parents=True)
     target.write_text("value = 3\n")

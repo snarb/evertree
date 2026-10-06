@@ -24,7 +24,7 @@ from evertree.core.evaluation import (
 )
 from evertree.core.graph import AccessView, Clause, GraphDelta, Predicate, RelationType, Slot
 from evertree.core.learning import LearningBinding, LearningObjective, LearningSignal, LearningStore
-from evertree.core.lifecycle import LifecycleError, git
+from evertree.core.programs.lifecycle import LifecycleError, git
 from evertree.core.runtime import Runtime
 
 WORKER_RUNTIME = partial(Runtime, process_factory=TestProcess)

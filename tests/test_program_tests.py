@@ -5,7 +5,7 @@ import asyncio
 import pytest
 from test_runtime import TestProcess, commit_programs
 
-from evertree.core.program_tests import run_candidate_tests
+from evertree.core.programs.tests import run_candidate_tests
 
 SUITE = """
 import unittest

@@ -31,7 +31,7 @@ def sources(tmp_path, monkeypatch, program_remote):
     monkeypatch.setattr(
         environment, "_installed_packages", lambda: {"evertree": "0.1.0", "dependency": "1.2.3"}
     )
-    from evertree.core.lifecycle import git
+    from evertree.core.programs.lifecycle import git
 
     git(repository, "init", "-b", "main")
     git(repository, "config", "user.name", "Test")
@@ -94,7 +94,7 @@ def test_restore_rejects_different_installed_runtime_without_overwriting_it(
     ],
 )
 def test_uncommitted_runtime_is_rejected(sources, relative, staged):
-    from evertree.core.lifecycle import git
+    from evertree.core.programs.lifecycle import git
 
     (sources.parent / relative).write_text("changed\n", encoding="utf-8")
     if staged:
@@ -104,7 +104,7 @@ def test_uncommitted_runtime_is_rejected(sources, relative, staged):
 
 
 def test_deleted_remote_branch_cannot_pass_via_stale_local_refs(sources, program_remote):
-    from evertree.core.lifecycle import git, remote_git
+    from evertree.core.programs.lifecycle import git, remote_git
 
     branch = git(sources.parent, "config", "--get", "branch.main.merge")
     remote_git(Path(program_remote), "update-ref", "-d", branch)
@@ -185,7 +185,7 @@ def test_state_rename_retries_are_bounded(tmp_path, monkeypatch):
 
 
 def test_local_only_runtime_commit_is_rejected(sources):
-    from evertree.core.lifecycle import git
+    from evertree.core.programs.lifecycle import git
 
     (sources / "core/trusted.py").write_text("VERSION = 2\n")
     git(sources.parent, "add", ".")

@@ -9,7 +9,7 @@ import pytest
 from websockets.asyncio.client import connect
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 
-from evertree.core.codex_executor import _CMD_SHIM, CodexExecutor
+from evertree.core.codex.executor import _CMD_SHIM, CodexExecutor
 
 
 class PipeProcess:
@@ -260,7 +260,7 @@ async def test_listen_failure_reaps_executor(tmp_path, monkeypatch):
     async def fail_listen(*_, **__):
         raise OSError("Fixture cannot bind socket")
 
-    monkeypatch.setattr("evertree.core.codex_executor.serve", fail_listen)
+    monkeypatch.setattr("evertree.core.codex.executor.serve", fail_listen)
     with pytest.raises(OSError, match="cannot bind"):
         await executor.start()
     assert process.closed

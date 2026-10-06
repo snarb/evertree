@@ -15,10 +15,10 @@ import pytest
 from evertree.core.actions import ActionGateway, ActionOption
 from evertree.core.graph import ContractError, json_value
 from evertree.core.memory import MemoryQuery, TraceStore
-from evertree.processes.experience_compaction._programs.default.implementation import (
+from evertree.processes.memory_processing.experience_compaction._exec import (
     run as propose_compaction,
 )
-from evertree.processes.replay_selection._programs.default.implementation import (
+from evertree.processes.memory_processing.replay_selection._exec import (
     run as select_replay,
 )
 

@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import dataclasses
+import io
+import zipfile
+from pathlib import Path
 from uuid import uuid4
 
 from ..core.anchors import AnchorResolver, parse_anchors
 from ..core.evaluation import AcceptanceCriteria, MetricGuardrail
 from ..core.graph import GraphDelta, Node, NodeUpdate, Prototype
-from ..core.lifecycle import ProgramLifecycleRuntime, git
+from ..core.programs.layout import process_directory, process_slug, validate_process_layout
+from ..core.programs.lifecycle import ProgramLifecycleRuntime, git
 from ..core.provider import AgentRequest
 from ..core.runtime import ProgramSpec, _git
 from ..core.values import json_value
@@ -23,7 +27,34 @@ class ProgramsMixin:
             self.state_dir / "lifecycle",
             self._acceptance_criteria,
             on_activate=self._activated,
+            validate_layout=self._validate_program_layout,
+            program_path=self._program_graph_path,
         )
+
+    def _program_graph_path(self, identity):
+        program = self.graph.get(int(identity))
+        process = self.graph.get(program.properties["process"])
+        lineage = [process, *self.graph.ancestors(process.id)]
+        root = self.graph.find("SelfProcess")
+        names = []
+        for node in lineage:
+            if node.id == root.id:
+                break
+            names.append(node.name)
+        else:
+            raise ValueError("Program must belong to Self/Process")
+        return "/".join(("Self", "Process", *reversed(names), program.properties["role"]))
+
+    def _validate_program_layout(self, branch, revision):
+        repository = Path(branch.workspace) if branch else self.repository
+        archive = _git(repository, "archive", "--format=zip", revision, "src/evertree/processes")
+        with zipfile.ZipFile(io.BytesIO(archive)) as sources:
+            validate_process_layout(
+                self.graph,
+                sources.namelist(),
+                lambda path: sources.read(path).decode("utf-8"),
+                candidate_program_id=int(branch.program_id) if branch else None,
+            )
 
     def _acceptance_criteria(self, candidate):
         binding = self._evaluation_bindings.get(str(candidate.program_id))
@@ -66,10 +97,19 @@ class ProgramsMixin:
     def programs(self):
         return [json_value(node) for node in self.graph.nodes(kind="program")]
 
-    def propose_program(self, name: str, *, role: str, claim: str, description=""):
+    def propose_program(
+        self, name: str, *, role: str, claim: str, description="", candidate_name: str | None = None
+    ):
         """Create an inactive definition and candidate; activation still requires evaluation."""
         if role not in {"exec", "model"} or not name.isidentifier() or self.graph.find(name):
             raise ValueError("A new Program requires a unique identifier name and model/exec role")
+        slug = process_slug(name)
+        directory = process_directory(self.graph, self.graph.find("SelfProcess").id).rstrip("/")
+        if slug.startswith("_") or any(
+            process_directory(self.graph, node.id).rstrip("/") == directory + "/" + slug
+            for node in self.graph.descendants(self.graph.find("SelfProcess").id)
+        ):
+            raise ValueError("Process name collides with an existing or reserved directory")
         run = self.memory.start_run(
             "ProgramProposal", git(self.repository, "rev-parse", "main"), {"name": name}
         )
@@ -79,13 +119,15 @@ class ProgramsMixin:
         process = Prototype(self.graph.reserve_id(), name, properties={"process": True})
         program = Node(
             self.graph.reserve_id(),
-            name + ".candidate",
+            name + "." + role,
             kind="program",
             description=description,
             properties={
-                "git_path": f"src/evertree/processes/{name}/_programs/default/implementation.py",
+                "git_path": f"{directory}/{slug}/_{role}.py",
                 "process": process.id,
                 "role": role,
+                "roles": (role,),
+                "slug": slug,
                 "active": False,
                 "entrypoint": "run",
             },
@@ -95,7 +137,8 @@ class ProgramsMixin:
                 process,
                 program,
                 self.graph.new_fact(
-                    "SUBTYPE_OF", {"type": process.id, "supertype": self.graph.find("Process").id}
+                    "SUBTYPE_OF",
+                    {"type": process.id, "supertype": self.graph.find("SelfProcess").id},
                 ),
                 self.graph.new_fact(
                     "PROGRAM_FOR_PROCESS", {"program": program.id, "process": process.id}
@@ -106,7 +149,9 @@ class ProgramsMixin:
         self.graph.apply(delta, provenance=ref)
         self.memory.retain(ref, "graph:" + str(program.id))
         self.memory.finish_run(run)
-        candidate = self.lifecycle.create_candidate(program.id, claim)
+        candidate = self.lifecycle.create_candidate(
+            program.id, claim, candidate_name=candidate_name
+        )
         if self._current_task:
             self._candidate_owners[candidate.id] = self._current_task
         return {"program": json_value(program), "candidate": dataclasses.asdict(candidate)}
@@ -202,6 +247,7 @@ class ProgramsMixin:
                     )
 
     def _activated(self, branch, revision):
+        self._validate_program_layout(branch, revision)
         node = self.graph.get(int(branch.program_id))
         run = self.memory.start_run("EvaluationChoice", revision, {"candidate": branch.id})
         event = self.memory.record(
@@ -275,7 +321,7 @@ class ProgramsMixin:
         }
 
     async def evaluate_candidate(self, candidate_id: str, *, task_id: str):
-        from ..core.experiments import evaluate_pair
+        from ..core.programs.experiments import evaluate_pair
 
         candidate = self.lifecycle.candidate(candidate_id)
         binding = self._evaluation_bindings.get(str(candidate.program_id))

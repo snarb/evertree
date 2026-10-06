@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .application import EverTree, EverTreeEvent
-    from .core.codex_provider import CodexProvider
+    from .core.codex import CodexProvider
     from .core.evaluation import SupervisorFeedback
     from .core.provider import AgentEvent, AgentProvider, AgentRequest, ScriptedProvider
 

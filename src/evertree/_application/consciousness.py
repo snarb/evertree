@@ -8,8 +8,8 @@ import json
 from ..core.cognition import TaskSpecification, prepare_context
 from ..core.evaluation import VerificationResult
 from ..core.learning import LearningCoordinator, LearningObjective, LearningSignal
-from ..core.lifecycle import git
 from ..core.memory import MemoryQuery
+from ..core.programs.lifecycle import git
 from ..core.provider import AgentRequest
 from ..core.values import json_value
 from .prompts import (

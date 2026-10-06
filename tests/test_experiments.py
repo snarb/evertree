@@ -9,12 +9,12 @@ from test_runtime import TestProcess, commit_programs
 
 from evertree.core.datasets import DatasetRevision, EvaluationCase
 from evertree.core.evaluation import AcceptanceCriteria, EvaluationStore, assess_candidate
-from evertree.core.experiments import evaluate_pair as core_evaluate_pair
 from evertree.core.graph import GraphDelta, GraphStore, Node
 from evertree.core.learning import LearningStore
-from evertree.core.lifecycle import ProgramLifecycleRuntime
 from evertree.core.memory import TraceStore
 from evertree.core.predictions import PredictionEvaluator
+from evertree.core.programs.experiments import evaluate_pair as core_evaluate_pair
+from evertree.core.programs.lifecycle import ProgramLifecycleRuntime
 from evertree.core.runtime import ProgramSpec, Runtime
 
 PATH = "src/evertree/processes/example.py"

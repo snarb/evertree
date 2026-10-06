@@ -8,7 +8,7 @@
 
 Основная роль Program — ровно `model` либо `exec`. `meta` модифицирует `exec`. Режим исполнения (`live`, `evaluation`, `simulation`) задаётся конкретному запуску. Model-вызовы не получают shell, динамические инструменты действий или внешние наблюдения.
 
-SDK работает в доверенном процессе с локальной авторизацией. Для native coding он подключает внешнюю среду исполнения: официальный Codex `exec-server` запускается внутри AppContainer EverTree с правами на выбранную workspace и временный профиль. Shell, файловые инструменты и их дочерние процессы остаются в этом контейнере; сетевые capabilities ему не выдаются. Python-мост `core/codex_executor.py` передаёт JSON-RPC между stdio сервера и loopback WebSocket. Подключение требует случайного bearer capability текущего запуска; браузерные Origin и второй клиент отклоняются. Capability не включается в URL или трассу.
+SDK работает в доверенном процессе с локальной авторизацией. Для native coding он подключает внешнюю среду исполнения: официальный Codex `exec-server` запускается внутри AppContainer EverTree с правами на выбранную workspace и временный профиль. Shell, файловые инструменты и их дочерние процессы остаются в этом контейнере; сетевые capabilities ему не выдаются. Python-мост `core/codex/executor.py` передаёт JSON-RPC между stdio сервера и loopback WebSocket. Подключение требует случайного bearer capability текущего запуска; браузерные Origin и второй клиент отклоняются. Capability не включается в URL или трассу.
 
 В проверенной Windows-среде `cmd /c dir` и Git внутри AppContainer не работают из-за ограничений Windows на нормализацию DOS-путей. Дополнительные права `ReadAttributes` и `Traverse` на родительские каталоги это не исправляют; такие права runtime не добавляет. Агент использует файловые инструменты Codex или Python `pathlib`/`os` для работы с workspace и Python для запуска тестов. Создание commit и операции принятия кандидата выполняет доверенное ядро с проверками метаданных Git; перенос native-команд в процесс без изоляции не выполняется.
 
@@ -22,27 +22,27 @@ SDK работает в доверенном процессе с локальн�
 
 | Область | Реализация | Проверки |
 | --- | --- | --- |
-| Идентичность, типизированный гипермультиграф, атомарные дельты, taxonomy, слоты, AccessView, Facets, UNKNOWN | `core/graph.py` | `test_graph.py` |
+| Идентичность, типизированный гипермультиграф, атомарные дельты, taxonomy, слоты, AccessView, Facets, UNKNOWN | `core/graph/__init__.py` | `test_graph.py` |
 | Атрибуция, интервалы, нормализация, структурные сигналы | `core/attribution.py`, `core/topology.py` | `test_attribution.py`, `test_graph.py` |
-| Единые доменные операции и права model/exec в live и evaluation, защита Program bindings | `core/operations.py`, `core/experiments.py` | `test_core_operations.py`, `test_operations_experiment.py` |
-| Неизменяемые traces, provenance, output refs, retention closure, retrieval, отложенное удаление | `core/memory.py` | `test_memory.py` |
+| Единые доменные операции и права model/exec в live и evaluation, защита Program bindings | `core/operations.py`, `core/programs/experiments.py` | `test_core_operations.py`, `test_operations_experiment.py` |
+| Неизменяемые traces, provenance, output refs, retention closure, retrieval, отложенное удаление | `core/memory/__init__.py` | `test_memory.py` |
 | Binary/categorical beliefs, зависимые источники, пересмотр и отзыв evidence, ограниченное неподтверждённое влияние | `core/beliefs.py` | `test_beliefs.py` |
-| AppContainer, приватный Python, JSON IPC, Job Object, commit-код | `core/sandbox.py`, `core/runtime.py`, `core/worker.py` | `test_runtime.py` |
-| CodeAnchor, точные Git-версии и семантические operator ID | `core/anchors.py`, `core/runtime.py` | `test_anchors.py`, `test_runtime.py` |
-| DBOS workflow на ProgramRun, дочерние workflows, steps, replay и наблюдения | `core/runtime.py`, `core/worker.py` | `test_runtime.py`, `test_lifecycle_backup.py` |
+| AppContainer, приватный Python, JSON IPC, Job Object, commit-код | `core/sandbox/__init__.py`, `core/runtime/__init__.py`, `core/runtime/worker.py` | `test_runtime.py` |
+| CodeAnchor, точные Git-версии и семантические operator ID | `core/anchors.py`, `core/runtime/__init__.py` | `test_anchors.py`, `test_runtime.py` |
+| DBOS workflow на ProgramRun, дочерние workflows, steps, replay и наблюдения | `core/runtime/__init__.py`, `core/runtime/worker.py` | `test_runtime.py`, `test_lifecycle_backup.py` |
 | Backup состояния + SQLite + Git-ревизии + параметры окружения; ошибки обслуживания и длинные пути | `core/backup.py`, `application.py` | `test_lifecycle_backup.py`, `test_application.py`, `test_application_guards.py` |
 | Git commit доверенного runtime, SHA256, Python и версии зависимостей; проверка совместимости до restore | `core/environment.py`, `core/backup.py`, `application.py` | `test_environment.py`, `test_application_guards.py` |
-| Provider abstraction, Luna/high, динамические инструменты, события, отмена, ограничение прав | `core/provider.py`, `core/codex_provider.py` | `test_provider.py`, отдельная SDK-интеграция |
-| Изолированный native Codex exec-server, authenticated loopback bridge и остановка дерева | `core/codex_executor.py`, `core/sandbox.py` | `test_codex_executor.py`, `test_native_executor_security.py` |
+| Provider abstraction, Luna/high, динамические инструменты, события, отмена, ограничение прав | `core/provider.py`, `core/codex/__init__.py` | `test_provider.py`, отдельная SDK-интеграция |
+| Изолированный native Codex exec-server, authenticated loopback bridge и остановка дерева | `core/codex/executor.py`, `core/sandbox/__init__.py` | `test_codex_executor.py`, `test_native_executor_security.py` |
 | Готовые Action-команды, проверка сессии, unknown outcome, отсутствие автоматического повтора | `core/actions.py` | `test_actions.py` |
-| TaskSpecification, внимание, единственная Task, бюджеты, исключение approval wait и ancestry расхода | `core/cognition.py`, `application.py` | `test_cognition_learning.py`, `test_application.py`, `test_application_guards.py` |
-| Первоначальный разбор, подготовка контекста/аргументов, планирование, контроль ресурсов, verification, reflection | `processes/*/_programs/default/implementation.py` | `test_bootstrap.py`, `test_application.py` |
-| Evaluated / NotApplicable / Unresolved → Signal → Credit → PreparedUpdate → ledger/receipt; отзыв и коррекция | `core/evaluation.py`, `core/learning.py` | `test_cognition_learning.py` |
-| SupervisorFeedback −5…+5, PREDICTS → исходный trace, сопоставление наблюдений, missing prediction → дочерний CreditAssignment → Attention | `core/predictions.py`, `core/evaluation.py`, `application.py`, `processes/prediction_evaluator/` | `test_prediction_flow.py` |
-| Bernoulli, категории, числовые моменты, линейная регрессия; prediction без изменения параметров | `core/learning.py` | `test_cognition_learning.py` |
+| TaskSpecification, внимание, единственная Task, бюджеты, исключение approval wait и ancestry расхода | `core/cognition/__init__.py`, `application.py` | `test_cognition_learning.py`, `test_application.py`, `test_application_guards.py` |
+| Первоначальный разбор, подготовка контекста/аргументов, планирование, контроль ресурсов, verification, reflection | `processes/<group>/<process>/_exec.py` | `test_bootstrap.py`, `test_application.py` |
+| Evaluated / NotApplicable / Unresolved → Signal → Credit → PreparedUpdate → ledger/receipt; отзыв и коррекция | `core/evaluation/__init__.py`, `core/learning/__init__.py` | `test_cognition_learning.py` |
+| SupervisorFeedback −5…+5, PREDICTS → исходный trace, сопоставление наблюдений, missing prediction → дочерний CreditAssignment → Attention | `core/predictions.py`, `core/evaluation/__init__.py`, `application.py`, `processes/learning/prediction_evaluator/` | `test_prediction_flow.py` |
+| Bernoulli, категории, числовые моменты, линейная регрессия; prediction без изменения параметров | `core/learning/__init__.py` | `test_cognition_learning.py` |
 | Неизменяемые datasets, версии, source/episode independence, exposure lineage | `core/datasets.py` | `test_cognition_learning.py` |
-| Claim, candidate clone, фиксированные проверки, exact commit, EvaluationChoice, активация | `core/lifecycle.py`, `core/experiments.py`, `application.py` | `test_lifecycle_backup.py`, `test_experiments.py`, `test_demo.py` |
-| Запуск committed unittest suite кандидата в sandbox, отсутствие тестов, падение, timeout | `core/program_tests.py` | `test_program_tests.py` |
+| Claim, candidate clone, фиксированные проверки, exact commit, EvaluationChoice, активация | `core/programs/lifecycle.py`, `core/programs/experiments.py`, `application.py` | `test_lifecycle_backup.py`, `test_experiments.py`, `test_demo.py` |
+| Запуск committed unittest suite кандидата в sandbox, отсутствие тестов, падение, timeout | `core/programs/tests.py` | `test_program_tests.py` |
 | Подписки событий без скрытой очереди, контекст без дублирования SDK-сессии, начальный бюджет и ResourceControl | `application.py` | `test_application_flow.py` |
 | CLI и асинхронный API, новые входы во время выполнения, отдельные формирование/доставка/завершение | `cli.py`, `application.py` | `test_cli.py`, `test_application.py`, `test_application_guards.py` |
 
@@ -132,3 +132,5 @@ Associative Plane с пометкой `future`, composite attribution axes, со
 - [Codex permission profiles](https://learn.chatgpt.com/docs/permissions).
 - [Windows AppContainer](https://learn.microsoft.com/en-us/windows/win32/secauthz/appcontainer-isolation).
 - [DBOS: локальная база](https://docs.dbos.dev/python/tutorials/database-connection).
+
+Структура Self/Process и role-файлы проверяются командой `uv run python -m evertree.core.programs.layout` в Windows CI, при bootstrap и перед оценкой/активацией кандидата. Старые snapshots восстанавливаются с соответствующим Git commit доверенного ядра: перенос каталогов не меняет этого требования проверки fingerprint.

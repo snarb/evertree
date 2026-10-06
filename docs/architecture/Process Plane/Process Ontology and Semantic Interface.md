@@ -87,6 +87,9 @@ ProcessConcept: Concept {
 **`Process`** — общий корневой концепт таксономии процессов. Все остальные типы процессов связаны с ним напрямую или через предков отношением [[Semantics Plane#^spec-SUBTYPE_OF|`SUBTYPE_OF`]]. Это конкретный концепт графа; `ProcessConcept` обозначает тип передаваемых объектов. Таксономия связывает виды процессов; составные шаги процесса описываются отдельно.
 ^def-ProcessRoot
 
+Собственные процессы агента образуют поддерево `SelfProcess` (представление **Self/Process**). Оно связано с общим `Process` через `SUBTYPE_OF`, с Self — через `PART_WHOLE`. Общий `Process` не переносится под Self: он также организует процессы внешнего мира. Начальные подтипы собственной ветви — `TaskManagement`, `CognitiveControl`, `MemoryProcessing` и `Learning`; каталог `src/evertree/processes/` отражает именно эту ветвь.
+
+
 ### Semantic organization: Concept → ProcessConcept → Program
 
 Основной semantic anchor — `Concept`. С ним связываются процессы, относящиеся к этому предмету, а с процессами — Programs, которые их моделируют или исполняют.

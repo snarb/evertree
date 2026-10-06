@@ -7,8 +7,8 @@ from test_runtime import TestProcess
 
 from evertree.core.attribution import AttributionRuntime, NormalizationRule, PropertyDefinition
 from evertree.core.beliefs import BeliefStore
-from evertree.core.experiments import evaluate_pair
 from evertree.core.memory import TraceOutputRef
+from evertree.core.programs.experiments import evaluate_pair
 
 
 async def test_evaluation_uses_complete_isolated_semantic_state(tmp_path):

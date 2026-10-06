@@ -140,7 +140,7 @@ async def test_terminal_task_discards_its_workspace(agent, status):
 
 
 async def test_restore_fetches_committed_artifact_after_local_repository_is_lost(agent):
-    from evertree.core.lifecycle import git, remote_git
+    from evertree.core.programs.lifecycle import git, remote_git
 
     artifact = agent.repository / "artifacts/result.txt"
     artifact.parent.mkdir()
@@ -164,7 +164,7 @@ async def test_restore_fetches_committed_artifact_after_local_repository_is_lost
 
 
 async def test_failed_git_publication_keeps_previous_completed_backup(agent, tmp_path):
-    from evertree.core.lifecycle import LifecycleError
+    from evertree.core.programs.lifecycle import LifecycleError
 
     saved = await agent.backup()
     remote = agent._program_remote
@@ -181,7 +181,9 @@ async def test_failed_git_publication_keeps_previous_completed_backup(agent, tmp
 async def test_restore_discards_candidate_ownership_from_later_work(agent):
     task = task_for(agent)
     saved = await agent.backup()
-    candidate = agent.lifecycle.create_candidate("program", "Disposable experiment")
+    candidate = agent.lifecycle.create_candidate(
+        agent._program("TaskFraming").program_id, "Disposable experiment"
+    )
     agent._candidate_owners[candidate.id] = task.id
     await agent.restore(saved)
     assert not agent._candidate_owners
@@ -192,7 +194,9 @@ async def test_restore_discards_candidate_ownership_from_later_work(agent):
 async def test_provider_close_failure_still_discards_workspaces(agent, monkeypatch):
     task = task_for(agent)
     await write_code(agent, task, {"temporary.txt": "discard me"})
-    candidate = agent.lifecycle.create_candidate("program", "Disposable work")
+    candidate = agent.lifecycle.create_candidate(
+        agent._program("TaskFraming").program_id, "Disposable work"
+    )
 
     async def fail():
         raise RuntimeError("Provider close failed")

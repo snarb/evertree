@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .application import EverTree
-from .core.codex_provider import CodexProvider
+from .core.codex import CodexProvider
 from .core.graph import json_value
 from .core.sandbox import check_sandbox
 

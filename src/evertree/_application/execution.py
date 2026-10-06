@@ -8,7 +8,7 @@ import time
 from contextlib import contextmanager
 from uuid import uuid4
 
-from ..core.lifecycle import git
+from ..core.programs.lifecycle import git
 from ..core.provider import AgentRequest
 
 

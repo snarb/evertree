@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from .application import EverTree
-from .core.codex_provider import CodexProvider
+from .core.codex import CodexProvider
 from .core.datasets import EvaluationCase
 from .core.provider import AgentEvent, AgentRequest, ProviderError
 from .core.runtime import Runtime
@@ -138,6 +138,7 @@ class DemoProvider:
                 arguments = {
                     "program": self.program_id,
                     "claim": "Removing the set conversion preserves repeated observations without changing order semantics",
+                    "candidate_name": "preserve duplicates",
                 }
                 yield AgentEvent("tool_call", {"name": "create_candidate", "arguments": arguments})
                 self.candidate = await call("create_candidate", arguments)
@@ -240,6 +241,7 @@ async def run_demo(
             role="exec",
             claim="Ascending sorting can be implemented as a compact reusable deterministic Program",
             description="Sort integer values ascending; initial verification covers distinct inputs",
+            candidate_name="ascending sort",
         )
         program = proposal["program"]
         identity, path = program["id"], program["properties"]["git_path"]

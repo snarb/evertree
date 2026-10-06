@@ -27,15 +27,15 @@ from evertree.core.learning import (
     LearningSignal,
     LearningStore,
 )
-from evertree.core.lifecycle import (
+from evertree.core.memory import TraceStore
+from evertree.core.programs.lifecycle import (
     LifecycleError,
     ProgramLifecycleRuntime,
     git,
     initialize_seed_repository,
 )
-from evertree.core.memory import TraceStore
 from evertree.core.runtime import ProgramExecutionError, ProgramSpec
-from evertree.processes.reflection._programs.default.implementation import run as reflect
+from evertree.processes.learning.reflection._exec import run as reflect
 
 
 async def no_gateway(method, payload):

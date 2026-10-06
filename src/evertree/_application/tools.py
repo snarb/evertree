@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 from ..core.graph import GraphDelta, Node
-from ..core.lifecycle import git
 from ..core.memory import TraceOutputRef
+from ..core.programs.lifecycle import git
 from ..core.provider import AgentRequest
 from ..core.values import json_value
 from .prompts import CANDIDATE_INSTRUCTIONS, CODING_INSTRUCTIONS
@@ -75,10 +75,12 @@ class ToolsMixin:
             self._apply_delta(task_id, GraphDelta(creates=(node,)))
             return json_value(node)
         if name == "create_candidate":
-            self._program(args["program"], allow_inactive=True)
-            candidate = self.lifecycle.create_candidate(args["program"], args["claim"])
+            program = self._program(args["program"], allow_inactive=True)
+            candidate = self.lifecycle.create_candidate(
+                program.program_id, args["claim"], candidate_name=args.get("candidate_name")
+            )
             self._candidate_owners[candidate.id] = task_id
-            self.datasets.inherit_exposure("program:" + str(args["program"]), candidate.id)
+            self.datasets.inherit_exposure("program:" + str(program.program_id), candidate.id)
             return dataclasses.asdict(candidate)
         if name == "propose_program":
             result = self.propose_program(**args)

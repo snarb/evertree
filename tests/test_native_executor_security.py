@@ -9,7 +9,7 @@ import socket
 import pytest
 from websockets.asyncio.client import connect
 
-from evertree.core.codex_executor import CodexExecutor
+from evertree.core.codex.executor import CodexExecutor
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Native Windows AppContainer")
