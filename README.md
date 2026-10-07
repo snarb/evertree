@@ -2,9 +2,6 @@
 
 A local agent with a semantic graph, memory, and executable Programs that evolve through verified updates. Available through a CLI and asynchronous Python components; designed for a single installation.
 
-## Quick start
-
-Requires Python **3.13.16**, Git, [uv](https://docs.astral.sh/uv/), and local Codex authorization. Model calls use `openai-codex` with **gpt-6-luna / high**, without fallback.
 
 **Program execution and native coding tools require Windows AppContainer.** macOS supports development and portable tests; its production sandbox is not implemented. Execution fails if isolation is unavailable.
 
@@ -23,7 +20,7 @@ uv run evertree --home C:\agents\my-tree doctor
 uv run evertree --home C:\agents\my-tree chat
 ```
 
-`doctor` checks authorization, model availability, and actual sandbox enforcement. Use `uv run evertree --help` for task, Program, graph, memory, and backup commands.
+`doctor` checks authorization, model availability, and actual sandbox enforcement.
 
 ## Operational contracts
 
@@ -45,7 +42,6 @@ The default suite runs unit and component tests with up to four workers. Integra
 
 ### Code conventions
 
-- Keep `__init__.py` files limited to package docstrings. Define and import components in named modules; do not add package re-exports or compatibility aliases. Internal Python import paths are not a compatibility contract.
 - Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`, evolving behavior in `processes`, and reusable Program helpers in `common`.
 - Call other Programs through the runtime, including other roles of the same process; do not import their implementations directly.
