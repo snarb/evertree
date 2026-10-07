@@ -4,6 +4,9 @@
   [test guide](tests/README.md).
 - Consult the [architecture](docs/architecture/Overview.md) and relevant
   [design documents](docs/architecture/) when changing system behavior.
+- Never assume migration support or backward compatibility is required, or make
+  design or implementation decisions to preserve either, unless the user
+  explicitly requests it.
 - Add short, clear comments at the relevant code location only to explain
   motivation, reasons, or logic that are not obvious from the code. A bug fix alone
   does not justify a comment; a useful comment explains the non-obvious reason
