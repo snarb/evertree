@@ -9,15 +9,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from evertree.core.evaluation.contracts import UnresolvedEvaluationResult, exact_json_equal
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.graph.types import GraphDelta, RelationType, Slot
+from evertree.core.memory.types import TraceOutputRef
+
 from .datasets import content_revision
-from .evaluation import (
-    EvaluationStore,
-    UnresolvedEvaluationResult,
-    evaluate_prediction,
-    exact_json_equal,
-)
-from .graph import GraphDelta, RelationType, Slot
-from .memory import TraceOutputRef
 from .values import json_value, timestamp
 
 

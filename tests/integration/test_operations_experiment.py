@@ -4,7 +4,7 @@ import pytest
 
 from evertree.core.attribution import AttributionRuntime, NormalizationRule, PropertyDefinition
 from evertree.core.beliefs import BeliefStore
-from evertree.core.memory import TraceOutputRef
+from evertree.core.memory.types import TraceOutputRef
 from evertree.core.programs.experiments import evaluate_pair
 from tests.support.evaluation import dataset
 from tests.support.experiments import TEST_RUNTIME, prepare

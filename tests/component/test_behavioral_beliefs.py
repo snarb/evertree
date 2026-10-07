@@ -6,9 +6,12 @@ import pytest
 
 from evertree.core.attribution import AttributionRuntime, PropertyDefinition
 from evertree.core.beliefs import BeliefStore
-from evertree.core.graph import UNKNOWN, ContractError, GraphDelta, GraphStore, Node
-from evertree.core.learning import LearningStore
-from evertree.core.memory import TraceOutputRef, TraceStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.learning.state import LearningStore
+from evertree.core.memory.store import TraceStore
+from evertree.core.memory.types import TraceOutputRef
+from evertree.core.values import UNKNOWN, ContractError
 
 
 @pytest.fixture

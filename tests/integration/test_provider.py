@@ -6,7 +6,7 @@ def test_launcher_drops_host_permissions_and_secrets(monkeypatch):
     import subprocess
     import sys
 
-    from evertree.core.codex import _LAUNCHER
+    from evertree.core.codex.configuration import _LAUNCHER
 
     monkeypatch.setenv("CODEX_PERMISSION_PROFILE", ":danger-full-access")
     monkeypatch.setenv("OPENAI_API_KEY", "test-secret")

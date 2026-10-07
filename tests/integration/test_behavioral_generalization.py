@@ -5,19 +5,18 @@ from dataclasses import replace
 
 import pytest
 
-from evertree.core.evaluation import AcceptanceCriteria, MetricGuardrail
-from evertree.core.graph import GraphStore
-from evertree.core.learning import (
-    LearningStore,
-)
-from evertree.core.memory import TraceStore
+from evertree.core.evaluation.acceptance import AcceptanceCriteria, MetricGuardrail
+from evertree.core.graph.store import GraphStore
+from evertree.core.learning.state import LearningStore
+from evertree.core.memory.store import TraceStore
 from evertree.core.programs.lifecycle import (
     LifecycleError,
     ProgramLifecycleRuntime,
     git,
     initialize_seed_repository,
 )
-from evertree.core.runtime import ProgramExecutionError, ProgramSpec
+from evertree.core.runtime.controller import ProgramSpec
+from evertree.core.runtime.repository import ProgramExecutionError
 from tests.support.evaluation import dataset
 from tests.support.experiments import PATH, evaluate_pair
 from tests.support.experiments import TEST_RUNTIME as WORKER_RUNTIME

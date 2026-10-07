@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from evertree.core.backup import BackupError, BackupManager, _extended, safe_remove_tree
-from evertree.core.evaluation import AcceptanceCriteria
+from evertree.core.evaluation.acceptance import AcceptanceCriteria
 from evertree.core.programs.lifecycle import (
     EvaluationReport,
     LifecycleError,
@@ -15,7 +15,7 @@ from evertree.core.programs.lifecycle import (
     publish_programs,
     remote_git,
 )
-from evertree.core.runtime import ProgramSpec, Runtime
+from evertree.core.runtime.controller import ProgramSpec, Runtime
 from tests.support.lifecycle_backup import change, seed_repository
 from tests.support.runtime import TestProcess, commit_programs
 

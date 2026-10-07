@@ -1,6 +1,6 @@
 # EverTree
 
-A local agent with a semantic graph, memory, and executable Programs that evolve through verified updates. Available through a CLI and an asynchronous Python API; designed for a single installation.
+A local agent with a semantic graph, memory, and executable Programs that evolve through verified updates. Available through a CLI and asynchronous Python components; designed for a single installation.
 
 ## Quick start
 
@@ -42,6 +42,8 @@ uv run ruff format --check src tests
 ```
 
 The default suite runs unit and component tests with up to four workers. Integration, Windows-native, and opt-in live SDK suites are separate; see the [test guide](tests/README.md).
+
+Package `__init__.py` files contain only docstrings. Import components from their defining modules, such as `evertree.application.EverTree`, `evertree.core.graph.store.GraphStore`, and `evertree.core.provider.ScriptedProvider`. Internal Python import paths are not a compatibility contract.
 
 ## Documentation
 

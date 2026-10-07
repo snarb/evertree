@@ -1,6 +1,6 @@
 """Evaluate mandatory check results without accepting or executing the decision."""
 
-from evertree.core.cognition import verification_result
+from evertree.core.cognition.control import verification_result
 
 
 def run(required_checks: list[str], checks: dict):

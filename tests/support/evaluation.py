@@ -1,11 +1,11 @@
 """Minimal evaluation fixtures without repository or candidate creation."""
 
 from evertree.core.datasets import DatasetRevision, EvaluationCase
-from evertree.core.graph import GraphStore
-from evertree.core.learning import LearningStore
-from evertree.core.memory import TraceStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.learning.state import LearningStore
+from evertree.core.memory.store import TraceStore
 from evertree.core.programs.lifecycle import ProgramBranch
-from evertree.core.runtime import ProgramSpec
+from evertree.core.runtime.controller import ProgramSpec
 
 
 def evaluation_state(tmp_path):
@@ -25,7 +25,7 @@ def fixed_outcomes(monkeypatch, baseline, candidate):
     from unittest.mock import AsyncMock
 
     from evertree.core.programs import experiments
-    from evertree.core.runtime import RunResult
+    from evertree.core.runtime.controller import RunResult
 
     def baseline_exists(repository, *arguments):
         assert arguments[:2] == ("cat-file", "-e")

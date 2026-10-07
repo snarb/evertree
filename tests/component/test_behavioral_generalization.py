@@ -6,16 +6,13 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from evertree.core.beliefs import BeliefStore
-from evertree.core.evaluation import evaluate_prediction
-from evertree.core.graph import GraphDelta, GraphStore, Node
-from evertree.core.learning import (
-    LearningBinding,
-    LearningCoordinator,
-    LearningObjective,
-    LearningSignal,
-    LearningStore,
-)
-from evertree.core.memory import TraceStore
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.learning.contracts import LearningBinding, LearningObjective, LearningSignal
+from evertree.core.learning.coordinator import LearningCoordinator
+from evertree.core.learning.state import LearningStore
+from evertree.core.memory.store import TraceStore
 from evertree.processes.learning.reflection._exec import run as reflect
 
 

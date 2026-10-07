@@ -10,29 +10,27 @@ import os
 import time
 import weakref
 from pathlib import Path
-from typing import Any, Literal  # noqa: F401 -- retain the public schema annotation namespace
+from typing import Any
 from uuid import uuid4
+
+from evertree.core.codex.provider import CodexProvider
+from evertree.core.evaluation.contracts import SupervisorFeedback, exact_json_equal
+from evertree.core.memory.types import TraceOutputRef
+from evertree.core.runtime.controller import Runtime
 
 from ._application.consciousness import ConsciousnessMixin
 from ._application.execution import TaskExecutionMixin
 from ._application.persistence import PersistenceMixin
 from ._application.programs import ProgramsMixin
-from ._application.prompts import (  # noqa: F401 -- preserve existing imports from this module
-    CONSCIOUSNESS_INSTRUCTIONS,
-    AnswerVerification,
-    Decision,
+from ._application.prompts import (
     consciousness_tools,
 )
 from ._application.tools import ToolsMixin
 from .core.backup import BackupManager
 from .core.cache import prune
-from .core.codex import CodexProvider
 from .core.environment import capture_runtime, require_committed_runtime
-from .core.evaluation import SupervisorFeedback, exact_json_equal
-from .core.memory import TraceOutputRef
 from .core.programs.lifecycle import initialize_seed_repository, resolve_program_remote
 from .core.provider import AgentProvider
-from .core.runtime import Runtime
 from .core.values import json_value
 
 

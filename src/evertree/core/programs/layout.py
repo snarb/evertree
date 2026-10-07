@@ -7,7 +7,7 @@ import re
 from collections.abc import Callable, Iterable
 from pathlib import PurePosixPath
 
-from ..graph import GraphStore
+from evertree.core.graph.store import GraphStore
 
 PREFIX = "src/evertree/processes/"
 ROLES = {"_exec": "exec", "_model": "model"}
@@ -184,7 +184,8 @@ def main() -> None:
     """CI check of installed seed sources and their freshly constructed graph."""
     from pathlib import Path
 
-    from ..graph import GraphDelta, Node
+    from evertree.core.graph.types import GraphDelta, Node
+
     from .bootstrap import seed_process_delta
 
     package = Path(__file__).resolve().parents[2]

@@ -10,8 +10,9 @@ from threading import RLock
 from typing import Any
 from uuid import uuid4
 
+from evertree.core.evaluation.acceptance import VerificationResult
+
 from ..datasets import freeze_json, thaw_json
-from ..evaluation import VerificationResult
 
 TERMINAL_STATUSES = frozenset({"succeeded", "failed", "cancelled"})
 
@@ -423,15 +424,3 @@ class TaskStore:
         store._usage_operations = thaw_json(freeze_json(data.get("usage_operations", {})))
         store._events = thaw_json(freeze_json(data.get("events", [])))
         return store
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    utc_now,
-    _finite_nonnegative,
-    TaskSpecification,
-    ExecutionBudget,
-    TaskState,
-    TaskStore,
-):
-    _export.__module__ = "evertree.core.cognition"

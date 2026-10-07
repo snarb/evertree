@@ -2,11 +2,12 @@ from functools import partial
 
 import pytest
 
-from evertree import SupervisorFeedback
 from evertree.application import EverTree
-from evertree.core.graph import GraphDelta, json_value
+from evertree.core.evaluation.contracts import SupervisorFeedback
+from evertree.core.graph.types import GraphDelta
 from evertree.core.provider import ScriptedProvider
-from evertree.core.runtime import Runtime
+from evertree.core.runtime.controller import Runtime
+from evertree.core.values import json_value
 from tests.support.runtime import TestProcess
 
 CONTEXT = {

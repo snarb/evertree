@@ -113,11 +113,3 @@ class WindowsProcessTree:
         finally:
             self._kernel.CloseHandle(self._job)
             self._job = None
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    SandboxUnavailable,
-    WindowsProcessTree,
-):
-    _export.__module__ = "evertree.core.sandbox"

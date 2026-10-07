@@ -1,7 +1,8 @@
 import pytest
 
 from evertree.core.anchors import AnchorResolver, parse_anchors
-from evertree.core.graph import ContractError, GraphStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.values import ContractError
 
 
 def test_anchor_identity_survives_line_movement_and_ignores_string_comments():

@@ -3,7 +3,8 @@ import json
 
 import pytest
 
-from evertree.core.cognition import TaskStore, verification_result
+from evertree.core.cognition.control import verification_result
+from evertree.core.cognition.tasks import TaskStore
 from evertree.core.provider import ScriptedProvider
 from tests.support.application import completed, decision, verification, wait_for_event
 from tests.support.component import component_app

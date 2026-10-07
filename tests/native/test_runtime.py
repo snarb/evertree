@@ -8,8 +8,10 @@ import sys
 
 import pytest
 
-from evertree.core.runtime import ProgramExecutionError, ProgramSpec, Runtime, RuntimeBusy
-from evertree.core.sandbox import SandboxedProcess, WindowsProcessTree
+from evertree.core.runtime.controller import ProgramSpec, Runtime, RuntimeBusy
+from evertree.core.runtime.repository import ProgramExecutionError
+from evertree.core.sandbox.appcontainer import SandboxedProcess
+from evertree.core.sandbox.job import WindowsProcessTree
 from tests.support.runtime import commit_programs
 
 

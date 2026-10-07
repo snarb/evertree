@@ -31,7 +31,7 @@ async def write_code(agent, task, files):
 @pytest.mark.parametrize("status", ["succeeded", "failed", "cancelled"])
 async def test_terminal_task_discards_its_workspace(agent, status):
     """Terminal state cleanup removes real temporary files without creating a Git candidate."""
-    from evertree.core.cognition import VerificationResult
+    from evertree.core.evaluation.acceptance import VerificationResult
 
     agent.provider = WorkspaceProvider([])
     task = task_for(agent)

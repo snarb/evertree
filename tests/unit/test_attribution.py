@@ -5,16 +5,9 @@ import pytest
 
 from evertree.core.attribution import AttributionRuntime, NormalizationRule, PropertyDefinition
 from evertree.core.beliefs import BeliefStore
-from evertree.core.graph import (
-    UNKNOWN,
-    ContractError,
-    Facet,
-    GraphDelta,
-    GraphStore,
-    Instance,
-    Node,
-    Prototype,
-)
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import Facet, GraphDelta, Instance, Node, Prototype
+from evertree.core.values import UNKNOWN, ContractError
 
 START = datetime(2025, 1, 1, tzinfo=UTC)
 

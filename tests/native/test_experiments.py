@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from evertree.core.runtime import Runtime
+from evertree.core.runtime.controller import Runtime
 from tests.support.evaluation import dataset
 from tests.support.experiments import evaluate_pair, prepare
 from tests.support.lifecycle_backup import change

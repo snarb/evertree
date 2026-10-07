@@ -105,14 +105,3 @@ def _native_tool_events(item, *, completed):
             for change in changes
         )
     return tuple(events)
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    _RawResponse,
-    _request,
-    _json,
-    _usage,
-    _native_tool_events,
-):
-    _export.__module__ = "evertree.core.codex_provider"

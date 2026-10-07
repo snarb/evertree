@@ -10,7 +10,7 @@ from types import MappingProxyType
 from typing import Any
 from uuid import uuid4
 
-from .memory import TraceOutputRef
+from evertree.core.memory.types import TraceOutputRef
 
 
 def freeze_json(value: Any) -> Any:

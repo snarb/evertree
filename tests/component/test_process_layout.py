@@ -2,7 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from evertree.core.graph import GraphDelta, GraphStore, Node, NodeUpdate, Prototype
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node, NodeUpdate, Prototype
 from evertree.core.programs.bootstrap import seed_process_delta
 from evertree.core.programs.layout import PREFIX, process_directory, validate_process_layout
 

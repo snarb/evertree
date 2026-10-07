@@ -8,9 +8,10 @@ import sys
 from pathlib import Path
 from uuid import uuid4
 
+from evertree.core.runtime.repository import extract_revision
+from evertree.core.sandbox.appcontainer import SandboxedProcess
+
 from ..backup import _extended, _restore_io, safe_remove_tree
-from ..runtime import extract_revision
-from ..sandbox import SandboxedProcess
 
 _RUNNER = """
 import json, pathlib, sys, unittest

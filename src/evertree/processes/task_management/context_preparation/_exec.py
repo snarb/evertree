@@ -1,6 +1,7 @@
 """Assemble exact task state and caller-selected source material."""
 
-from evertree.core.cognition import TaskState, prepare_context
+from evertree.core.cognition.attention import prepare_context
+from evertree.core.cognition.tasks import TaskState
 
 
 def run(

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from evertree.core.runtime import ProgramSpec, Runtime
+from evertree.core.runtime.controller import ProgramSpec, Runtime
 
 
 def test_private_cache_publication_retries_sharing_violation(tmp_path, monkeypatch):

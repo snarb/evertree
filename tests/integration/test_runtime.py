@@ -4,7 +4,8 @@ import asyncio
 
 import pytest
 
-from evertree.core.runtime import ProgramExecutionError, ProgramSpec, Runtime, RuntimeBusy
+from evertree.core.runtime.controller import ProgramSpec, Runtime, RuntimeBusy
+from evertree.core.runtime.repository import ProgramExecutionError
 from tests.support.runtime import TestProcess, commit_programs
 
 

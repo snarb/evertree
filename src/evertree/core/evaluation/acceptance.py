@@ -145,13 +145,3 @@ def assess_candidate(
     if missing:
         return VerificationResult("need_checks", (), tuple(dict.fromkeys(missing)))
     return VerificationResult("verified")
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    VerificationResult,
-    MetricGuardrail,
-    AcceptanceCriteria,
-    assess_candidate,
-):
-    _export.__module__ = "evertree.core.evaluation"

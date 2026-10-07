@@ -7,9 +7,9 @@ from unittest.mock import Mock
 import pytest
 
 from evertree.core.actions import ActionOption
-from evertree.core.evaluation import evaluate_prediction
-from evertree.core.graph import GraphDelta
-from evertree.core.learning import LearningCredit, LearningObjective, LearningSignal
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.graph.types import GraphDelta
+from evertree.core.learning.contracts import LearningCredit, LearningObjective, LearningSignal
 from evertree.core.programs.lifecycle import ProgramBranch
 from evertree.core.provider import AgentEvent, AgentRequest, ScriptedProvider
 from tests.support.application import decision, framing, verification, wait_for_event

@@ -4,8 +4,8 @@ import math
 import pytest
 
 from evertree.core.beliefs import BeliefStore
-from evertree.core.graph import ContractError
-from evertree.core.memory import TraceOutputRef
+from evertree.core.memory.types import TraceOutputRef
+from evertree.core.values import ContractError
 
 
 def test_binary_dedup_revision_retraction_and_zero_evidence():

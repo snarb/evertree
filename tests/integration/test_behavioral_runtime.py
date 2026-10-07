@@ -1,6 +1,6 @@
 import pytest
 
-from evertree.core.runtime import ProgramSpec, Runtime
+from evertree.core.runtime.controller import ProgramSpec, Runtime
 from tests.support.runtime import TestProcess, commit_programs
 
 

@@ -5,10 +5,13 @@ from __future__ import annotations
 import asyncio
 import json
 
-from ..core.cognition import TaskSpecification, prepare_context
-from ..core.evaluation import VerificationResult
-from ..core.learning import LearningCoordinator, LearningObjective, LearningSignal
-from ..core.memory import MemoryQuery
+from evertree.core.cognition.attention import prepare_context
+from evertree.core.cognition.tasks import TaskSpecification
+from evertree.core.evaluation.acceptance import VerificationResult
+from evertree.core.learning.contracts import LearningObjective, LearningSignal
+from evertree.core.learning.coordinator import LearningCoordinator
+from evertree.core.memory.types import MemoryQuery
+
 from ..core.provider import AgentRequest
 from ..core.values import json_value
 from .prompts import (
@@ -281,7 +284,7 @@ class ConsciousnessMixin:
             state.id, status, reason=reason, execution_stopped=True, verification=verification
         )
         if status in {"succeeded", "failed"} and state.id in self._predictions:
-            from ..core.evaluation import evaluate_prediction
+            from evertree.core.evaluation.scoring import evaluate_prediction
 
             run = self.memory.start_run(
                 "TaskOutcome", self._program_revision(), {"task_id": state.id}

@@ -8,13 +8,15 @@ import msgpack
 import pytest
 import zstandard
 
-from evertree.application import AnswerVerification, Decision
-from evertree.core.cognition import TaskSpecification
-from evertree.core.evaluation import SupervisorFeedback
-from evertree.core.graph import UNKNOWN, GraphDelta, GraphStore, Node
-from evertree.core.learning import LearningObjective
-from evertree.core.memory import TraceStore
+from evertree._application.prompts import AnswerVerification, Decision
+from evertree.core.cognition.tasks import TaskSpecification
+from evertree.core.evaluation.contracts import SupervisorFeedback
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.learning.contracts import LearningObjective
+from evertree.core.memory.store import TraceStore
 from evertree.core.serialization import decode_snapshot, encode_snapshot
+from evertree.core.values import UNKNOWN
 
 
 def test_snapshot_preserves_scalar_types_unicode_and_arbitrary_integers():
@@ -111,43 +113,48 @@ def test_unknown_or_empty_extensions_are_rejected(extension):
 @pytest.mark.parametrize(
     ("module_name", "name"),
     [
-        ("evertree.core.graph", "Node"),
-        ("evertree.core.memory", "TraceEvent"),
-        ("evertree.core.memory", "RetentionPolicy"),
-        ("evertree.core.cognition", "TaskState"),
-        ("evertree.core.learning", "LearningSignal"),
-        ("evertree.core.evaluation", "EvaluationResult"),
-        ("evertree.core.evaluation", "AcceptanceCriteria"),
-        ("evertree.core.sandbox", "SandboxLimits"),
-        ("evertree.application", "Decision"),
-        ("evertree.application", "AnswerVerification"),
+        ("evertree.core.graph.types", "Node"),
+        ("evertree.core.memory.types", "TraceEvent"),
+        ("evertree.core.memory.types", "RetentionPolicy"),
+        ("evertree.core.cognition.tasks", "TaskState"),
+        ("evertree.core.learning.contracts", "LearningSignal"),
+        ("evertree.core.evaluation.contracts", "EvaluationResult"),
+        ("evertree.core.evaluation.acceptance", "AcceptanceCriteria"),
+        ("evertree.core.sandbox.appcontainer", "SandboxLimits"),
+        ("evertree.core.runtime.controller", "ProgramSpec"),
+        ("evertree.core.runtime.controller", "RunResult"),
+        ("evertree._application.prompts", "Decision"),
+        ("evertree._application.prompts", "AnswerVerification"),
     ],
 )
-def test_public_type_identities_and_annotations_survive_module_refactoring(module_name, name):
-    public_type = getattr(importlib.import_module(module_name), name)
-    assert public_type.__module__ == module_name
-    assert pickle.loads(pickle.dumps(public_type)) is public_type
-    assert get_type_hints(public_type)
+def test_defined_types_support_pickle_and_resolve_annotations(module_name, name):
+    defined_type = getattr(importlib.import_module(module_name), name)
+    assert defined_type.__module__ == module_name
+    assert pickle.loads(pickle.dumps(defined_type)) is defined_type
+    assert get_type_hints(defined_type)
 
 
 @pytest.mark.parametrize(
     ("value", "type_name"),
     [
-        (Node(1, "Knowledge"), "evertree.core.graph.Node"),
-        (TaskSpecification("Read a source"), "evertree.core.cognition.TaskSpecification"),
-        (SupervisorFeedback(1), "evertree.core.evaluation.SupervisorFeedback"),
-        (LearningObjective(("brier",), "minimize"), "evertree.core.learning.LearningObjective"),
+        (Node(1, "Knowledge"), "evertree.core.graph.types.Node"),
+        (TaskSpecification("Read a source"), "evertree.core.cognition.tasks.TaskSpecification"),
+        (SupervisorFeedback(1), "evertree.core.evaluation.contracts.SupervisorFeedback"),
+        (
+            LearningObjective(("brier",), "minimize"),
+            "evertree.core.learning.contracts.LearningObjective",
+        ),
         (
             Decision(status="completed", answer="Done", progress="Verified"),
-            "evertree.application.Decision",
+            "evertree._application.prompts.Decision",
         ),
         (
             AnswerVerification(verified=True, reason="Checked"),
-            "evertree.application.AnswerVerification",
+            "evertree._application.prompts.AnswerVerification",
         ),
     ],
 )
-def test_trace_output_type_names_remain_stable_after_module_refactoring(value, type_name):
+def test_trace_records_defining_module_and_preserves_it_in_snapshot(value, type_name):
     memory = TraceStore()
     run = memory.start_run("program", "commit", {})
     event = memory.record(run, "result", output=value)

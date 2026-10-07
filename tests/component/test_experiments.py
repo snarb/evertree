@@ -1,7 +1,7 @@
 import pytest
 
 from evertree.core.datasets import DatasetRevision, EvaluationCase
-from evertree.core.evaluation import AcceptanceCriteria, assess_candidate
+from evertree.core.evaluation.acceptance import AcceptanceCriteria, assess_candidate
 from evertree.core.programs.experiments import evaluate_pair
 from tests.support.evaluation import dataset, evaluation_state, fixed_outcomes
 

@@ -6,9 +6,10 @@ import sys
 
 import pytest
 
-from evertree import AgentEvent, AgentRequest, EverTree, ScriptedProvider, cli
-from evertree.application import EverTreeEvent
-from evertree.core.cognition import TaskStore
+from evertree import cli
+from evertree.application import EverTree, EverTreeEvent
+from evertree.core.cognition.tasks import TaskStore
+from evertree.core.provider import AgentEvent, AgentRequest, ScriptedProvider
 
 
 class TransportAgent:
@@ -176,7 +177,7 @@ def test_cli_exposes_inspection_commands_without_model_calls():
         assert cli.parser().parse_args(args).command == args[0]
 
 
-def test_python_api_exports_are_provider_neutral():
+def test_cli_uses_application_and_provider_definitions():
     assert EverTree.__module__ == "evertree.application"
     assert AgentRequest.__module__ == "evertree.core.provider"
     assert AgentEvent.__module__ == "evertree.core.provider"

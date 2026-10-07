@@ -178,19 +178,3 @@ def _distribution(prediction: Any) -> dict[str, float]:
     if not math.isclose(sum(result.values()), 1.0, rel_tol=0, abs_tol=1e-10):
         raise ValueError("Categorical probabilities must sum to one")
     return result
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    SupervisorFeedback,
-    MetricSample,
-    EvaluationResult,
-    EvaluatedResult,
-    NotApplicableResult,
-    UnresolvedEvaluationResult,
-    exact_json_equal,
-    _number,
-    _probability,
-    _distribution,
-):
-    _export.__module__ = "evertree.core.evaluation"

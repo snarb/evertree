@@ -147,19 +147,3 @@ def _semantic_value(value: Any) -> Any:
     if isinstance(value, (tuple, list)):
         return tuple(_semantic_value(item) for item in value)
     return freeze(value)
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    TraceOutputRef,
-    ProgramRun,
-    TraceEvent,
-    SemanticTrace,
-    MemoryQuery,
-    MemoryCandidateGroup,
-    RetentionPolicy,
-    _ref,
-    _references,
-    _semantic_value,
-):
-    _export.__module__ = "evertree.core.memory"

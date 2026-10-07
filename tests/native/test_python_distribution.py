@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from evertree.core import cache, sandbox
+from evertree.core import cache
 from evertree.core.sandbox import python as python_environment
+from evertree.core.sandbox.appcontainer import SandboxedProcess
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Private Windows Python distribution")
@@ -20,7 +21,7 @@ def test_python_shares_dependencies_and_collects_old_source_environments(tmp_pat
     (source / "core/private.py").write_text("PROTECTED = True")
     monkeypatch.setattr(python_environment, "__file__", str(source / "core/sandbox/python.py"))
 
-    with sandbox.prepare_python(include_core=False) as (coding, (base, public)):
+    with python_environment.prepare_python(include_core=False) as (coding, (base, public)):
         packages = base / "Lib/site-packages"
         assert (packages / "dbos").is_dir()
         assert (packages / "pydantic").is_dir()
@@ -31,15 +32,18 @@ def test_python_shares_dependencies_and_collects_old_source_environments(tmp_pat
             p.relative_to(public / "Lib/site-packages/evertree").as_posix()
             for p in (public / "Lib/site-packages/evertree").rglob("*.py")
         } == {"__init__.py", "core/__init__.py", "core/contracts.py"}
-        with sandbox.prepare_python() as (worker, (worker_base, worker_source)):
+        with python_environment.prepare_python() as (worker, (worker_base, worker_source)):
             assert worker_base == base and worker != coding
             assert (worker_source / "Lib/site-packages/evertree/core/private.py").is_file()
             assert not (worker_source / "DLLs").exists()
-            with sandbox.prepare_python(include_core=False) as (again, _):
+            with python_environment.prepare_python(include_core=False) as (again, _):
                 assert again == coding
 
         (source / "core/contracts.py").write_text("VERSION = 2")
-        with sandbox.prepare_python(include_core=False) as (updated, (same_base, new_source)):
+        with python_environment.prepare_python(include_core=False) as (
+            updated,
+            (same_base, new_source),
+        ):
             assert same_base == base and updated != coding
             assert public.exists()  # Still leased by this process.
             scratch = tmp_path / "scratch"
@@ -56,7 +60,7 @@ else:
     raise AssertionError('shared libraries are writable')
 print(json.dumps([VERSION, str(Path.home())]))
 """
-            with sandbox.SandboxedProcess(
+            with SandboxedProcess(
                 None,
                 ["-I", "-c", code],
                 workdir=scratch,
@@ -84,7 +88,7 @@ def test_parallel_sandboxes_keep_access_to_shared_python(tmp_path, monkeypatch):
     def run(index):
         scratch = tmp_path / str(index)
         scratch.mkdir()
-        with sandbox.SandboxedProcess(
+        with SandboxedProcess(
             None,
             ["-I", "-c", "import dbos, pydantic, time; time.sleep(0.1); print('ready')"],
             workdir=scratch,

@@ -307,12 +307,3 @@ class UpdateTransactionManager:
                 for key, entry in entries
             }
             return self._commit(retraction, new_state, retracted, "retracted", fingerprint)
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    CreditAssignmentProgram,
-    UpdatePlanner,
-    UpdateTransactionManager,
-):
-    _export.__module__ = "evertree.core.learning"

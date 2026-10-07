@@ -8,8 +8,10 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import Any
 
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import Facet, Node, RelationInstance
+
 from .beliefs import BeliefData, BeliefReading, BeliefStore
-from .graph import Facet, GraphStore, Node, RelationInstance
 from .values import UNKNOWN, ContractError, freeze, json_value, restore_value, timestamp, utcnow
 
 

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from functools import partial
 
-from evertree.core.evaluation import AcceptanceCriteria
-from evertree.core.graph import GraphDelta, GraphStore, Node
-from evertree.core.learning import LearningStore
-from evertree.core.memory import TraceStore
+from evertree.core.evaluation.acceptance import AcceptanceCriteria
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.learning.state import LearningStore
+from evertree.core.memory.store import TraceStore
 from evertree.core.programs.experiments import evaluate_pair as core_evaluate_pair
 from evertree.core.programs.lifecycle import ProgramLifecycleRuntime
-from evertree.core.runtime import ProgramSpec, Runtime
+from evertree.core.runtime.controller import ProgramSpec, Runtime
 from tests.support.runtime import TestProcess, commit_programs
 
 PATH = "src/evertree/processes/example.py"

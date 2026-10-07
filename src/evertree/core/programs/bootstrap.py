@@ -225,7 +225,7 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
     """Describe Self's own process taxonomy and its initial role bindings."""
     import dataclasses
 
-    from ..graph import GraphDelta, Node, Prototype
+    from evertree.core.graph.types import GraphDelta, Node, Prototype
 
     root = Prototype(graph.reserve_id(), "SelfProcess", properties={"process": True})
     creates = [

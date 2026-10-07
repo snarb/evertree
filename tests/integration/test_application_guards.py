@@ -8,9 +8,9 @@ import pytest
 
 from evertree.application import EverTree
 from evertree.core.datasets import EvaluationCase
-from evertree.core.evaluation import AcceptanceCriteria, MetricGuardrail
+from evertree.core.evaluation.acceptance import AcceptanceCriteria, MetricGuardrail
 from evertree.core.provider import AgentEvent, ScriptedProvider
-from evertree.core.runtime import Runtime
+from evertree.core.runtime.controller import Runtime
 from tests.support.application import decision, framing, verification, wait_for_event
 from tests.support.runtime import TestProcess
 

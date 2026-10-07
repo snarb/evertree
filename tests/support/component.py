@@ -17,7 +17,8 @@ from uuid import uuid4
 
 from evertree.application import EverTree
 from evertree.core.provider import ScriptedProvider
-from evertree.core.runtime import ProgramExecutionError, RunResult, Runtime
+from evertree.core.runtime.controller import RunResult, Runtime
+from evertree.core.runtime.repository import ProgramExecutionError
 
 REVISION = "0" * 40
 

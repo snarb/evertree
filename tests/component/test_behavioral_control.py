@@ -1,10 +1,9 @@
 import pytest
 
 from evertree.core.actions import ActionGateway, ActionOption
-from evertree.core.cognition import AttentionRuntime, TaskStore
-from evertree.core.graph import (
-    json_value,
-)
+from evertree.core.cognition.attention import AttentionRuntime
+from evertree.core.cognition.tasks import TaskStore
+from evertree.core.values import json_value
 
 
 class ActionFixture:

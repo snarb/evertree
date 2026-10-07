@@ -7,8 +7,9 @@ import dataclasses
 import json
 from pathlib import Path
 
-from ..core.graph import GraphDelta, Node
-from ..core.memory import TraceOutputRef
+from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.memory.types import TraceOutputRef
+
 from ..core.programs.lifecycle import git
 from ..core.provider import AgentRequest
 from ..core.values import json_value

@@ -5,19 +5,18 @@ import pytest
 
 from evertree.core.attribution import AttributionRuntime, PropertyDefinition
 from evertree.core.beliefs import BeliefStore
-from evertree.core.graph import (
-    UNKNOWN,
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import (
     AccessView,
     Clause,
-    ContractError,
     GraphDelta,
-    GraphStore,
     Node,
     NodeUpdate,
     Predicate,
     RelationType,
     Slot,
 )
+from evertree.core.values import UNKNOWN, ContractError
 
 EARLY = datetime(2025, 1, 1, 10, tzinfo=UTC)
 

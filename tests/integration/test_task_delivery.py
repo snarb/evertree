@@ -7,7 +7,7 @@ import pytest
 
 from evertree.application import EverTree
 from evertree.core.provider import ScriptedProvider
-from evertree.core.runtime import Runtime
+from evertree.core.runtime.controller import Runtime
 from tests.support.application import completed, decision, verification, wait_for_event
 from tests.support.runtime import TestProcess
 

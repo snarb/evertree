@@ -6,42 +6,38 @@ from dataclasses import replace
 
 import pytest
 
-from evertree.core.cognition import (
-    AttentionRuntime,
-    TaskSpecification,
-    TaskStore,
-    commitment_control,
-    get_task_outcome_stats,
-    prepare_context,
-)
+from evertree.core.cognition.attention import AttentionRuntime, prepare_context
+from evertree.core.cognition.control import commitment_control, get_task_outcome_stats
+from evertree.core.cognition.tasks import TaskSpecification, TaskStore
 from evertree.core.datasets import DatasetStore, EvaluationCase
-from evertree.core.evaluation import (
+from evertree.core.evaluation.acceptance import (
     AcceptanceCriteria,
+    MetricGuardrail,
+    VerificationResult,
+    assess_candidate,
+)
+from evertree.core.evaluation.contracts import (
     EvaluatedResult,
     EvaluationResult,
-    EvaluationStore,
-    MetricGuardrail,
     MetricSample,
     NotApplicableResult,
     UnresolvedEvaluationResult,
-    VerificationResult,
-    assess_candidate,
-    evaluate_prediction,
     exact_json_equal,
-    prediction_unexpectedness,
 )
-from evertree.core.learning import (
+from evertree.core.evaluation.scoring import evaluate_prediction, prediction_unexpectedness
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.learning.contracts import (
     CreditRetraction,
     LearningBinding,
-    LearningCoordinator,
     LearningObjective,
     LearningSignal,
-    LearningStore,
     PreparedUpdate,
     UnresolvedCredit,
     UpdateBlocked,
-    UpdateTransactionManager,
 )
+from evertree.core.learning.coordinator import LearningCoordinator
+from evertree.core.learning.state import LearningStore
+from evertree.core.learning.updates import UpdateTransactionManager
 
 
 def signal(value, outcome_id="outcome-1", *, prediction=0.5, metric="brier"):

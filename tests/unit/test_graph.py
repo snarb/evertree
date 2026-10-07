@@ -3,14 +3,12 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from evertree.core.graph import (
-    UNKNOWN,
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import (
     AccessView,
     Clause,
-    ContractError,
     Facet,
     GraphDelta,
-    GraphStore,
     Instance,
     Node,
     NodeUpdate,
@@ -18,11 +16,9 @@ from evertree.core.graph import (
     Prototype,
     RelationType,
     Slot,
-    freeze,
-    json_value,
-    restore_value,
 )
 from evertree.core.topology import inspect_topology, propose_reification
+from evertree.core.values import UNKNOWN, ContractError, freeze, json_value, restore_value
 
 
 def bootstrap():

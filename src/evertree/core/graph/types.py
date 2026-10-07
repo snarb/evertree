@@ -307,27 +307,3 @@ def node_from_dict(data: Mapping[str, Any]) -> Node:
         fields.setdefault("views", [])
         fields["views"] = [{"constraints": None, **dict(view)} for view in fields["views"]]
     return _node_from_data({"class": kinds.get(fields.get("kind"), "Node"), "fields": fields})
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    Node,
-    Concept,
-    Prototype,
-    Instance,
-    Facet,
-    Slot,
-    Clause,
-    Predicate,
-    AccessView,
-    RelationType,
-    RelationInstance,
-    NodeUpdate,
-    GraphDelta,
-    GraphChange,
-    ViewMatch,
-    _node_data,
-    _node_from_data,
-    node_from_dict,
-):
-    _export.__module__ = "evertree.core.graph"

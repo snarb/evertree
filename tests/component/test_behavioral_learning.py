@@ -6,27 +6,24 @@ from dataclasses import replace
 
 import pytest
 
-from evertree.core.evaluation import (
-    EvaluatedResult,
-    EvaluationStore,
-    MetricSample,
-    SupervisorFeedback,
-    evaluate_prediction,
-)
-from evertree.core.graph import GraphDelta, GraphStore, Node
-from evertree.core.learning import (
+from evertree.core.evaluation.contracts import EvaluatedResult, MetricSample, SupervisorFeedback
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.learning.contracts import (
     CreditRetraction,
     LearningBinding,
-    LearningCoordinator,
     LearningObjective,
     LearningSignal,
-    LearningStore,
     PreparedUpdate,
     UnresolvedCredit,
     UpdateBlocked,
-    UpdateTransactionManager,
 )
-from evertree.core.memory import TraceStore
+from evertree.core.learning.coordinator import LearningCoordinator
+from evertree.core.learning.state import LearningStore
+from evertree.core.learning.updates import UpdateTransactionManager
+from evertree.core.memory.store import TraceStore
 from evertree.core.predictions import PredictionEvaluator
 
 

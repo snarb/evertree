@@ -110,4 +110,3 @@ def prepare_python(*, include_core: bool = True):
 
 
 # Preserve existing imports and pickled references through the public module.
-_key.__module__ = prepare_python.__module__ = "evertree.core.sandbox"

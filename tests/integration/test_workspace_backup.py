@@ -10,7 +10,7 @@ import pytest
 from evertree.application import EverTree
 from evertree.core.backup import _extended, safe_remove_tree
 from evertree.core.provider import AgentEvent, ScriptedProvider
-from evertree.core.runtime import Runtime
+from evertree.core.runtime.controller import Runtime
 from tests.support.runtime import TestProcess
 
 

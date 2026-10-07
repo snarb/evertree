@@ -60,7 +60,7 @@ def get_task_outcome_stats(
     *,
     descendants: Mapping[str, Iterable[str]] | None = None,
 ) -> dict[str, Any]:
-    from ..evaluation import _time
+    from evertree.core.evaluation.store import _time
 
     start, end = map(_time, period)
     if start >= end:
@@ -140,13 +140,3 @@ def get_task_outcome_stats(
         "skipped": skipped,
         "period": list(period),
     }
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    CommitmentDecision,
-    verification_result,
-    commitment_control,
-    get_task_outcome_stats,
-):
-    _export.__module__ = "evertree.core.cognition"

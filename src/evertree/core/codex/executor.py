@@ -2,7 +2,7 @@
 
 The SDK harness keeps account credentials on the trusted host. Its native tools
 use an external execution environment whose server has only stdio handles and
-the filesystem rights granted by ``sandbox.start_exec_server``. This bridge
+the filesystem rights granted by ``sandbox.execution.start_exec_server``. This bridge
 transports JSON-RPC; it never executes a command or accesses a requested path.
 """
 
@@ -78,7 +78,7 @@ class CodexExecutor:
             raise RuntimeError("Executor may be started only once")
         self._started = True
         if self._factory is None:
-            from ..sandbox import start_exec_server
+            from evertree.core.sandbox.execution import start_exec_server
 
             factory = start_exec_server
         else:

@@ -22,10 +22,6 @@ class AnswerVerification(BaseModel):
     reason: str
 
 
-# Preserve existing type names in trace outputs and pickled references.
-Decision.__module__ = AnswerVerification.__module__ = "evertree.application"
-
-
 CONSCIOUSNESS_INSTRUCTIONS = """You are the consciousness of EverTree. Solve the current task,
 respect its exact specification, constraints and finite budget. Use existing Programs when
 appropriate; learn and improve reusable mechanisms only when the expected benefit justifies

@@ -5,6 +5,9 @@
 
 # Engineering Principles
 
+- Keep `__init__.py` files limited to package docstrings. Define components in
+  named modules and import them from their defining modules; do not add package
+  re-exports or compatibility aliases.
 - Keep interfaces and data models minimal and elegant: every field, parameter, and option must have a current purpose.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`;
   evolving behavior belongs in `processes`, reusable Program helpers in `common`.

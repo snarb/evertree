@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from evertree.core.evaluation import EvaluationStore
-from evertree.core.graph import GraphDelta, Node
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.predictions import PredictionEvaluator
-from evertree.core.runtime import ProgramSpec
+from evertree.core.runtime.controller import ProgramSpec
 from tests.support.evaluation import dataset
 from tests.support.experiments import PATH, TEST_RUNTIME, evaluate_pair, prepare
 from tests.support.lifecycle_backup import change

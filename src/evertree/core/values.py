@@ -101,16 +101,3 @@ def restore_value(value: Any) -> Any:
     if isinstance(value, list):
         return tuple(restore_value(item) for item in value)
     return value
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    ContractError,
-    _Unknown,
-    utcnow,
-    timestamp,
-    freeze,
-    json_value,
-    restore_value,
-):
-    _export.__module__ = "evertree.core.graph"

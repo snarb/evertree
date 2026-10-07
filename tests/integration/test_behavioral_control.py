@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 
 from evertree.application import EverTree
-from evertree.core.graph import (
+from evertree.core.graph.types import (
     AccessView,
     Clause,
     GraphDelta,
@@ -13,7 +13,7 @@ from evertree.core.graph import (
     Slot,
 )
 from evertree.core.provider import ScriptedProvider
-from evertree.core.runtime import Runtime
+from evertree.core.runtime.controller import Runtime
 from tests.support.runtime import TestProcess
 
 

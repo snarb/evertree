@@ -7,13 +7,12 @@ from functools import partial
 import pytest
 
 from evertree.core.beliefs import BeliefStore
-from evertree.core.evaluation import (
-    evaluate_prediction,
-)
-from evertree.core.graph import AccessView, Clause, GraphDelta, Predicate, RelationType, Slot
-from evertree.core.learning import LearningBinding, LearningObjective, LearningSignal, LearningStore
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.graph.types import AccessView, Clause, GraphDelta, Predicate, RelationType, Slot
+from evertree.core.learning.contracts import LearningBinding, LearningObjective, LearningSignal
+from evertree.core.learning.state import LearningStore
 from evertree.core.programs.lifecycle import LifecycleError, git
-from evertree.core.runtime import Runtime
+from evertree.core.runtime.controller import Runtime
 from tests.support.evaluation import dataset
 from tests.support.experiments import PATH, evaluate_pair, prepare
 from tests.support.lifecycle_backup import change

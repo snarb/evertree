@@ -5,8 +5,9 @@ from unittest.mock import AsyncMock
 import pytest
 
 from evertree.core.actions import ActionGateway, ActionOption
-from evertree.core.graph import ContractError, json_value
-from evertree.core.memory import MemoryQuery, TraceStore
+from evertree.core.memory.store import TraceStore
+from evertree.core.memory.types import MemoryQuery
+from evertree.core.values import ContractError, json_value
 from evertree.processes.memory_processing.experience_compaction._exec import (
     run as propose_compaction,
 )

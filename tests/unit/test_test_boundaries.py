@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from evertree.core.sandbox import SandboxedProcess
+from evertree.core.sandbox.appcontainer import SandboxedProcess
 
 
 @pytest.mark.parametrize(

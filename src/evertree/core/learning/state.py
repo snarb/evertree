@@ -186,8 +186,3 @@ class LearningStore:
         if any(entry["state"] not in store._states for entry in store._ledger.values()):
             raise ValueError("Learning ledger addresses a missing estimator state")
         return store
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (LearningStore,):
-    _export.__module__ = "evertree.core.learning"

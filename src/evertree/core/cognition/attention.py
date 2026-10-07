@@ -176,12 +176,3 @@ def prepare_context(
             "self_improvement_budget": task.self_improvement_budget,
         },
     )
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    AttentionRuntime,
-    PreparedContext,
-    prepare_context,
-):
-    _export.__module__ = "evertree.core.cognition"

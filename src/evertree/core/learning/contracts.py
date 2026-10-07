@@ -210,18 +210,3 @@ class UpdateReceipt:
 
     def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    LearningObjective,
-    LearningSignal,
-    LearningCredit,
-    UnresolvedCredit,
-    LearningBinding,
-    PreparedUpdate,
-    UpdateBlocked,
-    CreditRetraction,
-    UpdateReceipt,
-):
-    _export.__module__ = "evertree.core.learning"

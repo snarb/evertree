@@ -3,8 +3,9 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from evertree.core.graph import ContractError
-from evertree.core.memory import MemoryQuery, RetentionPolicy, TraceOutputRef, TraceStore
+from evertree.core.memory.store import TraceStore
+from evertree.core.memory.types import MemoryQuery, RetentionPolicy, TraceOutputRef
+from evertree.core.values import ContractError
 
 START = datetime(2025, 1, 1, tzinfo=UTC)
 

@@ -160,16 +160,3 @@ class UpdateDispatcher:
     def register(self, kind: str, updater: EstimatorUpdater) -> None:
         """Developer extension point; never exposed as an agent tool."""
         self._updaters[kind] = updater
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    _number,
-    EstimatorUpdater,
-    BetaBernoulliUpdater,
-    CategoricalUpdater,
-    MeanUpdater,
-    LinearRegressionUpdater,
-    UpdateDispatcher,
-):
-    _export.__module__ = "evertree.core.learning"

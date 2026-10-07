@@ -9,7 +9,9 @@ from __future__ import annotations
 import dataclasses
 from collections import defaultdict
 
-from .graph import GraphDelta, GraphStore, Node
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node
+
 from .values import ContractError
 
 

@@ -6,20 +6,20 @@ provider, schedules a task or performs an external action.
 
 from dataclasses import dataclass, field
 
+from evertree.core.evaluation.contracts import exact_json_equal
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta
+from evertree.core.learning.contracts import LearningCredit, LearningObjective, LearningSignal
+from evertree.core.learning.coordinator import LearningCoordinator
+from evertree.core.learning.state import LearningStore
+from evertree.core.learning.updates import CreditAssignmentProgram, UpdatePlanner
+from evertree.core.memory.store import TraceStore
+from evertree.core.memory.types import TraceOutputRef
+
 from .attribution import AttributionRuntime
 from .beliefs import BeliefStore
-from .evaluation import EvaluationStore, evaluate_prediction, exact_json_equal
-from .graph import GraphDelta, GraphStore
-from .learning import (
-    CreditAssignmentProgram,
-    LearningCoordinator,
-    LearningCredit,
-    LearningObjective,
-    LearningSignal,
-    LearningStore,
-    UpdatePlanner,
-)
-from .memory import TraceOutputRef, TraceStore
 from .predictions import PredictionEvaluator, protect_prediction_delta
 from .topology import inspect_topology
 from .values import json_value

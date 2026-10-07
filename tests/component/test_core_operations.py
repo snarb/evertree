@@ -6,10 +6,14 @@ from evertree.application import EverTree
 from evertree.core.attribution import AttributionRuntime, NormalizationRule, PropertyDefinition
 from evertree.core.beliefs import BeliefStore
 from evertree.core.datasets import DatasetRevision, DatasetStore, EvaluationCase
-from evertree.core.evaluation import EvaluationStore, evaluate_prediction
-from evertree.core.graph import GraphDelta, GraphStore, Node, RelationType, Slot
-from evertree.core.learning import LearningBinding, LearningObjective, LearningSignal, LearningStore
-from evertree.core.memory import TraceOutputRef, TraceStore
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node, RelationType, Slot
+from evertree.core.learning.contracts import LearningBinding, LearningObjective, LearningSignal
+from evertree.core.learning.state import LearningStore
+from evertree.core.memory.store import TraceStore
+from evertree.core.memory.types import TraceOutputRef
 from evertree.core.operations import CoreOperations
 from evertree.core.provider import ScriptedProvider
 

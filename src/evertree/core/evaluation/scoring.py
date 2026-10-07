@@ -137,11 +137,3 @@ def evaluate_prediction(
         observed_at=observed_at,
         comparison_key=comparison_key,
     )
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    prediction_unexpectedness,
-    evaluate_prediction,
-):
-    _export.__module__ = "evertree.core.evaluation"

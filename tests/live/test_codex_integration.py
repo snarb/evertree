@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from evertree.core.codex import CodexProvider
+from evertree.core.codex.provider import CodexProvider
 from evertree.core.provider import AgentRequest, SessionRef, ToolDefinition
 
 

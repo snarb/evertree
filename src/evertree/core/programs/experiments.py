@@ -16,18 +16,20 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from evertree.core.evaluation.contracts import exact_json_equal
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.learning.state import LearningStore
+from evertree.core.memory.store import TraceStore
+from evertree.core.runtime.controller import ProgramSpec, Runtime
+from evertree.core.runtime.repository import ProgramExecutionError, _git
+
 from ..attribution import AttributionRuntime
 from ..backup import _restore_io, safe_remove_tree
 from ..beliefs import BeliefStore
 from ..datasets import DatasetRevision, content_revision, thaw_json, validate_holdout
-from ..evaluation import EvaluationStore, evaluate_prediction, exact_json_equal
-from ..graph import GraphStore
-from ..learning import (
-    LearningStore,
-)
-from ..memory import TraceStore
 from ..operations import CoreOperations, authorize_operation
-from ..runtime import ProgramExecutionError, ProgramSpec, Runtime, _git
 from ..serialization import decode_snapshot, encode_snapshot
 from ..values import json_value
 from .lifecycle import EvaluationReport, ProgramBranch

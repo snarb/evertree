@@ -190,7 +190,7 @@ def _attach_process_tree(client):
     process = getattr(client, "_proc", None)
     if process is None:
         return None
-    from evertree.core.sandbox import WindowsProcessTree
+    from evertree.core.sandbox.job import WindowsProcessTree
 
     return WindowsProcessTree(process.pid)
 
@@ -344,13 +344,3 @@ def thread_config(client, workspace: Path, command_environment=None) -> dict[str
         "experimental_use_profile": False,
     }
     return config
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    _profile,
-    _toml,
-    _attach_process_tree,
-    _start_owned_client,
-):
-    _export.__module__ = "evertree.core.codex_provider"

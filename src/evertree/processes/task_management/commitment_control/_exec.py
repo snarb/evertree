@@ -1,7 +1,7 @@
 """Choose automatic control or consciousness while preserving verification gates."""
 
-from evertree.core.cognition import commitment_control
-from evertree.core.evaluation import VerificationResult
+from evertree.core.cognition.control import commitment_control
+from evertree.core.evaluation.acceptance import VerificationResult
 
 
 def run(

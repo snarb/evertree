@@ -7,7 +7,7 @@ from evertree.core.programs.layout import PREFIX
 
 def test_independent_layout_gate_runs_before_candidate_evaluator(tmp_path):
     """A real candidate repository proves layout validation precedes evaluation."""
-    from evertree.core.evaluation import AcceptanceCriteria
+    from evertree.core.evaluation.acceptance import AcceptanceCriteria
     from evertree.core.programs.lifecycle import ProgramLifecycleRuntime, git
     from tests.support.runtime import commit_programs
 

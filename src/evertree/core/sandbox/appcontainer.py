@@ -530,13 +530,3 @@ class SandboxedProcess:
 
     def __exit__(self, *_):
         self.close()
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    SandboxLimits,
-    _grant,
-    _revoke,
-    SandboxedProcess,
-):
-    _export.__module__ = "evertree.core.sandbox"

@@ -1,11 +1,14 @@
 import pytest
 
-from evertree import SupervisorFeedback
-from evertree.core.evaluation import EvaluationStore
-from evertree.core.graph import GraphDelta, GraphStore, Node, NodeUpdate, json_value
-from evertree.core.learning import CreditAssignmentProgram, LearningStore
-from evertree.core.memory import TraceStore
+from evertree.core.evaluation.contracts import SupervisorFeedback
+from evertree.core.evaluation.store import EvaluationStore
+from evertree.core.graph.store import GraphStore
+from evertree.core.graph.types import GraphDelta, Node, NodeUpdate
+from evertree.core.learning.state import LearningStore
+from evertree.core.learning.updates import CreditAssignmentProgram
+from evertree.core.memory.store import TraceStore
 from evertree.core.predictions import PredictionEvaluator
+from evertree.core.values import json_value
 
 CONTEXT = {
     "process_id": "motor",

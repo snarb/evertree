@@ -2,7 +2,7 @@
 
 from evertree.common.bootstrap_schemas import TASK_FRAMING_SCHEMA as SCHEMA
 from evertree.common.structured import ask
-from evertree.core.cognition import ExecutionBudget, TaskSpecification
+from evertree.core.cognition.tasks import ExecutionBudget, TaskSpecification
 
 
 async def run(ctx, request: str, context: dict | None = None):

@@ -16,9 +16,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from urllib.parse import quote
 
+from evertree.core.evaluation.acceptance import AcceptanceCriteria, assess_candidate
+from evertree.core.runtime.repository import ProgramExecutionError, _git
+
 from ..backup import safe_remove_tree
-from ..evaluation import AcceptanceCriteria, assess_candidate
-from ..runtime import ProgramExecutionError, _git
 
 
 class LifecycleError(RuntimeError):

@@ -3,12 +3,9 @@ import math
 import pytest
 
 from evertree.core.datasets import DatasetStore, EvaluationCase
-from evertree.core.evaluation import (
-    NotApplicableResult,
-    UnresolvedEvaluationResult,
-    evaluate_prediction,
-)
-from evertree.core.learning import LearningObjective, LearningSignal
+from evertree.core.evaluation.contracts import NotApplicableResult, UnresolvedEvaluationResult
+from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.learning.contracts import LearningObjective, LearningSignal
 from evertree.core.programs.experiments import evaluate_pair
 from tests.support.evaluation import evaluation_state
 

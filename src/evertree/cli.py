@@ -1,4 +1,4 @@
-"""Local command-line transport for EverTree's Python API."""
+"""Local command-line transport for EverTree."""
 
 from __future__ import annotations
 
@@ -9,10 +9,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from evertree.core.codex.provider import CodexProvider
+from evertree.core.sandbox.diagnostics import check_sandbox
+from evertree.core.values import json_value
+
 from .application import EverTree
-from .core.codex import CodexProvider
-from .core.graph import json_value
-from .core.sandbox import check_sandbox
 
 
 def _positive(value: str) -> int:

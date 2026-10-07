@@ -170,13 +170,3 @@ def extract_revision(repository: Path, revision: str, destination: Path) -> None
             ):
                 raise ValueError("Program checkout contains an unsafe path or symbolic link")
         source.extractall(root)
-
-
-# Keep existing trace type names and pickled references valid through the public module.
-for _export in (
-    ProgramExecutionError,
-    _validate_git_metadata,
-    _git,
-    extract_revision,
-):
-    _export.__module__ = "evertree.core.runtime"
