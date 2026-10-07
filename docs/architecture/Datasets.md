@@ -3,55 +3,55 @@ status: draft
 target_version: next
 ---
 
-## Назначение и связь с памятью
+## Purpose and Relationship to Memory
 #concept #topic_core
 
 (def_id:: entity.Dataset)
-> [!definition] **Dataset** — набор примеров или агрегатов, подготовленный для конкретного обучения или проверки. Он задаёт, какой опыт используется и как его интерпретировать. ^def-Dataset
+> [!definition] **Dataset** — a set of examples or aggregates prepared for a specific training or evaluation task. It defines which experience is used and how to interpret it. ^def-Dataset
 
-Датасеты позволяют агенту:
+Datasets let the agent:
 
-- обучить новую модель процесса на накопленном опыте через [[Learning system#^def-TrainingDataset|TrainingDataset]];
-- сравнить кандидатов на одинаковых случаях через [[Process Plane/Program Evaluation and Testing#EvaluationDataset|EvaluationDataset]] и проверить улучшение на независимых данных;
-- переиспользовать дорогую подготовку данных в нескольких прогонах.
+- train a new process model on accumulated experience through [[Learning system#^def-TrainingDataset|TrainingDataset]];
+- compare candidates on the same cases through [[Process Plane/Program Evaluation and Testing#EvaluationDataset|EvaluationDataset]] and check for improvement on independent data;
+- reuse costly data preparation across multiple runs.
 
-[[Memory#^def-Memory|Memory]] поддерживает компактное представление опыта для разных будущих задач: типичные случаи с их вариативностью, редкие группы, исключения и частоты. Датасет выбирает из него материал и готовит его под своё назначение. Поэтому механизмы отбора и сжатия общие, а постоянный датасет для каждого процесса не обязателен.
+[[Memory#^def-Memory|Memory]] maintains a compact representation of experience for different future tasks: typical cases and their variation, rare groups, exceptions, and frequencies. A dataset selects material from it and prepares it for its purpose. Thus selection and compression mechanisms are shared, and a permanent dataset for every process is not required.
 
-Источники — [[Memory#Observation|собственный опыт и опыт других]], включая рассказы и внешние данные, а также simulation и сгенерированные сценарии. Происхождение сохраняется: синтетический пример не становится наблюдением реального события.
+Sources include [[Memory#Observation|the agent's own and others' experience]], including accounts and external data, as well as simulations and generated scenarios. Provenance is preserved: a synthetic example does not become an observation of a real event.
 
-Обычно достаточно [[Core data structures#Объекты и ссылки|ссылок на память]]; отдельный файл нужен, если этого требует использование. Датасет может включать ещё не сжатый опыт или собираться онлайн.
+Usually, [[Core data structures#Objects and References|references to memory]] are sufficient; a separate file is needed only when required by its use. A dataset may include experience that has not yet been compressed, or it may be assembled online.
 
-## Версии и правила использования
+## Versions and Usage Rules
 #topic_core
 
-Назначение определяет формат, подробность, объём, покрытие и бюджет набора.
+Purpose determines a dataset's format, detail, size, coverage, and budget.
 
-Для сравнимости и воспроизводимости фиксируются **состав, содержимое примеров и правила подготовки и оценки**. Результат относится к этой версии; повторный retrieval из изменившейся памяти её не воспроизводит. Добавления и исправления создают новую версию. Исправление исходных данных может потребовать пересмотра прежних оценок и обученных моделей.
+For comparability and reproducibility, the **composition, example contents, and preparation and evaluation rules** are fixed. Results apply to that version; repeating retrieval from changed memory does not reproduce it. Additions and corrections create a new version. Correcting source data may require revisiting previous evaluations and trained models.
 
-**Число сохранённых примеров не заменяет частоту опыта.** Если два кластера охватывают 98% наблюдений, а шесть других — 2%, редким можно выделить больше места ради покрытия. При этом сохраняются [[Memory#^experience-frequency|исходные частоты]], а у частых групп — существенные нюансы и шум.
+**The number of retained examples is not a substitute for experience frequency.** If two clusters cover 98% of observations and six others cover 2%, rare cases may be given more space to improve coverage. The [[Memory#^experience-frequency|original frequencies]] are preserved, as are meaningful nuances and noise in frequent groups.
 
-При оценке качества на исходном процессе учитываются отбор и веса; одни частоты кластеров не исправят смещённый отбор внутри них. Набор сложных случаев отвечает на свой вопрос, а не автоматически оценивает качество на всём процессе. Повторное использование и больший вес примера не создают независимых наблюдений.
+Evaluation on the original process accounts for selection and weights; cluster frequencies alone do not correct biased selection within clusters. A set of difficult cases answers its own question; it does not automatically measure quality across the entire process. Reusing an example or assigning it more weight does not create independent observations.
 
-### Границы обучения и проверки
+### Training and Evaluation Boundaries
 #topic_core
 
-Данные итоговой проверки не используются для предварительной подгонки кандидата, его начального состояния, подготовки входов или доступной ему памяти: обобщение, построенное с использованием этих данных, тоже раскрывает их обучению. Разделение учитывает время и общие исходные эпизоды; разные фрагменты или пересказы одного случая не дают независимых примеров. При [[Process Plane/Program Evaluation and Testing#^evaluation-modes|проверке способности обучаться]] уже оценённые исходы разрешено использовать для следующих шагов по заранее заданным правилам.
+Final evaluation data must not be used for candidate pre-fitting, its initial state, input preparation, or memory available to it: generalization built using those data also exposes them to training. Splits account for time and shared source episodes; different fragments or retellings of one case are not independent examples. During [[Process Plane/Program Evaluation and Testing#^evaluation-modes|evaluation of learning ability]], already evaluated outcomes may be used in subsequent steps under predefined rules.
 
-Если по результатам набора подбирают модель, начальное состояние или алгоритм обучения, он уже используется для подбора. Для итогового вывода нужны отложенные или последующие случаи по [[Process Plane/Program Evaluation and Testing#^prediction-quality-protocol|протоколу проверки качества]]. После проверки опыт можно передать в обучение; смена имени или удаление датасета не делает его снова независимым для этой модели.
+If a model, initial state, or learning algorithm is tuned using a dataset's results, that dataset has already been used for tuning. A final conclusion requires held-out or subsequent cases under the [[Process Plane/Program Evaluation and Testing#^prediction-quality-protocol|quality evaluation protocol]]. After evaluation, the experience may be used for training; renaming or deleting the dataset does not make it independent again for that model.
 
-## Жизненный цикл
+## Lifecycle
 #topic_core
 
-**Создание, обновление и удаление датасета выполняют отдельные [[Cognition and Attention#Goal, Task и спецификация задачи|Task]].** Задача сбора может длительно принимать новые данные: агент выбирает примеры из памяти вручную и/или назначает автоматический онлайн-отбор с бюджетом и условием завершения. Отбор выполняется только во время исполнения этой Task по [[Cognition and Attention#^sequential-tasks|общему порядку]]; во время её ожидания runtime сохраняет поступающие данные для последующей обработки.
+**A dataset is created, updated, and deleted by a separate [[Cognition and Attention#Goal, Task, and Task Specification|Task]].** A collection task may accept new data for an extended period: the agent selects examples from memory manually and/or schedules automatic online selection with a budget and stopping condition. Selection occurs only while this Task is running, according to the [[Cognition and Attention#^sequential-tasks|shared ordering]]; while it waits, the runtime stores incoming data for later processing.
 
-**Датасет хранится, пока нужен именно этот набор.** После разового сравнения кандидатов он обычно удаляется. Память продолжает накапливать и уточнять представление опыта; для следующей задачи можно подготовить новый срез. Продление хранения требует причины: продолжение экспериментов на том же составе, незавершённое обучение, воспроизведение значимого решения или сохранение редких важных данных с полной нужной подробностью.
+**A dataset is retained while that specific set is needed.** It is usually deleted after a one-time candidate comparison. Memory continues to accumulate and refine its representation of experience; a new slice can be prepared for the next task. Retention beyond that requires a reason: continuing experiments on the same composition, unfinished training, reproducing a significant decision, or preserving rare important data at the required level of detail.
 
-Например, для будущего тюнинга LLM могут понадобиться специальный формат, больше примеров и подробностей, чем оставляет обычное сжатие памяти. Такая Task заранее защищает нужные данные и накапливает их из памяти и/или онлайн. Утраченные детали восстановить из сжатого представления нельзя. Этот сценарий допустим; конкретный механизм тюнинга здесь не задаётся.
+For example, future LLM tuning may require a special format and more examples and detail than ordinary memory compression retains. A Task can protect the required data in advance and accumulate them from memory and/or online. Lost details cannot be recovered from a compressed representation. This scenario is allowed; the specific tuning mechanism is not defined here.
 
-### Удаление
+### Deletion
 
-Удаление датасета снимает его требования к хранению. Полезный опыт и данные других потребителей остаются по [[Memory#Обязательства сохранности|правилам Memory]]. Сжатие исходного воспоминания также не удаляет действующий case, если ему ещё нужна эта информация.
+Deleting a dataset removes its retention requirements. Useful experience and data needed by other consumers remain under [[Memory#Retention Obligations|Memory rules]]. Compressing a source memory also does not delete an active case if it still needs that information.
 
-Сохраняемый полный результат проверки требует своих исходов и trace. Если достаточно сводки, она создаётся как новый результат; прежние данные освобождаются с соблюдением [[Memory#Provenance и ссылочная целостность|ссылочной целостности]] и [[Memory#Delete и deleted_protection_period|общего порядка удаления]].
+A complete evaluation result that is retained requires its outcomes and trace. If a summary is sufficient, it is created as a new result; the old data are released in accordance with [[Memory#Provenance and Referential Integrity|referential integrity]] and [[Memory#Delete and deleted_protection_period|the general deletion process]].
 
-Удаление данных не отменяет уже выполненное обучение; исправление его вкладов регулируется [[Learning system#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|правилами Learning System]].
+Deleting data does not undo training already performed; correction of its contributions is governed by the [[Learning system#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|Learning System rules]].

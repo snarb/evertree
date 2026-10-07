@@ -3,51 +3,46 @@ status: draft
 target_version: next
 ---
 
-## Intro
+## Introduction
 #concept #topic_intro
 
 (def_id:: et.Process Plane)
 > [!definition]
-> **Process Plane**  — плоскость динамики, моделей изменения мира, причинности и внутренних программ агента EverTree. 
+> **Process Plane** — the plane of dynamics, models of change in the world, causality, and the internal programs of an EverTree agent.
 
+It describes:
 
-Она описывает:
+- which factors trigger, enable, suppress, or interrupt changes, and which consequences follow;
+- how objects in the world and relationships among them change over time (at the symbolic level, this projects to “how [[Core data structures#^def-Concept|concepts]] and relationships between concepts change over time”);
+- how strongly and with what probability a cause affects an outcome;
+- how the agent should respond in a given situation, both externally and internally.
 
--  какие факторы запускают, делают возможными, подавляют или прерывают изменения и какие следствия возникают;;
-- как объекты мира  и связи между ними изменяются во времени ( что на символом уровне проецируется в "как [[Core data structures#^def-Concept |концепты]] и связи между концептами изменяются во времени");
-- с какой силой и вероятностью причина влияет на результат;
-- как реагировать агенту в той или иной ситуации (на внешнем и внутреннем уровне). 
+### Purpose
 
-
-### Назначение
-
- 
- * Эффективный анализ и прогнозирование
- * Самоулучшение агента
+- Effective analysis and prediction
+- Agent self-improvement
 
 ---
 
 ## Process Modeling Principles
-#topic_details 
+#topic_details
 
-1) строить не “полное описание процесса”, а минимальную модель, которая позволяет предсказывать, вмешиваться и быстро учиться на ошибке. Самая примитивная стартовая модель: “если я делаю X в ситуации S, вероятен результат Y” - **модель affordance / action-outcome**. Агент выделяет измерения: что здесь меняется, что стабильно, что важно, что можно игнорировать. Сначала задать вопросы: **какие состояния есть → какие переходы возможны → что их запускает → что их блокирует → какие действия меняют траекторию → по каким сигналам я пойму, что модель неверна.** И постевенно происходит уточнение модели, добавление нескольких разноплановых моделей процесса при необходимости.
-2) Хорошая модель важного процесса имеет четыре слоя:
-   -  **атрибутивный**: каковы объекты и состояния процесса. Какие свойства важны?
-   - **семантический**: что есть что, из чего состоит система, какие роли играют элементы
-   - **процессный**:  программы 
-   - **ассоциативный / контекстный**: что обычно появляется вместе, что усиливает или подавляет другое
-4) Разделять триггер, условие и причинную
-5) Проверятьи учитывать крайние случаи
-6) Использовать контрфакты
-7) Использовать интервенции
-8) После инсайта/победы/проиграша закреплять не только вывод, но и путь к нему
-9) Хорошая модель часто вероятностная
-10) Исследование  не хаотично, а по цене информации
-11) Процесс режется на подпроцессы. Стиараемся выделить и переиспользовать общие подпроцессы разных процессов
-12) Хорошая модель:
- - предиктивна
- - **операциональна**: показывает, какие действия меняют исход
- - **иерархична**: различает конкретный случай, класс случаев и общий принцип
- - **сжимаема**: со временем превращает много эпизодов в малое число паттернов.
-
-
+1. Build not a “complete description of the process,” but the smallest model that supports prediction, intervention, and rapid learning from errors. The simplest starting model is “if I do X in situation S, outcome Y is likely” — an **affordance/action-outcome model**. The agent identifies dimensions: what changes here, what stays stable, what matters, and what can be ignored. Start by asking: **what states exist → what transitions are possible → what triggers them → what blocks them → what actions change the trajectory → which signals will tell me the model is wrong?** The model is refined gradually, adding several complementary process models when needed.
+2. A good model of an important process has four layers:
+   - **Attribution:** what the objects and states of the process are like; which properties matter.
+   - **Semantics:** what is what, what the system consists of, and which roles its elements play.
+   - **Process:** programs.
+   - **Associative/contextual:** what tends to appear together, and what strengthens or suppresses something else.
+3. Distinguish triggers, conditions, and causes.
+4. Check and account for edge cases.
+5. Use counterfactuals.
+6. Use interventions.
+7. After an insight, win, or loss, retain not only the conclusion but also the path that led to it.
+8. A good model is often probabilistic.
+9. Exploration should be driven by information value, not be chaotic.
+10. Break processes into subprocesses. Look for common subprocesses across processes and reuse them.
+11. A good model is:
+    - predictive;
+    - **operational:** shows which actions change the outcome;
+    - **hierarchical:** distinguishes an individual case, a class of cases, and a general principle;
+    - **compressible:** turns many episodes into a small number of patterns over time.

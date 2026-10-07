@@ -1,105 +1,105 @@
-### Program 
+### Program
 
 #topic_core
 
-**Program** — стабильная identity Python-backed механизма, который моделирует или исполняет процесс.
+**Program** — a stable identity for a Python-backed mechanism that models or executes a process.
 
-`Program` задаёт устойчивую графовую идентичность программы. Конкретная версия кода определяется Git commit. Активная версия программы — это код этой `Program` в `main` branch репозитория.
+`Program` defines a persistent graph identity for a program. A specific code version is identified by its Git commit. The active version is the code for that `Program` on the repository's `main` branch.
 
-Одна `Program` может вызывать другие `Program`. Это обычная композиция программ, а не отдельный тип.
+One `Program` may call other `Program`s. This is ordinary program composition, not a separate type.
 
 ```python
 Program: Concept {
   name: <string>
-    "Краткое имя программы."
+    "Short program name."
 
   description?: <string>
-    "Что программа делает, где применима и какие границы имеет."
+    "What the program does, where it applies, and its boundaries."
 
   roles: <set["model" | "exec" | "meta" | "simulation"]>
-    "Основная роль программы и опциональные модификаторы."
+    "The program's primary role and optional modifiers."
 
   git_path: <string>
-    "Путь к Python-файлу или модулю в Git-репозитории."
+    "Path to the Python file or module in the Git repository."
 
   requirements?: <string> = None
-    "Текстовые требования программы, учитываемые при подготовке её входа."
+    "Textual program requirements considered when preparing its input."
 
   effect_contract?: <string[]>
-    "Какие классы эффектов программа может выполнять: predict, simulate, mutate_internal, act_external."
+    "Classes of effects the program may perform: predict, simulate, mutate_internal, act_external."
 
   read_contract?: <Concept[] | RelationType[] | TransitionType[]>
-    "Что программа фактически читает."
+    "What the program actually reads."
 
   output_contract?: <Concept[] | RelationType[] | TransitionType[] | PropertyConcept[]>
-    "Что программа фактически предсказывает, создаёт, изменяет или удаляет."
+    "What the program actually predicts, creates, changes, or deletes."
 
   dual_program?: <Program>
-    "Связанная программа с другой основной ролью: для model — exec, для exec — model."
+    "A related program with the other primary role: model for exec, or exec for model."
 
   alternative_to?: <Program>
-    "Программа, которой эта Program является альтернативой, если это конкурирующий подход."
+    "The program this Program is an alternative to, if they are competing approaches."
 
   active_branches?: <ProgramBranch[]>
-    "Живые ветки изменений этой программы до принятия EvaluationChoice."
+    "Live change branches for this program, pending an EvaluationChoice."
 
   lifecycle_status: "idea" | "initial_code_version" | "verified_by_cognition" | "active" | "candidate" | "rejected" | "archived"
-    "Текущее состояние жизненного цикла программы."
+    "The program's current lifecycle state."
 
   belief_data?: <BeliefData>
-    "Вычисляемый belief-view активной revision программы."
+    "Computed belief view for the active program revision."
 }
 ```
 
-#### Program roles
+#### Program Roles
 
 #topic_core
 
-`roles` классифицирует механизм `Program`. Набор содержит ровно одну основную роль:
+`roles` classifies the `Program` mechanism. The set contains exactly one primary role:
 
 ```text
 model | exec
 ```
 
-и может содержать модификаторы:
+and may contain modifiers:
 
 ```text
 meta
 simulation
 ```
 
-Инвариант:
+Invariant:
 
 ```text
 meta ∈ Program.roles
 → exec ∈ Program.roles
 ```
 
-Роль определяется назначением программы, а не использованием LLM или отсутствием непосредственных effects. Составление плана, подготовка аргументов и выбор следующего шага исполняют внутренние процессы и относятся к `exec`; прогноз результата, стоимости или переходов процесса относится к `model`. В исходниках реализованная роль хранится в `_exec.py` или `_model.py`; помощники своей роли могут находиться в одноимённом пакете.
+Role is determined by a program's purpose, not by whether it uses an LLM or has direct effects. Preparing a plan or arguments and selecting the next step execute internal processes, so they are `exec`; predicting process outcomes, costs, or transitions is `model`. In source code, an implemented role is stored in `_exec.py` or `_model.py`; helpers for a role may live in a package with the same name.
 
-Роли имеют следующую семантику:
+Role semantics:
 
 ```text
 model
-→ Program описывает, объясняет или прогнозирует процесс;
-→ сама не выбирает внешнее или внутреннее действие.
+→ Program describes, explains, or predicts a process;
+→ it does not itself select an external or internal action.
 
 exec
-→ Program исполняет процесс, выбирает действия, вызывает
-  другие Programs и выполняет допустимые внутренние или внешние effects.
+→ Program executes a process, selects actions, calls
+  other Programs, and performs allowed internal or external effects.
 
 meta
-→ exec-программа строит, проверяет, выбирает, обучает,
-  улучшает или управляет lifecycle других обучаемых
-  механизмов агента, включая Programs.
+→ an exec program builds, checks, selects, trains,
+  improves, or manages the lifecycle of other learnable
+  agent mechanisms, including Programs.
 
 simulation
-→ Program предназначена также для работы с simulated
-  состояниями или процессами: создаёт simulation, rollout,
-  self-play или optimization environment либо работает в них.
+→ Program is also intended to work with simulated
+  states or processes: it creates or operates in a simulation,
+  rollout, self-play, or optimization environment.
 ```
 
-Примеры:
+Examples:
 
 ```text
 PokerModel.roles = {model}
@@ -111,67 +111,65 @@ SelfPlayProgram.roles = {exec, simulation}
 
 #topic_details
 
-Модификатор `simulation` описывает назначение механизма, а не режим конкретного запуска. Если одна `Program` запускается и с live-, и с simulated-состоянием, режим задаётся runtime/environment context, включая существующий [[Memory#^def-ProgramRun|`ProgramRun.run_mode`]]. Отдельное поле вводится только при реальной необходимости.
+The `simulation` modifier describes the mechanism's purpose, not the mode of a particular run. If one `Program` runs with both live and simulated state, runtime/environment context defines the mode, including the existing [[Memory#^def-ProgramRun|`ProgramRun.run_mode`]]. Add a separate field only when genuinely needed.
 
-#### Belief о Program
+#### Belief About a Program
 
 #topic_core
 
-Epistemic [[Uncertainty and Belief Tracking in the World Model#^def-BeliefTarget|target]] задаётся парой `(Program, program_revision)`: стабильная identity не имеет одного belief, общего для всех revisions. Основное проверяемое утверждение определяется основной ролью:
+The epistemic [[Uncertainty and Belief Tracking in the World Model#^def-BeliefTarget|target]] is the pair `(Program, program_revision)`: a stable identity does not have one belief shared by all revisions. The primary claim being checked depends on the primary role:
 
 ```text
 model ∈ Program.roles
-→ насколько точно revision описывает соответствующий процесс;
+→ how accurately the revision describes the corresponding process;
 
 exec ∈ Program.roles
-→ насколько надёжно revision реализует
-  предназначенное поведение.
+→ how reliably the revision implements its intended behavior.
 ```
 
-Модификаторы добавляют требования к этому утверждению:
+Modifiers add requirements to this claim:
 
 ```text
 simulation ∈ Program.roles
-→ насколько надёжно revision работает с заявленными simulated
-  состояниями или процессами; для model сюда входит точность
-  воспроизведения существенной динамики;
+→ how reliably the revision works with the stated simulated
+  states or processes; for model, this includes accurately
+  reproducing material dynamics;
 
 meta ∈ Program.roles
-→ насколько надёжно revision выполняет заявленные операции
-  над другими обучаемыми механизмами агента.
+→ how reliably the revision performs its stated operations
+  on other learnable agent mechanisms.
 ```
 
-
-#### Program as process transition interface
+#### Program as a Process-Transition Interface
 
 #topic_core
 
-Программы могут описывать или исполнять процесс как n-арный переход между входными и выходными интерфейсами, управляя концептами и отношениями (как символами реальных объектов).
+Programs may describe or execute a process as an n-ary transition between input and output interfaces, operating on concepts and relations as symbols for real objects.
 
-Пример:
+Example:
 
-```
+```text
 PersonA + PersonB
 → FamilyRelation(PersonA, PersonB)
 ```
 
- Программы могут создавать, удалять, изменять, объединять, разделять концепты, а также формировать или разрушать связи между ними.
+Programs may create, delete, modify, merge, and split concepts, and create or break links between them.
 
 ### Program Contracts
 
 #topic_core
 
-Program contracts описывают, что конкретная реализация фактически читает, предсказывает, создаёт, изменяет или удаляет. Их отличие от semantic scope процесса определено в [[Process Ontology and Semantic Interface#^semantic-program-organization|Semantic organization]].
+Program contracts describe what a specific implementation actually reads, predicts, creates, changes, or deletes. Their distinction from the semantic scope of a process is defined in [[Process Ontology and Semantic Interface#^semantic-program-organization|Semantic Organization]].
 
-`roles` классифицирует механизм, а `effect_contract` ограничивает допустимые классы его эффектов. Эти поля отвечают на разные вопросы.
+`roles` classifies the mechanism, while `effect_contract` limits the classes of effects it may perform. These fields answer different questions.
 
 #### ProgramDesign
 
 #topic_core
 
-**ProgramDesign** — типизированное описание проектных решений программы. Обязательные поля помогают LLM явно рассмотреть существенные вопросы при создании и пересмотре кода. Каждая `Program` использует подходящий профиль; внутренним helper-функциям отдельное описание не требуется.
+**`ProgramDesign`** is a typed description of a program's design decisions. Required fields help an LLM explicitly consider material questions when creating or revising code. Each `Program` uses an appropriate profile; internal helper functions do not need separate descriptions.
 
-Профиль и заполненный объект `design` хранятся вместе с кодом и относятся к `(Program, program_revision)`. Они доступны генератору и reviewer-у до запуска программы. Это метаданные версии: отдельная графовая identity и повторная передача при каждом вызове не нужны.
+The profile and completed `design` object are stored with the code and apply to `(Program, program_revision)`. They are available to the generator and reviewer before the program runs. These are version metadata; a separate graph identity and retransmission on every call are unnecessary.
 
 ```python
 from pydantic import BaseModel, ConfigDict, Field
@@ -182,118 +180,117 @@ class ProgramDesign(BaseModel):
 
     applicability: str = Field(
         min_length=1,
-        description="Условия применимости и существенные предпосылки; "
-                    "что делать, если их выполнение неизвестно.",
+        description="Conditions of applicability and material assumptions; "
+                    "what to do when it is unknown whether they hold.",
     )
     adaptation: str = Field(
         min_length=1,
-        description="Как обнаруживается потеря актуальности предпосылок "
-                    "или изменение условий, включая смену режима процесса, "
-                    "среды, участников или их поведения; какая реакция "
-                    "предусмотрена и кто отвечает за пересмотр.",
+        description="How to detect when assumptions are no longer valid "
+                    "or conditions change, including a change in process mode, "
+                    "environment, participants, or their behavior; what response "
+                    "is planned and who is responsible for revision.",
     )
     learning: str = Field(
         min_length=1,
-        description="Что обучается, на каких данных, кем и когда; "
-                    "как проверяется улучшение, либо почему механизм фиксирован.",
+        description="What is learned, from which data, by whom, and when; "
+                    "how improvement is checked, or why the mechanism is fixed.",
     )
 
 
 class PolicyDesign(ProgramDesign):
     exploration: str = Field(
         min_length=1,
-        description="Где и каким механизмом получается полезный новый опыт; "
-                    "как учитываются риск и бюджет; "
-                    "какие программы за это отвечают, "
-                    "либо почему исследование сейчас не применяется.",
+        description="Where and by what mechanism useful new experience is obtained; "
+                    "how risk and budget are handled; which programs are responsible, "
+                    "or why exploration is not currently used.",
     )
 ```
 
-`ProgramDesign` подходит в том числе моделям процессов. `PolicyDesign` обязателен для программ, управляющих поведением процесса или выбирающих действия: [[Cognition and Attention#^def-TaskManagingProgram|TaskManagingProgram]], политик и соответствующих [[Action Selection and Planning#Управление процессом и развитие навыка|программ развития навыка]]. Модель сама не организует исследовательские действия; их описывает использующая её `exec`.
+`ProgramDesign` also applies to process models. `PolicyDesign` is required for programs that control process behavior or select actions: [[Cognition and Attention#^def-TaskManagingProgram|`TaskManagingProgram`]], policies, and the corresponding [[Action Selection and Planning#Process Management and Skill Development|skill-development programs]]. A model does not organize exploration itself; the `exec` program using it describes that work.
 
-`adaptation` описывает, когда и как пересматривать способ работы при изменении условий; `exploration` — целенаправленное получение знаний для будущих решений; `learning` — изменение обучаемых компонентов по опыту. Адаптация может использовать исследование и обучение либо ограничиться выбором готовой модели или стратегии. Исследование полезно и при стабильных условиях, если существенного знания ещё не хватает.
+`adaptation` describes when and how to reconsider an approach as conditions change; `exploration` is the purposeful acquisition of knowledge for future decisions; `learning` changes learnable components based on experience. Adaptation may use exploration and learning or may only select an existing model or strategy. Exploration can be useful even under stable conditions when material knowledge is still missing.
 
-Поля не имеют значений по умолчанию. Ответ явно описывает местный механизм, делегирование с указанием ответственной программы или обоснованную неприменимость. Эти случаи могут сочетаться. `adaptation` не требует отдельного детектора смены режима: пересмотр может запускаться по событиям среды, результатам Evaluation или правилам управляющей программы.
+Fields have no default values. Each answer explicitly describes a local mechanism, delegation to a named responsible program, or a justified statement that the field does not apply. These cases may be combined. `adaptation` does not require a separate mode-change detector: reconsideration may be triggered by environmental events, Evaluation results, or control-program rules.
 
-При генерации и проверке программы LLM получает схему с `description`, заполненный `design` и реализацию. Pydantic проверяет наличие и форму ответов; [[Program Lifecycle and Evolution|Program Lifecycle]] проверяет их содержательность и соответствие коду, включая ранние ветвления и фактический путь обучения. Заполненная строка сама по себе не подтверждает наличие работающего механизма.
+When a program is generated and reviewed, the LLM receives the schema and its `description` fields, the completed `design`, and the implementation. Pydantic checks that answers are present and correctly shaped; [[Program Lifecycle and Evolution|Program Lifecycle]] checks their substance and correspondence to the code, including early branching and the actual learning path. A nonempty string alone does not prove that a mechanism works.
 
-Описание ссылается на существующие [[Cognition and Attention#Goal, Task и спецификация задачи|цели, ограничения и бюджет задачи]], контракты и подпрограммы без повторного определения. Параметры и ссылки, которыми пользуется runtime, закрепляются в типизированном исполняемом интерфейсе; текст `design` объясняет решение. Docstring может добавлять пояснения, не создавая вторую копию этих полей. [[#Текстовые требования программы|`Program.requirements`]] сохраняет своё назначение подготовки входа.
+The description refers to existing [[Cognition and Attention#Goal, Task, and Task Specification|task goals, constraints, and budgets]], contracts, and subprograms without redefining them. Parameters and references used by runtime belong in the typed executable interface; `design` text explains the decision. A docstring may add explanation without duplicating these fields. [[#Program Input Requirements|`Program.requirements`]] retains its separate role in input preparation.
 
 #topic_details
 
-Профили можно расширять и уточнять наследованием, сохраняя смысл обязательных вопросов. Неприменимость указывается явно; удалить вопрос или сделать его необязательным ради конкретной реализации нельзя. Другой профиль выбирается по назначению программы. Изменение самой схемы проходит Program Lifecycle с проверкой того, какие обязательные вопросы она сохраняет. Например, профиль политик на основе оценок может добавить `value_semantics` с определением величины, горизонта и шкалы.
+Profiles may be extended through inheritance while retaining the meaning of required questions. Inapplicability must be stated explicitly; a question cannot be removed or made optional to accommodate one implementation. Choose another profile when the program's purpose differs. Changes to the schema itself go through Program Lifecycle, which checks which required questions remain. For example, an evaluation-based policy profile may add `value_semantics` to define the quantity, horizon, and scale.
 
-Наследование профиля не определяет структуру control flow. Реализация остаётся обычными Python-функциями и классами, которым не требуется наследоваться от `BaseModel`. [[Action Selection and Planning|Политики]] используют готовые функции выбора или необязательные шаблоны подходящего семейства; обязательного метода вычисления scores или построения распределения в базовом классе всех `exec` нет.
+Profile inheritance does not define control flow. The implementation remains ordinary Python functions and classes and need not inherit from `BaseModel`. [[Action Selection and Planning|Policies]] use existing selection functions or optional templates from a suitable family; there is no required score-computation method or distribution-building method in a base class for all `exec` programs.
 
-#### Семантические типы аргументов и результатов
+#### Semantic Types for Arguments and Results
 ^program-semantic-interface
 
 #topic_core
 
-Параметры и результаты любой `Program` могут иметь Python-тип, задающий представление в коде, и семантический тип — ссылку на [[Core data structures#^def-Concept|`Concept`]] EverTree. Например, `str` может представлять слово, абзац или документ; отдельный Python-класс для каждого смысла не нужен.
+Parameters and results of any `Program` may have a Python type that defines their representation in code and a semantic type—a reference to an EverTree [[Core data structures#^def-Concept|`Concept`]]. For example, `str` may represent a word, paragraph, or document; a separate Python class for every meaning is unnecessary.
 
-Python-сигнатура и **явные** семантические привязки образуют единый интерфейс без дублирующего списка аргументов. Имя параметра и содержимое строки не заменяют привязку. Интерфейс при необходимости задаёт роль, ограничения и допустимые преобразования: тип «слово» определяет вид значения, роль «слово для анализа» — назначение в вызове. Текст уточняет контракт, не повторяя смыслы Concepts.
+The Python signature and **explicit** semantic bindings form one interface without a duplicate argument list. A parameter name and the string contents do not replace a binding. When needed, the interface specifies a role, constraints, and permitted transformations: the type “word” defines the kind of value, while the role “word to analyze” defines its purpose in the call. Text clarifies the contract without duplicating the meanings of Concepts.
 
-Подготовка вызова учитывает оба типа и требования задачи. Одной проверки Python-типа недостаточно: нужно обосновать семантическую пригодность, выбор объекта и преобразования. Например, соединять сообщения в слово можно, если задача определяет их как его части; тип «слово» сам эту связь не задаёт.
+Call preparation accounts for both types and task requirements. Checking the Python type alone is insufficient: semantic suitability, object selection, and transformations must also be justified. For example, joining messages into a word is valid if the task defines them as its parts; the “word” type alone does not establish that relationship.
 
-[[Memory#Автоматическая фиксация аргументов программы|Фактические аргументы]] связываются с параметрами интерфейса, а контракт [[Memory#^def-OperatorOutput|`OperatorOutput`]] задаёт смысл результата и его именованных частей. Передача значения не требует отдельного persistent-узла: действуют [[Memory#^def-ResultProvenance|provenance]] и [[Core data structures#Объекты и ссылки|общие правила объектов и ссылок]].
+[[Memory#Automatic Recording of Program Arguments|Actual arguments]] are bound to interface parameters, while the [[Memory#^def-OperatorOutput|`OperatorOutput`]] contract defines the meaning of the result and its named parts. Passing a value does not require a separate persistent node: [[Memory#^def-ResultProvenance|provenance]] and the [[Core data structures#Objects and References|general object and reference rules]] apply.
 
-#### Локальные переменные и семантические результаты
+#### Local Variables and Semantic Results
 ^local-values-and-results
 
 #topic_core
 
-Локальные переменные не требуют отдельной семантической разметки: смысл значений задают [[#^program-semantic-interface|контракты аргументов и результатов]]. Присваивание существующего результата другой переменной не создаёт новый semantic result. Значимые вычисления фиксируются через [[#Code Anchors|anchored-операции]] с provenance. При сохранении изменённого значения создаётся новый результат; прежние версии неизменны.
+Local variables do not need separate semantic labels: the meaning of values is defined by the [[#^program-semantic-interface|argument and result contracts]]. Assigning an existing result to another variable does not create a new semantic result. Material computations are recorded through [[#Code Anchors|anchored operations]] with provenance. Saving a changed value creates a new result; previous versions remain immutable.
 
 #topic_details
 
-Сознательное чтение фиксирует точное значение либо ссылку на сохранённую версию. Нужные для продолжения задачи ссылки остаются в состоянии исполнения. Срок хранения результатов определяет [[Memory#Lifecycle|Memory]], независимо от времени жизни локальной переменной.
+Conscious reading records the exact value or a reference to the saved version. References needed to resume the task remain in execution state. Retention of results is defined by [[Memory#Lifecycle|Memory]], independently of a local variable's lifetime.
 
-Фиксируемые результаты по умолчанию хранятся в trace; крупные значения — в [[Core data structures#^def-Artifact|Artifact]] по точной ссылке из trace. Включение в persistent graph требует [[Core data structures#Изменение persistent graph|`GraphDelta`]].
+Recorded results are stored in the trace by default; large values are stored in an [[Core data structures#^def-Artifact|`Artifact`]] referenced exactly by the trace. Adding a result to the persistent graph requires [[Core data structures#Updating the Persistent Graph|`GraphDelta`]].
 
-#### Текстовые требования программы
+#### Program Input Requirements
 ^program-input-requirements
 
 #topic_core
 
-`Program.requirements: str | None` — опциональные [[Cognition and Attention#^def-Requirement|требования]] вызываемой программы к подготовке входа, доступные **до вызова** без её запуска. Они содержат существенные условия, ещё не выраженные оправданной структурой.
+`Program.requirements: str | None` contains optional [[Cognition and Attention#^def-Requirement|requirements]] for preparing the called program's inputs. They are available **before the call**, without running the program, and capture material conditions not yet expressed through justified structure.
 
-[[Cognition and Attention#^def-Consciousness|Сознание]] или вызывающая `exec` выбирает программу, читает интерфейс и организует [[#^def-ArgumentPreparation|подготовку аргументов]], выполняющую требования. [[Cognition and Attention#^def-Perception|Восприятие]] предоставляет наблюдения; выбор и вызов программы процесса — ответственность вызывающего.
+[[Cognition and Attention#^def-Consciousness|Consciousness]] or the calling `exec` program selects the program, reads its interface, and organizes [[#^def-ArgumentPreparation|argument preparation]] to meet the requirements. [[Cognition and Attention#^def-Perception|Perception]] provides observations; the caller is responsible for choosing and calling a process program.
 
-##### Выбор между структурой и текстом
+##### Choosing Structure or Text
 ^program-requirement-representation
 
 #topic_core
 
-**Всегда предпочитать структуру, если она сохраняет смысл и оправдана переиспользованием, обработкой или проверкой.** Сначала использовать существующие [[#^program-semantic-interface|Concepts и Python-интерфейсы]], отношения и ограничения; при необходимости — минимально расширять интерфейс. Отсутствие поля не оправдывает свободный текст. Новые Concepts создаются по [[Core data structures#Concept Canonicalization and Semantic Linking|правилам канонизации]], без дублей и обязательного нового Python-класса.
+**Prefer structure whenever it preserves meaning and is justified by reuse, processing, or verification.** First use existing [[#^program-semantic-interface|Concepts and Python interfaces]], relations, and constraints; extend the interface minimally when needed. The absence of a field does not justify free text. Create new Concepts under the [[Core data structures#Concept Canonicalization and Semantic Linking|canonicalization rules]], without duplicates or requiring a new Python class.
 
-Польза структуры должна оправдывать её разработку и сопровождение. Точная проверка важного условия может оправдать её даже в редком случае; ждать повторных ошибок необязательно.
+The benefit of structure must justify its development and maintenance. Precise checking of an important condition may justify structure even for a rare case; there is no need to wait for repeated failures.
 
-Текст сохраняет **неформализованный остаток** — исключения и нюансы без устойчивого представления. Флаг `special_document_mode=True` не формализует ещё неясный смысл. Даже частый нюанс остаётся текстовым, если схема повторяет неоднозначность или теряет исключения.
+Text retains the **unformalized remainder**—exceptions and nuances without a stable representation. A flag such as `special_document_mode=True` does not formalize meaning that is still unclear. Even a frequent nuance should remain text when a schema would repeat the ambiguity or lose exceptions.
 
-Редкость, неожиданность и изменчивость сами не определяют форму. Меняющийся порог остаётся числом; неизвестное значение известного типа — явно неизвестным значением этого типа. Сложное извлечение не требует свободного текста: LLM может заполнять структурированное поле. Новую комбинацию известных условий можно выразить существующими Concepts и отношениями.
+Rarity, surprise, and variability do not determine the representation. A changing threshold remains a number; an unknown value of a known type remains an explicitly unknown value of that type. Complex extraction does not require free text: an LLM may fill a structured field. A new combination of known conditions can be expressed with existing Concepts and relations.
 
-`str` не означает неструктурированный интерфейс: слово, документ и свободная инструкция могут быть аргументами с разными семантическими ролями. Исходный текст передаётся аргументом, а не внутри `requirements`.
+`str` does not mean an unstructured interface: a word, document, and free-form instruction can be arguments with different semantic roles. Pass source text as an argument, not inside `requirements`.
 
-Регулярное извлечение одного условия из `requirements` — повод рассмотреть его перенос в минимальную структуру. После проверки сохранности смысла, исключений и допустимых случаев она становится канонической; текст сохраняет оставшиеся нюансы и пояснения, не второе определение контракта. Нет остатка — `requirements = None`.
+Repeated extraction of one condition from `requirements` is a reason to consider moving it into a minimal structure. After verifying that meaning, exceptions, and allowed cases are preserved, the structure becomes canonical; text retains only the remaining nuances and explanations rather than defining the contract a second time. If nothing remains, set `requirements = None`.
 
-Текстовые требования обязательны: вызывающий организует выполнение и доступные проверки, а не просто пересылает строку. Структурные проверки не заменяются повторной LLM-интерпретацией.
+Textual requirements are binding: the caller organizes execution and available checks rather than merely forwarding the string. Structural checks are not replaced by interpreting the same requirements with an LLM again.
 
-##### Постоянный контракт и уточнение текущего вызова
+##### Stable Contract and Current-Call Refinement
 
 #topic_details
 
-`requirements` — текстовая часть входного контракта версии программы; изменения проходят [[Program Lifecycle and Evolution|Program Lifecycle]]. Программа или сознание анализирует новое наблюдение, прежде чем предложить уточнение через [[#^program-feedback|feedback]] или текущую задачу.
+`requirements` is the textual part of the versioned program input contract; changes go through [[Program Lifecycle and Evolution|Program Lifecycle]]. Before proposing a refinement through [[#^program-feedback|feedback]] or the current task, the program or consciousness analyzes the new observation.
 
-Для текущего случая вызывающий сначала использует существующие параметры и подготовку. Неформализованный нюанс передаётся через `arguments_formatter(..., instructions=...)` либо явно читаемые данные [[Cognition and Attention|Task]] и записывается в trace. При LLM-подготовке он входит в фактический запрос. Уточнение не перезаписывает `Program.requirements`; если интерфейса и логики подготовки недостаточно, нужна их ревизия. Форма «структура/текст» и область «постоянный контракт/текущий вход» выбираются независимо.
+For the current case, the caller first uses existing parameters and preparation. An unformalized nuance is passed through `arguments_formatter(..., instructions=...)` or through explicitly read [[Cognition and Attention|Task]] data and is recorded in the trace. For LLM preparation, it is included in the actual request. This refinement does not overwrite `Program.requirements`; if the interface and preparation logic are insufficient, they must be revised. The choice between structure and text is independent of the choice between a stable contract and current-call input.
 
-#### Единый результат Program
+#### Unified Program Result
 
 #topic_core
 
 (def_id:: entity.ProgramResult)
 > [!definition]
-> **ProgramResult[T]** — обязательная форма успешного возврата любой EverTree `Program`.
+> **`ProgramResult[T]`** — the required form of a successful return from any EverTree `Program`.
 > ^def-ProgramResult
 
 ```python
@@ -304,76 +301,75 @@ class ProgramResult[T](OperatorOutput):
 
 ```python
 return ProgramResult(result=forecast)
-return ProgramResult(result=forecast, feedback="Для следующего прогноза полезны более частые измерения.")
+return ProgramResult(result=forecast, feedback="More frequent measurements would help the next forecast.")
 ```
 
-Единая форма упрощает обработку вызывающим и tracer-ом. `result` сохраняет технический и семантический тип; `None` допустим, только если его допускает `T`. Вспомогательные Python-функции и anchored-операторы, не являющиеся `Program`, сохраняют свои формы возврата.
+One shared form simplifies handling by the caller and tracer. `result` retains its technical and semantic types; `None` is allowed only when permitted by `T`. Helper Python functions and anchored operators that are not `Program`s keep their own return forms.
 
-Обязательные возвращаемые данные закрепляются в схеме `ProgramResult.result`; runtime проверяет их наличие и соответствие схеме при возврате. Пропуск обязательных данных — нарушение контракта.
+Required return data are defined in the `ProgramResult.result` schema; runtime checks their presence and conformance to the schema at return. Omitting required data violates the contract.
 
-Оболочка наследует [[Memory#^def-OperatorOutput|`OperatorOutput`]] и записывается в trace целиком. Доменная логика и схемы «Program → прогноз» используют `.result`; `.feedback` имеет отдельный смысл и не входит в прогноз или наблюдение.
+The wrapper inherits from [[Memory#^def-OperatorOutput|`OperatorOutput`]] and is recorded in full in the trace. Domain logic and “Program → forecast” schemas use `.result`; `.feedback` has a separate meaning and is not part of the forecast or observation.
 
-`requirements` и `feedback` — строки, без отдельных Python-объектов `Requirement`/`Feedback`; обёртка [[Core data structures#^def-Note|Note]] не требуется.
+`requirements` and `feedback` are strings, without separate Python `Requirement` / `Feedback` objects; wrapping them in [[Core data structures#^def-Note|`Note`]] is unnecessary.
 
-#### Текстовая обратная связь
+#### Textual Feedback
 ^program-feedback
 
 #topic_core
 
 (def_id:: entity.Feedback)
 > [!definition]
-> **Feedback** — оценка выполненной работы и обоснованные предложения улучшений, включая успешные случаи.
+> **Feedback** — an assessment of completed work and justified suggestions for improvement, including after successful cases.
 > ^def-Feedback
 
 ```python
 ProgramResult.feedback: str | None = None
 ```
 
-Без содержательной обратной связи — `None`; LLM-вызов ради поля не нужен.
+Use `None` when there is no substantive feedback; an LLM call solely to fill this field is unnecessary.
 
-Feedback возвращается с результатом непосредственному вызывающему. Тот решает, использовать ли предложения и кому их передать, с учётом роли, задачи, бюджета и требований. Например, модель предлагает изменить гранулярность восприятия; настройку меняет вызвавшая её `exec` или сознание. Родитель может использовать feedback завершённых дочерних вызовов, продолжая работу.
+Feedback is returned with the result to the immediate caller. That caller decides whether to use the suggestions and whom to pass them to, accounting for role, task, budget, and requirements. For example, a model may suggest changing perception granularity; the calling `exec` program or consciousness changes the setting. A parent may use feedback from completed child calls while continuing its work.
 
-Feedback не рассылается автоматически; этот интерфейс не задаёт промежуточных сообщений незавершённой `Program`. Сам feedback не меняет контракт и не запускает обучение; [[Evaluative-Control System#^def-SupervisorFeedbackSignal|`supervisor_feedback_signal`]] — отдельная внешняя оценка с числовым значением и необязательным комментарием. Сознание вправе уточнять подготовку самостоятельно.
+Feedback is not broadcast automatically; this interface does not define intermediate messages from an unfinished `Program`. Feedback itself does not change a contract or trigger training. [[Evaluative-Control System#^def-SupervisorFeedbackSignal|`supervisor_feedback_signal`]] is a separate external assessment with a numeric value and optional comment. Consciousness may refine preparation on its own.
 
-#### Графовые инструкции и Prompt
+#### Graph Instructions and Prompt
 ^program-text-dependencies
 
 #topic_details
 
-[[Core data structures#^def-Note|`Note`]] может пояснять код или служить инструкцией. Инструкцию программа явно читает; поясняющая связь не добавляет текст в LLM-контекст. [[#Code Anchors|Code Anchor]] связывает вычисление с оператором, а читаемая заметка — его зависимость.
+A [[Core data structures#^def-Note|`Note`]] may explain code or serve as an instruction. A program explicitly reads an instruction; a link that merely explains code does not add text to the LLM context. A [[#Code Anchors|Code Anchor]] links a computation to an operator, while a Note that is read becomes one of its dependencies.
 
-[[Core data structures#^def-Prompt|`Prompt`]] задаёт [[Core data structures#^prompt-configuration|шаблон сообщений, целевые модели, defaults генерации и схему ответа]]. Placeholders используют [[#^program-semantic-interface|семантический интерфейс]] без дублирования типов и ролей; значения готовятся до подстановки. Логику подготовки и вызовов задаёт `Program`.
+A [[Core data structures#^def-Prompt|`Prompt`]] defines a [[Core data structures#^prompt-configuration|message template, target models, generation defaults, and response schema]]. Placeholders use the [[#^program-semantic-interface|semantic interface]] without duplicating types or roles; values are prepared before substitution. `Program` defines preparation and invocation logic.
 
-По умолчанию инструкционные зависимости, включая Prompt, закреплены неизменяемыми версиями. Замена ссылок меняет Git revision программы и проходит [[Program Lifecycle and Evolution|Program Lifecycle]]. Изменяемые знания графа можно читать как входные данные, сохраняя фактическое состояние для [[Memory#^def-ResultProvenance|provenance]] и восстановления запуска.
+By default, instruction dependencies, including Prompts, are pinned to immutable versions. Replacing a reference changes the Program's Git revision and goes through [[Program Lifecycle and Evolution|Program Lifecycle]]. Mutable graph knowledge may be read as input, preserving the actual state for [[Memory#^def-ResultProvenance|provenance]] and execution recovery.
 
-Динамический выбор инструкций разрешён явными правилами программы; выбранные версии записываются в trace. [[#Belief о Program|Belief версии программы]] относится к поведению этих правил в проверенной области применения. Успех одного варианта не подтверждает остальные: [[Core data structures#^note-claim-prompt-evaluation|оценка]] учитывает версию текста, модель и контекст.
+Dynamic instruction selection is allowed under explicit program rules; record the selected versions in the trace. The [[#Belief About a Program|belief about a Program revision]] concerns how these rules behave within the verified applicability domain. Success of one option does not validate the others: [[Core data structures#^note-claim-prompt-evaluation|evaluation]] accounts for text version, model, and context.
 
-Для каждого LLM-вызова trace сохраняет фактический запрос (инструкции, историю, результаты tools), ID и доступную версию модели, итоговые настройки после defaults и переопределений, связи с исходными данными. Ссылок на шаблон или Note недостаточно: текст или его интерпретация могли измениться.
+For every LLM call, the trace saves the actual request (instructions, history, tool results), the ID and available version of the model, final settings after defaults and overrides, and links to source data. References to a template or Note are not enough: the text or its interpretation may have changed.
 
-Если параметр опущен, а default провайдера неизвестен, trace фиксирует пропуск и эту неопределённость. [[Core data structures#^note-claim-prompt-evaluation|Оценка Prompt]] относится к фактической конфигурации, а не только `target_llms` или defaults шаблона.
+If a parameter is omitted and the provider's default is unknown, the trace records the omission and that uncertainty. [[Core data structures#^note-claim-prompt-evaluation|Prompt evaluation]] applies to the actual configuration, not just `target_llms` or template defaults.
 
 #### Read Contract
 
 #topic_core
 
-`read_contract` — список  концептов(в том числе операторов), relation и transition types, которые программа фактически читает, но не пишет.
+`read_contract` lists the Concepts (including operators), relation types, and transition types that a program actually reads but does not write.
 
-#### Output contract
-
-#topic_core
-`output_contract` — список концептов, relation types, property axes или transition types, которые программа фактически предсказывает, создаёт, изменяет или удаляет. 
-
-
-Обязательные prediction/profile задаются контрактом конкретной реализации. Связь `PROCESS_VARIABLE(process, x)` сама по себе не обязывает каждую программу процесса предсказывать `x`: [[Process Ontology and Semantic Interface#^semantic-program-organization|semantic scope процесса и coverage реализации различаются]]. Отсутствие обязательного прогноза требует разбора и исправления программы.
-  
-
-#### Expected signals
+#### Output Contract
 
 #topic_core
 
-**ExpectedOutcomeSignal** — прогноз значения выбранного [[Evaluative-Control System#^def-SignalChannel|SignalChannel]] по общему [[#PredictionTarget и контракт прогноза|контракту прогноза]]. Это роль типизированного результата модели, а не отдельный оценочный канал или обязательный runtime-класс.
+`output_contract` lists the Concepts, relation types, property axes, or transition types that a program actually predicts, creates, changes, or deletes.
 
-`Program` может включать expected signals в типизированный payload `ProgramResult.result` вместе с доменным результатом:
+Required predictions and Profiles are defined by the specific implementation's contract. A link `PROCESS_VARIABLE(process, x)` does not by itself require every program for that process to predict `x`: [[Process Ontology and Semantic Interface#^semantic-program-organization|process semantic scope and implementation coverage differ]]. A missing required prediction needs to be analyzed and the program corrected.
+
+#### Expected Signals
+
+#topic_core
+
+**`ExpectedOutcomeSignal`** is a forecast of the value of a selected [[Evaluative-Control System#^def-SignalChannel|`SignalChannel`]] under the shared [[#PredictionTarget and Forecast Contract|forecast contract]]. It is a role of a typed model result, not a separate evaluation channel or mandatory runtime class.
+
+A `Program` may include expected signals in the typed `ProgramResult.result` payload alongside its domain result:
 
 ```text
 ProgramResult.result
@@ -381,98 +377,98 @@ ProgramResult.result
 + optional expected signals
 ```
 
-Expected signals нужны, чтобы родительская программа могла через общий интерфейс оценить последствия результата, сравнить альтернативы, принять commitment или направить внимание.
+Expected signals let a parent program use a shared interface to assess consequences of a result, compare alternatives, make a commitment, or direct attention.
 
-Программы могут возвращать прогнозы по выбранным каналам, если их результат является самостоятельным outcome и может повлиять на дальнейшее управление:
+Programs may return forecasts for selected channels when their result is an independent outcome that could affect later control:
 
 ```text
 ExecutableProgram
-→ может возвращать expected signals для предлагаемых действий,
-  кандидатов или ветвей до их исполнения;
+→ may return expected signals for proposed actions,
+  candidates, or branches before execution;
 
 Declarative Model
-→ может возвращать expected signals, когда прогноз этих последствий
-  полезен для выбора или внимания;
+→ may return expected signals when forecasting consequences
+  helps with selection or attention;
 
-Program с модификатором meta или simulation
-→ возвращает их, если результат оценивается
-  по общим signal channels.
+Program with meta or simulation modifier
+→ returns them when its result is evaluated
+  through shared signal channels.
 ```
 
-Технические утилиты и внутренние вычисления без самостоятельного управляющего значения expected signals не возвращают.
+Technical utilities and internal computations with no independent control significance do not return expected signals.
 
 #topic_details
 
-Если последствия промежуточной ветви нужны родительской программе до продолжения исполнения, эта ветвь выделяется в дочернюю `Program`.
+If a parent program needs the consequences of an intermediate branch before continuing, make that branch a child `Program`.
 
 ```text
-обычное внутреннее вычисление
+ordinary internal computation
 → anchored operator;
 
-самостоятельно оцениваемый outcome
+independently evaluated outcome
 → child Program
 → expected signals.
 ```
 
-Expected signals являются разреженной частью результата:
+Expected signals are a sparse part of the result:
 
 ```python
 expected_signals?: <dict[SignalChannel, ExpectedOutcomeSignal]>
 ```
 
-Для такого словаря контракт фиксирует предмет, условия и горизонт каждого канала. Если нужны несколько прогнозов одного канала, их различает типизированный payload программы. Числовой прогноз supervisor feedback относится к `value`; опциональный `comment` поясняет фактическую оценку.
+For this dictionary, the contract defines the subject, conditions, and horizon for each channel. If several forecasts for one channel are needed, distinguish them in the program's typed payload. A numeric supervisor-feedback forecast belongs in `value`; an optional `comment` explains the actual assessment.
 
-Отсутствующий канал означает, что программа его не моделирует, а не ожидаемый нулевой эффект. Сознание выбирает каналы и места прогнозирования по [[Learning system#Выбор обучаемых компонентов и режима обучения|значимости процесса и стоимости моделирования]]. Предикторы всех сигналов в каждом семантическом операторе не создаются по умолчанию. Наличие `BeliefData` у оператора также не требует собственного предиктора сигналов.
+An absent channel means that the program does not model it, not that a zero effect is expected. Consciousness selects channels and forecast points based on [[Learning system#Selecting Learnable Components and Learning Mode|process importance and modeling cost]]. Predictors for every signal are not created for every semantic operator by default. An operator having `BeliefData` does not require its own signal predictor.
 
-### Обучаемые и фиксированные компоненты
+### Learnable and Fixed Components
 
 #topic_core
 
-**Обучаемая часть программы** — состояние estimator-а или параметры программы, которые предусмотрено обновлять по данным без изменения кода и контракта: например, счётчики исходов, обучаемое значение `V`, коэффициенты регрессии или параметры policy.
+A **learnable part of a program** is estimator state or program parameters that are intended to be updated from data without changing code or contract—for example, outcome counts, a learnable value `V`, regression coefficients, or policy parameters.
 
-[[Learning system#LearningCredit and UnresolvedCredit|LearningCredit]] относится к [[Learning system#^def-LearningTarget|LearningTarget]] и его применению в контексте опыта; для обучения прогнозов это [[#^def-PredictionTarget|PredictionTarget]]. Конкретное состояние или параметры для обновления выбирает [[Learning system#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|UpdatePlanner]]. Параметры политики могут обучаться по независимо оценённым последствиям решений без собственного прогноза.
+[[Learning system#LearningCredit and UnresolvedCredit|`LearningCredit`]] applies to a [[Learning system#^def-LearningTarget|`LearningTarget`]] and its use in the context of experience; for forecast training this is a [[#^def-PredictionTarget|`PredictionTarget`]]. [[Learning system#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|`UpdatePlanner`]] selects the specific state or parameters to update. Policy parameters may be learned from independently evaluated decision consequences without a forecast of their own.
 
-**Фиксированный компонент** — часть программы, которую parameter learning не изменяет: например, код, явное правило или заданный порог. Её можно изменить через [[Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]]; «фиксированный» не означает неизменный навсегда.
+A **fixed component** is a part that parameter learning does not change, such as code, an explicit rule, or a specified threshold. It may be changed through [[Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]]; “fixed” does not mean immutable forever.
 
-Одна программа может сочетать оба вида компонентов. Постоянное по входам значение `V` может быть обучаемым, а заданная константа — фиксированной. Компонент с приостановленным обучением сохраняет найденное состояние и может продолжать использоваться; возобновление обучения не требует создавать его заново.
+One program may combine both kinds of component. A value `V` that is constant across inputs may still be learnable, while a specified constant is fixed. A component whose learning is paused retains its acquired state and may remain in use; resuming training does not require recreating it.
 
+---
 ## Program Roles: Declarative Models and Executable Programs
-
 
 ### Declarative Models
 
 #topic_core
 
-Объект **ProcessModel** — описывает, как меняются концепты и какие причинные связи ведут к каким результатам. Это базовая модель процесса (элемент "world model"). Технически это `Program` с `model ∈ Program.roles`.
+A **ProcessModel** describes how concepts change and which causal relationships lead to which outcomes. It is a base process model (part of the “world model”) and is technically a `Program` with `model ∈ Program.roles`.
 
-Она может описывать:
+It may describe:
 
-- процессы внешнего мира и взаимодействия
-- жизненный цикл концептов и связей 
-- поведение внутренних программ и измененения внутренних структур агента 
+- processes and interactions in the external world;
+- lifecycles of concepts and relations;
+- behavior of internal programs and changes to the agent's internal structures.
 
-И использоваться для прогнозирования, анализа.
+It is used for prediction and analysis.
 
-ProcessModel описывает, предсказывает, объясняет. Отличается от ExecutableProgram отсутсвие актиных нод(действий агента). В том числе не отвечает пользователю . 
+A ProcessModel describes, predicts, and explains. Unlike an ExecutableProgram, it has no active nodes (agent actions); it does not, for example, answer the user.
 
-Для обучения Declarative Models могут использоваться [[Memory#^def-Observation|наблюдения и outcomes]], включая оценки supervisor_feedback_signal и tension_reduction. Обучающие данные и функция потерь определяются алгоритмом конкретной модели. [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] служит диагностикой расхождения конкретного прогноза и основанием для анализа, а не универсальной функцией потерь.
+For training Declarative Models, use [[Memory#^def-Observation|observations and outcomes]], including evaluations of `supervisor_feedback_signal` and `tension_reduction`. Training data and loss function are defined by the specific model algorithm. [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] diagnoses a discrepancy in a specific forecast and motivates analysis; it is not a universal loss function.
 
 #topic_details
 
-ProcessModel может прогнозировать переходы, доменные результаты — например, итоговые очки игры — и выбранные [[#Expected signals|expected signals]] для состояний и действий. Доменные прогнозы не обязаны быть общими сигналами агента. Модель возвращает прогноз; действие выбирает использующая её программа.
+A ProcessModel may predict transitions, domain outcomes (such as a game's final score), and selected [[#Expected Signals|expected signals]] for states and actions. Domain forecasts do not have to be general agent signals. The model returns a forecast; the program using it selects the action.
 
-Выбор действия выполняется внутри `ExecutableProgram` обычным control flow или вызовом [[Action Selection and Planning|программы политики]]. Политика возвращает `ProgramResult[ActionDistribution]`; вызывающая программа выбирает действие из распределения общей функцией и организует его исполнение. Детерминированный выбор представляется вероятностью `1` для одного действия. Управляющая `exec` сохраняет собственный `ProgramResult[T]` и может выполнять несколько решений, ждать наблюдения или завершаться без действия.
+Action selection takes place inside an `ExecutableProgram` through ordinary control flow or a call to an [[Action Selection and Planning|policy program]]. A policy returns `ProgramResult[ActionDistribution]`; the caller selects an action from the distribution using a shared function and organizes its execution. A deterministic choice is represented by probability `1` for a single action. The controlling `exec` program saves its own `ProgramResult[T]` and may make several decisions, wait for an observation, or finish without an action.
 
 ```text
-Declarative Model, если нужна
-→ прогнозы / expected signals для контекста решения
+Declarative Model, when needed
+→ forecasts / expected signals for the decision context
 
-Verification, если требуется
+Verification, when required
 → sufficiently verified candidate set
 
 CommitmentControl
 → automatic
-  или consciousness_selection
+  or consciousness_selection
 
 if automatic:
     policy(...)
@@ -484,43 +480,43 @@ if consciousness_selection:
     → Consciousness
 ```
 
-Обязанности [[Action Selection and Planning#Управление процессом и развитие навыка|TaskManagingProgram и SkillDevelopmentProgram]] включают организацию Evaluation и выбранного пути обучения; сама выборка из распределения их не запускает. Порядок применимых Verification и CommitmentControl определяет вызывающая программа по контексту решения.
+Responsibilities of [[Action Selection and Planning#Process Management and Skill Development|`TaskManagingProgram` and `SkillDevelopmentProgram`]] include organizing Evaluation and the selected learning path; sampling from the distribution does not initiate either by itself. The calling program determines the order of applicable Verification and CommitmentControl from the decision context.
 
+In Declarative Models, expected values for individual signals are added only for selected channels and program points: states, transitions, `ActionConcept`, or `PROCESS_VARIABLE`. Modeling a process does not require forecasting supervisor feedback or other general signals. Add such a forecast when the signal is part of the modeled subject or its evaluation is expected to help control.
 
-В Declarative Models expected per-signal values добавляются только для выбранных каналов и точек программы: состояний, переходов, `ActionConcept` или `PROCESS_VARIABLE`. Само моделирование процесса не требует прогноза supervisor feedback или других общих сигналов. Такой прогноз добавляется, если сигнал является предметом моделирования или его оценка оправданно помогает управлению.
+If a separate learnable numeric predictor for a signal is needed, the MVP supports `V` and linear regression `Ax+b` over input parameters, such as the size of a poker pot. A fixed value or an estimate from an existing model may suffice. More complex separate predictors, such as XGBoost or MLP, are reserved for later versions and justified cases. This limitation applies to separate numeric signal predictors, not all [[#Estimator|estimators]] for process models.
 
-Если нужен отдельный обучаемый числовой предиктор сигнала, MVP поддерживает `V` и линейную регрессию `Ax+b` от входных параметров, например размера банка в покере. Может хватить фиксированного значения или оценки из существующей модели. Более сложные отдельные предикторы, например XGBoost или MLP, остаются для будущих версий и оправданных случаев. Это ограничение относится к отдельным числовым предикторам сигналов, а не ко всем [[#Estimator|estimator-ам]] моделей процессов.
-
-#### PredictionTarget и контракт прогноза
+---
+#### `PredictionTarget` and Forecast Contract
 
 #topic_core
 
 > [!definition]
-> **PredictionTarget** — семантически определённая величина, событие или состояние, выбранное для прогнозирования: очки, температура, исход игры, свойство или составное состояние объекта, выбранный сигнал.
+> **`PredictionTarget`** — a semantically defined quantity, event, or state selected for forecasting: a score, temperature, game outcome, property, composite object state, or selected signal.
 > ^def-PredictionTarget
 
-При обучении прогноза `PredictionTarget` выступает частным случаем [[Learning system#^def-LearningTarget|LearningTarget]]: credit относится к тому, что учится предсказывать модель. Другие `LearningTarget` могут обозначать действия, решения или использованные выводы без собственного прогноза.
+For forecast training, `PredictionTarget` is a specific kind of [[Learning system#^def-LearningTarget|`LearningTarget`]]: credit concerns what the model is learning to predict. Other `LearningTarget`s may denote actions, decisions, or inferences used without having their own forecast.
 
-Смысл цели задаётся существующим `Concept` и связями в графе; отдельный узел или Python-класс для роли цели прогноза не требуется. Для свойства смысл задаёт `PropertyConcept`, пространство значений и чтение — [[Attribution Plane#Attribution Axis|AttributionAxis]]. [[Process Ontology and Semantic Interface#PROCESS_VARIABLE|PROCESS_VARIABLE]] связывает значимую величину с процессом, а [[#Output contract|output_contract]] и [[#^program-semantic-interface|семантические привязки интерфейса]] определяют покрытие конкретной модели. У процесса может быть много целей прогноза; каждая модель покрывает выбранные.
+The target's meaning is defined by an existing `Concept` and its graph links; a separate node or Python class for the forecast-target role is unnecessary. For a property, `PropertyConcept` defines its meaning, while [[Attribution Plane#Attribution Axis|`AttributionAxis`]] defines its value space and read interface. [[Process Ontology and Semantic Interface#PROCESS_VARIABLE|`PROCESS_VARIABLE`]] links a material quantity to a process; [[#Output Contract|`output_contract`]] and [[#^program-semantic-interface|semantic interface bindings]] define coverage by a specific model. A process may have many forecast targets; each model covers selected targets.
 
-Одна цель может прогнозироваться несколькими estimator-ами; один estimator может прогнозировать несколько целей. Формула или правило могут давать прогноз без обучаемого состояния.
+One target may be predicted by several estimators; one estimator may predict several targets. A formula or rule may produce a forecast without learnable state.
 
+The contract for each forecast output defines:
 
-Контракт каждого прогнозного выхода определяет:
+- **What and whose value:** the semantic target, subject, and answer form—a value, mean, event probability, distribution, or state.
+- **When and under which conditions:** the horizon and available information, plus the assumed first action and continuation when they affect the result.
+- **How it will be checked:** how to obtain and match the observed outcome; for a latent quantity, which consequences can be checked.
 
-- **Что и о ком:** семантическую цель, субъект и форму ответа — значение, среднее, вероятность события, распределение или состояние.
-- **Когда и при каких условиях:** горизонт, доступную информацию, предполагаемое первое действие и продолжение, если они влияют на результат.
-- **Как проверять:** путь получения и сопоставления наблюдаемого исхода; для latent-величины — проверяемые последствия.
+Fixed conditions belong in the versioned contract; changing conditions are passed as typed arguments. Use references to Concepts and relations; text explains any unformalized remainder. A separate mandatory `ForecastSpec` is not introduced. The configuration of a shared estimator may collect these references and settings, but does not duplicate graph definitions.
 
-Постоянные условия закрепляются контрактом версии, изменяемые передаются типизированными аргументами. Используются ссылки на Concepts и отношения; текст поясняет неформализованный остаток. Отдельный обязательный `ForecastSpec` не вводится. Конфигурация общего estimator-а может собирать эти ссылки и настройки, но не дублирует определения графа.
+For example, a stack change, its conditional mean, the probability of winning at least `X`, and the task objective of obtaining `X` have different meanings. A forecast of future `prediction_unexpectedness` concerns a specified model and evaluation conditions; it does not replace the evaluation itself or become an optimization target.
 
-Например, изменение стека, его условное среднее, вероятность выигрыша не менее `X` и цель задачи получить `X` — разные смыслы. Прогноз будущего `prediction_unexpectedness` относится к указанной модели и условиям её проверки; он не заменяет саму проверку и не становится целью оптимизации.
-
-#### Прямой прогноз результата
+---
+#### Direct Outcome Forecast
 
 #topic_core
 
-Модель может прогнозировать результат без обхода дерева продолжений: по правилу, формуле, накопленной статистике или [[#Estimator|estimator-у]]. Внешний интерфейс задаёт вопрос к модели, estimator — возможный способ вычисления ответа. Например:
+A model may forecast an outcome without traversing a continuation tree, using a rule, formula, accumulated statistics, or an [[#Estimator|estimator]]. The external interface defines the question to the model; an estimator is one possible way to compute the answer. For example:
 
 ```python
 PokerReturnModel.run(
@@ -528,111 +524,113 @@ PokerReturnModel.run(
 ) -> ProgramResult[float]
 ```
 
-Семантическая привязка результата означает ожидаемое изменение стека указанного игрока от текущего момента до конца раздачи при первом действии `first_action` и объявленном продолжении. Модель не исполняет действие. Она оценивает только поддерживаемые условия; передача другой политики не делает прогноз автоматически применимым к ней.
+The semantic binding for the result means the expected change in the specified player's stack from the current point to the end of the hand, given the first action `first_action` and declared continuation. The model does not perform the action. It estimates only conditions it supports; passing it a different policy does not automatically make the forecast applicable to that policy.
 
-Прогноз по состоянию оценивает результат при заданном продолжении; прогноз по состоянию и действию дополнительно фиксирует первое действие. Названия `predict_state_value` и `predict_action_value` допустимы для таких численных оценок, но не являются обязательными методами `ProcessModel`. Прогноз текущего состояния сам по себе не сравнивает кандидатов: нужны оценки при каждом действии либо модель перехода с оценкой следующего состояния.
+A state forecast estimates the outcome under a specified continuation; a state-and-action forecast also fixes the first action. Names such as `predict_state_value` and `predict_action_value` are acceptable for such numeric estimates, but they are not required `ProcessModel` methods. A forecast of the current state does not itself compare candidates: that requires estimates for each action or a transition model plus an estimate of the next state.
 
-Прогноз может напрямую служить score, если соответствует критерию выбора; иначе политика учитывает также затраты, ограничения и риск. Выбор между прогнозом распределения и отдельной характеристики следует [[Learning system#Представление прогноза и цель обучения|общим правилам моделирования]]. Такой прогноз используется как в политике без поиска, так и для оценки оставшегося результата при [[Action Selection and Planning#Оценка продолжений|планировании]].
+A forecast may directly serve as a score when it matches the selection criterion; otherwise, the policy also accounts for costs, constraints, and risk. The choice between forecasting a distribution and one characteristic follows the [[Learning system#Forecast Representation and Learning Objective|general modeling rules]]. Such forecasts are used both by a policy without search and to evaluate remaining outcomes during [[Action Selection and Planning#Evaluating Continuations|planning]].
 
-#### Estimator
+---
+#### `Estimator`
 
 #topic_details
 
 (def_id:: entity.Estimator)
 > [!definition]
-> **Estimator** — переиспользуемый компонент, который по данным строит численную, вероятностную или категориальную модель зависимости и использует её для получения оценок.
+> **`Estimator`** — a reusable component that builds a numeric, probabilistic, or categorical model of a dependency from data and uses it to produce estimates.
 > ^def-Estimator
 
-`Estimator` не обязателен для каждой [[#Declarative Models|ProcessModel]]: он используется, когда часть модели естественно обучается по данным и такой механизм полезно выделить или переиспользовать.
+An `Estimator` is not required for every [[#Declarative Models|ProcessModel]]; use one when part of the model is naturally learned from data and it is useful to isolate or reuse that mechanism.
 
-**Среднее и частоты, обновляемые по опыту для прогнозирования, — простейшие обучаемые estimator-ы.** Готовые реализации позволяют агенту настроить прогноз, не писать накопление и обучение заново для каждой точки программы.
+**Means and frequencies updated from experience for forecasting are the simplest learnable estimators.** Ready-made implementations let the agent configure a forecast without rewriting accumulation and training for each program point.
 
-Базовые реализации — накопители среднего и частот, их варианты с группировкой по бакетам и регрессия по признакам. Форма прогноза и метрики выбираются по [[Learning system#Представление прогноза и цель обучения|общим правилам моделирования]].
+Basic implementations include running means and frequencies, their bucketed variants, and regression over features. Select the forecast form and metrics under the [[Learning system#Forecast Representation and Learning Objective|general modeling rules]].
 
-Линейная регрессия `Ax+b` подходит для численных величин. Для вероятностей используются частоты или модель с выходом в `[0, 1]`, например логистическая регрессия; произвольный линейный выход не считается вероятностью.
+Linear regression `Ax+b` is suitable for numeric quantities. For probabilities, use frequencies or a model with output in `[0, 1]`, such as logistic regression; an arbitrary linear output is not a probability.
 
-Минимальный интерфейс внутреннего компонента:
+Minimal interface of an internal component:
 
 ```python
 estimator.predict(inputs: Inputs) -> Forecast
 ```
 
-`Inputs` и `Forecast` — конкретные типы по контракту компонента. Результатом может быть число, распределение или составной прогноз. Если допускается недоступность прогноза, она выражается типом выхода, например `float | None`, и явно обрабатывается вызывающим. [[Learning system#Начальное состояние estimator-а|Начальная оценка]] задаётся контрактом; отсутствие данных само по себе не означает ноль.
+`Inputs` and `Forecast` are concrete types defined by the component contract. A result may be a number, distribution, or composite forecast. If a forecast may be unavailable, express that in the output type—for example, `float | None`—and handle it explicitly in the caller. The [[Learning system#Estimator Initial State|initial estimate]] is defined by contract; absence of data does not itself mean zero.
 
-Внутренний helper может вернуть обычное число. На границе model `Program` оно входит в `ProgramResult[T]`; самостоятельный anchored-оператор оформляет результат как доменный [[Memory#^def-OperatorOutput|OperatorOutput]] с семантическим контрактом. У накопителей также есть `statistics()` с типизированной сводкой наблюдений: число примеров, среднее и разброс либо счётчики категорий. При пустой выборке счётчики равны нулю, а эмпирические оценки среднего, вероятностей и разброса недоступны; prior не выдаётся за наблюдённые данные.
+An internal helper may return an ordinary number. At the model `Program` boundary, it is included in `ProgramResult[T]`; a standalone anchored operator formats its result as a domain [[Memory#^def-OperatorOutput|`OperatorOutput`]] with a semantic contract. Accumulators also provide `statistics()` with a typed observation summary: sample count, mean and spread, or category counts. For an empty sample, counts are zero while empirical estimates of mean, probabilities, and spread are unavailable; a prior is not presented as observed data.
 
-При создании или пересмотре программы [[Learning system#Выбор обучаемых компонентов и режима обучения|сознание выбирает]] полезные цели и точки прогнозирования, сначала проверяет готовые модели и правила. Для выбранного estimator-а программа связывает [[#PredictionTarget и контракт прогноза|контракт прогноза]] с компонентом, подготовкой входов и получением фактического исхода. Эта привязка позволяет стандартному механизму сопоставлять опыт и обновлять состояние:
+When creating or revising a program, [[Learning system#Selecting Learnable Components and Learning Mode|consciousness selects]] useful targets and forecast points, first checking ready-made models and rules. For the selected estimator, the program links the [[#`PredictionTarget` and Forecast Contract|forecast contract]] to the component, input preparation, and retrieval of the actual outcome. This binding lets the standard mechanism match experience and update state:
 
 ```python
-# Внутри PokerReturnModel.run(view, first_action):
+# Inside PokerReturnModel.run(view, first_action):
 features = decision_features(view, first_action)
 return ProgramResult(result=return_estimator.predict(features))
 ```
 
-[[#Code Anchors|Anchor]] связывает место вызова с графом и trace. Для обучения сохраняются использованные признаки, версия состояния estimator-а и исходный прогноз с provenance; [[Learning system#Предсказание и наблюдение|PREDICTS]] позволяет найти его для проверки. Позднее раскрытые сведения, например карты соперника, не подмешиваются в признаки прежнего решения. `predict` не обучает компонент: подходящие исходы проходят Evaluation и [[Learning system#LearningCoordinator|LearningCoordinator]], конкретный updater вычисляет новое состояние, общий механизм применяет обновление. Это относится и к счётчикам простого накопителя.
+An [[#Code Anchors|Anchor]] links the call location to the graph and trace. For training, retain the features used, estimator state version, and original forecast with provenance; [[Learning system#Prediction and Observation|`PREDICTS`]] makes it findable for evaluation. Information revealed later, such as an opponent's cards, must not be added to the features for an earlier decision. `predict` does not train the component: applicable outcomes go through Evaluation and [[Learning system#LearningCoordinator|`LearningCoordinator`]], the specific updater computes new state, and the shared mechanism applies the update. This also applies to simple running-count accumulators.
 
-Anchor сам по себе не задаёт однородную выборку: через одну развилку проходят разные состояния и действия. Среднее по прошлым посещениям становится прогнозом только при обоснованной применимости к текущим условиям. Например, средние выигрыши после `fold` со слабыми руками и после `call` с сильными не сравнивают эти действия в одной ситуации. Допустимый опыт, исходы невыбранных действий, повторный учёт и локальная адаптация следуют [[Learning system#Выбор обучаемых компонентов и режима обучения|общим правилам обучения]].
+An Anchor does not itself define a homogeneous sample: different states and actions may pass through one branch. A mean over past visits is a forecast only if its applicability to current conditions is justified. For example, average winnings after `fold` with weak hands and after `call` with strong hands do not compare these actions in the same situation. Admissible experience, outcomes for unchosen actions, repeat accounting, and local adaptation follow the [[Learning system#Selecting Learnable Components and Learning Mode|general learning rules]].
 
-Статистика разных точек может использовать общее состояние estimator-а при явно совместимых контрактах. Совпадение цели прогноза само по себе не объединяет выборки; предикторы всех целей на каждом anchor не создаются автоматически. [[Attribution Plane#Instance-level numeric state|InstanceSketch]] и [[Attribution Plane#MetricDistribution на уровне Prototype / Type|MetricDistribution]] могут предоставлять статистические механизмы, но описание прошлых наблюдений или нормы не заменяет контракт прогноза.
+Statistics from different points may use shared estimator state when their contracts are explicitly compatible. Matching `PredictionTarget` alone does not merge samples; predictors for every target are not automatically created at every anchor. [[Attribution Plane#Instance-Level Numeric State|`InstanceSketch`]] and [[Attribution Plane#MetricDistribution at the Prototype / Type Level|`MetricDistribution`]] may provide statistical mechanisms, but descriptions of past observations or norms do not replace a forecast contract.
 
-#### Связь с рефлексией
+---
+
+#### Relation to Reflection
 
 #topic_details
 
-ProcessModel может описывать не только внешний мир, но и программы самого агента из  Executable Programs. Это основа самонаблюдения, самопрограммирования и метаобучения.
+A ProcessModel may describe not only the external world, but also the agent's own programs among its Executable Programs. This is the basis for self-observation, self-programming, and meta-learning.
 
 ### Executable Programs
 
 #topic_core
 
-**ExecutableProgram** — `Program` с `exec ∈ Program.roles`, которая выбирает действия, вызывает программы и может изменять внутреннее или внешнее состояние агента.
-Она может использовать Declarative Process Models как подпрограммы, но отличается тем, что может:
-- создавать/изменять/удалять связи и концепты
-- симулировать и оптимизировать политики агента ( в том числе регулировать внимание)
-- отправлять ответ пользователю и вызывать другие внешние действия согласно [[Cognition and Attention#^actions-and-user-response|общему циклу действий]].
+An **ExecutableProgram** is a `Program` with `exec ∈ Program.roles` that selects actions, calls programs, and may change the agent's internal or external state.
 
+It may use Declarative Process Models as subprograms, but differs in that it can:
 
+- create, change, or delete relations and concepts;
+- simulate and optimize agent policies, including regulating attention;
+- send a response to the user and perform other external actions according to the [[Cognition and Attention#^actions-and-user-response|shared action cycle]].
 
-Когда мы хотим переиспользвать уже имеющуюся модель процесса или какой-либо его части,  мы вызываем Declarative Models( и их подфункции)  внутри ExecutableProgram.  ExecutableProgram может вызывать Declarative Model, но не наоборот.
+When an existing process model or part of one should be reused, the ExecutableProgram calls Declarative Models and their subfunctions. An ExecutableProgram may call a Declarative Model, but not the other way around.
 
-Executable Programs обучаются и улучшаются по наблюдениям, outcomes и результатам Evaluation с выбранной [[Learning system#^def-LearningSignal|целью обучения]]. Оценочные сигналы могут помогать отбирать опыт; tension_reduction само по себе не подтверждает улучшения.
+Executable Programs learn and improve from observations, outcomes, and Evaluation results against a selected [[Learning system#^def-LearningSignal|learning objective]]. Evaluation signals may help select experience; `tension_reduction` alone does not confirm improvement.
 
 #topic_details
 
-Мы можем использовать ExecutableProgram, например, для того  чтобы научиться проверенной стратегии через подражание, когда ProcessModel с адекватными прогнозными сигналами -еще нет. 
+For example, an ExecutableProgram can learn a verified strategy by imitation when there is not yet a ProcessModel with adequate predictive signals.
 
+An ExecutableProgram may use expected signals to choose branches and actions. After execution, it creates realized outcomes and signals, which are then compared with the expected ones.
 
-ExecutableProgram может использовать expected signals при выборе ветвей и действий. После фактического исполнения она создаёт realized outcomes и signals, которые затем сопоставляются с ожидаемыми.
-
-### Вызовы программ при выполнении задачи
+### Program Calls During Task Execution
 ^process-observation-input
 
 #topic_core
 
-Подготовка аргументов связывает доступные данные с параметрами выбранной программы. Вызов организует сознание или `exec`-программа в рамках [[Cognition and Attention#^def-TaskExecution|Task]], включая наблюдение и рефлексию; его место в работе агента показано в [[Cognition and Attention#^agent-processing-cycle|общем цикле]].
+Argument preparation connects available data to the parameters of the selected program. The call is organized by consciousness or an `exec` program within a [[Cognition and Attention#^def-TaskExecution|Task]], including observation and Reflection; its place in agent work is shown in the [[Cognition and Attention#^agent-processing-cycle|overall cycle]].
 
-**Исходный материал**, или **источник данных**, — сообщение, документ, измерения, результат команды, из которых готовится вход программы. Ссылка на источник указывает, откуда получен фрагмент.
+**Source material**, or a **data source**, is a message, document, measurement, or command result from which a program input is prepared. A source reference identifies where a fragment came from.
 ^preparation-source
 
-Материал сохраняется для подготовки разных представлений под конкретную работу. [[Cognition and Attention#^def-Perception|Восприятие]] может представить целый блок как наблюдение: универсальное извлечение всех атомарных фактов потребовало бы знания специфики всех процессов. Разные представления сохраняют общее происхождение.
+The material is retained so that different representations can be prepared for specific work. [[Cognition and Attention#^def-Perception|Perception]] may represent an entire block as an observation: extracting every atomic fact generically would require knowing the specifics of every process. Different representations retain shared provenance.
 
-[[Cognition and Attention#^input-reception|Приём входа]] сохраняет данные и связывает их с Task. Результат инструмента с известным идентификатором вызова возвращается вызвавшей программе или ожидающей Task. Для нового наблюдения сознание или `exec` при необходимости использует [[Process Ontology and Semantic Interface#^def-ProcessRouter|ProcessRouter]], определяющий процесс и подходящую программу. При неоднозначности вызывающий уточняет вход или запрашивает сознательный разбор. Создание Task, выбор Focus и запуск найденной программы остаются отдельными решениями.
+[[Cognition and Attention#^input-reception|Input reception]] saves data and links it to a Task. A tool result with a known call ID is returned to the calling program or waiting Task. For a new observation, consciousness or an `exec` program may use [[Process Ontology and Semantic Interface#^def-ProcessRouter|ProcessRouter]] to identify the process and a suitable program. If the input is ambiguous, the caller clarifies it or requests conscious analysis. Creating a Task, choosing a Focus, and launching the identified program remain separate decisions.
 
-#### Выбор очередного шага обработки эпизода
+#### Choosing the Next Episode-Processing Step
 ^next-episode-step
 
 #topic_details
 
-Для входа, связанного с Task и [[Memory#^def-Episode|Episode]], программа [[Cognition and Attention#^context-preparation|prepare_context]] собирает `PreparedContext`: выбранный прошлый опыт и полный текущий вход. Дальнейшей обработкой управляет получившее контекст сознание или [[Cognition and Attention#^def-TaskManagingProgram|TaskManagingProgram]].
+For input associated with a Task and [[Memory#^def-Episode|Episode]], the [[Cognition and Attention#^context-preparation|prepare_context]] program assembles a `PreparedContext`: selected past experience and the complete current input. Further processing is managed by the consciousness or [[Cognition and Attention#^def-TaskManagingProgram|TaskManagingProgram]] that receives this context.
 
 > [!definition]
-> **EpisodeStep** — данные для одного очередного шага обработки эпизода: например, абзац или окно измерений.
+> **EpisodeStep** — data for one next step in processing an episode, such as a paragraph or a measurement window.
 > ^def-EpisodeStep
 
-Ниже задан контракт разбиения **текста**: сообщений, документов, вывода инструментов. Для измерений программы выбора временных окон используют доменные типы и собственные контракты.
+The following contract covers splitting **text**: messages, documents, and tool output. For measurements, time-window selection programs use domain types and their own contracts.
 
 > [!definition]
-> **TextInput** — неизменяемый текст из упорядоченных диапазонов сохранённых текстовых значений: например, частей сообщений или конкретной версии эссе.
+> **TextInput** — immutable text made from ordered ranges of saved text values, such as message fragments or a specific version of an essay.
 > ^def-TextInput
 
 ```python
@@ -647,13 +645,13 @@ class TextInput(OperatorOutput):
     def read(self) -> str: ...
 ```
 
-- `source` — [[Memory#Фиксация происхождения|TraceOutputRef]] на сохранённую Python-строку `source_text`; большие тексты могут храниться в [[Core data structures#^def-Artifact|Artifact]].
-- `TextSpan` — диапазон `[start, stop)` с проверкой `0 <= start < stop <= len(source_text)`.
-- `read()` соединяет диапазоны по порядку без разделителей; `parts=()` даёт пустой текст. Разбиение меняет диапазоны без копирования остатка.
+- `source` is a [[Memory#Recording Provenance|TraceOutputRef]] to a saved Python string `source_text`; large texts may be stored in [[Core data structures#^def-Artifact|Artifact]].
+- `TextSpan` is a range `[start, stop)` validated by `0 <= start < stop <= len(source_text)`.
+- `read()` joins ranges in order without separators; `parts=()` yields empty text. Splitting changes the ranges without copying the remainder.
 
-Для текста из локальной переменной используется ссылка на его [[#^local-values-and-results|сохранённую версию]]. Сборка, перестановка и редактирование частей — отдельные операции с сохранением происхождения; они не меняют сохранённые снимки. При исправлении обработанных частей вызывающий пересматривает зависимые результаты.
+For text held in a local variable, use a reference to its [[#^local-values-and-results|saved version]]. Assembling, reordering, and editing parts are separate operations that retain provenance; they do not change saved snapshots. When processed parts are corrected, the caller reconsiders dependent results.
 
-Для текста `EpisodeStep` представлен выбранным `TextInput`:
+For text, an `EpisodeStep` is represented by the selected `TextInput`:
 
 ```python
 class NextEpisodeStep(OperatorOutput):
@@ -669,38 +667,38 @@ def get_next_episode_step(
 ) -> ProgramResult[NextEpisodeStep]: ...
 ```
 
-`prepared_context` задаёт условия задачи; `program`, если известна, — контракт целевого вызова.
+`prepared_context` specifies task conditions; `program`, when known, specifies the target call's contract.
 
-**`complete` означает окончание передачи конкретного входа.** Его задаёт `TaskManagingProgram` или сознание: для готового документа или отдельного полученного сообщения — `True`; при сборке частями — `False` до установленного окончания, например подтверждения пользователя или закрытия потока. Неясную границу уточняет управляющая программа или сознание; программа разбиения её не угадывает.
+**`complete` means that transmission of this particular input has ended.** `TaskManagingProgram` or consciousness sets it: `True` for a ready document or a separately received message; `False` while content is arriving in parts, until an established end such as user confirmation or stream closure. The managing program or consciousness clarifies an uncertain boundary; the splitting program does not guess.
 
-Если шаг готов, `step` содержит непустое начало текста, а `remaining` — остаток: `text.read() == step.read() + remaining.read()`. Размер шага обучаем; проверенное разбиение может выполняться обычным кодом. При отсутствии готового шага возвращаются `step=None` и исходный текст в `remaining`.
+When a step is ready, `step` contains a non-empty beginning of the text and `remaining` contains the rest: `text.read() == step.read() + remaining.read()`. Step size is learnable; verified splitting may run as ordinary code. If no step is ready, return `step=None` and the original text as `remaining`.
 
-Порядок работы управляющей программы или сознания:
+The control program or consciousness proceeds as follows:
 
-1. Собрать `TextInput` из входа, сохранённого остатка и нужных семантических значений; связь частей определяет задача.
-2. Вызвать `get_next_episode_step(text, prepared_context, complete=...)`.
-3. Если `step` получен, передать его целевой программе через [[#^def-ArgumentPreparation|подготовку аргументов]], которая может прочитать его как `str`. После обработки продолжить с `remaining`.
-4. При `step=None`: если `complete=False` — сохранить остаток и ждать продолжение либо уточнение; если `complete=True` — пустой остаток завершает разбор, непустой требует другого разбиения или уточнения.
+1. Assemble `TextInput` from the input, saved remainder, and required semantic values; the Task determines how the parts relate.
+2. Call `get_next_episode_step(text, prepared_context, complete=...)`.
+3. If a `step` is returned, pass it to the target program through [[#^def-ArgumentPreparation|argument preparation]], which may read it as `str`. Continue with `remaining` after processing.
+4. If `step=None`: when `complete=False`, retain the remainder and wait for continuation or clarification; when `complete=True`, an empty remainder ends parsing, while a non-empty one requires a different split or clarification.
 
-Состояние исполнения хранит остаток; выбранный шаг сохраняется до завершения обработки или явного пропуска для продолжения при сбое. Связанное продолжение или сигнал окончания обновляет вход и `complete` и возобновляет выбор шага; сигнал может прийти без нового текста.
+Execution state stores the remainder; the selected step is retained until processing completes or it is explicitly skipped, so work can continue after a failure. A related continuation or end signal updates the input and `complete`, then resumes step selection; the signal may arrive without new text.
 
-Позднее дополнение становится новым входом и при необходимости требует пересмотра результатов. Исчерпание текста не завершает Task. Разбиение сохраняет происхождение, не создавая независимых наблюдений; вспомогательные вызовы не требуют нового `EpisodeStep`.
+A later addition becomes new input and may require reconsidering results. Running out of text does not finish the Task. Splitting retains provenance and does not create independent observations; helper calls do not require a new `EpisodeStep`.
 
-#### Подготовка аргументов
+#### Argument Preparation
 
 #topic_core
 
 (def_id:: entity.ArgumentPreparation)
 > [!definition]
-> **ArgumentPreparation** — [[Process Ontology and Semantic Interface#ProcessConcept|ProcessConcept]], описывающий подготовку аргументов выбранной программы по её интерфейсу, назначению вызова и доступным данным.
+> **ArgumentPreparation** is a [[Process Ontology and Semantic Interface#ProcessConcept|ProcessConcept]] describing how arguments for a selected program are prepared from its interface, the purpose of the call, and available data.
 > ^def-ArgumentPreparation
 
-Реализующие подготовку программы выбирают и преобразуют данные, связывают их с параметрами и проверяют контракт. Одной сигнатуры недостаточно: тип «слово» не определяет, какое слово нужно и являются ли два сообщения его частями.
+Programs that implement preparation select and transform data, bind it to parameters, and check the contract. A signature alone is not enough: a type such as “word” does not specify which word is needed or whether two messages are parts of one word.
 
 #topic_details
 
 ```python
-Arguments = dict[str, object]  # имена параметров → значения
+Arguments = dict[str, object]  # parameter names → values
 
 class ArgumentsNotReady(OperatorOutput):
     reason: str
@@ -716,21 +714,21 @@ def arguments_formatter(
 ) -> ProgramResult[Arguments | ArgumentsNotReady]: ...
 ```
 
-| Аргумент           | Назначение                                                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `program`          | Целевая программа: revision интерфейса, семантические типы и `requirements`.                                       |
-| `prepared_context` | Условия Task и Episode, текущий вход и выбранные сведения.                                                         |
-| `sources`          | Дополнительные источники текущего исполнения для получения аргументов.                                             |
-| `known_arguments`  | Уже заданные привязки к параметрам. Подготовщик проверяет их и сохраняет при построении полного набора аргументов. |
-| `instructions`     | Уточнение подготовки, ещё не выраженное контрактом, контекстом или данными.                                        |
+| Argument | Purpose |
+| --- | --- |
+| `program` | Target program: interface revision, semantic types, and `requirements`. |
+| `prepared_context` | Task and Episode conditions, current input, and selected information. |
+| `sources` | Additional sources from the current execution to obtain arguments. |
+| `known_arguments` | Bindings to parameters already supplied. The preparer validates them and retains them when building the full argument set. |
+| `instructions` | Preparation clarification not yet expressed by the contract, context, or data. |
 
-Источники, готовые привязки и инструкции задаёт вызывающая `exec`-программа либо сознание. `sources` содержит [[Memory#Фиксация происхождения|TraceOutputRef]] на сохранённые результаты операций или программ, например выбранный `EpisodeStep` или собранный текст. Ссылка даёт доступ к значению, его семантике и происхождению без копирования данных и передачи всех локальных переменных. Имена локальных переменных не определяют соответствие целевым параметрам.
+The calling `exec` program or consciousness specifies sources, ready bindings, and instructions. `sources` contains [[Memory#Recording Provenance|TraceOutputRef]] references to saved operation or program results, such as a selected `EpisodeStep` or assembled text. A reference provides access to the value, its semantics, and provenance without copying data or passing all local variables. Local variable names do not determine correspondence to target parameters.
 
-При пустом `sources` используются данные `PreparedContext`. Переданный `EpisodeStep` задаёт материал обработки; контекст помогает его понять и подготовить сопутствующие аргументы. Менять границы шага вправе вызывающий. Один аргумент может объединять источники, один источник — давать несколько аргументов. Аргумент не обязан становиться `Observation`.
+When `sources` is empty, data from `PreparedContext` is used. A supplied `EpisodeStep` defines the material to process; context helps interpret it and prepare related arguments. Only the caller may change step boundaries. One argument may combine sources, and one source may provide several arguments. An argument does not have to become an `Observation`.
 
-`instructions` читает подготовщик, например: «Включи заголовок раздела вместе с абзацем в `excerpt`». Вызывающий может уточнять их по feedback. Условия поведения целевой программы передаются её аргументами: «оценить только ясность» — через `criteria`.
+The preparer reads `instructions`, for example: “Include the section heading together with the paragraph in `excerpt`.” The caller may refine them based on feedback. Conditions on the target program's behavior are passed as its arguments: “assess clarity only” is expressed through `criteria`.
 
-Например, буква задана, а слово нужно извлечь из сохранённого шага `step_ref`:
+For example, the letter is known, but the word must be extracted from a saved step `step_ref`:
 
 ```python
 prepared = arguments_formatter(
@@ -743,61 +741,61 @@ prepared = arguments_formatter(
 
 (def_id:: entity.ArgumentsNotReady)
 > [!definition]
-> **ArgumentsNotReady** — результат незавершённой подготовки: `reason` объясняет нехватку данных, неоднозначность или невыполненное условие; `partial_arguments` содержит пригодные привязки к параметрам.
+> **ArgumentsNotReady** is the result of incomplete preparation: `reason` explains missing data, ambiguity, or an unmet condition; `partial_arguments` contains usable parameter bindings.
 > ^def-ArgumentsNotReady
 
-[[#^def-ProgramResult|`ProgramResult.result`]] содержит:
+[[#^def-ProgramResult|`ProgramResult.result`]] contains:
 
-- `Arguments` — все обязательные аргументы установлены, входные условия контракта выполнены. Параметры с default можно опустить; разрешённое контрактом `None` или неизвестное значение не означает незавершённость.
-- `ArgumentsNotReady` — вызывающий получает данные, уточняет выбор, ждёт или меняет подготовку; при повторе передаёт актуальные `partial_arguments` как `known_arguments`.
+- `Arguments` — all required arguments are set and input conditions in the contract are met. Parameters with defaults may be omitted; `None` or an unknown value allowed by the contract does not mean preparation is incomplete.
+- `ArgumentsNotReady` — the caller obtains more data, clarifies the selection, waits, or changes preparation; on retry, it passes current `partial_arguments` as `known_arguments`.
 
-Невозможность подготовить вызов выражается в `.result`; `feedback` предлагает улучшения. Происхождение аргументов сохраняется в trace. Целевую программу запускает вызывающий; весь `PreparedContext` передаётся только при наличии соответствующего параметра.
+An inability to prepare a call is expressed in `.result`; `feedback` suggests improvements. Argument provenance is retained in the trace. The caller launches the target program; the full `PreparedContext` is passed only if the target has a corresponding parameter.
 
-Подготовка использует результаты восприятия и [[#^source-access-preparation|общие операции чтения и преобразования]], включая сборку контекста, если он нужен как аргумент. Локальная сборка LLM-запроса внутри целевой программы использует её аргументы и разрешённые чтения: например, выбирает раздел документа для [[Core data structures#^def-Prompt|Prompt]], не перезапуская [[Cognition and Attention#^context-preparation|ContextPreparation]] всей задачи.
+Preparation uses perception results and the [[#^source-access-preparation|shared read and transformation operations]], including context assembly when context is needed as an argument. Local assembly of an LLM request inside a target program uses its arguments and permitted reads; for example, it selects a document section for [[Core data structures#^def-Prompt|Prompt]] without rerunning [[Cognition and Attention#^context-preparation|ContextPreparation]] for the entire Task.
 
-С готовыми аргументами и выполненными условиями вызывают программу напрямую. Входы `arguments_formatter` передаёт вызывающий. Известные операции подготовки могут выполняться обычным кодом без LLM.
+With ready arguments and satisfied conditions, call the program directly. The caller supplies inputs to `arguments_formatter`. Known preparation operations may run as ordinary code without an LLM.
 
-#### Вложенный цикл вызова
+#### Nested Call Cycle
 ^input-preparation-pipeline
 
 #topic_core
 
 ```text
-PreparedContext + значения текущего исполнения
-→ сознание или вызывающая exec в рамках Task / Episode
-→ выбор следующей работы
-→ при разборе текста: get_next_episode_step
-  (step=None → ожидание, окончание разбора или уточнение условий)
-→ целевая Program и её контракт
-→ готовые аргументы либо arguments_formatter
-  ├─ ArgumentsNotReady → уточнить / получить данные / ждать / изменить способ
-  └─ Arguments → вызывающий запускает Program → ProgramResult(result, feedback)
-→ вызывающий обновляет состояние и выбирает продолжение, ожидание или завершение
+PreparedContext + current execution values
+→ consciousness or calling exec within Task / Episode
+→ select next work
+→ when processing text: get_next_episode_step
+  (step=None → wait, finish parsing, or clarify conditions)
+→ target Program and its contract
+→ ready arguments or arguments_formatter
+  ├─ ArgumentsNotReady → clarify / get data / wait / change method
+  └─ Arguments → caller launches Program → ProgramResult(result, feedback)
+→ caller updates state and chooses continuation, waiting, or completion
 ```
 
-Это зависимости между операциями, а не обязательные отдельные LLM-вызовы. Если целевая программа известна заранее, её контракт учитывается при [[#^next-episode-step|выборе шага]]; иначе пригодность шага проверяет [[#^def-ArgumentPreparation|подготовка аргументов]]. Неясный этап процесса можно сначала уточнить разбором или вызовом модели. Дочерние вызовы не требуют возврата к сознанию на каждом шаге.
+These are dependencies between operations, not a requirement for separate LLM calls. If the target program is already known, its contract is considered when [[#^next-episode-step|selecting a step]]; otherwise, [[#^def-ArgumentPreparation|argument preparation]] checks whether the step is suitable. An unclear process stage can first be clarified through analysis or a model call. Child calls do not require returning to consciousness at every step.
 
-В LLM-шаге программа выбирает [[Core data structures#^def-Prompt|Prompt]], модель, настройки и данные для placeholders, затем разбирает и проверяет ответ. Её аргументы, доступный материал и фактический LLM-запрос могут различаться; локальная сборка запроса не требует отдельного ProgramRun. Точный алгоритм может обходиться без LLM. `ProcessModel` использует переданные данные, чтения по `read_contract` и допустимые вызовы моделей; получение новых наблюдений, действия и вызовы `exec` организует вызывающая `exec` или сознание.
+For an LLM step, the program selects [[Core data structures#^def-Prompt|Prompt]], model, settings, and data for placeholders, then parses and checks the response. Its arguments, available material, and actual LLM request may differ; assembling a request locally does not require a separate ProgramRun. An exact algorithm may need no LLM. A `ProcessModel` uses passed data, reads allowed by `read_contract`, and permitted model calls; the calling `exec` or consciousness organizes new observations, actions, and `exec` calls.
 
-Результаты доступны из локальных переменных и [[Memory|памяти]], последующим вызовам — напрямую либо через `sources` и `known_arguments`. Новый вход или изменение условий может потребовать пересборки `PreparedContext`; очередное вычисление — нет. Отдельный обязательный объект состояния процесса не вводится. Недостаток данных сохраняет неопределённость, а распознавание этапа процесса не переносит Python-исполнение на произвольную строку.
+Results are available from local variables and [[Memory|memory]]; later calls access them directly or through `sources` and `known_arguments`. A new input or changed conditions may require rebuilding `PreparedContext`; another computation does not. No separate mandatory process-state object is introduced. Missing data preserves uncertainty, and recognizing a process stage does not move Python execution to an arbitrary line.
 
-Evaluation выполняется при достаточных данных об исходе; выбранный оценённый опыт поступает в [[Learning system#LearningCoordinator|LearningCoordinator]] для credit assignment и разрешённого parameter learning. Оценка observations как epistemic evidence идёт отдельно. Вызывающий использует feedback для последующей подготовки или повторного разбора по [[#^program-feedback|общим правилам]], постоянные изменения контракта проходят [[Program Lifecycle and Evolution|ревизию]].
+Evaluation is performed when outcome data are sufficient; selected evaluated experience is passed to [[Learning system#LearningCoordinator|LearningCoordinator]] for credit assignment and permitted parameter learning. Assessing observations as epistemic evidence is separate. The caller uses feedback for further preparation or reanalysis under the [[#^program-feedback|shared rules]]; persistent contract changes go through [[Program Lifecycle and Evolution|revision]].
 
-Возврат программы передаёт управление родителю; завершение Task и отправка ответа пользователю определяются [[Cognition and Attention#^actions-and-user-response|логикой задачи и действиями]]. Повторное чтение источника внутри Task не требует [[Memory#^def-MemoryReplay|Replay]]; отдельная задача возврата к опыту использует тот же цикл с исходным provenance.
+A program's return passes control to its parent; Task completion and sending a user response are determined by [[Cognition and Attention#^actions-and-user-response|task logic and actions]]. Rereading a source within a Task does not require [[Memory#^def-MemoryReplay|Replay]]; a separate task that returns to experience uses the same cycle with original provenance.
 
-#### Requirements и feedback на примере восприятия
+#### Requirements and Feedback: Perception Example
 ^perception-requirements-feedback
 
 #topic_details
 
-`exec` анализирует журнал испытаний двигателя и выбирает модель для определения текущего этапа его работы; первичная обработка и routing могут предшествовать этому выбору.
+An `exec` program analyzes an engine test log and selects a model to determine the current operating stage; initial processing and routing may happen before this choice.
 
-- **До вызова** `exec` готовит данные по контракту модели: события, известные временные связи, исходные фрагменты и условия испытания. Типы и роли заданы семантически, точность и порядок — ограничениями. В `requirements` остаётся нюанс языка автора: «Для неоднозначной фразы “почти завёлся” сохрани соседние записи». Неизвестные значения остаются явными. Для чтения requirements запускать модель не требуется.
-- **После вызова** модель возвращает правильный этап в `.result` и рекомендацию в `.feedback`: «Для разбора роста температуры добавляй заголовок опыта: “холостой ход” или “под нагрузкой”». `exec` передаёт его через предусмотренный аргумент контекста. При устойчивой потребности роль заголовка закрепляется через существующий Concept.
+- **Before the call**, `exec` prepares data under the model contract: events, known temporal relationships, source fragments, and test conditions. Types and roles are semantic; accuracy and order are expressed as constraints. `requirements` retains a nuance in the author's language: “For the ambiguous phrase ‘almost started,’ keep the neighboring records.” Unknown values remain explicit. Reading requirements does not require running a model.
+- **After the call**, the model returns the correct stage in `.result` and a recommendation in `.feedback`: “When analyzing a temperature rise, add the test heading: ‘idle’ or ‘under load’.” `exec` passes it through the designated context argument. If the need is persistent, the heading's role is formalized through an existing Concept.
 
-Так feedback улучшает успешную обработку. Выбор модели, её вызов и применение feedback принадлежат `exec`; новые наблюдения она получает через восприятие.
+Feedback thus improves successful processing. Model selection, its call, and applying feedback belong to `exec`; new observations arrive through perception.
 
-#### Получение следующего наблюдения
+#### Receiving the Next Observation
 ^next-observation
 
 #topic_core
@@ -806,128 +804,128 @@ Evaluation выполняется при достаточных данных о�
 observation: OperatorOutput = await next_observation()
 ```
 
-`next_observation()` возвращает следующий доставленный данному исполнению [[Memory#^def-Observation|доменный output в роли наблюдения]]. Доставленные входы сохраняются до обработки. Если очередной вход уже есть, метод возвращает его без ожидания новых данных; иначе исполнение ожидает поступления. Доставка и восстановление получения используют [[Cognition and Attention#^durable-program-execution|общий механизм сохраняемого исполнения]].
+`next_observation()` returns the next [[Memory#^def-Observation|domain output delivered to this execution in the role of an observation]]. Delivered inputs are retained until processed. If an input is already available, the method returns it without waiting for more; otherwise, execution waits for one. Delivery and recovery of the receive operation use the [[Cognition and Attention#^durable-program-execution|shared durable execution mechanism]].
 
-Это функция получения входа, не `Program`. Если наблюдение получено программой восприятия, доставляется соответствующее [[Memory#^def-Observation|контракту Observation]] значение её `.result` с исходными identity и provenance; оболочка `ProgramResult` и feedback не становятся наблюдением.
+This is an input-receive function, not a `Program`. If an observation was obtained by a perception program, the value delivered is its `.result` under the corresponding [[Memory#^def-Observation|Observation contract]], with the original identity and provenance; the `ProgramResult` wrapper and feedback do not become part of the observation.
 
-Метод не отбирает только ожидаемый тип: ожидание температуры не должно скрывать сообщение о дыме. Конец источника и истечение заданного срока ожидания различаются с временным отсутствием входа; сами по себе они не означают завершения процесса в мире.
+The method does not filter for only an expected type: waiting for temperature must not hide a message about smoke. Source end and expiration of a specified waiting period differ from a temporary absence of input; neither alone means the process has ended in the world.
 
-Уже доставленная история обрабатывается последовательно без ожидания интервалов между описанными событиями. Позднее сообщение о прошлом учитывается как прошлое; программа задачи задаёт, реконструируется ли история или управляется текущий процесс, чтобы разбор истории не повторял реальные действия.
+Already delivered history is processed sequentially without waiting for intervals between described events. A later message about the past is treated as past information; the task program specifies whether history is being reconstructed or a current process is being managed, so historical analysis does not repeat real actions.
 
-#### Гранулярность обработки данных
+#### Data Processing Granularity
 ^observation-granularity
 
 #topic_core
 
-**Гранулярность обработки** — размер единицы отдельного шага разбора, вычисления или проверки: символ, абзац, состояние процесса или переход. Мелкие единицы позволяют проверять детали и промежуточные результаты, но могут увеличить затраты; крупные часто снижают накладные расходы, но могут скрыть существенные различия и увеличить число галлюцинаций LLM. Выбор определяется задачей, пользой для обучения, задержкой и бюджетом. EverTree сохраняет доступный [[#^preparation-source|исходный материал]], позволяя пересматривать способ обработки.
+**Processing granularity** is the size of one unit in a parsing, computation, or checking step: a character, paragraph, process state, or transition. Small units make it possible to check detail and intermediate results but may increase cost; large units often reduce overhead but can hide important distinctions and increase LLM hallucinations. Selection depends on the task, learning value, latency, and budget. EverTree retains available [[#^preparation-source|source material]], so the processing method can be reconsidered.
 
-##### От поступивших данных к единице обработки
+##### From Incoming Data to a Processing Unit
 
 #topic_details
 
-**Входной блок** — часть данных, выделенная при получении или первичной обработке: сообщение, фрагмент документа, отсчёт датчика, часть вывода команды. Его границы не задают ни аргументы программы, ни её внутренние шаги:
+An **input block** is a portion of data identified during receipt or initial processing: a message, document fragment, sensor reading, or part of command output. Its boundaries define neither program arguments nor its internal steps:
 
 ```text
-два сообщения с частями слова
-    → один аргумент со смыслом целого слова
-    → чтение символов внутри одного вызова программы подсчёта
+two messages containing parts of a word
+    → one argument with the meaning of the whole word
+    → read characters inside one call to a counting program
 ```
 
-Связь фрагментов и допустимые преобразования определяются задачей и [[#^program-semantic-interface|интерфейсом]], а не соседством. При последовательном разборе `get_next_episode_step` выбирает фрагмент для вызова; внутреннюю подробность чтения задаёт сама программа. Граница `EpisodeStep` не требует learning update.
+The relationship among fragments and permitted transformations are determined by the task and [[#^program-semantic-interface|interface]], not by adjacency. In sequential parsing, `get_next_episode_step` selects a fragment for a call; the program itself specifies the internal detail of reading it. An `EpisodeStep` boundary does not require a learning update.
 
-##### Контекст операции и объединение вычислений
+##### Operation Context and Batching Computation
 
 #topic_core
 
-С гранулярностью связаны два самостоятельных решения:
+Two separate decisions are related to granularity:
 
-- **Контекст операции** — дополнительные сведения для понимания единицы: заголовок, соседние события, условие задачи. Для одного знака может понадобиться вся задача; добавление контекста не меняет размер самой единицы.
-- **Пакет вычислений** — число единиц в одном вызове. Один LLM-вызов может определить тему каждого из нескольких абзацев; код — обработать все символы слова. Мелкая гранулярность не требует LLM-вызова на единицу.
+- **Operation context** is additional information needed to interpret a unit: a heading, neighboring events, or task condition. A single character may require the entire task for context; adding context does not change the unit's size.
+- **Computation batch** is the number of units in one call. One LLM call may identify the topic of several paragraphs; code may process all characters in a word. Fine granularity does not require one LLM call per unit.
 
-Совместный выбор этих параметров должен сохранять [[#^granularity-learning-sequence|границы доступа к исходам]] при проверке прогнозов.
+Joint selection of these parameters must preserve [[#^granularity-learning-sequence|information-access boundaries]] when checking predictions.
 
-##### Чтение и подготовка исходных данных
+##### Reading and Preparing Source Data
 ^source-access-preparation
 
 #topic_details
 
-Внутренний API работы с [[#^preparation-source|исходным материалом]] позволяет:
+The internal API for working with [[#^preparation-source|source material]] supports:
 
-- читать точные диапазоны, символы, слова и последовательно обходить содержимое;
-- выделять фрагменты и временные окна, собирать связанные части в аргумент;
-- получать контекст — заголовки, соседние фрагменты, связанные объекты, допустимую историю;
-- извлекать сведения с сохранением их происхождения.
+- reading exact ranges or characters, reading words, and traversing content sequentially;
+- selecting fragments and time windows, and assembling related parts into an argument;
+- obtaining context such as headings, neighboring fragments, related objects, and permitted history;
+- extracting information while retaining its provenance.
 
-Общие подпрограммы группируются по этим операциям; подготовщик выбирает их по контракту целевой программы, без исключений по её имени. Смысл единиц задают Concepts, допустимые преобразования — интерфейсы. Структурное выделение абзацев может выполняться кодом, смысловое — при необходимости LLM. Сознательное чтение буквы и цикл в коде могут использовать одну операцию; самостоятельные Programs возвращают `ProgramResult`, технические функции — обычные значения.
+Shared subprograms are grouped around these operations; the preparer selects them under the target program's contract, without exceptions based on its name. Concepts specify the meaning of units; interfaces specify permitted transformations. Structural paragraph selection may run as code; semantic segmentation may use an LLM when needed. Conscious character-by-character reading and a code loop may use the same operation; standalone Programs return `ProgramResult`, while technical functions return ordinary values.
 
-При перегруппировке данных подготовка сохраняет ссылки на исходные диапазоны, сведения об исходном порядке и известных временных отношениях; порядок текста не считается хронологией событий. Перекрывающиеся окна, повторное чтение и новое разбиение сохраняют [[Memory#^def-ResultProvenance|provenance]], не создавая независимого evidence или обязательного persistent-узла на каждый фрагмент.
+When regrouping data, preparation retains references to source ranges, information about original order, and known temporal relationships; text order is not treated as event chronology. Overlapping windows, rereading, and new splitting retain [[Memory#^def-ResultProvenance|provenance]] without creating independent evidence or requiring a persistent node for every fragment.
 
-Операции работают с уже полученными данными: окно измерений можно выбрать заново, повышение частоты будущих измерений требует действия. Утраченную при удалении или агрегации точность дробление не восстановит; сохранность данных определяют [[Memory|обязательства памяти]].
+Operations use data already received: a measurement window may be selected again, while increasing the frequency of future measurements requires an action. Splitting cannot restore precision lost through deletion or aggregation; data retention is governed by [[Memory|memory obligations]].
 
-##### Как выбирается и меняется способ обработки
+##### Choosing and Changing a Processing Method
 ^granularity-adaptation
 
 #topic_details
 
-[[Cognition and Attention#^def-TaskExecution|Управляющая задачей]] `exec` или сознание выбирает способ по задаче и контракту. Начальные варианты: сообщение целиком, документ по разделам или абзацам, измерения по отсчётам или окнам. Затем способ можно корректировать:
+The [[Cognition and Attention#^def-TaskExecution|`exec` program managing the task]] or consciousness chooses a method based on the task and contract. Initial options include a complete message, a document by section or paragraph, and measurements by sample or window. The method can then be adjusted:
 
-- недостающие связи восстанавливаются объединением фрагментов или добавлением контекста;
-- пропущенные переходы разбираются отдельно;
-- надёжные вычисления объединяются для снижения затрат.
+- recover missing relationships by combining fragments or adding context;
+- inspect missed transitions separately;
+- combine reliable computations to reduce cost.
 
-Уточнения могут следовать из feedback, опыта или смены этапа даже при успешной работе. Повышенная чувствительность к признакам, например опасности, не равна переключению [[Cognition and Attention#Внимание (`Attention`)|Attention]] между задачами и не должна скрывать неожиданные значимые входы.
+Adjustments may follow from feedback, experience, or a stage change even when processing succeeded. Increased sensitivity to features such as danger is not the same as switching [[Cognition and Attention#Attention (`Attention`)|Attention]] between tasks and must not hide unexpected significant inputs.
 
-Решения реализуют существующие программы: [[#^next-episode-step|get_next_episode_step]] выбирает текстовый шаг, доменная программа — окно измерений, [[Cognition and Attention#^context-preparation|`prepare_context`]] — контекст, `arguments_formatter` — аргументы. Выбор может обучаться по задаче, контракту, данным, этапу, опыту и бюджету; проверенные стратегии могут использоваться без повторного выбора. Внутреннее чтение и порядок прогнозирования задаёт программа процесса. Уточнения текущего запуска передаются по [[#^program-requirement-representation|правилам структуры и текста]] и не переписывают постоянный контракт.
+Existing programs implement the decisions: [[#^next-episode-step|`get_next_episode_step`]] selects a text step, a domain program selects a measurement window, [[Cognition and Attention#^context-preparation|`prepare_context`]] selects context, and `arguments_formatter` prepares arguments. Selection may be learned from the task, contract, data, stage, experience, and budget; verified strategies can be reused without another selection. The process program defines internal reading and prediction order. Current-run clarifications are passed under the [[#^program-requirement-representation|rules for structure and text]] and do not rewrite the persistent contract.
 
-Критерии включают точность, полноту, сохранность важных сведений, задержку, суммарные затраты на подготовку, обработку, проверки и повторные вызовы; для обучающих задач — пользу опыта для модели и общих механизмов агента. Новая, важная или редко проверяемая работа может оправдывать более подробный разбор, но зависимость иногда видна только на большом фрагменте. Дорогая смысловая сегментация оправдана, если польза для результата или обучения покрывает затраты. Невозможность обеспечить обязательную точность и своевременную реакцию в бюджете остаётся явной.
+Criteria include accuracy, completeness, retention of important information, latency, and total cost of preparation, processing, checks, and retries; for learning tasks, they also include experience value for the model and shared agent mechanisms. New, important, or rarely checked work may justify more detail, though a dependency may only become visible in a larger fragment. Expensive semantic segmentation is justified when its benefit to the result or learning covers its cost. Inability to meet required accuracy and response time within the budget remains explicit.
 
-Trace сохраняет существенные решения подготовки, данные и связь с результатом; [[Learning system#Credit Assignment|credit assignment]] оценивает вклады подготовки, маршрутизации и модели при достаточных основаниях. Критерии задаёт задача, без универсального суммарного score; количество фактов, шагов или уменьшение блока сами по себе не доказывают улучшения. При одновременном изменении сегментации, контекста и Prompt выигрыш относится ко всей комбинации, пока отдельные вклады не установлены. Настройка запуска, разрешённое обучение параметров и структурная ревизия — разные операции.
+The trace retains significant preparation decisions, data, and their links to the result; [[Learning system#Credit Assignment|credit assignment]] assesses contributions from preparation, routing, and the model when there are sufficient grounds. The task sets the criteria; there is no universal aggregate score. Counts of facts or steps, or a smaller block size, do not by themselves prove improvement. If segmentation, context, and Prompt change together, the benefit belongs to the combination until individual contributions are established. Run configuration, permitted parameter learning, and structural revision are separate operations.
 
-##### Зачем управлять гранулярностью при обучении модели процесса
+##### Why Control Granularity When Learning a Process Model
 ^granularity-learning-sequence
 
 #topic_details
 
-При обучении модели процесса агент может проверять прогнозы состояний и переходов. Для такой проверки модель фиксирует прогноз до предъявления ей исхода. Например, после описания роста температуры — предсказать остановку двигателя, прежде чем прочитать о срабатывании защиты:
+When learning a process model, the agent may check forecasts of states and transitions. For this check, the model records a prediction before the outcome is shown. For example, after a description of rising temperature, predict that an engine will stop before reading that its protection system activated:
 
 ```text
-доступные до перехода сведения → сохранённый прогноз
-→ наблюдаемый исход → Evaluation
-→ credit assignment и разрешённое обновление при достаточных основаниях
-→ следующий прогноз
+information available before transition → saved prediction
+→ observed outcome → Evaluation
+→ credit assignment and permitted update when grounds are sufficient
+→ next prediction
 ```
 
-Крупный шаг может сразу раскрыть предпосылки и исход, а слишком мелкие — увеличить число бесполезных проверок. Поэтому выбираются значимые состояния и переходы; предсказывать каждый токен или менять цель обучения базовой LLM не требуется.
+A large step may reveal both premises and outcome at once; overly small steps may create many useless checks. Therefore, select significant states and transitions; predicting every token or changing the base LLM's training objective is not required.
 
-При [[Program Evaluation and Testing#^prediction-quality-protocol|проверке прогноза до исхода]] `arguments_formatter` готовит для модели выбранный шаг и сведения, доступные до прогнозируемого перехода. Полный материал доступен программе задачи и программе разбиения. Разбор всей истории допустим для ретроспективного объяснения или обучения по известному случаю, но не считается прогнозом до исхода.
+During [[Program Evaluation and Testing#^prediction-quality-protocol|checking a prediction before its outcome]], `arguments_formatter` prepares the selected step and information available before the predicted transition for the model. The full material is available to the task program and splitting program. Reviewing the full history is allowed for retrospective explanation or training on a known case, but is not treated as a prediction made before the outcome.
 
-Оценка и обучение используют [[Learning system|общий механизм Learning]] и [[Learning system#Выбор обучаемых компонентов и режима обучения|разрешённый режим]]. Прогноз может провериться через несколько `EpisodeStep`; один исход — проверить несколько прежних прогнозов. При недостаточных основаниях для credit assignment обновление не выполняется.
+Evaluation and learning use the [[Learning system|shared Learning mechanism]] and the [[Learning system#Selecting Learnable Components and Learning Mode|authorized mode]]. A prediction may be checked across several `EpisodeStep` instances; one outcome may check several earlier predictions. If there are insufficient grounds for credit assignment, no update is made.
 
-Для защиты от утечки будущего и переобучения нужны границы доступной информации и проверка переноса на новые случаи; размер фрагментов сам по себе этого не обеспечивает. Новая нарезка одного источника не создаёт независимых обучающих и проверочных случаев.
+To prevent future-information leakage and overfitting, enforce information boundaries and check transfer to new cases; fragment size alone does not ensure this. Re-splitting one source does not create independent training and evaluation cases.
 
-##### Применение к разным задачам
+##### Applying Granularity to Different Tasks
 ^input-pipeline-scenarios
 
 #topic_details
 
-| Задача                                    | Организация обработки                                                                                                                                                                                                            |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Посчитать буквы в слове из двух сообщений | Собрать слово по установленной связи фрагментов, затем считать символы кодом за один вызов.                                                                                                                                      |
-| Проанализировать структуру книги          | Обработать целиком либо сопоставить разборы разделов по критериям полноты, точности и стоимости.                                                                                                                                 |
-| Проверить модель процесса по книге        | Выбрать существенные переходы и последовательно разделить прогноз и наблюдаемый исход.                                                                                                                                           |
-| Наблюдать показания датчика               | Выбрать отсчёты или окна; при feedback или смене этапа пересмотреть их. Усреднение не должно скрыть краткий существенный выброс.                                                                                                 |
-| Учесть запоздавшее наблюдение             | Сохранить время события и получения; пересмотреть историю, проверяя прежний прогноз по доступным тогда данным и не повторяя действия.                                                                                            |
-| Разобрать вывод команды                   | Выбрать весь вывод или диагностические записи с командой и условиями запуска; сохранить доступные stdout/stderr, статус и provenance. Объединить транспортные части в записи; различать завершение, timeout и отсутствие вывода. |
+| Task | Processing organization |
+| --- | --- |
+| Count letters in a word across two messages | Join the word according to the established fragment relationship, then count characters in code in one call. |
+| Analyze a book's structure | Process it as a whole or compare analyses of sections using completeness, accuracy, and cost criteria. |
+| Check a process model against a book | Select significant transitions and keep the prediction separate from the observed outcome. |
+| Monitor sensor readings | Select samples or windows; reconsider them after feedback or a stage change. Averaging must not hide a brief significant spike. |
+| Account for a delayed observation | Retain event time and receipt time; reconsider history, check the earlier prediction using information then available, and do not repeat actions. |
+| Analyze command output | Select all output or diagnostic records together with the command and launch conditions; retain available stdout/stderr, status, and provenance. Reassemble transport fragments into records; distinguish completion, timeout, and no output. |
 
-[[Cognition and Attention#^dialogue-word-count|Сценарий подсчёта букв]] показывает связь первого примера с общим циклом Task.
+[[Cognition and Attention#^dialogue-word-count|The letter-counting scenario]] shows how the first example fits the overall Task cycle.
 
-#### Типы, условия и подпрограммы
+#### Types, Conditions, and Subprograms
 
 #topic_core
 
-Тип output задаёт доступные поля, а его семантические связи — смысл наблюдения. Перед обращением к `observation.temperature` программа должна установить наличие измерения температуры, его единицы и применимость к нужному объекту и времени. «Двигатель горячий» не становится точным числовым измерением. Открытый набор доменных типов и понятий не требует отдельного Python-класса для каждого возможного события мира.
+An output type specifies available fields, while its semantic relations define what an observation means. Before accessing `observation.temperature`, a program must establish that a temperature measurement exists, its unit, and its applicability to the required object and time. “The engine is hot” does not become an exact numeric measurement. An open set of domain types and concepts does not require a separate Python class for every possible event in the world.
 
-`OperatorOutput` — общий интерфейс входа, конкретная схема сохраняется при передаче. Например, если `TemperatureReading` — схема измерения в °C, числовая ветвь после проверки объекта и времени выглядит так:
+`OperatorOutput` is a shared input interface; the specific schema is preserved when passed. For example, if `TemperatureReading` is a measurement schema in °C, the numeric branch after checking object and time is:
 
 #topic_details
 
@@ -939,224 +937,205 @@ if isinstance(observation, TemperatureReading):
 
 #topic_core
 
-Control flow остаётся обычным Python-кодом. `if`, циклы и вызовы [[#OperatorConcept, Code Anchors and AnchorResolver|семантических операторов]] могут использовать граф и выбирать все применимые условия. Взаимоисключающий `match` допустим, когда варианты действительно исключают друг друга; составное наблюдение обрабатывается с учётом всех значимых аспектов перед выбором действий. Для неизвестного типа, неясного смысла или неразрешённого условия программа предусматривает уточнение либо передачу вопроса вниманию. Неизвестное значение условия не считается ложным.
+Control flow remains ordinary Python code. `if`, loops, and calls to [[#OperatorConcept, Code Anchors, and AnchorResolver|semantic operators]] may use the graph and select every applicable condition. An exclusive `match` is appropriate when alternatives truly exclude one another; compound observations are handled with all significant aspects in mind before choosing actions. For an unknown type, unclear meaning, or unresolved condition, the program provides clarification or passes the question to Attention. An unknown condition value is not treated as false.
 
-В делегированном исполнении общий вход получает конкретная родительская `exec`; подпрограммы этапов получают от неё наблюдения и не конкурируют за чтение этого входа. Короткие вызовы возвращают ей управление. Runtime продолжает принимать и сохранять входы во время длительной дочерней работы, но сохранение в очереди само по себе не обеспечивает своевременную реакцию. Для неё `exec` должна предусмотреть обработчик и возможность передать ему управление либо запросить передачу управления на [[Cognition and Attention#Внимание (Attention)|ближайшей допустимой runtime-границе]]. Простое блокирующее ожидание дочерней работы этого не даёт.
+In delegated execution, the shared input goes to a specific parent `exec`; subprograms for stages receive observations from it and do not compete to read that input. Short calls return control to it. Runtime continues to receive and save inputs during long child work, but queuing alone does not ensure a timely response. The `exec` program must provide a handler and a way to pass it control, or request a handoff at the [[Cognition and Attention#Attention (`Attention`)|nearest permitted runtime boundary]]. Simply blocking while waiting for child work does not provide this.
 
-Общие реакции проверяются при обработке нового наблюдения независимо от текущего этапа. Срочная реакция не ждёт завершения Evaluation или обучения. Например:
+Shared reactions are checked when each new observation is processed, regardless of the current stage. An urgent reaction does not wait for Evaluation or training. For example:
 
 ```text
-есть сведения о горении двигателя
-→ вызвать программу реакции на пожар;
-  приостановить несовместимое обычное управление;
+information indicates the engine is on fire
+→ call the fire response program;
+  pause incompatible ordinary control;
 
-условия обычного управления установлены
-→ продолжить подпрограмму текущего этапа;
+conditions for ordinary control are established
+→ continue the subprogram for the current stage;
 
-данных недостаточно
-→ выполнить предусмотренное уточнение или передать вопрос вниманию.
+data are insufficient
+→ perform a specified clarification or pass the question to Attention.
 ```
 
-Родительская `exec` определяет совместимость, приоритет и порядок применимых ветвей. Несколько подходящих условий не означают автоматического параллельного исполнения. Одна рабочая композиция может включать нагрев, охлаждение и аварийную реакцию как подпрограммы; альтернативные модели процесса не запускаются и не обучаются все сразу. Если требуется сознательное решение, Task запрашивает ресурс внимания; это не создаёт промежуточный канал `ProgramResult.feedback` незавершённой программы.
+The parent `exec` determines compatibility, priority, and order among applicable branches. Multiple matching conditions do not automatically run in parallel. One working composition may include heating, cooling, and emergency response as subprograms; it does not launch and train every alternative process model at once. If a conscious decision is needed, the Task requests Attention resources; this does not create an intermediate `ProgramResult.feedback` channel for an unfinished program.
 
-Этот выбор сохраняет последовательный Python-код, допускает неожиданные и составные наблюдения и позволяет уточнять поведение через семантику графа. Отдельный язык ожиданий и собственный планировщик ветвей для этого не нужны.
+This design retains sequential Python code, allows unexpected and compound observations, and makes it possible to refine behavior through graph semantics. A separate expectation language and branch scheduler are not needed.
 
-Для проверки программа процесса вызывает общий [[Learning system#^def-PredictionEvaluator|`PredictionEvaluator`]] с наблюдениями, контекстом процесса и метриками. Его функция `match_predictions` находит прогнозы и собирает связанные наблюдения, `evaluate_prediction` проверяет каждый прогноз, а `handle_unmatched_observations` обрабатывает несопоставленный опыт. Отсутствие прогноза известного выбранного `PredictionTarget` фиксируется через [[Learning system#LearningCredit and UnresolvedCredit|UnresolvedCredit]] и передаётся на разбор по общим правилам evaluator-а. Назначенное программой задачи обучение организует [[Learning system#LearningCoordinator|`LearningCoordinator`]]. Сам факт Evaluation не разрешает training. Credit относится к семантическому target; `UpdatePlanner` выбирает состояние для обновления, включая параметры router-а при наличии основания оценить его выбор.
-
+For checking, the process program calls the shared [[Learning system#^def-PredictionEvaluator|`PredictionEvaluator`]] with observations, process context, and metrics. Its `match_predictions` function finds predictions and gathers related observations; `evaluate_prediction` checks each prediction; `handle_unmatched_observations` handles unmatched experience. A missing prediction for a known, selected `PredictionTarget` is recorded through [[Learning system#LearningCredit and UnresolvedCredit|UnresolvedCredit]] and passed for review under the evaluator's shared rules. The task program organizes assigned learning through [[Learning system#LearningCoordinator|`LearningCoordinator`]]. Evaluation by itself does not authorize training. Credit concerns a semantic target; `UpdatePlanner` selects the state to update, including router parameters when there are grounds to evaluate its choice.
 
 ---
 
+## Specialization Strategy
 
+### Generalization and Model Compression
 
-
-## Specialization strategy
-
-### Обобщение и сжатие моделей
 #topic_core
 
-Генерализация и сжатие — постоянный стратегический приоритет агента. При сохранении необходимого качества и оправданных затратах он стремится сокращать число самостоятельных моделей, estimator-ов и независимо обучаемых параметров, а также дублирование кода. Цель — объединять совместимый опыт, улучшать перенос на новые случаи и снижать стоимость обучения, исполнения и сопровождения.
+Generalization and compression are persistent strategic priorities for the agent. While preserving required quality and justified cost, it aims to reduce the number of independent models, estimators, and independently trained parameters, as well as duplicated code. The goal is to combine compatible experience, improve transfer to new cases, and reduce training, execution, and maintenance costs.
 
-Программы специализированных процессов могут использовать общую модель как есть либо дополнять её условиями, локальными параметрами и поправками. Существенные различия оправдывают отдельные модели или estimator-ы. Переиспользование кода с независимыми параметрами само по себе не обеспечивает [[Structural Dynamics and Topology#Parameter tying|совместного обучения]].
+Programs for specialized processes may use a shared model as is or extend it with conditions, local parameters, and adjustments. Significant differences justify separate models or estimators. Reusing code with independent parameters does not by itself ensure [[Structural Dynamics and Topology#Parameter Tying|joint training]].
 
-Обнаруженная общность оформляется как [[Core data structures#^def-Claim|Claim]] о применимости общей модели в указанной области. Кандидат рефакторинга меняет использующие её Programs; для обучаемых компонентов он явно определяет общие и локальные состояния и опыт, который их обновляет. [[Program Evaluation and Testing|Evaluation]] или практические проверки сравнивают качество по затронутым процессам, перенос и затраты с прежними моделями; дальнейшее использование определяется обычным [[Program Lifecycle and Evolution#EvaluationChoice|EvaluationChoice]].
+Discovered commonality is represented by a [[Core data structures#^def-Claim|Claim]] that a shared model applies within a specified scope. A refactoring candidate changes the Programs that use it; for learnable components, it explicitly defines shared and local state and the experience that updates them. [[Program Evaluation and Testing|Evaluation]] or practical checks compare quality across affected processes, transfer, and costs against the former models; further use follows the ordinary [[Program Lifecycle and Evolution#EvaluationChoice|EvaluationChoice]].
 
-### 1. Обогащение семантики текущей модели
+### 1. Enriching the Semantics of the Current Model
 
 #topic_details
 
-Агент может добавлять специальные семантические отношения на концепты, операторы или программы процесса.
+The agent may add specialized semantic relations to concepts, operators, or process programs.
 
-Примеры:
+Examples:
 
-```
+```text
 CAUSAL_TRANSITION(factor, effect)
 TRIGGERS(trigger, process_or_transition)
 CONTROL_CONFLICT(subject, constraint, scope, expected_signals?)
 ```
 
-Такой путь предпочтителен по умолчанию: мы не создаём новый тип модели, а уточняем смысл и связи существующей модели.
+This is the preferred default: rather than create a new kind of model, refine the meaning and relations of an existing model.
 
 ---
-### 2. Создание специализированной model Program
+
+### 2. Creating a Specialized Model Program
 
 #topic_details
 
-Если обычной модели процесса недостаточно, агент может создать отдельную `Program` с более специализированной формой представления, например causal model.
+If an ordinary process model is insufficient, the agent may create a separate `Program` with a more specialized representation, such as a causal model.
 
 ```text
 PROGRAM_FOR_PROCESS(program, process)
 PROGRAM_MODEL_FORM(program, CausalModel)
 ```
 
-[[Process Ontology and Semantic Interface#^semantic-program-organization|`PROGRAM_FOR_PROCESS`]] определяет, **какой процесс моделируется**, а `PROGRAM_MODEL_FORM` — **какая специализированная форма модели используется**. Сами model forms организуются через обычную [[Semantics Plane#^spec-SUBTYPE_OF|`SUBTYPE_OF`]].
+[[Process Ontology and Semantic Interface#^semantic-program-organization|`PROGRAM_FOR_PROCESS`]] specifies **which process is modeled**, while `PROGRAM_MODEL_FORM` specifies **which specialized model form is used**. Model forms themselves are organized through ordinary [[Semantics Plane#^spec-SUBTYPE_OF|`SUBTYPE_OF`]].
 
-Специализированная `Program` имеет собственные contracts, semantic links, lifecycle и Evaluation.
-
-
-
+A specialized `Program` has its own contracts, semantic links, lifecycle, and Evaluation.
 
 ---
 
-
-
-
-
-
 ## Program Implementation Interface
 
-### Python-backed core
+### Python-Backed Core
 
-#### Введение
-
-#topic_core
-
-Python-код используется для:
-
-- описания сложных процессов без искусственного YAML/JSON-дублирования;
-- выполнения моделей, симуляций и внутренних программ агента;
-- проверки условий, ветвлений, циклов и переходов;
-- отладки через обычный Python runtime;
-- генерации и редактирования кода LLM-агентом;
-- привязки операторов к концептам графа для рефлексии, памяти и credit assignment.
-
-Код остаётся источником истины для control flow внутри ProcessModel = **исполняемая логика процесса**.  
-Граф остаётся источником истины для семантических связей, program composition, вызовов самих ProcessModel.
-
-Python-интерфейс программы может вызывать библиотеки и native backend. Семантические контракты и Code Anchors описывают значимые границы таких вызовов; отдельная разметка каждого внутреннего вычисления не требуется. Для узких задач допустим [[Learning system#Специализированное обучение|отдельный путь специализированного обучения]] под управлением конкретной подпрограммы.
-
-
-
-### Действия
+#### Introduction
 
 #topic_core
 
+Python code is used to:
 
+- describe complex processes without artificial YAML/JSON duplication;
+- execute models, simulations, and the agent's internal programs;
+- check conditions, branches, loops, and transitions;
+- debug through the ordinary Python runtime;
+- generate and edit code with an LLM agent;
+- link operators to graph concepts for Reflection, memory, and credit assignment.
 
-```
+Code remains the source of truth for control flow within a ProcessModel: it is the **executable process logic**. The graph remains the source of truth for semantic relations, program composition, and calls to ProcessModels themselves.
+
+A program's Python interface may call libraries and native backends. Semantic contracts and Code Anchors describe significant boundaries of those calls; each internal computation does not need separate markup. For narrow tasks, a [[Learning system#Specialized Learning|specialized learning path]] managed by a specific subprogram is permitted.
+
+### Actions
+
+#topic_core
+
+```text
 ACTION(agent, target, expected_outcome)
 ```
 
-Смысл:
+Meaning:
 
-```
-Action — процессный шаг, намеренно инициированный агентом.
+```text
+Action — a process step intentionally initiated by the agent.
 ```
 
-Пример:
+Example:
 
-```
+```text
 AgentIgnitesWood triggers FireBurnsWood
 ```
 
-Нужно  различать:
+Distinguish:
 
-```
-Action    —  действие агента (не концепт). Разрешен только в Executable Programs.
-ActionConcept    — концепт символизирующий действие агента в процессных моделях. Основа для рефлексии.
-```
-
-В runtime [[Action Selection and Planning|политика]] возвращает распределение по `ActionCandidate`, которые могут ссылаться на `ActionConcept`, `ProgramCall` или branch transition. Общая функция выборки возвращает конкретного кандидата вызывающей `exec`.
-
-```
-`ActionConcept` нужен для семантики, рефлексии, memory retrieval и `CONTROL_CONFLICT`.  
-`ActionCandidate` нужен для конкретного выбора в текущем execution context.
+```text
+Action — an agent action (not a concept). Allowed only in Executable Programs.
+ActionConcept — a concept representing an agent action in process models. A basis for Reflection.
 ```
 
-Если варианты поступают из внешней среды, их общий контракт и два способа вызова описаны в [[Discrete Action Interface]].
+At runtime, a [[Action Selection and Planning|policy]] returns a distribution over `ActionCandidate` instances, which may reference an `ActionConcept`, `ProgramCall`, or branch transition. The shared sampling function returns a specific candidate to the calling `exec`.
 
-### Outcome 
+```text
+`ActionConcept` is for semantics, Reflection, memory retrieval, and `CONTROL_CONFLICT`.
+`ActionCandidate` is for a specific choice in the current execution context.
+```
+
+If options come from the external environment, their shared contract and two call methods are described in [[Discrete Action Interface]].
+
+### Outcome
 
 #topic_core
-Ожидаемый результат.  Процесс не обязан иметь один детерминированный результат.
 
-```
-OutcomeProfile:  
+An expected result. A process does not have to produce one deterministic outcome.
+
+```text
+OutcomeProfile:
   Process → OutcomeA = 0.7
   Process → OutcomeB = 0.3
 ```
 
-
-
-
-### «Обучение» операторов и переходов
+### “Training” Operators and Transitions
 
 #topic_details
 
-Каждое anchored использование оператора имеет `BeliefData`; оператор или функция, возвращающие semantic value, также возвращают отдельный result `BeliefData`.
+Each anchored use of an operator has `BeliefData`; an operator or function that returns a semantic value also returns separate result `BeliefData`.
 
-Собственный `BeliefData` у anchor не требует отдельного assessor-а или LLM-вызова: [[Uncertainty and Belief Tracking in the World Model#Жизненный цикл assessment|EvidenceAssessmentProgram обрабатывает связанные назначения пакетно]] и переиспользует подготовленные модели.
+An anchor's own `BeliefData` does not require a separate assessor or LLM call: [[Uncertainty and Belief Tracking in the World Model#Assessment Lifecycle|EvidenceAssessmentProgram processes related assignments in batches]] and reuses prepared models.
 
-Для оператора он относится не к абстрактному действию вообще, а к **его использованию в конкретной точке control flow**:
+For an operator, this belief concerns not an abstract action in general but **its use at a specific point in control flow**:
 
 ```text
 OperatorConcept.belief_data
-→ насколько evidence подтверждает,
-  что данный переход / оператор уместен и надёжен здесь.
+→ how strongly evidence supports that
+  this transition / operator is suitable and reliable here.
 ```
 
-Поэтому одно действие, например `Jump`, в разных ветках программы может иметь разные operator beliefs.
+Therefore, the same action, such as `Jump`, may have different operator beliefs in different program branches.
 
-Нужно различать:
+Distinguish:
 
 ```text
 Program.belief_data
-→ belief активной revision Program как целого;
+→ belief in the active revision of the Program as a whole;
 
 OperatorConcept.belief_data
-→ belief anchored использования перехода / оператора
-  в конкретной revision и точке control flow;
+→ belief in an anchored use of a transition / operator
+  at a specific control-flow point and revision;
 
 result BeliefData
-→ уверенность в полученном semantic result.
+→ confidence in the semantic result obtained.
 ```
 
-Для anchored-вызова политики operator belief относится к применению механизма выбора в данной точке; уверенность в оценках последствий относится к результатам соответствующих моделей. Политика не обязана вычислять оценки полезности для каждого кандидата. Отдельной оболочки выбора для хранения belief не требуется.
+For an anchored policy call, operator belief concerns applying the selection mechanism at this point; confidence in estimates of consequences belongs to the results of the corresponding models. A policy does not need to calculate utility estimates for every candidate. A separate selection wrapper is not required for storing belief.
 
-Operator beliefs обновляются через общий evidence / learning lifecycle.
+Operator beliefs are updated through the shared evidence / learning lifecycle.
 
+### OperatorConcept, Code Anchors, and AnchorResolver
 
-
-
-### OperatorConcept, Code Anchors and AnchorResolver 
-
-####  Operator Concept
+#### Operator Concept
 
 #topic_core
 
-Если оператор важен для reasoning, он имеет концепт в `GraphStore` (связь через Code Anchor)
+If an operator matters for reasoning, it has a concept in `GraphStore` (linked through a Code Anchor):
 
 ```python
 OperatorConcept: Concept(1.0) {
     id: "op:EngineStartCode:start_gate"
-    prototype: "PythonIfOperator" # Автоматичеки заполняем из связей по лестнице абстракции
+    prototype: "PythonIfOperator" # Automatically filled from relations up the abstraction hierarchy
     description: "Guard deciding whether engine start transition can execute."
-    belief_data: BeliefData(...) # уверенность в самом операторе как части модели 
+    belief_data: BeliefData(...) # belief in the operator itself as part of the model
 }
 ```
 
-Связи оператора хранятся отдельно в `RelationStore` как и у любых концептов.
+Operator relations are stored separately in `RelationStore`, as for any concept.
 
-Пример:
+Example:
+
 ```python
 Relation(
   type="IDENTITY_TYPE",
@@ -1167,34 +1146,33 @@ Relation(
 )
 ```
 
-
-#### Code Anchors 
+#### Code Anchors
 
 #topic_core
 
-Code Anchors связывают элементы Python-кода с соответствующими `Concept` и `OperatorConcept` в графе. Эта привязка определяет **семантическую поверхность программы**: какие вычисления, состояния, условия, выборы и действия имеют самостоятельное значение для мышления, памяти, обучения, генерализации и отладки.
+Code Anchors link Python code elements to their corresponding `Concept` and `OperatorConcept` in the graph. This binding defines the program's **semantic surface**: which computations, states, conditions, choices, and actions have independent meaning for reasoning, memory, learning, generalization, and debugging.
 
-Anchored-элементы входят в наблюдаемый опыт агента. Технические детали реализации без anchor не материализуются как самостоятельные элементы памяти.
+Anchored elements are part of the agent's observable experience. Technical implementation details without anchors are not materialized as independent memory items.
 
-Runtime-значение anchored-оператора интерпретируется согласно его
-семантическому контракту, а не только как техническое Python-значение. 
+The runtime value of an anchored operator is interpreted according to its semantic contract, not only as a technical Python value.
 
-Tracer автоматически создаёт trace-local `Facet` состояния доменного объекта, если это предусмотрено [[Memory#Семантическая интерпретация OperatorOutput|контрактом проекции `OperatorOutput`]]. Достоверность утверждений о состоянии задаётся через `Belief_data`.
+The tracer automatically creates a trace-local `Facet` for a domain object's state when specified by the [[Memory#Semantic Interpretation of `OperatorOutput`|`OperatorOutput` projection contract]]. The reliability of claims about the state is expressed through `Belief_data`.
 
-Такое разделение защищает память от технического шума, но позволяет сохранять всё, что необходимо для объяснения результатов и последующего улучшения программы. Агент определяет и постепенно уточняет набор anchors в ходе жизненного цикла `Program`.
+This separation protects memory from technical noise while allowing retention of everything needed to explain results and improve the program later. The agent defines and gradually refines the set of anchors during the `Program` lifecycle.
 
-Если anchored-элемент выполняется, создаётся `TraceEvent`. Если anchored-оператор возвращает результат, его конкретный `OperatorOutput` задаёт semantic type результата и роли его именованных частей. Tracer не выводит смысл из имени переменной или raw Python-значения.
+Execution of an anchored element creates a `TraceEvent`. If an anchored operator returns a result, its specific `OperatorOutput` defines the semantic type of the result and the roles of its named parts. The tracer does not infer meaning from a variable name or raw Python value.
 
-**Code Anchors определяют границу между техническим исполнением и запоминаемым смысловым опытом.**
+**Code Anchors define the boundary between technical execution and semantic experience that is retained.**
 
-Формат Code Anchor в коде:
+Code Anchor format:
 
 #topic_details
+
 ```python
 # et:op=<op_id>
 ```
 
-Пример:
+Example:
 
 ```python
 def engine_start(ctx):  # et:op=engine_start_program
@@ -1208,20 +1186,20 @@ def engine_start(ctx):  # et:op=engine_start_program
     return ProgramResult(result=outcome)
 ```
 
-Notes: 
-- Подвыражение с самостоятельным семантическим значением выносится в отдельную строку с отдельной переменной и Code Anchor.
-- Объекты вроде `ctx.fuel_present` не являются строками. Это runtime-объекты, которые содержат все поля(напр belief_data) соответствующих концептов на базе которых они были созданы. В runtime агент может перейти использовать эти поля и переходить по связям концепта используя стаандартный ЛЛМ tool-calling.
+Notes:
 
+- A subexpression with independent semantic meaning is moved to its own line with a separate variable and Code Anchor.
+- Objects such as `ctx.fuel_present` are not strings. They are runtime objects containing all fields (such as `belief_data`) of the corresponding concepts from which they were created. At runtime, the agent can use these fields and navigate concept relations through standard LLM tool-calling.
 
-`op_id` — локальный ID оператора внутри `CodeNode`.
+`op_id` is the local ID of an operator within a `CodeNode`.
 
-Полный `concept_id` строится под капотом:
+The full `concept_id` is constructed under the hood:
 
 ```text
 op:<code_node_id>:<op_id>
 ```
 
-Пример:
+Example:
 
 ```text
 op:EngineStartCode:start_gate
@@ -1231,7 +1209,7 @@ op:EngineStartCode:start_gate
 
 #topic_details
 
-`AnchorResolver` возвращает концепта оператора.
+`AnchorResolver` returns the operator concept.
 
 ```python
 resolve_operator(
@@ -1240,21 +1218,12 @@ resolve_operator(
 ) -> Concept
 ```
 
+For operators themselves, the returned Concept is an `OperatorConcept`.
 
-
-Для самих операторов возвращаемым Concept будет OperatorConcept.
-
-
-Связи запрашиваются отдельно  если нужны:
+Relations are queried separately if needed:
 
 ```python
-get_relations(...) -> list[Relation] #ToDo: детализировать аргументы
-
-
+get_relations(...) -> list[Relation] # TODO: detail the arguments
 ```
-
-
-
-
 
 ---

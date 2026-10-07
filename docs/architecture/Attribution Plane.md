@@ -3,422 +3,398 @@ status: draft
 target_version: next
 ToDo:
 ---
-## Intro
-#topic_core 
 
-Вопрос: **«Каков объект?»**  
-Плоскость Атрибуции отвечает за свойства, измерения и классификации объектов, состояний и концептов.
+## Introduction
+#topic_core
+
+Question: **“What is the object like?”**  
+The Attribution Plane handles the properties, dimensions, and classifications of objects, states, and concepts.
 
 (def_id:: et.AttributionPlane)
 > [!definition]
-> **Attribution Plane** — это плоскость, чья суть состоит в том, чтобы представлять объект через его свойства: измерять их, сравнивать, нормализовать и использовать в reasoning. В EverTree сущность/состояние `x` описывается через **property facts** (факты свойств), а результат чтения свойства возвращается в едином формате `PropertyReading(U)`.
+> **Attribution Plane** — a plane whose purpose is to represent an object through its properties: to measure, compare, and normalize them, and use them in reasoning. In EverTree, an entity/state `x` is described through **property facts**, and a property reading is returned in the unified format `PropertyReading(U)`.
 ^def-AttributionPlane
 
-Иначе говоря, **Attribution Plane** — это пространство, где агент отвечает не на вопрос *«что это по сути?»* и не на вопрос *«что произойдёт?»*, а на вопрос:
+In other words, the **Attribution Plane** is where the agent answers neither *“what is this, essentially?”* nor *“what will happen?”*, but questions such as:
 
-- какой у объекта цвет,
-- какова его скорость,
-- высокий ли у него риск,
-- на какой он поверхности,
-- в какой фазе находится,
-- к какому классу он относится по данному критерию.
+- what color an object is,
+- how fast it is,
+- whether its risk is high,
+- what surface it is on,
+- what phase it is in,
+- which class it belongs to under a given criterion.
 
-### Ключевые принципы
+### Key Principles
 
-- `PropertyConcept` — это **тип аспекта**, который мы хотим знать про `x`  
-  (например `SpeedOfMotion`, `SurfaceUnder`, `UserIntent`, `RiskLevel`).
-
-- Свойства **не обязаны храниться готовыми внутри объекта**.  
-  Их значения получают через чтение, вывод или нормализацию; сохранение результата в графе — отдельное решение.
-
-- **Входы чтения** определяет контракт свойства или связанной `Program`: какие условия уточняют вопрос и какие данные нужны для ответа. Они передаются через [[#Параметры операций|объявленные параметры]].
-
-- Ось в этой плоскости — это **операционная утилита над свойством**:
-  она читает, вычисляет, сравнивает и нормализует значения свойства, давая агенту рабочий доступ к нему.
-
+- `PropertyConcept` is the **type of aspect** we want to know about `x` (for example, `SpeedOfMotion`, `SurfaceUnder`, `UserIntent`, or `RiskLevel`).
+- Properties **do not have to be stored as ready-made values inside an object**. Their values are obtained by reading, inference, or normalization; storing the result in the graph is a separate decision.
+- **Read inputs** are defined by the contract of the property or its associated `Program`: which conditions refine the question and which data are needed to answer it. They are passed through [[#Operation Parameters|declared parameters]].
+- An axis in this plane is an **operational utility for a property**: it reads, computes, compares, and normalizes property values, giving the agent practical access to them.
 
 ---
 
 ## Attribution Axis
-#topic_core 
+#topic_core
 
 (def_id:: et.AttributionAxis)
 > [!definition]
-> **Attribution Axis** — это ось внутри Attribution Plane, которая задаёт одно свойство объекта как измерение на некоторой шкале `U` и определяет, как это свойство читать, сравнивать, нормализовать и использовать в reasoning.
+> **Attribution Axis** — an axis within the Attribution Plane that defines one object property as a dimension on a scale `U` and specifies how to read, compare, and normalize that property and use it in reasoning.
 ^def-AttributionAxis
 
-Интуитивно ось — это способ ответить на вопрос вида:
+Intuitively, an axis is a way to answer questions such as:
 
-- “какова скорость этого объекта?”  
-- “насколько высок риск?”  
-- “в какой фазе находится процесс?”
-- и т.д.
+- “How fast is this object?”
+- “How high is the risk?”
+- “What phase is the process in?”
+- and so on.
 
-Ось задаёт не только **что именно измеряется**, но и **в какой форме это значение существует** и **какие операции над ним допустимы**.
+An axis defines not only **what is measured**, but also **the form in which the value exists** and **which operations are allowed on it**.
 
-### Что задаёт ось
+### What an Axis Defines
 
-Каждая ось в Плоскости Атрибуции задаёт:
+Each axis in the Attribution Plane defines:
 
-- **Домен (`X`)** — к каким объектам, состояниям или концептам применимо свойство.
-- **Шкалу (`U`)** — пространство допустимых значений.
-- **Результат измерения** — в какой форме ось возвращает значение свойства.
-- **Алгебру операций** — какие операции допустимы для значений на этой шкале  
-  (сравнение, расстояние, принадлежность, нормализация, фильтрация).
-- **Динамику обновления** — Правила работы со значениями на шкале `U`;
-
+- **Domain (`X`)** — which objects, states, or concepts the property applies to.
+- **Scale (`U`)** — the space of allowed values.
+- **Measurement result** — the form in which the axis returns the property value.
+- **Operation algebra** — which operations are allowed on values on this scale (comparison, distance, membership, normalization, filtering).
+- **Update dynamics** — the rules for working with values on scale `U`.
 
 > [!note]
-> Ось не является самим свойством.  
-> `PropertyConcept` задаёт смысл свойства, а `AttributionAxis` задаёт операционный интерфейс доступа к нему.
+> An axis is not the property itself. `PropertyConcept` defines the meaning of the property, while `AttributionAxis` defines the operational interface for accessing it.
 
-
-> [!note] Специфика Attribution Plane
-> В Attribution Plane ось возвращает не просто `Belief(U)`, а атрибутивное чтение:
+> [!note] Attribution Plane specifics
+> In the Attribution Plane, an axis returns not simply `Belief(U)`, but an attribution reading:
 >
 > ```text
 > PropertyReading(U) := <value_U?, belief_data>
 > ```
 >
-> `belief_data` — `BeliefData` отдельного значения / утверждения либо `Profile` одного `CompetitionScope`. Точный контракт задан в [[#Formal definition]].
+> `belief_data` is `BeliefData` for an individual value/claim or a `Profile` for one `CompetitionScope`. The exact contract is defined in [[#Formal Definition]].
 
 ---
 
 ## Attribution Plane
 
-### Formal definition
-#topic_core 
+### Formal Definition
+#topic_core
 
-В **Attribution Plane** ось задаёт свойство объекта как отображение:
+In the **Attribution Plane**, an axis defines an object property as a mapping:
 
 $$
 a_p: X \times I_p \rightarrow \mathrm{PropertyReading}(U_p) \cup \{\mathrm{unknown}\}
 $$
 
-где:
+where:
 
-- **`p`** — `PropertyConcept`, то есть измеряемое свойство;
-- **`X`** — пространство объектов, состояний или концептов, к которым применяется свойство;
-- **`I_p`** — допустимые наборы входов по [[#Параметры операций|контракту чтения свойства]]; это математическое обозначение, а не отдельный тип данных;
-- **`U_p`** — шкала (_scale_) значения данного свойства;
-- **$\mathrm{PropertyReading}(U_p)$** — атрибутивный результат вида:
+- **`p`** is `PropertyConcept`, the property being measured;
+- **`X`** is the space of objects, states, or concepts to which the property applies;
+- **`I_p`** is an allowed set of inputs under the [[#Operation Parameters|property-reading contract]]; this is mathematical notation, not a separate data type;
+- **`U_p`** is the scale of values for this property;
+- **$\mathrm{PropertyReading}(U_p)$** is an attribution result of the form:
 
 $$
 \mathrm{PropertyReading}(U_p) := \langle value_{U_p}?,\ belief\_data \rangle
 $$
 
-где:
+where:
 
-- **`value_U`** — значение свойства на шкале `U`;
-- **`belief_data`** — [[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] отдельного значения / утверждения либо [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]] mutually exclusive + exhaustive alternatives одного [[Uncertainty and Belief Tracking in the World Model#^def-CompetitionScope|`CompetitionScope`]].
+- **`value_U`** is the property value on scale `U`;
+- **`belief_data`** is [[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] for an individual value/claim or a [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]] of mutually exclusive and exhaustive alternatives within one [[Uncertainty and Belief Tracking in the World Model#^def-CompetitionScope|`CompetitionScope`]].
 
-С `BeliefData` поле `value_U` обязательно. В scope-backed reading каноническим результатом является `Profile`; `value_U` возвращается только как производный point-view по явной selection policy и не материализует достоверный property fact.
+With `BeliefData`, the `value_U` field is required. For a scope-backed reading, `Profile` is the canonical result; `value_U` is returned only as a derived point view under an explicit selection policy and does not materialize a reliable property fact.
 
-Смена источника не меняет шкалу `U_p`: качественная интерпретация числового свойства возвращается на своей шкале `U_norm` через [[#Numeric ↔ Qualitative via Criterion|Criterion]].
+Changing the source does not change scale `U_p`: a qualitative interpretation of a numeric property is returned on its own scale `U_norm` through [[#Numeric ↔ Qualitative Through a Criterion|Criterion]].
 
-
-Конкретные формы **`value_U`** по типам шкал описаны в разделе [[#Scale types]].  
-Общие правила belief update описаны в [[Uncertainty and Belief Tracking in the World Model]].
-`unknown` означает недоступность применимого чтения; см. [[#5. Unknown]].
-
+Concrete forms of **`value_U`** for each scale type are described in [[#Scale Types]]. General belief-update rules are described in [[Uncertainty and Belief Tracking in the World Model]]. `unknown` means that no applicable reading is available; see [[#5. Unknown]].
 
 ---
 
-## Scale types
-#topic_core 
+## Scale Types
+#topic_core
 
-Шкала `U` определяет, **какого рода значения** возвращает ось и **какие операции** над ними допустимы.
+Scale `U` defines **what kind of values** an axis returns and **which operations** are allowed on them.
 
-В Плоскости Атрибуции используются четыре базовых типа шкал:
+The Attribution Plane uses four basic scale types:
 
-1. **Nominal** — категориальная,
-2. **Ordinal** — ранговая,
-3. **Numeric** — числовая,
-4. **Circular** — циклическая.
+1. **Nominal** — categorical;
+2. **Ordinal** — ranked;
+3. **Numeric** — numerical;
+4. **Circular** — cyclic.
 
 > [!note]
-> Тип шкалы определяет не только форму значения, но и набор допустимых операций.  
-> Именно поэтому важно различать, например, “класс” и “число”, даже если оба используются для описания одного и того же объекта.
+> A scale type determines not only the form of a value, but also the set of allowed operations. That is why it is important to distinguish, for example, a “class” from a “number,” even when both describe the same object.
 
 ---
 
-### 1. Категориальная ось (Nominal)
+### 1. Categorical Axis (Nominal)
 
-**Смысл:**  
-Ось задаёт классы или категории **без естественного порядка** между ними.
+**Meaning:**  
+The axis defines classes or categories **with no natural ordering** among them.
 
-Это подходит для свойств, где корректно спрашивать **“какой класс?”**, но некорректно спрашивать **“больше или меньше?”**.
+This is suitable for properties where it makes sense to ask **“which class?”**, but not **“greater or smaller?”**
 
-**Типичные примеры:**
+**Typical examples:**
 
-- язык,
-- домен,
-- роль,
-- тип интента,
-- класс ошибки,
-- категория поверхности.
+- language,
+- domain,
+- role,
+- intent type,
+- error class,
+- surface category.
 
-Форма `value_U`:
+Form of `value_U`:
 
-- `value_U = C`, где `C` — одно из допустимых значений nominal scale `U`.
+- `value_U = C`, where `C` is one of the allowed values on nominal scale `U`.
 
-Сам тип nominal scale ещё не гарантирует взаимоисключаемость значений. Epistemic representation выбирается по semantic contract конкретного Property:
+The nominal scale type alone does not guarantee that values are mutually exclusive. The epistemic representation is selected according to the semantic contract of the specific Property:
 
 ```text
 values mutually exclusive + exhaustive
-→ один CompetitionScope
-→ один Profile в belief_data;
+→ one CompetitionScope
+→ one Profile in belief_data;
 
-несколько values могут быть истинны одновременно
-→ отдельные binary BeliefTarget.
+multiple values may be true at once
+→ separate binary BeliefTargets.
 ```
 
-Например, `SQLProblemSolvingLevel(AgentA)` со шкалой `Low | Medium | High` использует общий `CompetitionScope` и `Profile`, если `Criterion` действительно делает эти значения взаимоисключающими и исчерпывающими. Независимые свойства `GoodAtSQL`, `GoodAtPython`, `GoodAtDebugging` таким scope не являются.
+For example, `SQLProblemSolvingLevel(AgentA)` with scale `Low | Medium | High` uses a shared `CompetitionScope` and `Profile` if `Criterion` makes these values mutually exclusive and exhaustive. Independent properties such as `GoodAtSQL`, `GoodAtPython`, and `GoodAtDebugging` do not form such a scope.
 
-**Как представляется в графе:**
+**Graph representation:**
 
-- обычно через `CLASSIFIED_AS(entity, C)`,  
-  где `C` — допустимое значение шкалы данного `PropertyConcept` по критерию, соответствующему смыслу классификации и условиям запроса.
+- Usually through `CLASSIFIED_AS(entity, C)`, where `C` is an allowed value on the scale of the given `PropertyConcept`, according to a criterion that matches the meaning of the classification and the query conditions.
 
-**Допустимые операции:**
+**Allowed operations:**
 
-- `equals(C1, C2)` — равенство,
-- `membership(C, S)` — принадлежность множеству,
-- предикаты вида `=` / `∈` / `NOT(...)`.
+- `equals(C1, C2)` — equality;
+- `membership(C, S)` — set membership;
+- predicates such as `=`, `∈`, and `NOT(...)`.
 
-**Важно:**  
-Если значения не образуют естественного порядка, это **не ordinal** и не numeric, а именно **nominal**.
+**Important:** If values have no natural order, the scale is **nominal**, not ordinal or numeric.
 
-**Мини-пример:**
+**Minimal example:**
 
 - Property: `Language`
 - Value: `CLASSIFIED_AS(Message#77, UA)`
 
 ---
 
-### 2. Ранговая ось (Ordinal)
+### 2. Ordinal Axis
 
-**Смысл:**  
-Ось задаёт **порядок** значений, но не задаёт корректной числовой дистанции между ними.
+**Meaning:**  
+The axis defines an **ordering** of values, but not a valid numerical distance between them.
 
-Это подходит для свойств, где можно сказать:
+This suits properties where it is meaningful to say:
 
-- выше / ниже,
-- лучше / хуже,
-- важнее / менее важно,
+- higher / lower,
+- better / worse,
+- more / less important,
 
-но нельзя строго и универсально сказать **“на сколько”**.
+but not to say strictly and universally **“by how much.”**
 
-**Типичные примеры:**
+**Typical examples:**
 
 - `RiskLevel`,
-- важность,
-- срочность,
-- приоритет,
-- степень релевантности.
+- importance,
+- urgency,
+- priority,
+- degree of relevance.
 
-Форма `value_U`:
+Form of `value_U`:
 
-- `value_U ∈ OrderedClassConcept`, где классы образуют явно упорядоченное множество.
+- `value_U ∈ OrderedClassConcept`, where the classes form an explicitly ordered set.
 
-Если ordinal values mutually exclusive и exhaustive, `belief_data` является тем же `Profile` соответствующего `CompetitionScope`. Порядок alternatives не меняет epistemic updater.
+If ordinal values are mutually exclusive and exhaustive, `belief_data` is the `Profile` for the corresponding `CompetitionScope`. The order of alternatives does not change the epistemic updater.
 
-**Как представляется в графе:**
+**Graph representation:**
 
-- обычно через `CLASSIFIED_AS(entity, RiskHigh)` и аналогичные классы,
-- а сам порядок задаётся явно структурой `ValueOrder`, а не именем класса.
+- Usually through `CLASSIFIED_AS(entity, RiskHigh)` and similar classes.
+- The order itself is explicitly defined by the `ValueOrder` structure, not by class names.
 
-**Допустимые операции:**
+**Allowed operations:**
 
-- `compare(c1, c2) -> {less, equal, greater, incomparable}`,
-- сортировка,
-- top-k,
-- предикаты `>=`, `<=`.
+- `compare(c1, c2) -> {less, equal, greater, incomparable}`;
+- sorting;
+- top-k;
+- predicates `>=`, `<=`.
 
-В ordinal-шкале нельзя безопасно считать разности типа:
+For an ordinal scale, differences such as these cannot be calculated safely:
 
-- `High - Mid`
-- “в два раза выше”
+- `High - Mid`;
+- “twice as high.”
 
-Если для свойства важны корректные дельты и расстояния, нужна уже **numeric** шкала.
+If valid deltas and distances matter for a property, use a **numeric** scale instead.
 
-**Мини-пример:**
+**Minimal example:**
 
 - Property: `RiskLevel`
 - Value: `CLASSIFIED_AS(Task#A, RiskHigh)`
 
 ---
 
-### 3. Числовая ось (Numeric)
+### 3. Numeric Axis
 
-**Смысл:**  
-Ось задаёт свойство как величину на числовой шкале, где корректны:
+**Meaning:**  
+The axis defines a property as a quantity on a numeric scale, where the following are valid:
 
-- сравнение,
-- расстояние,
-- диапазоны,
-- дельты,
-- а иногда и агрегирование.
+- comparison,
+- distance,
+- ranges,
+- deltas,
+- and, sometimes, aggregation.
 
-Это основной тип оси для количественных измерений.
+This is the main axis type for quantitative measurements.
 
-**Типичные примеры:**
+**Typical examples:**
 
-- скорость,
-- масса,
-- температура,
-- стоимость,
-- время,
+- speed,
+- mass,
+- temperature,
+- cost,
+- time,
 - latency,
-- вероятность,
-- риск-скор.
+- probability,
+- risk score.
 
-**Форма `value_U`**:
+**Forms of `value_U`:**
 
-- число (`float`, `int`);
-- интервал;
-- параметры распределительной оценки;
-- sketch / квантили, если сама форма значения является приближённой оценкой.
-- `Belief_data` отдельно 
+- a number (`float`, `int`);
+- an interval;
+- parameters of a distributional estimate;
+- a sketch/quantiles, when the value itself is an approximate estimate.
+- `Belief_data` separately.
 
+**Graph representation:**
 
+- A scalar value uses `HAS_NUMERIC_VALUE(entity, property, value[, unit])`.
+- An interval, distribution, or other numerical estimate is a typed result under the [[#4. Typed Result or Computation|axis source contract]].
 
-**Как представляется в графе:**
+**Allowed operations:**
 
-- скалярное значение — через `HAS_NUMERIC_VALUE(entity, property, value[, unit])`;
-- интервал, распределение или другая числовая оценка — как типизированный результат по [[#4. Типизированный результат или вычисление|контракту источника оси]].
+- `<, >, <=, >=`;
+- `in [a,b]`;
+- `≈` with a tolerance;
+- `distance(v1, v2)`;
+- delta;
+- normalization relative to a domain.
 
-**Допустимые операции:**
+**Norms and comparability:**  
+Numeric axes almost always need interpretation **relative to a domain**:
 
-- `<, >, <=, >=`,
-- `in [a,b]`,
-- `≈` с допуском,
-- `distance(v1, v2)`,
-- дельта,
-- нормализация относительно домена.
+- `112 km/h` means different things for a car and an airplane;
+- `50 ms latency` may be good or bad depending on the type of system.
 
-**Нормы и сопоставимость:**  
-Numeric-оси почти всегда требуют интерпретации **относительно домена**:
+Numeric values are therefore often supplemented by domain distributions and normalization criteria.
 
-- `112 km/h` для машины и для самолёта означают разное,
-- `50 ms latency` может быть хорошим или плохим в зависимости от типа системы.
-
-Поэтому numeric-значения часто дополняются доменными распределениями и критериями нормализации.
-
-**Мини-пример:**
+**Minimal example:**
 
 - `HAS_NUMERIC_VALUE(MyCarNow, SpeedOfMotion, 112 km/h)`
 
 ---
 
-### 4. Циклическая ось (Circular)
+### 4. Circular Axis
 
-**Смысл:**  
-Ось задаёт значения, живущие **по кругу**, а не на линейной прямой.
+**Meaning:**  
+The axis defines values that live **on a circle**, rather than a linear line.
 
-В такой шкале начало и конец совпадают:
+On this scale, the beginning and end coincide:
 
-- `0° ≡ 360°`,
-- конец цикла возвращает нас в ту же точку.
+- `0° ≡ 360°`;
+- the end of a cycle returns to the same point.
 
-Это важно для фаз, углов, периодов и ритмов.
+This matters for phases, angles, periods, and rhythms.
 
-**Типичные примеры:**
+**Typical examples:**
 
-- угол,
-- фаза,
-- сезонный цикл,
-- периодичность,
-- стадии повторяющегося процесса.
+- angle,
+- phase,
+- seasonal cycle,
+- periodicity,
+- stages of a recurring process.
 
-**Форма значения:**
+**Value form:**
 
-- число с циклической топологией,
-- либо дискретные фазы, если цикл разбит на этапы.
+- a number with circular topology;
+- or discrete phases, if the cycle is divided into stages.
 
-**Как представляется в графе:**
+**Graph representation:**
 
-- числовой вариант:  
-  `HAS_NUMERIC_VALUE(entity, property, θ[, unit])`
-- дискретный вариант:
-  `CLASSIFIED_AS(entity, Phase3)`
+- Numeric form: `HAS_NUMERIC_VALUE(entity, property, θ[, unit])`
+- Discrete form: `CLASSIFIED_AS(entity, Phase3)`
 
-**Допустимые операции:**
+**Allowed operations:**
 
-- `circular_distance(θ1, θ2)` — расстояние по кратчайшей дуге,
-- `≈` с допуском по окружности,
-- `shift(θ, Δ)` — фазовый сдвиг (опционально).
+- `circular_distance(θ1, θ2)` — distance along the shorter arc;
+- `≈` with a tolerance on the circle;
+- `shift(θ, Δ)` — phase shift (optional).
 
-**Важно:**  
-Линейная метрика здесь ломает смысл.
+**Important:** A linear metric breaks the meaning.
 
-Например:
+For example, the distance between `350°` and `10°` is `20°`, not `340°`.
 
-- расстояние между `350°` и `10°` равно `20°`, а не `340°`.
-
-**Мини-пример:**
+**Minimal example:**
 
 - `HAS_NUMERIC_VALUE(EngineNow, PhaseAngle, 350 deg)`
 
 ---
 
-### Связь типа шкалы и reasoning
+### Relationship Between Scale Type and Reasoning
 
-Тип шкалы определяет, **какие вопросы можно корректно задавать оси**.
+The scale type determines **which questions can be asked correctly of an axis**:
 
-- **Nominal** — “это то же значение или нет?”
-- **Ordinal** — “что выше / ниже?”
-- **Numeric** — “на сколько больше / ближе / дальше?”
-- **Circular** — “насколько близко по циклу?”
+- **Nominal** — “is this the same value or not?”
+- **Ordinal** — “which is higher/lower?”
+- **Numeric** — “by how much greater/closer/farther?”
+- **Circular** — “how close are they on the cycle?”
 
-Поэтому выбор типа шкалы — это не косметика, а часть контракта смысла свойства.
+Therefore, choosing a scale type is part of the property's semantic contract, not a cosmetic choice.
 
 ---
 
-## Property facts and relation-backed readings
-#topic_core 
+## Property Facts and Relation-Backed Readings
+#topic_core
 
-Ось Атрибуции не хранит значение свойства сама по себе. Она читает факты или типизированные результаты либо вычисляет значение через связанную со свойством модель или правило.
+The Attribution Axis does not itself store a property value. It reads facts or typed results, or computes a value using a model or rule associated with the property.
 
-Нужно различать:
+The following must be distinguished:
 
-- **native property facts** — факты, которые прямо хранят значение свойства в Attribution Plane;
-- **relation-backed readings** — атрибутивные чтения, где значение свойства извлекается из semantic relation-instance.
+- **native property facts** — facts that directly store a property's value in the Attribution Plane;
+- **relation-backed readings** — attribution readings whose values are retrieved from a semantic relation instance.
 
-Property facts нужны, чтобы разделить:
+Property facts separate:
 
-- **что измеряем** — `PropertyConcept`, например `SpeedOfMotion`, `UserIntent`;
-- **у какой сущности измеряем** — `Entity`, `Facet`, `Instance`, `Prototype`;
-- **какое значение получили** — число или класс;
-- **каково epistemic состояние чтения** — `BeliefData` либо общий `Profile` scope-а.
+- **what is measured** — `PropertyConcept`, such as `SpeedOfMotion` or `UserIntent`;
+- **which entity is measured** — `Entity`, `Facet`, `Instance`, or `Prototype`;
+- **which value was obtained** — a number or class;
+- **the epistemic state of the reading** — `BeliefData` or the shared `Profile` of a scope.
 
-Ось Атрибуции использует применимые к её шкале источники значения свойства:
+The Attribution Axis uses property value sources applicable to its scale:
 
 1. numeric property fact;
 2. membership property fact;
-3. relation-backed reading из Semantics Plane;
-4. [[#4. Типизированный результат или вычисление|Типизированный результат или вычисление]] по объявленной семантической привязке.
+3. relation-backed reading from the Semantics Plane;
+4. [[#4. Typed Result or Computation|typed result or computation]] under a declared semantic binding.
 
 ---
 
-### 1. Numeric property fact
+### 1. Numeric Property Fact
 
-Используется, когда значение свойства является числом.
+Used when a property value is a number.
 
 ```python
 RelationType HAS_NUMERIC_VALUE {
   name: "HAS_NUMERIC_VALUE"
-  description: "Числовой факт свойства: entity имеет числовое значение по property. Значение хранится как число (не как Concept) и несёт Belief_data на ребре. Не является классификацией (CLASSIFIED_AS) и не задаёт таксономию/мериологию."
+  description: "Numeric property fact: an entity has a numeric value for a property. The value is stored as a number (not as a Concept) and carries Belief_data on the edge. It is not a classification (CLASSIFIED_AS) and does not define taxonomy or mereology."
   signature: [
-    entity   = Entity   "сущность, к которой привязываем измерение (Facet/Instance/Prototype/...)",
-    property = Property "какое свойство измеряем (Concept смысла: SpeedOfMotion, Latency, ...)",
-    value    = Number   "числовое значение (float/int)",
-    unit?    = Unit     "единица измерения (если применимо)"
+    entity   = Entity   "entity to which the measurement is attached (Facet/Instance/Prototype/...)"
+    property = Property "which property is measured (Concept of meaning: SpeedOfMotion, Latency, ...)"
+    value    = Number   "numeric value (float/int)"
+    unit?    = Unit     "unit of measurement (when applicable)"
   ]
 }
 ```
 
-**Примеры:**
+**Examples:**
 
 - `HAS_NUMERIC_VALUE(MyCarNow, SpeedOfMotion, 112, km/h)`
 - `HAS_NUMERIC_VALUE(ServerNow, Latency, 84, ms)`
@@ -426,61 +402,51 @@ RelationType HAS_NUMERIC_VALUE {
 
 ---
 
-### 2. Membership property fact
+### 2. Membership Property Fact
 
-Используется, когда значение свойства выражено принадлежностью к классу.
+Used when a property value is expressed as membership in a class.
 
 ```python
 RelationType CLASSIFIED_AS {
   name: "CLASSIFIED_AS"
-  description: "Факт принадлежности entity к class_concept. Является значением Property, если class_concept входит в его шкалу и Criterion соответствует смыслу классификации и условиям запроса."
+  description: "Fact that an entity belongs to a class_concept. It is a property value if class_concept belongs to the property's scale and Criterion matches the meaning of the classification and the query conditions."
   signature: [
-    entity        = Entity       "сущность, которую классифицируем (Facet/Instance/Prototype/...)",
-    class_concept = ClassConcept "класс/категория как Concept (Fast, OnRoad, RefundIntent, UA, ...)"
+    entity        = Entity       "entity being classified (Facet/Instance/Prototype/...)"
+    class_concept = ClassConcept "class/category as a Concept (Fast, OnRoad, RefundIntent, UA, ...)"
   ]
 }
 ```
 
-`CLASSIFIED_AS(entity, C)` считается значением свойства `property`, если `C` входит в его шкалу, а применимый `Criterion` связывает класс со свойством и сохраняет смысл оцениваемого утверждения. Класс вроде `Fast` может быть качественной интерпретацией числового свойства, но не заменяет значение на его Numeric-шкале. Без такой связи классификация остаётся самостоятельным утверждением.
+`CLASSIFIED_AS(entity, C)` counts as a value of property `property` if `C` belongs to its scale and the applicable `Criterion` links the class to the property while preserving the meaning of the evaluated claim. A class such as `Fast` may be a qualitative interpretation of a numeric property, but it does not replace the value on its Numeric scale. Without such a link, the classification remains an independent claim.
 
-Если допустимые values Property mutually exclusive и exhaustive, каждое допустимое proposition `CLASSIFIED_AS(entity, C)` обозначает alternative одного [[Uncertainty and Belief Tracking in the World Model#^def-CompetitionScope|`CompetitionScope`]]. Evidence назначается scope целиком, а `Strength(C)` читается из общего [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]]; отдельные belief, `Support` или `PriorSupport` для каждого `C` не создаются.
-
-
+If the allowed values of a Property are mutually exclusive and exhaustive, each allowed proposition `CLASSIFIED_AS(entity, C)` denotes an alternative in one [[Uncertainty and Belief Tracking in the World Model#^def-CompetitionScope|`CompetitionScope`]]. Evidence is assigned to the scope as a whole, and `Strength(C)` is read from the shared [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]]; separate beliefs, `Support`, or `PriorSupport` are not created for each `C`.
 
 (def_id:: et.Criterion)
 > [!definition]
-> **`Criterion`** — правило, задающее условия интерпретации или проверки утверждения либо результата в определённой области применения.
+> **`Criterion`** — a rule that defines the conditions for interpreting or evaluating a claim or result within a particular scope of application.
 ^def-Criterion
 
-При классификации `Criterion` связывает `ClassConcept` с `PropertyConcept` и задаёт область применения, необходимые входы и условия принадлежности классу. Вместе со шкалой он определяет, являются ли alternatives mutually exclusive и exhaustive. Правило не утверждает принадлежность конкретного объекта; например, оно задаёт, при какой скорости и в каком домене объект считается `Slow`, `Normal` или `Fast`.
+For classification, `Criterion` links `ClassConcept` to `PropertyConcept` and defines the scope, required inputs, and conditions for membership in the class. Together with the scale, it determines whether alternatives are mutually exclusive and exhaustive. The rule does not assert that a specific object belongs to a class; for example, it defines the speed and domain at which an object is considered `Slow`, `Normal`, or `Fast`.
 
-Критерий может быть частью семантического определения или [[Process Plane/Program Layer#Program Contracts|контракта Program]]; отдельный узел и копия правила не обязательны. Для оценки числовых значений и моделей действует [[Uncertainty and Belief Tracking in the World Model#Numeric and distributional values|общий контракт numeric belief]].
+A criterion may be part of a semantic definition or a [[Process Plane/Program Layer#Program Contracts|Program contract]]; a separate node or copy of the rule is not required. Evaluation of numeric values and models follows the [[Uncertainty and Belief Tracking in the World Model#Numeric and Distributional Values|shared numeric belief contract]].
 
-`Profile` выражает только epistemic uncertainty между заданными alternatives и не компенсирует неполную или неоднозначную scale.
+`Profile` represents only epistemic uncertainty among specified alternatives; it does not compensate for an incomplete or ambiguous scale.
 
-Если существует только разовый claim вроде «AgentA хорошо решает SQL-задачи», но нет полезных общих `PropertyConcept` + scale + `Criterion`, искусственный факт `SQLProblemSolvingLevel(AgentA) = High` не создаётся. Утверждение остаётся [[Core data structures#^def-Claim|`Claim`]] до появления достаточно строгой semantic structure.
+If there is only a one-off claim such as “AgentA is good at solving SQL problems,” but no useful general `PropertyConcept` + scale + `Criterion`, do not create an artificial fact `SQLProblemSolvingLevel(AgentA) = High`. The statement remains a [[Core data structures#^def-Claim|`Claim`]] until sufficiently rigorous semantic structure exists.
 
-**Примеры:**
+**Examples:**
 
-- `CLASSIFIED_AS(MyCarNow, Fast)`  
-    является качественной интерпретацией `SpeedOfMotion` по критерию `Fast-from-SpeedOfMotion`.
-    
-- `CLASSIFIED_AS(Message#77, UA)`  
-    считается значением свойства `Language`, если `UA` входит в допустимые значения `Language`.
-    
-- `CLASSIFIED_AS(UserMessage#12, RefundIntent)`  
-    считается значением свойства `UserIntent`, если есть критерий классификации интента.
-    
+- `CLASSIFIED_AS(MyCarNow, Fast)` is a qualitative interpretation of `SpeedOfMotion` under criterion `Fast-from-SpeedOfMotion`.
+- `CLASSIFIED_AS(Message#77, UA)` counts as a value of property `Language` if `UA` is an allowed `Language` value.
+- `CLASSIFIED_AS(UserMessage#12, RefundIntent)` counts as a value of property `UserIntent` if an intent classification criterion exists.
 
 ---
 
-### 3. Relation-backed attribution projection
+### 3. Relation-Backed Attribution Projection
 
-Используется, когда значение свойства не хранится как отдельный native-факт Attribution Plane, а получается как проекция structural relation fact.  
-  
-Сам structural relation fact принадлежит своей native-плоскости: Semantic / Structural / Hierarchy, в зависимости от типа отношения.
+Used when a property value is not stored as a separate native fact in the Attribution Plane, but is obtained as a projection of a structural relation fact. The structural relation fact itself belongs to its native plane: Semantic, Structural, or Hierarchy, depending on the relation type.
 
-Пример:
+Example:
 
 ```python
 ON_SURFACE {
@@ -489,23 +455,22 @@ ON_SURFACE {
 }
 ```
 
-Его атрибутивная проекция:
+Its attribution projection:
 
 ```python
 SurfaceUnder(MyCar) = Road#17
 ```
 
-Здесь:
+Here:
 
-- `ON_SURFACE(vehicle, surface)` — native structural relation fact;
-- `SurfaceUnder` — `PropertyConcept` в Attribution Plane;
-- `Road#17` — `value_U`, полученное из output-slot `surface`;
-- `belief_data` наследуется из исходного relation fact.
+- `ON_SURFACE(vehicle, surface)` is a native structural relation fact;
+- `SurfaceUnder` is a `PropertyConcept` in the Attribution Plane;
+- `Road#17` is `value_U`, obtained from the `surface` output slot;
+- `belief_data` is inherited from the source relation fact.
 
-Attribution Plane не дублирует structural relation fact. Она только задаёт правило, как читать его как значение свойства.
+The Attribution Plane does not duplicate the structural relation fact. It only defines how to read it as a property value.
 
-
-Ось использует [[Semantics Plane#Общий исполнитель и результат|общий исполнитель views]], передавая [[#Чтение свойств состояния|временные параметры запроса]]. Для `ON_SURFACE` view `get_surface` объявляет `inputs=["vehicle"]`, `outputs=["surface"]`, `output_arity="list0"`. В примере `select_one` применяет `latest` к метаданным `source_fact` и возвращает `None`, если кандидатов нет или политика не разрешает выбор:
+The axis uses the [[Semantics Plane#Shared Executor and Result|shared view executor]], passing temporal query parameters from [[#Reading State Properties]]. For `ON_SURFACE`, the `get_surface` view declares `inputs=["vehicle"]`, `outputs=["surface"]`, and `output_arity="list0"`. In the example, `select_one` applies `latest` to `source_fact` metadata and returns `None` when there are no candidates or the policy does not allow a selection:
 
 ```python
 matches = ON_SURFACE.get_surface(
@@ -524,39 +489,38 @@ return PropertyReading(
 )
 ```
 
-Здесь `source_fact.belief_data` обозначает общее чтение belief с теми же `valid_at` и `known_at`. Такое чтение не создаёт новый relation fact и не дублирует исходную связь.
+Here `source_fact.belief_data` denotes the shared belief reading with the same `valid_at` and `known_at`. This reading does not create a new relation fact or duplicate the original link.
 
-Если нужна быстрая фильтрация, нормализация или объяснимость, можно дополнительно материализовать summary-класс:
+For fast filtering, normalization, or explainability, a summary class may also be materialized:
 
 ```python
 CLASSIFIED_AS(MyCarNow, OnRoad)
 ```
 
-Но только если это даёт операционную пользу: ускорение поиска, сжатие, объяснимость, нормализацию или кеширование дорогого вывода.
+Do so only when it provides operational value: faster search, compression, explainability, normalization, or caching an expensive inference.
 
-Такой summary-class регулируется через `Criterion` / mapping rule и Materialization Policy.
-
+Such a summary class is governed by `Criterion` / a mapping rule and a Materialization Policy.
 
 ---
 
-## Axis interface
-#topic_details 
+## Axis Interface
+#topic_details
 
-Ось Атрибуции читает или вычисляет значение через заданные для свойства источники и возвращает [[#Formal definition|`PropertyReading(U)`]] либо `unknown`.
+An Attribution axis reads or computes a value through the sources defined for a property and returns [[#Formal Definition|`PropertyReading(U)`]] or `unknown`.
 
-`measure`, `read_property` и `reconstruct_property` используют общий контракт источников и [[#Чтение свойств состояния|временных ограничений]]. Эти ограничения действуют и при чтении нормы или правила для `normalize`. Чтение выполняет предусмотренное контрактом вычисление в пределах бюджета задачи; оно не ищет и не обучает новые модели. Результат получает обычный [[Memory#^def-ResultProvenance|provenance]]; материализация в persistent graph выполняется отдельно через [[Core data structures#Изменение persistent graph|`GraphDelta`]].
+`measure`, `read_property`, and `reconstruct_property` share a contract for sources and [[#Reading State Properties|temporal constraints]]. These constraints also apply when reading a norm or rule for `normalize`. Reading performs the computation specified by the contract within the task budget; it does not search for or train new models. The result receives ordinary [[Memory#^def-ResultProvenance|provenance]]; materialization in the persistent graph is handled separately through [[Core data structures#Updating the Persistent Graph|`GraphDelta`]].
 
-В примерах `fact.belief_data` обозначает вычисляемое [[Uncertainty and Belief Tracking in the World Model#Read-time computation and provenance|чтение belief]] соответствующего target. Сохранённый исторический snapshot не подменяет текущую оценку.
+In examples, `fact.belief_data` denotes the computed [[Uncertainty and Belief Tracking in the World Model#Read-Time Computation and Provenance|belief read]] for the corresponding target. A saved historical snapshot does not replace the current estimate.
 
-### Параметры операций
+### Operation Parameters
 
-Контракт свойства, критерия или связанной `Program` объявляет необходимые параметры, их типы и [[Process Plane/Program Layer#^program-semantic-interface|семантические роли]]. Входами могут быть условия вопроса, сведения о самом объекте, внешние факты или предположения. Постоянные условия закрепляются контрактом; изменяемые передаются именованными аргументами. Для сохранённого результата используются закреплённые за ним условия, если они соответствуют запросу.
+The contract for a property, criterion, or associated `Program` declares required parameters, their types, and [[Process Plane/Program Layer#^program-semantic-interface|semantic roles]]. Inputs may include the conditions of the question, information about the object itself, external facts, or assumptions. Fixed conditions belong in the contract; changing conditions are passed as named arguments. A saved result uses the conditions attached to it if they match the query.
 
-[[Cognition and Attention#^def-PreparedContext|`PreparedContext`]] задачи служит одним из источников для [[Process Plane/Program Layer#^def-ArgumentPreparation|подготовки аргументов]] конкретного вызова. Готовые аргументы можно передать напрямую. Обязательного общего параметра `context` у операций оси нет.
+The task's [[Cognition and Attention#^def-PreparedContext|`PreparedContext`]] is one source for [[Process Plane/Program Layer#^def-ArgumentPreparation|preparing arguments]] for a specific call. Ready arguments can be passed directly. Axis operations do not require a universal `context` parameter.
 
-Условия, меняющие смысл вопроса, учитываются в [[Uncertainty and Belief Tracking in the World Model#Belief and BeliefTarget|каноническом target]]; дополнительные наблюдения о том же вопросе уточняют его оценку. Гипотетические условия задаются явно как предположения и сохраняют этот статус в результате.
+Conditions that change the meaning of a question are included in the [[Uncertainty and Belief Tracking in the World Model#Belief and BeliefTarget|canonical target]]. Additional observations about the same question refine its estimate. Hypothetical conditions are stated explicitly as assumptions and retain that status in the result.
 
-В сигнатурах ниже `...` обозначает дополнительные именованные параметры конкретного контракта. Параметр можно опустить, если его значение или способ получения определён контрактом; нехватка необходимых данных или неоднозначность вопроса дают `unknown`.
+In the signatures below, `...` denotes additional named parameters specific to a contract. A parameter may be omitted when its value or retrieval method is defined by the contract; missing required data or an ambiguous question yields `unknown`.
 
 ---
 ### `measure`
@@ -566,39 +530,36 @@ measure(x, property, *, valid_at=now, known_at=now, ...)
     -> PropertyReading(U) | unknown
 ```
 
-`measure` читает свойство уже выбранного объекта или состояния `x`. Ось и источники заданы контрактом свойства; разрешение состояния Instance выполняет [[#Чтение свойств состояния|`read_property`]].
+`measure` reads a property of an already selected object or state `x`. The axis and sources are defined by the property's contract; resolving an Instance state is handled by [[#Reading State Properties|`read_property`]].
 
 ---
+### Source Applicability Rules
 
-### Правило чтения: применимость источников
+A source must match the property, its scale, and the query conditions, including declared parameters, `valid_at`, and `known_at`. The order of the subsections below does not define priority: the property-reading contract determines which applicable source to use. The absence of a numeric value does not permit returning a class in its place.
 
-Источник должен соответствовать свойству, его шкале и условиям запроса, включая объявленные параметры, `valid_at` и `known_at`. Порядок подразделов ниже не задаёт приоритет: выбор между применимыми источниками определяется контрактом чтения свойства. Отсутствие числового значения не разрешает вернуть класс вместо него.
+#### 1. Numeric Fact
 
-#### 1. Numeric fact
-
-Если существует:
+If this fact exists:
 
 ```python
 HAS_NUMERIC_VALUE(x, property, v)
 ```
 
-ось возвращает:
+the axis returns:
 
 ```python
-PropertyReading(  
-value_U=v,  
-belief_data=fact.belief_data  
+PropertyReading(
+    value_U=v,
+    belief_data=fact.belief_data
 )
 ```
 
-где:
-`belief_data` соответствующего `HAS_NUMERIC_VALUE` fact.
+where `belief_data` is the value read from the corresponding `HAS_NUMERIC_VALUE` fact.
 
 ---
+#### 2. Membership Fact
 
-#### 2. Membership fact
-
-Если семантика свойства задаёт `CompetitionScope` с mutually exclusive + exhaustive alternatives, ось возвращает его общий `Profile` независимо от выбора или материализации отдельного `CLASSIFIED_AS(x, C)`:
+If the property's semantics define a `CompetitionScope` with mutually exclusive and exhaustive alternatives, the axis returns its shared `Profile`, whether or not an individual `CLASSIFIED_AS(x, C)` fact has been selected or materialized:
 
 ```text
 PropertyReading(
@@ -614,36 +575,35 @@ PropertyReading(
 )
 ```
 
-По явной selection policy чтение может дополнительно вернуть `value_U = High`; это производный point-view, а не замена `Profile`. Evidence обновляет весь scope через общий `CompetitionScopeUpdater`; остальные инварианты определены в [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]].
+Under an explicit selection policy, the reading may also return `value_U = High`; this is a derived point view, not a replacement for the `Profile`. Evidence updates the whole scope through the shared `CompetitionScopeUpdater`; other invariants are defined in [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]].
 
-При отсутствии собственного evidence действует предусмотренный scope prior. Чтение не создаёт scope или alternatives: одна nominal-шкала не гарантирует их взаимоисключаемость и исчерпываемость.
+When there is no evidence from the agent's own experience, the specified scope prior applies. Reading does not create the scope or its alternatives: a nominal scale alone does not guarantee mutual exclusivity and exhaustiveness.
 
-Для независимой binary classification `CLASSIFIED_AS(x, C)` чтение возвращает:
+For an independent binary classification, reading `CLASSIFIED_AS(x, C)` returns:
 
 ```python
 PropertyReading(
-   value_U = C,
-   belief_data = fact.belief_data
+   value_U=C,
+   belief_data=fact.belief_data
 )
 ```
 
-В обоих случаях классы должны входить в запрошенную шкалу, а `Criterion` — связывать их со свойством, быть применимым к домену и контексту и соответствовать смыслу target. Для binary classification `Strength` оценивает принадлежность классу, а `Support` отражает назначенное ей evidence, учитывающее применимость критерия.
+In either case, classes must belong to the requested scale, and `Criterion` must link them to the property, apply to the domain and context, and match the target's meaning. For binary classification, `Strength` estimates class membership and `Support` reflects the evidence assigned to it, accounting for the criterion's applicability.
 
-Если известно только `Fast`, соответствующее `CLASSIFIED_AS(x, Fast)` находится через [[Semantics Plane#Views: проекции над одним фактом|view отношения]] или retrieval. [[Uncertainty and Belief Tracking in the World Model#Read-time computation and provenance|Общее чтение belief]] возвращает `BeliefData` независимой классификации либо `Profile` её scope с учётом условий и временных ограничений запроса. Это знание доступно для фильтрации без числовой оценки.
+If only `Fast` is known, find the corresponding `CLASSIFIED_AS(x, Fast)` through a [[Semantics Plane#Views: Projections Over One Fact|relation view]] or retrieval. The [[Uncertainty and Belief Tracking in the World Model#Read-Time Computation and Provenance|shared belief read]] returns `BeliefData` for an independent classification or the `Profile` for its scope, accounting for query conditions and temporal constraints. This information can be used for filtering without a numeric estimate.
 
-Числовое чтение `SpeedOfMotion` остаётся недоступным, пока нет применимой числовой оценки. При наличии числового значения качественную интерпретацию возвращает [[#Numeric normalization|`normalize`]].
+A numeric reading of `SpeedOfMotion` remains unavailable until an applicable numeric estimate exists. When a numeric value is available, [[#Numeric Normalization|`normalize`]] returns its qualitative interpretation.
 
 ---
+#### 3. Relation-Backed Attribution Projection
 
-#### 3. Relation-backed attribution projection
-
-Если свойство задано как атрибутивная проекция structural relation fact, например:
+If a property is defined as an attribution projection of a structural relation fact, for example:
 
 ```python
 ON_SURFACE { vehicle=x, surface=s }
 ```
 
-ось применяет заданное правило источника (`PropertySource`):
+the axis applies the declared source rule (`PropertySource`):
 
 ```python
 source_relation = ON_SURFACE
@@ -651,76 +611,64 @@ source_view = "get_surface"
 selection_policy = "latest"
 ```
 
-и возвращает:
+and returns:
 
 ```python
-PropertyReading(value_U = s, belief_data = belief_data)
+PropertyReading(value_U=s, belief_data=belief_data)
 ```
-    
-- исходный `ON_SURFACE` остаётся native relation fact своей плоскости;
-- если создаётся summary-class вроде `OnRoad`, он должен быть разрешён через `Criterion` / Materialization Policy.
 
-Если нужен сам relation fact или его аргументы, используется view соответствующего `RelationType`. `read_property` используется только тогда, когда для relation определена проекция на конкретный `PropertyConcept`.
+- The original `ON_SURFACE` remains a native relation fact in its own plane.
+- If a summary class such as `OnRoad` is created, it must be authorized by a `Criterion` / Materialization Policy.
+
+If the relation fact itself or its arguments are needed, use a view for the relevant `RelationType`. Use `read_property` only when the relation has a defined projection onto a specific `PropertyConcept`.
 
 ```text
 ON_SURFACE.get_surface(vehicle=MyCar)
-→ проекции подходящих facts с сохранением source_fact;
+→ projections of matching facts, retaining source_fact;
 
 read_property(MyCar, SurfaceUnder)
-→ атрибутивное чтение по правилу свойства, включая выбор кандидата.
+→ property reading under its source rule, including candidate selection.
 ```
 
-Оба интерфейса используют одни исходные facts без дублирования.
+Both interfaces use the same source facts without duplication.
 
 ---
-#### 4. Типизированный результат или вычисление
+#### 4. Typed Result or Computation
 
-Источником может быть сохранённый типизированный результат или вычисление уже связанной со свойством Program, модели либо правила. [[Process Plane/Program Layer#Семантические типы аргументов и результатов|Семантическая привязка]] определяет, к какому объекту, свойству и условиям относится результат; совпадения Python-типа недостаточно. Это позволяет читать интервалы, распределения и другие numeric estimates, сохраняя скалярный контракт `HAS_NUMERIC_VALUE`.
+A source may be a saved typed result or a computation from a Program, model, or rule already linked to the property. The [[Process Plane/Program Layer#Semantic Types for Arguments and Results|semantic binding]] defines which object, property, and conditions the result concerns; a matching Python type is not sufficient. This allows reading intervals, distributions, and other numeric estimates while preserving the scalar `HAS_NUMERIC_VALUE` contract.
 
-Сохранение и адресация результата используют [[Core data structures#Объекты и ссылки|общие правила объектов и ссылок]]. Исторический результат сохраняет использованное значение, а не ссылку на изменяемое текущее состояние estimator-а. Typed output не становится persistent property fact автоматически: применяются [[Memory#Trace-local и persistent results|общие правила материализации]].
+Save and address the result under the [[Core data structures#Objects and References|general object and reference rules]]. A historical result retains the value used at the time, not a reference to the estimator's mutable current state. A typed output does not automatically become a persistent property fact; the [[Memory#Trace-Local and Persistent Results|general materialization rules]] apply.
 
 ---
 #### 5. Unknown
 
-Если применимое чтение недоступно, в том числе из-за недостающих необходимых входов:
+If an applicable reading is unavailable, including because required inputs are missing, return:
 
 ```python
 unknown
 ```
 
-Отсутствие выбранного класса или собственного evidence само по себе не означает `unknown`: для заданного scope применяются [[#2. Membership fact|правила чтения Profile]].
+The absence of a selected class or evidence from the agent's own experience does not by itself mean `unknown`: for a defined scope, follow the [[#2. Membership Fact|Profile reading rules]].
 
 ---
-
 ### `compare(v1, v2)` / `distance(v1, v2)`
 
-Эти операции применимы только если их поддерживает шкала `U` данного свойства.
+These operations apply only when the property's scale `U` supports them.
 
-- **Nominal:**  
-    `equals`, `membership`, канонизация/синонимия при необходимости.  
-    Нет порядка и нет расстояния.
-    
-- **Ordinal:**  
-    `compare`, сортировка, top-k.  
-    Есть порядок, но нет корректной дельты.
-    
-- **Numeric:**  
-    `compare`, `distance`, дельта, диапазоны, оптимизация.
-    
-- **Circular:**  
-    циклическая близость, фазовый сдвиг, расстояние по минимальной дуге.
-    
+- **Nominal:** `equals`, `membership`, and canonicalization/synonym handling when needed. There is no ordering or distance.
+- **Ordinal:** `compare`, sorting, top-k. There is an order, but no valid difference value.
+- **Numeric:** `compare`, `distance`, differences, ranges, and optimization.
+- **Circular:** cyclic closeness, phase shifts, and shortest-arc distance.
 
-Пример:
+For example:
 
 ```python
 distance(350 deg, 10 deg) -> 20 deg
 ```
 
-а не `340 deg`.
+not `340 deg`.
 
 ---
-
 ### `normalize`
 
 ```text
@@ -728,75 +676,64 @@ normalize(v | dist, property, domain, *, valid_at=now, known_at=now, ...)
     -> PropertyReading(U_norm) | unknown
 ```
 
-**Назначение:** перевести raw-значение в форму “относительно нормы домена”.
+**Purpose:** convert a raw value into a form interpreted relative to the domain norm.
 
-Нормализация нужна, потому что одно и то же числовое значение может иметь разный смысл для разных типов объектов и разных контекстов.
+Normalization is needed because the same numeric value may have different meanings for different object types and contexts.
 
-Пример:
-
-- `112 km/h` для машины — возможно нормально;
-- `112 km/h` для человека — невозможно или аномально;
-
+For example, `112 km/h` may be normal for a car, but impossible or anomalous for a person.
 
 ---
+#### Numeric Normalization
 
-#### Numeric normalization
+For numeric scales, normalization uses the domain distribution (quantiles, z-score, and similar methods).
 
-Для числовых шкал нормализация использует распределение домена (квантили/z-score и т.п.)
-
-Пример:
+Example:
 
 ```python
 normalize(112 km/h, SpeedOfMotion, domain=Vehicle)
 ```
 
-Нормализация возвращает `PropertyReading(U_norm)`.
-
-Пример:
+Normalization returns `PropertyReading(U_norm)`, for example:
 
 ```python
-PropertyReading(  
-    belief_data = Profile {
+PropertyReading(
+    belief_data=Profile {
         strengths = {Slow: 0.05, Normal: 0.20, Fast: 0.75}
     }
 )
 ```
 
-По явной selection policy чтение может дополнительно вернуть `value_U = Fast`.
+Under an explicit selection policy, the reading may also return `value_U = Fast`.
 
 ---
+#### Ordinal / Nominal Values Derived from Numeric Values
 
-#### Ordinal / Nominal derived-from-numeric
-
-Для качественных классов, производных от чисел, нормализация означает применение критерия banding к переданному значению. Например, значение из:
+For qualitative classes derived from numbers, normalization applies a banding criterion to the supplied value. For example, the value from:
 
 ```python
 HAS_NUMERIC_VALUE(MyCarNow, SpeedOfMotion, 112 km/h)
 ```
 
-интерпретируется по критерию:
+is interpreted under the criterion:
 
 ```python
 Fast-from-SpeedOfMotion
 ```
 
-Результат — качественное чтение по [[#Numeric normalization|правилам нормализации]]. Сохранённая классификация `CLASSIFIED_AS(MyCarNow, Fast)` читается независимо по [[#2. Membership fact|правилам membership facts]]; `normalize` не ищет её по объекту.
+The result is a qualitative reading under the [[#Numeric Normalization|normalization rules]]. A saved `CLASSIFIED_AS(MyCarNow, Fast)` classification is read independently under the [[#2. Membership Fact|membership-fact rules]]; `normalize` does not search for a classification on the object.
 
-> [!note]  
-> Нормализация не обязана материализовывать derived fact.  
-> Она может вернуть результат лениво, а решение о записи в граф регулируется Materialization Policy.
+> [!note]
+> Normalization does not have to materialize a derived fact. It may return a result lazily; whether to write it to the graph is governed by the Materialization Policy.
 
----
+### Reading State Properties
 
-### Чтение свойств состояния
+#topic_details
 
-#topic_details 
+To read a state, use a specific `PropertyConcept`, not an abstract `state_variable`.
 
-Для чтения состояния используется конкретный `PropertyConcept`, а не абстрактный `state_variable`.
+Primary interface:
 
-Основной интерфейс:
-
-```
+```text
 read_property(
     subject: Concept,
     property: PropertyConcept,
@@ -807,40 +744,40 @@ read_property(
 ) -> PropertyReading | unknown
 ```
 
-- `subject` — объект, к которому применимо свойство: Instance, выбранный Facet или другой Concept.
-- `property` — требуемое свойство.
-- `valid_at` — время мира, к которому относится значение.
-- `known_at` — момент, знаниями на который ограничивается чтение.
+- `subject` — an object to which the property applies: an Instance, selected Facet, or another Concept.
+- `property` — the requested property.
+- `valid_at` — world time to which the value applies.
+- `known_at` — the time through which the agent's knowledge is considered.
 
-Примеры для контрактов с указанными параметрами:
+Examples for contracts with the stated parameters:
 
-```
+```text
 read_property(Igor, HealthStatus)
 read_property(car, SpeedOfMotion, reference_frame=road_frame)
 read_property(source, SourceReliability, domain=Programming)
 ```
 
-Общий порядок чтения:
+General read order:
 
+```text
+1. Resolve the object or state under the property contract and time constraints.
+2. Get a value from an applicable source under the axis's shared rules.
+3. Read BeliefData or the target's Profile under the shared belief contract.
+4. Return PropertyReading or unknown.
 ```
-1. Разрешает объект или состояние по контракту свойства и временным ограничениям.
-2. Получает значение из применимого источника по общим правилам оси.
-3. Читает BeliefData или Profile соответствующего target по общему belief-контракту.
-4. Возвращает PropertyReading либо unknown.
-```
 
-При чтении состояния Instance первый шаг использует [[Semantics Plane#get_facets|persistent Facets]], применимые в `valid_at` и известные в `known_at`; переданный Facet читается непосредственно. Для факта на самом Instance, relation projection или связанной Program создание промежуточного Facet не требуется.
+When reading an Instance state, the first step uses [[Semantics Plane#get_facets|persistent Facets]] applicable at `valid_at` and known at `known_at`; a supplied Facet is read directly. For a fact on the Instance itself, a relation projection, or a linked Program, an intermediate Facet is not required.
 
-Если `HealthStatus` задаёт mutually exclusive + exhaustive values, `read_property` возвращает общий `Profile` по правилу [[#2. Membership fact]].
+If `HealthStatus` defines mutually exclusive and exhaustive values, `read_property` returns the shared `Profile` under the [[#2. Membership Fact|membership-fact rule]].
 
 ---
+### Historical Reconstruction of a Property
 
-### Историческая реконструкция свойства
-#topic_details 
+#topic_details
 
-Для восстановления знаний агента на прошлом этапе используется обёртка того же чтения:
+To reconstruct the agent's knowledge at an earlier point, use a wrapper around the same read:
 
-```
+```text
 reconstruct_property(
     subject: Concept,
     property: PropertyConcept,
@@ -851,165 +788,123 @@ reconstruct_property(
 ) -> PropertyReading | unknown
 ```
 
-Она вызывает `read_property` с теми же аргументами и обязательными `valid_at` и `known_at`.
+It calls `read_property` with the same arguments and required `valid_at` and `known_at` values.
 
-Ограничение `known_at` распространяется на evidence, фактические входы, код, правила, нормы и состояние моделей во всех источниках чтения, включая `measure` и `normalize`. Реконструкция использует сохранённый результат либо вычисление по согласованным историческим версиям; доступная точность ограничена [[Memory#Удержание, сжатие и забывание|сохранённой детализацией памяти]].
+The `known_at` limit applies to evidence, actual inputs, code, rules, norms, and model state in every read source, including `measure` and `normalize`. Reconstruction uses a saved result or computes from compatible historical versions; available accuracy is limited by [[Memory#Retention, Compression, and Forgetting|the detail retained in memory]].
 
-**Начальная реализация должна быть простой:** в MVP достаточно поддержать чтение на моменты доступных завершённых [[Cognition and Attention#^agent-backup|backup агента]]:
+**The initial implementation should be simple:** the MVP only needs to support reads at times of available completed [[Cognition and Attention#^agent-backup|agent backups]]:
 
-1. Загрузить backup, соответствующий `known_at`, в отдельное окружение только для чтения, без возобновления workflows.
-2. Использовать сохранённые данные, действовавшие evidence, модели и правила. Зависящие от времени расчёты учитывают заданные `valid_at` и `known_at`.
-3. Выполнить обычное чтение свойства в этом окружении.
-4. Если нужного состояния или зависимости нет, вернуть `unknown`; сегодняшние данные и модели не подставляются.
+1. Load the backup corresponding to `known_at` into a separate read-only environment, without resuming workflows.
+2. Use the saved data, active evidence, models, and rules. Time-dependent calculations account for the specified `valid_at` and `known_at`.
+3. Perform an ordinary property read in that environment.
+4. If the required state or dependency is missing, return `unknown`; do not substitute today's data or models.
 
-Полное восстановление любого момента не требуется. Между backup оно допустимо при достаточной истории изменений; ближайший backup нельзя выдавать за состояние на другой `known_at`.
+Reconstruction at every point in time is not required. Reconstruction between backups is permitted when change history is sufficient; the nearest backup must not be presented as the state at a different `known_at`.
 
-[[Memory#^def-TraceEvent|Сохранённый trace]] показывает фактически выполненное прежнее вычисление. Новый расчёт по историческому состоянию сам по себе не означает, что агент уже получил этот результат тогда.
-
+A [[Memory#^def-TraceEvent|saved trace]] shows a computation that was actually performed in the past. A new calculation using historical state does not itself mean the agent had that result at the time.
 
 ---
 
-## Операционные роли осей Атрибуции
-#topic_core 
 
-Attribution Plane не просто хранит свойства. Она даёт агенту операционный доступ к ним:
+## Operational Roles of Attribution Axes
+#topic_core
+
+The Attribution Plane does more than store properties. It gives the agent operational access to them:
 
 ```text
-измерить → сравнить → наложить ограничение → отфильтровать → выбрать → нормализовать
+measure → compare → constrain → filter → select → normalize
 ```
 
-Важно различать два независимых уровня:
+Distinguish two independent levels:
 
-- **тип шкалы `U`** — какие значения возвращает ось: `Nominal`, `Ordinal`, `Numeric`, `Circular`;
-    
-- **роль оси в задаче** — что агент делает с этим значением: фильтрует, выбирает, ранжирует, ищет ближайшее, нормализует, проверяет согласованность.
-    
-
-
+- **Scale type `U`** — which values the axis returns: `Nominal`, `Ordinal`, `Numeric`, or `Circular`.
+- **Axis role in the task** — what the agent does with the value: filter, select, rank, find the nearest match, normalize, or check consistency.
 
 ---
+### 1. Filtering Role
 
-### 1. Filtering role
+An axis is used as a constraint for selecting candidates.
 
-Ось используется как ограничение для отбора кандидатов.
+This is predicate-based filtering: the agent does not search for “the best” option; it discards anything that fails the condition.
 
-Это predicate-based filtering: агент не ищет “лучшее”, а отбрасывает всё, что не проходит условие.
+Examples:
 
-Примеры:
+- **Nominal:** `Color = Red`; `Language ∈ {EN, UA}`
+- **Ordinal:** `RiskLevel >= Medium`; `Priority <= Low`
+- **Numeric:** `Latency >= 50 ms AND Latency < 120 ms`
+- **Circular:** `circular_distance(Phase, θ) <= 20 deg`; `Phase ≈ 180 deg`
 
-- **Nominal:**  
-    `Color = Red`  
-    `Language ∈ {EN, UA}`  
-    
-- **Ordinal:**  
-    `RiskLevel >= Medium`  
-    `Priority <= Low`
-    
-- **Numeric:**  
-    `Latency >= 50 ms AND Latency < 120 ms`  
-    
-- **Circular:**  
-    `circular_distance(Phase, θ) <= 20 deg`  
-    `Phase ≈ 180 deg`
-    
-
-В этом режиме ось должна поддерживать предикаты, применимые к её шкале:
+In this mode, the axis must support predicates applicable to its scale:
 
 ```python
-=, !=,  <, >, <=, >=, ≈, (AND/NOT)
+=, !=, <, >, <=, >=, ≈, (AND/NOT)
 ```
 
-Форма равенства зависит от типа шкалы:
+The meaning of equality depends on scale type:
 
-- для дискретных значений — точное равенство;
-    
-- для числовых и циклических — равенство с допуском;
-    
-- для scope-backed Property — порог `Strength` alternative в общем `Profile`.
-    
+- for discrete values — exact equality;
+- for numeric and circular values — equality within a tolerance;
+- for a scope-backed Property — a `Strength` threshold for an alternative in the shared `Profile`.
 
-Фильтры можно компоновать из нескольких свойств:
+Filters may combine multiple properties:
 
 ```python
 Color = Red AND Weight < 10 kg AND SurfaceType = Road
 ```
 
-или:
+or:
 
 ```python
 Intent = RefundIntent AND AngerLevel >= Medium AND LegalThreat = false
 ```
 
-Так агент формирует рабочие множества кандидатов для reasoning, planning и action selection.
+This lets the agent form working sets of candidates for reasoning, planning, and action selection.
 
 ---
+### 2. Selection / Retrieval Role
 
-### 2. Selection / Retrieval role
+An axis serves as a selection space when the agent needs to choose, rank, or find suitable values rather than merely check a condition.
 
-Ось используется как пространство выбора, когда агенту нужно не просто проверить условие, а выбрать, ранжировать или найти подходящие значения.
+In this mode, the axis helps to:
 
-В этом режиме ось помогает:
+- rank candidates;
+- find top-k values;
+- find the nearest value;
+- search for a value that is slightly larger or smaller;
+- choose a minimum or maximum;
+- find candidates in a range and rank them;
+- choose the next value or candidate nearest a target range.
 
-- ранжировать кандидатов;
-    
-- искать top-k;
-    
-- находить ближайшее значение;
-    
-- искать “чуть больше / чуть меньше”;
-    
-- выбирать минимум или максимум;
-    
-- находить кандидатов в диапазоне и ранжировать их;
-    
-- выбирать следующее значение или кандидата, ближайшего к целевому диапазону.
-    
+Examples:
 
-Примеры:
+- choose the task with the highest `Priority`;
+- find the object whose size is nearest a target;
+- first filter users by `RiskLevel >= Medium`, then rank those remaining by `RiskScore`.
 
-- выбрать задачу с максимальным `Priority`;
-    
-- найти объект с размером, ближайшим к целевому;
+Selection / Retrieval naturally support:
 
-- сначала отфильтровать пользователей по `RiskLevel >= Medium`, затем ранжировать оставшихся по `RiskScore`.
-    
-
-Selection / Retrieval естественно поддерживают:
-
-- **Ordinal** — сортировка, top-k, min/max;
-    
-- **Numeric** — distance, delta, nearest, range search, optimization;
-    
+- **Ordinal** — sorting, top-k, min/max;
+- **Numeric** — distance, difference, nearest value, range search, optimization;
 - **Circular** — circular distance, nearest phase, phase shift;
-    
-- **Nominal** — только если есть similarity / canonicalization layer или selection policy над `Profile`.
-    
+- **Nominal** — only when there is a similarity/canonicalization layer or a selection policy over a `Profile`.
 
-> [!note]  
-> Selection / Retrieval по оси — это не graph navigation в общем смысле.  
-> Это выбор или поиск в пространстве значений конкретного свойства.
+> [!note]
+> Selection / Retrieval over an axis is not graph navigation in the general sense. It is selection or search in the value space of a specific property.
 
 ---
+### 3. Normalization Role
 
-### 3. Normalization role
+An axis may convert a raw value into a form interpreted relative to the domain norm.
 
-Ось может переводить raw-значение в форму “относительно нормы домена”.
+Normalization is needed because the same value may have different meanings for different object types, populations, and contexts. For example, `112 km/h` may be normal for a car but impossible or anomalous for a person.
 
-Нормализация нужна, потому что одно и то же значение может иметь разный смысл для разных типов объектов, популяций и контекстов.
-
-Пример:
-
-- `112 km/h` для машины — возможно нормально;
-    
-- `112 km/h` для человека — невозможно или аномально;
-
-Нормализация может вернуть qualitative class:
+Normalization may return a qualitative class:
 
 ```python
 High
 ```
 
-или epistemic `Profile` mutually exclusive + exhaustive classes:
+or an epistemic `Profile` over mutually exclusive and exhaustive classes:
 
 ```python
 Profile {
@@ -1017,436 +912,403 @@ Profile {
 }
 ```
 
-Нормализация может использоваться перед filtering:
+Normalization may be used before filtering:
 
 ```python
 LatencyLevel >= Medium
 ```
 
-или перед selection:
+or before selection:
 
 ```python
 filter RiskLevel >= Medium, then rank by normalized RiskScore
 ```
 
-Но сама нормализация не выбирает объект.  
-Она меняет форму интерпретации значения.
+Normalization itself does not select an object; it changes how the value is interpreted.
 
-> [!note]  
-> Нормализация не обязана материализовывать derived fact.  
-> Она может вернуть результат лениво, а решение о записи в граф регулируется Materialization Policy.
+> [!note]
+> Normalization does not have to materialize a derived fact. It may return a result lazily; whether to write it to the graph is governed by the Materialization Policy.
+### 4. Consistency / Sanity Checks
 
----
+Axes help determine whether a new value is a chimera, a source error, or an observation artifact.
 
-### 4. Consistency checks / sanity checks
+For example, a speed may be too high for the given object type.
 
-Оси помогают проверять, не является ли новое значение химерой, ошибкой источника или артефактом наблюдения.
+Sanity checks use:
 
-Пример:
-
-- скорость слишком велика для данного типа объекта;
-
-Sanity checks используют:
-
-- нормы prototype/type;
-    
+- prototype/type norms;
 - `Support`;
-    
-- распределения популяции;
-    
-- совместимость свойств;
-    
-- историю наблюдений instance-level.
-    
+- population distributions;
+- property compatibility;
+- instance-level observation history.
+
+---
+### 5. Counterfactual / What-If Reasoning
+
+An axis allows the agent to mentally change one property and check what would change.
+
+Examples:
+
+- what would happen if `Mass` increased;
+- what would happen if `Latency` decreased;
+- what would happen if `UserIntent` changed from `RefundIntent` to `CancellationOnly`;
+- what would happen if an object were `Fragile`.
+
+Counterfactual reasoning requires properties to be sufficiently distinct from one another.
+
+If an axis does not represent a real distinction and is only an arbitrary label, what-if reasoning over it will produce false conclusions.
+
+The Attribution Plane provides a fast layer of practical reasoning before more expensive analysis.
+
+---
+### 6. Learning Hooks
+
+Attribution axes provide stable attachment points for new observations: a property value can be recorded, compared with an earlier state, used for normalization, or passed to the shared belief-update mechanism.
+
+Details on updating `Strength`, `Support`, instance-level exceptions, and prototype-level statistics are described in [[Uncertainty and Belief Tracking in the World Model]].
 
 ---
 
-### 5. Counterfactual / what-if reasoning
+## Numeric ↔ Qualitative Through a Criterion
+#topic_details
 
-Ось позволяет мысленно изменить одно свойство и проверить, что изменится.
+Qualitative classes such as `Fast`, `Slow`, `HighRisk`, and `LowTrust` are often based on numeric or structural data but remain separate `ClassConcept`s in the graph.
 
-Примеры:
+Distinguish:
 
-- что будет, если увеличить `Mass`;
-    
-- что будет, если снизить `Latency`;
-    
-- что будет, если `UserIntent` изменится с `RefundIntent` на `CancellationOnly`;
-    
-- что будет, если объект окажется `Fragile`.
-    
+- **raw value** — the exact or original value of a property;
+- **qualitative class** — a category convenient for reasoning;
+- **classification Criterion** — a rule that links the two.
 
-Контрфактуальность требует, чтобы свойства были отделены друг от друга достаточно чётко.
-
-Если ось не представляет реальное различие, а только случайный ярлык, what-if reasoning по ней будет давать ложные выводы.
-Plane как быстрый слой практического reasoning до запуска более дорогого анализа.
-
----
-
-### 6. Learning hooks
-
-Оси Атрибуции дают стабильные точки привязки для новых наблюдений: значение свойства можно записать, сравнить с прошлым состоянием, использовать для нормализации или передать в общий механизм belief update.
-
-Детали обновления `Strength`, `Support`, instance-level исключений и prototype-level статистики описаны в [[Uncertainty and Belief Tracking in the World Model]].
-
----
-
-
-## Numeric ↔ Qualitative via Criterion
-#topic_details 
-
-Качественные классы вроде `Fast`, `Slow`, `HighRisk`, `LowTrust` часто основаны на числовых или структурных данных, но в графе остаются отдельными `ClassConcept`.
-
-Важно разделять:
-
-- **raw value** — точное или исходное значение свойства;
-- **qualitative class** — удобная для мышления категория;
-- **Criterion классификации** — правило, которое связывает одно с другим.
-Пример:
+For example:
 
 ```text
 HAS_NUMERIC_VALUE(E_now, SpeedOfMotion, 112 km/h)
 CLASSIFIED_AS(E_now, Fast)
 ```
 
-Число `112 km/h` хранится как точное значение свойства `SpeedOfMotion`.
+The value `112 km/h` is stored as the exact value of the `SpeedOfMotion` property. The class `Fast` is stored as a qualitative interpretation of that value. The classification [[#^def-Criterion|`Criterion`]] defines the conditions under which a value counts as `Fast`.
 
-Класс `Fast` хранится как качественная интерпретация этого значения.
-
-Условия, при которых значение считается `Fast`, задаёт [[#^def-Criterion|Criterion]] классификации.
-
-Epistemic representation качественных classes определяется контрактом nominal / ordinal scale из [[#Scale types]], а не способом их получения из numeric value.
-
-### Пересмотр качественной интерпретации
-
-Смысл классификации задаётся её canonical target, а не текущим mapper-ом или текстом метки. Использованные правило, данные нормы и существенный контекст сохраняются через [[Memory#^def-ResultProvenance|общий provenance]]. Нужно различать:
-
-- изменение определения класса — [[Uncertainty and Belief Tracking in the World Model#Semantic target revision|semantic revision]], с новым target при изменении смысла вопроса;
-- изменение нормы как входа прежнего правила, например «выше текущего q80 этой популяции», — изменение условий, к которым относится результат;
-- обучение mapper-а при прежнем смысле класса — изменение способа оценки того же вопроса.
-
-Зависимое evidence пересматривается по [[Uncertainty and Belief Tracking in the World Model#Evidence reassessment and belief recomputation|общим правилам reassessment]]. Новая норма или модель не переопределяет исторический результат; изменение реального состояния объекта следует обычному [[Core data structures#Завершение временного состояния|lifecycle Facet]].
+The epistemic representation of qualitative classes follows the nominal/ordinal scale contract from [[#Scale Types]], not how the class was derived from a numeric value.
 
 ---
+### Revising a Qualitative Interpretation
 
-### Materialization rule
+The meaning of a classification is defined by its canonical target, not by the current mapper or label text. Retain the rule used, norm data, and material context through [[Memory#^def-ResultProvenance|shared provenance]]. Distinguish:
 
-Качественный класс можно:
+- **Changing the class definition** — a [[Uncertainty and Belief Tracking in the World Model#Semantic Target Revision|semantic revision]], with a new target if the question's meaning changes.
+- **Changing the norm as input to the existing rule**, such as “above the population's current q80” — a change to the conditions the result applies to.
+- **Training the mapper while the class meaning stays the same** — a change to how the same question is estimated.
 
-1. **вычислять лениво** при запросе;
-2. **материализовать** как `CLASSIFIED_AS`, если это даёт пользу.
-    
-
-Материализация разрешена, если класс:
-
-- часто используется в фильтрации или правилах;
-- ускоряет reasoning;
-- улучшает перенос опыта;
-- повышает объяснимость;
-- снижает стоимость повторного вычисления.
-
-Материализация запрещена, если класс является дешёвым алиасом без новой операционной пользы.
-
+Reassess dependent evidence under the [[Uncertainty and Belief Tracking in the World Model#Evidence Reassessment and Belief Recalculation|shared reassessment rules]]. A new norm or model does not redefine a historical result; a change to the object's actual state follows the ordinary [[Core data structures#Closing a Temporal State|Facet lifecycle]].
 
 ---
+### Materialization Rule
 
+A qualitative class may be:
+
+1. **computed lazily** when requested;
+2. **materialized** as `CLASSIFIED_AS` when it provides value.
+
+Materialization is allowed when a class:
+
+- is often used in filtering or rules;
+- speeds up reasoning;
+- improves transfer of experience;
+- makes results easier to explain;
+- reduces the cost of recomputation.
+
+Materialization is prohibited when a class is a cheap alias with no new operational value.
+
+---
 ## Axis Validity Criteria
-#topic_details 
+#topic_details
 
-Ось Атрибуции — это гипотеза о том, что отдельное свойство заслуживает собственного представления.
+An Attribution Axis is a hypothesis that a particular property deserves its own representation.
 
-Ось считается валидной, если она окупается в предсказании, выборе действий, обучении или снижении вычислительной стоимости.
+An axis is valid when it pays for itself through better prediction, action selection, learning, or reduced computational cost.
 
 ---
 
-### I. Три критерия валидной оси
+### I. Three Criteria for a Valid Axis
 
 #### 1. Discrimination
 
-Ось должна различать объекты или состояния.
+An axis must distinguish objects or states.
 
-Если все релевантные объекты имеют одинаковое значение по этой оси, ось не добавляет информации.
+If all relevant objects have the same value on this axis, it adds no information.
 
 ```text
-Нет различия → нет оси.
+No distinction → no axis.
 ```
 
-Примеры валидного различения:
+Examples of valid distinctions:
 
-- объекты выглядят одинаково, но имеют разную массу;
-- пользователи пишут похожие сообщения, но имеют разный intent;
-- задачи кажутся похожими, но различаются по risk level.
+- objects look alike but have different masses;
+- users write similar messages but have different intents;
+- tasks seem similar but differ in risk level.
 
 ---
 
 #### 2. Semantic Stability / Non-Artifactuality
 
-Ось должна фиксировать устойчивое различие, а не случайный артефакт наблюдения.
+An axis must capture a stable distinction rather than an accidental observation artifact.
 
-Свойство должно сохранять смысл при изменении несущественных условий наблюдения.
+The property must retain its meaning when irrelevant observation conditions change.
 
-Пример:
+Example:
 
-- `Color` валиден, если объект остаётся красным при разных условиях освещения.
-    
-- `BrightnessInCurrentPhoto` может быть полезным измерением изображения, но не должно подменять собой устойчивый `Color`.
-    
+- `Color` is valid if an object remains red under different lighting conditions.
+- `BrightnessInCurrentPhoto` may be a useful image measurement, but must not replace the stable property `Color`.
 
-Граница:
+Boundary:
 
 ```text
-Semantic Stability означает не абсолютную неизменность,
-а устойчивость смысла при допустимых изменениях контекста.
+Semantic stability does not mean absolute invariance;
+it means stability of meaning under permitted context changes.
 ```
 
 ---
 
 #### 3. Operational / Interventional Relevance
 
-Ось должна быть связана с проверяемыми последствиями.
+An axis must be connected to consequences that can be checked.
 
-В идеальном случае агент может совершить интервенцию и увидеть, как значение по оси влияет на поведение объекта.
+Ideally, the agent can intervene and observe how the value on the axis affects the object's behavior.
 
-Пример:
+Example:
 
-- агент толкает предмет;
-- лёгкий объект сдвигается;
-- тяжёлый объект почти не двигается;
-- возникает ось `Mass`.
-    
+- the agent pushes an object;
+- a light object moves;
+- a heavy object barely moves;
+- the `Mass` axis emerges.
 
-Если прямое вмешательство невозможно, ось может быть валидна через устойчивую предсказательную проверку.
-
+If direct intervention is impossible, an axis may still be valid through a stable predictive test.
 
 ---
 
-### II. Анти-паттерны
+### II. Anti-Patterns
 
-#### 1. Спутанность
+#### 1. Spurious Correlation
 
-Ось фиксирует мусорную корреляцию без устойчивой причинной или предсказательной связи.
+The axis captures a spurious correlation without a stable causal or predictive relationship.
 
-Пример:
+Example:
 
 ```text
-Пираты ↔ глобальное потепление
+Pirates ↔ global warming
 ```
-
 
 ---
 
-#### 2. Тавтология
+#### 2. Tautology
 
-Ось дублирует уже существующую ось без новой операции.
+The axis duplicates an existing axis without enabling a new operation.
 
-Пример:
+Example:
 
 ```text
 LengthMeters
 LengthFeet
 ```
 
-
-
-
 ---
 
-#### 3. Химеричность
+#### 3. Chimerical Axis
 
-Ось зависит от сиюминутного состояния наблюдателя, а не от объекта или устойчивого отношения между объектом и контекстом.
+The axis depends on the observer's momentary state rather than on the object or a stable relationship between the object and its context.
 
-Пример плохой оси:
+Example of a bad axis:
 
 ```text
 FeelsImportantToMeRightNow
 ```
 
-Она может быть состоянием агента, но не должна подменять свойство объекта.
+It may describe the agent's state, but must not replace a property of the object.
 
 ---
 
-#### 4. Чистый алиас
+#### 4. Pure Alias
 
-Ось не добавляет новой структуры, а только переименовывает уже доступный факт.
+The axis adds no new structure and only renames an already available fact.
 
-Пример:
+Example:
 
 ```text
 ON_SURFACE(MyCar, Road#17)
 ```
 
-Не нужно материализовать отдельный derived fact или Facet для `SurfaceUnder`, если значение всегда дешево получается стандартной навигацией и не даёт новой операционной пользы.
+There is no need to materialize a separate derived fact or Facet for `SurfaceUnder` if the value is always cheap to obtain through standard navigation and provides no new operational benefit.
 
 ---
 
-### III. Практический тест принятия оси
+### III. Practical Axis Acceptance Test
 
-Новая ось принимается, если выполняется хотя бы одно:
+A new axis is accepted if at least one of the following holds:
 
-1. она улучшает прогнозы по заранее выбранным [[Process Plane/Program Evaluation and Testing#Evaluation  (количественные)|метрикам качества]];
-2. она улучшает выбор действия;
-3. она ускоряет фильтрацию или поиск;
-4. она улучшает перенос опыта между похожими случаями;
-5. она снижает стоимость вычисления;
-6. она делает reasoning объяснимее без потери точности.
+1. it improves forecasts on metrics selected in advance [[Process Plane/Program Evaluation and Testing#Evaluation (Quantitative)|for quality evaluation]];
+2. it improves action selection;
+3. it speeds up filtering or search;
+4. it improves transfer of experience between similar cases;
+5. it reduces computational cost;
+6. it makes reasoning more explainable without reducing accuracy.
 
-Если ни одно условие не выполняется, ось должна быть отклонена или деградирована.
-
----
+If none of these conditions holds, the axis should be rejected or degraded.
 
 ## Genesis of New Attribution Axes
-#topic_details 
 
-AGI создаёт новую ось Атрибуции, когда существующих свойств недостаточно для предсказания, выбора, объяснения или сжатия опыта.
+#topic_details
 
-По умолчанию осей должно быть минимально необходимое число.
+AGI creates a new Attribution Axis when existing properties are insufficient for prediction, choice, explanation, or compression of experience.
+
+By default, the number of axes should be the minimum necessary.
 
 ```text
-Больше осей ≠ лучше модель.
-Хорошая ось уменьшает неопределённость или стоимость мышления.
-Плохая ось увеличивает шум и переобучение.
+More axes ≠ a better model.
+A good axis reduces uncertainty or the cost of reasoning.
+A bad axis increases noise and overfitting.
 ```
 
 ---
 
 ### 1. Prediction Gain / Surprise Reduction
 
-> [!IMPORTANT] Правило: Возникновение новой оси
-> **Концепт:** Новая ось возникает, когда объекты выглядят одинаково по существующим свойствам, но ведут себя по-разному.
-> 
-> **Действие:** Если объекты неразличимы в текущем пространстве свойств, но дают разные последствия — создай кандидата на новую ось.
+> [!IMPORTANT] Rule: Emergence of a New Axis
+> **Concept:** A new axis emerges when objects look the same on existing properties but behave differently.
+>
+> **Action:** If objects cannot be distinguished in the current property space but produce different consequences, create a candidate axis.
 
-> [!EXAMPLE] Пример: Взаимодействие с физическим миром
-> AGI видит два визуально идентичных чёрных ящика:
-> - первый легко сдвигается;
-> - второй почти не двигается.
-> 
-> По текущим свойствам они одинаковые, но реакция на действие разная. 
-> 
-> **Возникает новая ось:** `Mass`
-> 
-> > [!SUCCESS] Валидация оси
-> > После введения оси `Mass` поведение становится предсказуемым согласно закону:
+> [!EXAMPLE] Example: Interaction with the Physical World
+> AGI sees two visually identical black boxes:
+> - the first moves easily;
+> - the second barely moves.
+>
+> They have the same current properties, but respond differently to an action.
+>
+> **New axis emerges:** `Mass`
+>
+> > [!SUCCESS] Axis Validation
+> > After introducing the `Mass` axis, behavior becomes predictable according to the law:
 > > $$F = m \cdot a$$
-> > Ось `Mass` **повышает точность прогноза поведения** и поэтому признается системой как валидная.
+> > The `Mass` axis **improves the accuracy of behavior forecasts** and is therefore accepted by the system as valid.
 
 ---
 
 ### 2. Decision Utility
 
-Новая ось возникает, когда отдельное свойство улучшает выбор, ранжирование или фильтрацию объектов.
+A new axis emerges when a distinct property improves the selection, ranking, or filtering of objects.
 
-> [!TIP] Правило: Выделение скрытой оси
-> Если для достижения цели нужно стабильно выбирать между объектами, и существующие свойства **плохо объясняют успешность выбора** — создай ось, которая кодирует **релевантное различие**.
+> [!TIP] Rule: Identifying a Hidden Axis
+> If reaching a goal requires consistently choosing among objects, and existing properties **poorly explain which choices succeed**, create an axis that encodes the **relevant distinction**.
 
-> [!EXAMPLE] Пример: Оценка источников
-> AGI должен выбрать, какому источнику верить при наличии противоречий.
-> 
-> **Входящие данные:**
-> - пост с форума;
-> - статья из PubMed;
-> - внутренний лог системы;
-> - сообщение пользователя.
-> 
-> **Возникает новая ось:** `Credibility` (Достоверность)
-> 
-> Теперь источники можно сравнивать по этой оси как объекты:
+> [!EXAMPLE] Example: Assessing Sources
+> AGI must choose which source to trust when sources conflict.
+>
+> **Inputs:**
+> - a forum post;
+> - a PubMed article;
+> - an internal system log;
+> - a user message.
+>
+> **New axis emerges:** `Credibility`
+>
+> Sources can now be compared as objects on this axis:
 > ```text
 > Credibility(RedditPost) = low
 > Credibility(PubMedArticle) = high
 > Credibility(SystemLog) = very_high
 > ```
-> 
-
----
-### 3. Compression Gain (Выигрыш от сжатия)
-
-
-> [!TIP] 
-> **Концепт:** Новая ось возникает, когда множество наблюдаемых признаков устойчиво меняются вместе и могут быть заменены одной более компактной переменной.
-> 
-> **Правило:** Если несколько сенсоров или признаков синхронно меняются как следствие одной скрытой причины — создай ось-кандидат для этой скрытой переменной.
-
-> [!EXAMPLE] Пример: Вращающаяся монета
-> AGI видит вращающуюся монету. Одновременно меняются:
-> - форма эллипса;
-> - блики;
-> - видимый контур;
-> - соотношение сторон;
-> - тени.
-> 
-> Хранить все пиксельные изменения как независимые свойства неэффективно.
-> 
-> **Возникает ось:** `RotationAngle`
-> Одна координата по этой оси объясняет множество наблюдаемых изменений.
 
 ---
 
-###  4. Normalization Gain (Выигрыш от нормализации))
+### 3. Compression Gain
 
-> [!TIP] 
-> **Концепт:** Новая ось или Criterion может появиться, когда сырые значения (`raw values`) сами по себе плохо сопоставимы между доменами.
+> [!TIP]
+> **Concept:** A new axis emerges when many observed features change together in a stable way and can be replaced by one more compact variable.
+>
+> **Rule:** If several sensors or features change in synchrony as a result of one hidden cause, create a candidate axis for that latent variable.
 
-> [!EXAMPLE] Пример: Оценка задержки
-> Имеется параметр: `Latency = 300 ms`
-> Для одного сервиса это нормально, для другого — критично.
-> 
-> В таком случае полезна нормализованная ось (или derived qualitative class).
-> **Возникает ось:** `LatencyLevel = High`
-> 
-
+> [!EXAMPLE] Example: A Spinning Coin
+> AGI sees a spinning coin. At the same time, these properties change:
+> - ellipse shape;
+> - highlights;
+> - visible contour;
+> - aspect ratio;
+> - shadows.
+>
+> Storing every pixel change as an independent property is inefficient.
+>
+> **Axis emerges:** `RotationAngle`
+> One coordinate on this axis explains many observed changes.
 
 ---
 
-###  5. Деградация оси (Когда удалять)
+### 4. Normalization Gain
 
-Ось пересматривается, если нарушает [[#Axis Validity Criteria|критерии валидности]] или её польза по [[#III. Практический тест принятия оси|критериям принятия]] больше не оправдывает затраты. По результатам пересмотра её сохраняют, объединяют, понижают или удаляют.
+> [!TIP]
+> **Concept:** A new axis or Criterion may emerge when raw values are difficult to compare across domains.
 
-Редкое использование само по себе не означает бесполезности: ось может быть важна для редких дорогих ошибок. Недостаток данных о пользе также не доказывает её отсутствия. Прекращение активного использования не требует физического удаления определения: изменения сохраняют необходимые зависимости по [[Memory#Обязательства сохранности|общим обязательствам памяти]].
+> [!EXAMPLE] Example: Assessing Latency
+> A parameter is given: `Latency = 300 ms`.
+> This is normal for one service and critical for another.
+>
+> A normalized axis (or derived qualitative class) is useful in this case.
+> **Axis emerges:** `LatencyLevel = High`
 
+---
+
+### 5. Axis Degradation (When to Remove One)
+
+Reconsider an axis if it violates the [[#Axis Validity Criteria|validity criteria]] or if its benefit under the [[#III. Practical Axis Acceptance Test|acceptance criteria]] no longer justifies its cost. Based on the review, retain it, merge it, downgrade it, or remove it.
+
+Infrequent use alone does not mean an axis is useless: it may matter for rare, costly errors. Lack of data about its benefit also does not prove there is none. Stopping active use does not require physically deleting the definition; changes retain the dependencies they need under [[Memory#Retention Obligations|the shared memory obligations]].
 
 ---
 ## Numeric Attribute Representation
-#topic_details 
-Этот раздел описывает, как числовые атрибуты представлены в EverTree: от текущего `value_U` на numeric-шкале до доменных распределений и qualitative-интерпретаций вроде `Low / Mid / High`.
-### Numeric Facets: Scalar Metrics & Distributions
-#topic_details 
 
+#topic_details
 
-Этот раздел описывает формы хранения скалярных измерений и статистики нормы по популяции или типу. Они используются при необходимости, с [[Core data structures#Объекты и ссылки|общими правилами хранения объектов]].
+This section describes how numeric attributes are represented in EverTree: from the current `value_U` on a numeric scale to domain distributions and qualitative interpretations such as `Low / Mid / High`.
 
-Назначение:
+### Numeric Facets: Scalar Metrics and Distributions
 
-- хранить текущее числовое значение свойства;
-- сохранять неопределённость оценки в её представлении, а эпистемическую уверенность — через [[Uncertainty and Belief Tracking in the World Model#Numeric and distributional values|numeric belief]];
-- поддерживать нормализацию относительно типа/популяции;
-- позволять переводить число в qualitative labels вроде `Low`, `Mid`, `High`.
+#topic_details
+
+This section describes storage forms for scalar measurements and population- or type-level norm statistics. They are used when needed, following the [[Core data structures#Objects and References|shared rules for storing objects]].
+
+Purpose:
+
+- store the current numeric value of a property;
+- preserve uncertainty in the measurement representation and epistemic confidence through a [[Uncertainty and Belief Tracking in the World Model#Numeric and Distributional Values|numeric belief]];
+- support normalization relative to a type or population;
+- allow a number to be mapped to qualitative labels such as `Low`, `Mid`, and `High`.
 
 ---
 
 ### ScalarMetric
-#topic_details 
+
+#topic_details
 
 (def_id:: entity.ScalarMetric)
 > [!definition]
-> **ScalarMetric** — абстрактное представление числовой оси или числового свойства.
-^def-ScalarMetric
+> **ScalarMetric** is an abstract representation of a numeric axis or numeric property.
+> ^def-ScalarMetric
 
 (formal_id:: entity.ScalarMetric.schema)
 ```python
 ScalarMetric: <AbstractConcept> {
-  name: <string> "Имя числового свойства или оси измерения: Speed, Temperature, RiskScore, Latency."
+  name: <string> "Name of the numeric property or measurement axis: Speed, Temperature, RiskScore, Latency."
 }
 ```
 ^spec-ScalarMetric
 
-Минимальный смысл:
+Minimal meaning:
 
 ```text
-ScalarMetric = числовое PropertyConcept, значения которого лежат на Numeric scale.
+ScalarMetric = numeric PropertyConcept whose values lie on a Numeric scale.
 ```
 
-Примеры:
+Examples:
 
 ```text
 SpeedOfMotion
@@ -1460,96 +1322,94 @@ CredibilityScore
 ---
 
 ### FacetScalarMetric
-#topic_details 
 
+#topic_details
 
 (def_id:: entity.FacetScalarMetric)
-> [!definition] **FacetScalarMetric** хранит конкретное числовое значение объекта по конкретной оси в конкретном состоянии/окне.
-> 
-^def-FacetScalarMetric
+> [!definition] **FacetScalarMetric** stores a specific numeric value for an object on a specific axis in a specific state or window.
+> ^def-FacetScalarMetric
 
 (formal_id:: entity.FacetScalarMetric.schema)
 ```python
 FacetScalarMetric: <Facet> {
-  axis: <Axis> "Ссылка на числовую ось/свойство."
-  value: <float> "Текущее числовое значение."
-  unit?: <Unit> "Единица измерения, если применимо."
-  t?: <time> "Момент или окно, к которому относится измерение."
-  confidence?: <float> "Техническая оценка точности измерения, если нужна отдельно от Belief_data."
-  precision?: <float> "Ожидаемая погрешность измерения, если известна."
+  axis: <Axis> "Reference to the numeric axis/property."
+  value: <float> "Current numeric value."
+  unit?: <Unit> "Unit of measurement, when applicable."
+  t?: <time> "Time or window to which the measurement applies."
+  confidence?: <float> "Technical assessment of measurement accuracy, if needed separately from Belief_data."
+  precision?: <float> "Expected measurement error, if known."
 }
 ```
 ^spec-FacetScalarMetric
 
-Канонический графовый факт для такого значения:
+The canonical graph fact for this value is:
 
 ```text
 HAS_NUMERIC_VALUE(entity, property, value[, unit])
 ```
 
-`FacetScalarMetric` — необязательная реализационная форма хранения того же скалярного значения, а `HAS_NUMERIC_VALUE` — смысловая форма факта. Они не требуют двух независимо изменяемых копий значения или отдельного Facet для каждого измерения.
+`FacetScalarMetric` is an optional implementation form for storing the same scalar value; `HAS_NUMERIC_VALUE` is the semantic form of the fact. They do not require two independently mutable copies of the value or a separate Facet for every measurement.
 
----
+### Instance-Level Numeric State
 
-### Instance-level numeric state
-#topic_details 
+#topic_details
 
-Если числовая ось динамическая и важна локальная история конкретного объекта, Instance может хранить компактное состояние по этой оси.
+If a numeric axis is dynamic and the specific object's local history matters, an Instance may store compact state for that axis.
 
-Допустимые формы:
+Supported forms:
 
 1. **RecentSamples**
-    
-    Ring buffer последних `N` значений.
-    
-    Используется, если важна краткосрочная динамика.
-    
-2. **InstanceSketch**
-    
-    Компактный sketch распределения значений конкретного instance.
-    
-    Используется, если значение часто измеряется и важна локальная норма объекта.
-    
 
-Принцип:
+   A ring buffer of the last `N` values.
+
+   Used when short-term dynamics matter.
+
+2. **InstanceSketch**
+
+   A compact sketch of the value distribution for a specific instance.
+
+   Used when the value is measured frequently and the object's local norm matters.
+
+Principle:
 
 ```text
-Facet хранит рабочее значение "прямо сейчас".
-Instance хранит устойчивую локальную статистику объекта.
-История остаётся в памяти/эпизодах с детализацией по общему lifecycle памяти.
+Facet stores the working value "right now".
+Instance stores stable local statistics for the object.
+History remains in memory / episodes, with detail governed by the shared memory lifecycle.
 ```
 
 ---
 
-### MetricDistribution на уровне Prototype / Type
-#topic_details 
+### MetricDistribution at the Prototype / Type Level
+
+#topic_details
 
 (def_id:: entity.MetricDistribution)
-> [!definition] Каждый Prototype или Type может хранить статистику популяции по числовым метрикам через **MetricDistribution**. 
-^def-MetricDistribution
+> [!definition] Each Prototype or Type may store population statistics for numeric metrics through **MetricDistribution**.
+> ^def-MetricDistribution
 
 (formal_id:: entity.MetricDistribution.schema)
 ```python
 MetricDistribution: <InternalNode> {
-  axis: <Axis> "Ссылка на числовую ось/свойство."
-  domain: <Concept> "Тип, prototype, population или другой домен, для которого распределение задаёт норму."
-  sketch: <Sketch> "t-digest, DDSketch или другой компактный sketch распределения."
+  axis: <Axis> "Reference to the numeric axis/property."
+  domain: <Concept> "Type, prototype, population, or other domain whose distribution defines a norm."
+  sketch: <Sketch> "t-digest, DDSketch, or another compact distribution sketch."
   drift_policy: <enum> "ema_decay | sliding_window | fixed_window"
-  updated_at?: <time> "Когда распределение последний раз обновлялось."
-  belief_data: <Belief_data> "Убеждение в том, что это распределение корректно описывает норму данного домена."
+  updated_at?: <time> "When the distribution was last updated."
+  belief_data: <Belief_data> "Belief that this distribution correctly describes the norm for this domain."
 }
 ```
 ^spec-MetricDistribution
 
-Назначение:
+Purpose:
 
-- хранить норму типа;
-- вычислять квантили;
-- сравнивать объект с популяцией;
-- переводить raw value в qualitative class;
-- отслеживать drift нормы.
+- store a type-level norm;
+- calculate quantiles;
+- compare an object with a population;
+- map a raw value to a qualitative class;
+- track norm drift.
 
-Пример:
+Example:
 
 ```text
 MetricDistribution(Vehicle, SpeedOfMotion)
@@ -1559,38 +1419,37 @@ MetricDistribution(UserMessage, AngerScore)
 
 ---
 
-### QualitativeMapper внутри MetricDistribution
-#topic_details 
+### QualitativeMapper Within MetricDistribution
 
-Маппинг "число → qualitative label" не должен быть глобальным.
+#topic_details
 
-Классы вроде `Low`, `Mid`, `High`, `Fast`, `Slow`, `Expensive` обычно относительны типу, популяции и контексту.
+The mapping “number → qualitative label” should not be global.
+
+Classes such as `Low`, `Mid`, `High`, `Fast`, `Slow`, and `Expensive` are usually relative to a type, population, and context.
 
 (def_id:: entity.QualitativeMapper)
-> [!definition] **QualitativeMapper** — модель перевода числового значения в качественную интерпретацию по Criterion. Для нормы популяции mapper может использовать MetricDistribution и храниться вместе с ним.
-> 
-^def-QualitativeMapper
+> [!definition] **QualitativeMapper** is a model that maps a numeric value to a qualitative interpretation using a Criterion. For a population norm, the mapper may use `MetricDistribution` and be stored with it.
+> ^def-QualitativeMapper
 
 (formal_id:: entity.QualitativeMapper.schema)
 ```python
 QualitativeMapper: <InternalNode> {
   mode: <enum> "quantile_bins | peak_modes | learned_monotonic"
-  labels: <ClassConcept[]> "Качественные метки: Low, Mid, High или другие."
-  boundaries?: <float[]> "Границы интервалов, если используется жёсткий binning."
-  membership_functions?: <Callable[]> "Soft-membership функции, если границы плавные."
-  hysteresis?: <float> "Защита от частого переключения меток из-за шума."
+  labels: <ClassConcept[]> "Qualitative labels: Low, Mid, High, or others."
+  boundaries?: <float[]> "Interval boundaries when using hard binning."
+  membership_functions?: <Callable[]> "Soft-membership functions when boundaries are gradual."
+  hysteresis?: <float> "Protection against frequent label switching due to noise."
 }
 ```
 ^spec-QualitativeMapper
 
-### Quantile bins
+### Quantile Bins
 
+Default mode.
 
-Дефолтный режим.
+Used when simple, stable normalization against a type distribution is needed.
 
-Используется, когда нужна простая и стабильная нормализация относительно распределения типа.
-
-Пример:
+Example:
 
 ```text
 Low  = below q33
@@ -1598,7 +1457,7 @@ Mid  = q33..q66
 High = above q66
 ```
 
-или более консервативно:
+Or, more conservatively:
 
 ```text
 Low  = below q20
@@ -1606,24 +1465,21 @@ Mid  = q20..q80
 High = above q80
 ```
 
-Стабилизация:
+Stabilization:
 
-- границы обновляются не на каждом наблюдении;
-    
-- требуется достаточный `support`;
-    
-- используется hysteresis, чтобы метки не "флипались" от шума.
+- boundaries are not updated on every observation;
+- sufficient `support` is required;
+- hysteresis is used so labels do not flip because of noise.
 
-Изменение границ обрабатывается по [[#Пересмотр качественной интерпретации|общим правилам пересмотра интерпретации]]; само по себе обновление параметров не создаёт новый target.
-    
+Boundary changes follow the [[#Revising a Qualitative Interpretation|shared rules for revising an interpretation]]; a parameter update by itself does not create a new target.
 
-### Peak modes
+### Peak Modes
 
-Используется, когда распределение реально имеет несколько устойчивых режимов.
+Used when the distribution genuinely has several stable modes.
 
-Пример:
+Example:
 
-Скорость движения может иметь режимы:
+Movement speed may have the modes:
 
 ```text
 standing
@@ -1632,112 +1488,105 @@ running
 driving
 ```
 
-Если пики распределения устойчивы, qualitative labels можно привязать к модам.
+If the distribution peaks are stable, qualitative labels may be associated with the modes.
 
-Если моды нестабильны, fallback:
+If the modes are unstable, fall back to:
 
 ```text
 peak_modes → quantile_bins
 ```
 
-### Learned monotonic
+### Learned Monotonic
 
+Used when a qualitative class should correspond to utility, risk, or a supervised signal.
 
-
-Используется, когда qualitative class должен соответствовать полезности, риску или supervised signal.
-
-Пример:
+Example:
 
 ```text
 RiskScore → LowRisk / MidRisk / HighRisk
 ```
 
-Маппинг может обучаться так, чтобы `HighRisk` соответствовал не просто верхнему квантилю, а реальному росту вероятности плохого исхода.
+The mapping may be trained so that `HighRisk` corresponds not simply to the top quantile but to a real increase in the probability of a bad outcome.
 
-Допустимые модели:
+Allowed models:
 
 - isotonic regression;
-    
 - monotonic calibration;
-    
 - monotonic binning;
-    
 - learned thresholds with constraints.
-    
 
-Ограничение:
+Constraint:
 
 ```text
-Если свойство должно быть монотонным, модель не должна нарушать порядок.
+If a property must be monotonic, the model must preserve the ordering.
 ```
 
 ---
 
-### Point-view, Profile and overlapping membership
-#topic_details 
+### Point View, Profile, and Overlapping Membership
 
-Для mutually exclusive + exhaustive scale qualitative mapper возвращает общий `Profile`. Hard label, например `RiskHigh`, может быть только производным point-view по явной selection policy; собственные `Support` и `PriorSupport` ему не назначаются.
+#topic_details
 
-Если membership functions намеренно допускают одновременную принадлежность нескольким classes, это не `CompetitionScope`: каждая classification является отдельным binary target. Membership degree тогда является значением model, а не epistemic `Strength`.
+For a mutually exclusive and exhaustive scale, the qualitative mapper returns a shared `Profile`. A hard label, such as `RiskHigh`, may only be a derived point view under an explicit selection policy; it is not assigned its own `Support` or `PriorSupport`.
+
+If membership functions deliberately allow simultaneous membership in several classes, this is not a `CompetitionScope`: each classification is a separate binary target. Membership degree is then a model value, not epistemic `Strength`.
 
 ---
 
-
 ### Composite Axes
-#topic_intro  #future_versions 
+
+#topic_intro #future_versions
 
 (def_id:: et.CompositeAxis)
 > [!definition]
-> **Композитная ось** —атрибутивная ось, значение которой вычисляется из нескольких более простых свойств.
-^def-CompositeAxis
+> A **Composite Axis** is an attribution axis whose value is computed from several simpler properties.
+> ^def-CompositeAxis
 
-Композитная ось возникает, когда отдельные свойства менее полезны, чем их совместная проекция. Она не просто дублирует признаки, а выделяет **новое прагматически полезное свойство**, помогающее быстрее сравнивать, выбирать, прогнозировать или объяснять.
-
-
+A composite axis emerges when individual properties are less useful than their joint projection. It does not merely duplicate features; it identifies a **new, pragmatically useful property** that helps compare, choose, predict, or explain more quickly.
 
 ---
 
-> [!EXAMPLE] Примеры и их прагматика
-> - **Крупность** $= f(\text{Рост}, \text{Вес})$
->   *Назначение:* Быстро понять масштаб объекта и выбрать стратегию взаимодействия, не анализируя рост и вес по отдельности.
-> - **Импульс** $= \text{Масса} \times \text{Скорость}$
->   *Назначение:* Прогнозировать силу столкновения и оценивать опасность движущегося объекта.
-> - **Опасность** $= f(\text{Размер}, \text{Агрессия}, \text{Дистанция}, \text{Оружие}, \text{Скорость})$
->   *Назначение:* Быстро ранжировать угрозы и запускать safety behavior.
-> - **Надёжность источника** $= f(\text{История точности}, \text{Provenance}, \text{Тип})$
->   *Назначение:* Решать конфликты противоречивой информации.
+> [!EXAMPLE] Examples and Their Practical Use
+> - **Size** $= f(\text{Height}, \text{Weight})$
+>   *Purpose:* Quickly understand an object's scale and choose an interaction strategy without analyzing height and weight separately.
+> - **Momentum** $= \text{Mass} \times \text{Velocity}$
+>   *Purpose:* Predict collision force and assess the danger of a moving object.
+> - **Danger** $= f(\text{Size}, \text{Aggression}, \text{Distance}, \text{Weapon}, \text{Speed})$
+>   *Purpose:* Quickly rank threats and trigger safety behavior.
+> - **Source reliability** $= f(\text{Accuracy history}, \text{Provenance}, \text{Type})$
+>   *Purpose:* Resolve conflicts in contradictory information.
 
 ---
 
-### Механизмы синтеза
+### Synthesis Mechanisms
 
-Ось может быть создана тремя основными путями в зависимости от доступной информации о предметной области:
+An axis may be created in three main ways, depending on what is known about the domain:
 
-1. **Явная формула**
-   Используется, когда физическая или логическая связь точно известна (например, $Momentum = Mass \times Velocity$).
-2. **Линейная комбинация (Score)**
-   Используется для эвристических оценок: $RiskScore = w_1x_1 + w_2x_2 + \dots + w_nx_n$.
-   *Требует контроля:* нормализации входов, устойчивости весов, проверки на переобучение.
-3. **Incremental PCA / Low-rank decomposition**
-   Используется для поиска латентных координат и снижения размерности, когда множество признаков меняются совместно, но точной формулы нет.
+1. **Explicit formula**
+   Used when a physical or logical relationship is known precisely, such as $Momentum = Mass \times Velocity$.
+2. **Linear combination (Score)**
+   Used for heuristic assessments: $RiskScore = w_1x_1 + w_2x_2 + \dots + w_nx_n$.
+   *Requires control of:* input normalization, weight stability, and overfitting checks.
+3. **Incremental PCA / Low-Rank Decomposition**
+   Used to find latent coordinates and reduce dimensionality when many features change together but no exact formula is known.
 
 ---
 
-> [!NOTE] Математика: Правило выбора $k$ для IPCA
-> Для выбора оптимального количества компонент используется порог накопленной объясненной дисперсии. Пусть $\lambda_i$ — собственные значения (дисперсии) по компонентам IPCA.
-> 
-> Берём **минимальное** $k$, при котором выполняется условие:
+> [!NOTE] Mathematics: Choosing $k$ for IPCA
+> Choose the optimal number of components using a threshold for cumulative explained variance. Let $\lambda_i$ be the eigenvalues (component variances) from IPCA.
+>
+> Take the **smallest** $k$ that satisfies:
 > $$\frac{\sum_{i=1}^{k}\lambda_i}{\sum_{i=1}^{m}\lambda_i} \ge \tau$$
-> *Где $m$ — число доступных компонент, а $\tau$ — целевой порог.*
-> 
-> **Робастные гиперпараметры:**
-> 
-> | Параметр | Значение | Описание |
+> Here, $m$ is the number of available components and $\tau$ is the target threshold.
+>
+> **Robust hyperparameters:**
+>
+> | Parameter | Value | Description |
 > | :--- | :--- | :--- |
-> | **$\tau$** | `0.95` | Целевой порог накопленной дисперсии (по умолчанию). |
-> | **$k_{max}$** | *Custom* | Верхний предел компонент (ограничение памяти/скорости). |
-> | **$N_{min}$** | `200–1000` | Стабилизация: пересчитывать $k$ не чаще, чем раз в $N_{min}$ новых наблюдений. |
-> | **$\Delta$** | `0.01–0.02` | Гистерезис: обновлять $k$, только если это улучшает дисперсию минимум на $\Delta$ (1–2%). |
+> | **$\tau$** | `0.95` | Target cumulative variance threshold (default). |
+> | **$k_{max}$** | *Custom* | Maximum number of components (memory/speed limit). |
+> | **$N_{min}$** | `200–1000` | Stabilization: recalculate $k$ no more often than every $N_{min}$ new observations. |
+> | **$\Delta$** | `0.01–0.02` | Hysteresis: update $k$ only if variance improves by at least $\Delta$ (1–2%). |
 
-> [!WARNING] Ограничение латентных осей
-> **Интерпретируемость не гарантирована.** > Если полученная через PCA латентная ось не получает ясного смысла или полезного критерия (Criterion), она должна оставаться *внутренней технической координатой*, а не превращаться в полноценный онтологический `PropertyConcept`.
+> [!WARNING] Limitation of Latent Axes
+> **Interpretability is not guaranteed.** If a latent axis obtained through PCA has no clear meaning or useful Criterion, it must remain an *internal technical coordinate*, not become a full ontological `PropertyConcept`.

@@ -1,36 +1,36 @@
-## Выбор действий и планирование
+## Action Selection and Planning
 
-### Управление процессом и развитие навыка
+### Process Management and Skill Development
 
 #topic_core
 
-Выбор и исполнение задают обычные [[Program Layer#Executable Programs|exec-программы]] с разными назначениями.
+Selection and execution are handled by ordinary [[Program Layer#Executable Programs|`exec` programs]] with different purposes.
 
-**[[Cognition and Attention#^def-TaskManagingProgram|TaskManagingProgram]]** управляет выполнением задачи. Например, `PokerPlayProgram` ведёт игру, вызывает политику и организует исполнение и предусмотренное обучение.
+**[[Cognition and Attention#^def-TaskManagingProgram|`TaskManagingProgram`]]** manages task execution. For example, `PokerPlayProgram` runs a game, calls a policy, and organizes execution and any planned learning.
 
 > [!definition]
-> **PolicyProgram** — `exec`-программа, возвращающая распределение для выбора следующего действия.
+> **`PolicyProgram`** — an `exec` program that returns a distribution for selecting the next action.
 > ^def-PolicyProgram
 
-Она выделяется там, где полезен отдельный контракт выбора; внутри допустимы условия, модели, поиск и вызовы других политик.
+It is useful to separate this program when a distinct selection contract is needed; it may contain conditions, models, search, and calls to other policies.
 
-**Приоритет — проверенная компактная политика, выраженная через условия, концепты и правила.** Если она применима и обеспечивает требуемое качество и надёжность, используется она. Это сохраняет доступное для анализа знание о процессе, позволяет переносить закономерности и методы их получения и снижать затраты на повторные решения. Например, группы сходных покерных ситуаций — бакеты — и правила оценки силы руки могут заменить часть перебора; способы группировки и вероятностных расчётов полезны и в других задачах. Сжатие должно выделять содержательные закономерности; их применимость и перенос проверяются через Evaluation.
+**Prefer a verified, compact policy expressed through conditions, concepts, and rules.** Use it when applicable and when it provides the required quality and reliability. This preserves process knowledge in a form that can be analyzed, supports transfer of both regularities and the methods used to obtain them, and reduces the cost of repeated decisions. For example, groups of similar poker situations (buckets) and hand-strength rules can replace some search; grouping methods and probabilistic calculations are useful in other tasks too. Compression should capture meaningful regularities; applicability and transfer are checked through Evaluation.
 
 > [!definition]
-> **SkillDevelopmentProgram** — специализация `TaskManagingProgram` с ролями `exec` и `meta`, выполняющая задачу развития или адаптации переиспользуемого способа решать класс задач.
+> **`SkillDevelopmentProgram`** — a specialization of `TaskManagingProgram` with `exec` and `meta` roles that performs a task to develop or adapt a reusable way to solve a class of problems.
 > ^def-SkillDevelopmentProgram
 
-Например, `PokerSkillDevelopmentProgram` улучшает знания, модели и программы игры через исследование, обучение и сравнение вариантов по общим [[Self#Self-improvement loop|правилам self-improvement]].
+For example, `PokerSkillDevelopmentProgram` improves poker knowledge, models, and programs through exploration, learning, and comparison of alternatives under the shared [[Self#Self-Improvement Loop|self-improvement rules]].
 
-Предусмотренную адаптацию к смене среды, режима или соперника и его стиля выполняет `TaskManagingProgram` с подпрограммами. Самостоятельное исследование или пересмотр способа решения может стать [[Cognition and Attention#Goal, Task и спецификация задачи|задачей]] `SkillDevelopmentProgram`. Исполнение и развитие можно совмещать; отдельный запуск развития не нужен для каждого изменения или update. Их связь описывает [[Program Layer#ProgramDesign|ProgramDesign]].
+Planned adaptation to changes in the environment, mode, opponent, or opponent style is performed by a `TaskManagingProgram` with subprograms. Independent exploration or revision of a solution method can become a [[Cognition and Attention#Goal, Task, and Task Specification|task]] for `SkillDevelopmentProgram`. Execution and development can be combined; a separate development run is not needed for every change or update. Their relationship is described by [[Program Layer#ProgramDesign|`ProgramDesign`]].
 
-Это назначения обычных Programs, без новых значений `Program.roles` или сущности `Skill`. Навык может охватывать несколько программ и моделей. Приоритет MVP — переиспользуемые программы, модели процессов и знания с проверкой переноса; [[Learning system#Специализированное обучение|обучение отдельного backend]] — дополнительный путь для узких задач.
+These are purposes of ordinary Programs; they do not add values to `Program.roles` or introduce a `Skill` entity. A skill may span multiple programs and models. The MVP prioritizes reusable programs, process models, and knowledge with transfer checks; [[Learning system#Specialized Learning|training a dedicated backend]] is an additional path for narrow tasks.
 
-### Программа политики и ActionDistribution
+### Policy Program and ActionDistribution
 
 #topic_core
 
-Политика возвращает `ProgramResult[ActionDistribution]` по [[Program Layer#^def-ProgramResult|общему контракту]]; выбранное действие исполняет вызывающая программа. Единый выход позволяет использовать общую проверку и выборку при разных алгоритмах. Остальные `exec` сохраняют собственный `ProgramResult[T]`.
+A policy returns `ProgramResult[ActionDistribution]` under the [[Program Layer#^def-ProgramResult|shared contract]]; the calling program executes the selected action. This common output allows shared validation and sampling across different algorithms. Other `exec` programs retain their own `ProgramResult[T]`.
 
 ```python
 from dataclasses import dataclass
@@ -40,22 +40,22 @@ class ActionDistribution:
     choices: list[tuple[ActionCandidate, float]]
 
 ActionDistribution(choices=[(fold, 0.3), (call, 0.7)])
-# Детерминированное решение:
+# Deterministic decision:
 ActionDistribution(choices=[(fold, 1.0)])
 ```
 
-[[Program Layer#Действия|ActionCandidate]] описывает действие, вызов программы или переход. Пара связывает кандидата с вероятностью независимо от внешнего списка. Нулевые вероятности можно опускать.
+[[Program Layer#Actions|`ActionCandidate`]] describes an action, program call, or transition. Each pair associates a candidate with a probability, independently of any external list. Zero-probability choices may be omitted.
 
 #topic_details
 
-Условия контракта:
+Contract conditions:
 
-- Распределение непустое, кандидаты не дублируются.
-- Вероятности конечные, неотрицательные и в сумме дают `1` с численной погрешностью.
-- Если набор допустимых кандидатов передан, результат ограничен им; иначе созданные политикой кандидаты проверяются по контракту задачи и действия.
-- Нарушение обрабатывает вызывающая программа; неявного случайного fallback нет.
+- The distribution is nonempty and candidates are unique.
+- Probabilities are finite, nonnegative, and sum to `1` within numerical tolerance.
+- If an allowed candidate set is supplied, the result is limited to that set; otherwise, candidates created by the policy are checked against the task and action contracts.
+- The calling program handles violations; there is no implicit random fallback.
 
-Входы задаются [[Program Layer#^def-ArgumentPreparation|контрактом конкретной политики]], а не универсальным непрозрачным `ctx`:
+Inputs are defined by the [[Program Layer#^def-ArgumentPreparation|contract of the particular policy]], not by a universal opaque `ctx`:
 
 ```python
 poker_policy(
@@ -69,13 +69,13 @@ negotiation_policy(
 ) -> ProgramResult[ActionDistribution]
 ```
 
-В покере команды предоставляет [[Discrete Action Interface]], а вход политики содержит только доступную игроку информацию. В переговорах политика может сама подготовить предложения. Способ построения кандидатов выбирает сознание или управляющая программа.
+In poker, commands are provided by the [[Discrete Action Interface]], and the policy input contains only information available to the player. In negotiation, the policy may prepare proposals itself. Consciousness or the managing program chooses how candidates are constructed.
 
-### Композиция и выборка
+### Composition and Sampling
 
 #topic_details
 
-Программа может вызывать несколько политик или продолжать работу без действия. Все листья её кода не собираются в один набор альтернатив:
+A program may call several policies or continue without an action. Its code leaves are not collected into one set of alternatives:
 
 ```python
 def poker_policy(view, legal_actions) -> ProgramResult[ActionDistribution]:
@@ -84,60 +84,60 @@ def poker_policy(view, legal_actions) -> ProgramResult[ActionDistribution]:
     return postflop_policy(view, legal_actions)
 ```
 
-Ветвления до вызова политики тоже определяют поведение. Общий helper проверяет распределение и делает одну выборку:
+Branches before the policy call also determine behavior. A shared helper validates the distribution and samples once:
 
 ```python
 sample_action(distribution: ActionDistribution) -> ActionCandidate
 ```
 
-Распределение и выбранное действие фиксируются через [[Program Layer#Code Anchors|Code Anchor]] в trace. `ProgramResult.feedback` сохраняется и доступен вызывающему отдельно от вероятностей.
+The distribution and selected action are recorded in the trace through a [[Program Layer#Code Anchors|Code Anchor]]. `ProgramResult.feedback` is saved and available to the caller separately from the probabilities.
 
 ```text
 TaskManagingProgram
-→ наблюдения и подготовка входов
+→ observations and input preparation
 → PolicyProgram → ProgramResult[ActionDistribution]
-→ sample_action → предложенный ActionCandidate
-→ применимые Verification и CommitmentControl
-→ исполнение принятого действия
-→ наблюдаемые последствия и trace
-→ при достаточных данных: Evaluation
-→ выбранный опыт и цель обучения → LearningCoordinator
-→ обновление обучаемых компонентов и продолжение работы
+→ sample_action → proposed ActionCandidate
+→ applicable Verification and CommitmentControl
+→ execution of the accepted action
+→ observed consequences and trace
+→ when sufficient data are available: Evaluation
+→ selected experience and learning objective → LearningCoordinator
+→ update learnable components and continue
 ```
 
-Вызывающая программа организует [[Cognition and Attention#^actions-and-user-response|проверки, принятие и исполнение]], включая передачу выбора сознанию при необходимости. Проверки могут требоваться до вызова политики; выборка сама по себе не разрешает внешний эффект.
+The calling program organizes [[Cognition and Attention#^actions-and-user-response|validation, acceptance, and execution]], including handing selection to consciousness when needed. Checks may be required before the policy call; sampling alone does not authorize an external effect.
 
-Если ожидание — вариант решения, `wait` может быть кандидатом. Пустое распределение не обозначает ожидание, нехватку данных или ошибку.
+If waiting is an available decision, `wait` may be a candidate. An empty distribution does not mean waiting, missing data, or an error.
 
-#### Внутренняя случайность
+#### Internal Randomness
 
 #topic_details
 
-Возвращённые вероятности условны: они относятся к выборке **после вычислений текущего вызова**. Например, Thompson sampling сначала случайно выбирает модель, затем может вернуть одно действие с вероятностью `1`. Если обучению нужна полная вероятность поведения с учётом внутренней случайности, её получение и необходимые данные trace задаются контрактом алгоритма; возвращённая `1` её не заменяет.
+Returned probabilities are conditional: they apply to sampling **after the current call's computations**. For example, Thompson sampling first selects a model randomly and may then return one action with probability `1`. If learning needs the full behavior probability including internal randomness, the algorithm contract defines how to obtain it and which trace data are needed; a returned `1` is not a substitute.
 
-### Механизмы выбора
+### Selection Mechanisms
 
 #topic_core
 
-| Основание выбора | Пример |
+| Basis for selection | Example |
 |---|---|
-| Использовать известное | Максимум оценки полезности. |
-| Получить полезное знание | Эксперимент или проверка малоизученного варианта. |
-| Следовать смешанной стратегии | Заданные вероятности действий даже при хорошо изученном процессе. |
+| Use what is known | Maximize a utility score. |
+| Obtain useful knowledge | Experiment or check a poorly explored option. |
+| Follow a mixed strategy | Use specified action probabilities even for a well-studied process. |
 
-Политика может сочетать эти основания. Универсальные scores и температура не требуются.
+A policy may combine these bases. Universal scores and temperature are not required.
 
-#### Оценки полезности и жадный выбор
+#### Utility Scores and Greedy Selection
 
 #topic_core
 
-`score_actions` — имя необязательной операции оценки полезности кандидатов, а не класса модели. Большее значение предпочтительнее; сочетаемые оценки согласуются по смыслу и шкале. Контракт определяет критерий выбора и при необходимости учитывает горизонт, затраты, риск и пользу будущего знания.
+`score_actions` is the name of an optional operation for scoring candidate utility, not a model class. Higher values are preferred; scores combined together must be consistent in meaning and scale. The contract defines the selection criterion and, when needed, accounts for horizon, cost, risk, and the value of future knowledge.
 
-Источниками могут быть модель, симуляция, опыт, правила или LLM. `ProcessModel` прогнозирует конкретный [[Program Layer#^def-PredictionTarget|PredictionTarget]]; прогноз очков или другой величины служит score только при соответствии критерию выбора. Прогнозы [[Program Layer#Expected signals|expected signals]] добавляются только по [[Learning system#Выбор обучаемых компонентов и режима обучения|оправданным каналам и точкам программы]].
+Sources may include a model, simulation, experience, rules, or an LLM. A `ProcessModel` predicts a specific [[Program Layer#^def-PredictionTarget|PredictionTarget]]; a predicted score or other value serves as a selection score only if it matches the selection criterion. [[Program Layer#Expected Signals|Expected signals]] are added only through justified channels and program locations under the [[Learning system#Selecting Learnable Components and Learning Mode|learning rules]].
 
 #topic_details
 
-Если оценщик выделен в `Program`:
+If the evaluator is a separate `Program`:
 
 ```python
 score_actions(inputs, candidates) -> ProgramResult[list[SelectionScore]]
@@ -149,27 +149,27 @@ class SelectionScore:
     belief_data: BeliefData | None = None
 ```
 
-Scores конечные и соответствуют порядку кандидатов. **Жадный выбор** — `argmax(values)`: он может быть близоруким при оценке ближайшей награды или вести к исследованию, если оценка учитывает будущую пользу информации.
+Scores are finite and correspond to candidate order. **Greedy selection** is `argmax(values)`: it may be myopic when scoring immediate reward, or encourage exploration if the score accounts for future information value.
 
-#### Смешанная стратегия
+#### Mixed Strategy
 
-Распределение стратегии применяется непосредственно: вероятности действий не являются оценками полезности. Например, для классического Counterfactual Regret Minimization (CFR) используется усреднённая стратегия. `argmax` вместо выборки или произвольное изменение вероятностей меняет стратегию; фильтрация и замена кандидатов требуют предусмотренного способа адаптации.
+Apply the strategy distribution directly: action probabilities are not utility estimates. For example, classical Counterfactual Regret Minimization (CFR) uses an average strategy. Using `argmax` instead of sampling, or arbitrarily changing probabilities, changes the strategy; filtering or replacing candidates requires a specified adaptation method.
 
-### Исследование
+### Exploration
 
-Способ и интенсивность исследования определяются [[Self#Исследование|для каждого процесса и его частей]] ради пользы будущим решениям, с учётом риска, задач, ценностей и бюджета. Нужны сведения о неопределённости и актуальности опыта: одинаковая непосредственная полезность не означает одинаковую ценность исследования.
+The method and intensity of exploration are determined [[Self#Exploration|for each process and its parts]] to benefit future decisions, accounting for risk, tasks, values, and budget. Information about uncertainty and the freshness of experience is needed: equal immediate utility does not imply equal exploration value.
 
-| Механизм | Выбор | Требования |
+| Mechanism | Selection | Requirements |
 |---|---|---|
-| Целевой эксперимент | Проверить существенную гипотезу с учётом пользы, затрат и риска. | Способ различить гипотезы по наблюдениям. |
-| [UCB](https://doi.org/10.1023/A:1013689704352) | Максимум полезности с бонусом неопределённости. | Статистическая модель, обосновывающая бонус. |
-| [Thompson sampling](https://arxiv.org/abs/1707.02038) | Выбор модели или параметров из распределения неопределённости, затем лучшего действия для образца. | Обновляемое по данным распределение неопределённости модели. |
+| Targeted experiment | Test a material hypothesis while accounting for value, cost, and risk. | A way to distinguish hypotheses through observations. |
+| [UCB](https://doi.org/10.1023/A:1013689704352) | Maximize utility with an uncertainty bonus. | A statistical model that justifies the bonus. |
+| [Thompson sampling](https://arxiv.org/abs/1707.02038) | Sample a model or parameters from an uncertainty distribution, then choose the best action for that sample. | A model uncertainty distribution updated from data. |
 
-[[Program Layer#ProgramDesign|ProgramDesign]] фиксирует местный механизм, делегирование или обоснованную неприменимость исследования; параметры и предпосылки задаёт исполняемый контракт. При изменении условий программа перепроверяет актуальность модели по [[Learning system#Данные и автоматические обновления|правилам обучения]]. Общий монитор режима не требуется; повышение температуры не исправляет устаревшую модель.
+[[Program Layer#ProgramDesign|`ProgramDesign`]] records the local mechanism, delegation, or justified decision that exploration does not apply; the executable contract defines parameters and assumptions. When conditions change, the program rechecks model freshness under the [[Learning system#Data and Automatic Updates|learning rules]]. A general mode monitor is unnecessary; increasing temperature does not fix an outdated model.
 
-### Готовые функции и классы
+### Ready-Made Functions and Classes
 
-Повторяемые механизмы выделяются при реальной необходимости:
+Extract recurring mechanisms when there is a real need:
 
 ```python
 certain(action) -> ActionDistribution
@@ -178,47 +178,47 @@ softmax_distribution(candidates, values, temperature) -> ActionDistribution
 sample_action(distribution) -> ActionCandidate
 ```
 
-`argmax` возвращает индекс, softmax — вероятности; helpers связывают их с кандидатами. Обычные функции возвращают значения, самостоятельные Programs — `ProgramResult`.
+`argmax` returns an index and softmax returns probabilities; helpers associate them with candidates. Ordinary functions return values, while standalone Programs return `ProgramResult`.
 
-Методы и шаблоны классов вводятся, когда отражают повторяемую структуру. Например, необязательный `ValuePolicy` может сочетать оценщик и построение распределения.
+Introduce methods and class templates when they represent a recurring structure. For example, an optional `ValuePolicy` may combine an evaluator with distribution construction.
 
 ### TemperaturePolicy
 
-Температура `T` для `softmax(values / T)` — локальная настройка, выбираемая вместе со шкалой scores по опыту или сравнению вариантов. Для MVP достаточно константы; повторяемое правило можно выделить в `TemperaturePolicy`:
+Temperature `T` for `softmax(values / T)` is a local setting, chosen together with the score scale based on experience or comparison of alternatives. A constant is sufficient for the MVP; a recurring rule may be extracted as `TemperaturePolicy`:
 
 ```python
 temperature_policy(inputs, candidates, scores) -> ProgramResult[float]
-# Конечная T > 0.
+# Finite T > 0.
 ```
 
-Температура регулирует концентрацию выбора, но не заменяет исследование, смешанную стратегию или проверку допустимости. Для строго жадного выбора используется `greedy_distribution`, а не `T = 0`.
+Temperature controls how concentrated the selection is, but does not replace exploration, a mixed strategy, or validity checks. Use `greedy_distribution` for strictly greedy selection, not `T = 0`.
 
-### Belief и история выбора
+### Belief and Selection History
 
-Вероятности политики описывают поведение; [[Uncertainty and Belief Tracking in the World Model#^def-Profile|Profile]] — epistemic belief об альтернативах одного [[Uncertainty and Belief Tracking in the World Model#^def-CompetitionScope|CompetitionScope]] и при необходимости служит входом политики.
+Policy probabilities describe behavior; [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]] is an epistemic belief over alternatives in one [[Uncertainty and Belief Tracking in the World Model#^def-CompetitionScope|`CompetitionScope`]] and may be a policy input.
 
-Уверенность в программе и её применении задаётся общими [[Program Layer#«Обучение» операторов и переходов|program и operator beliefs]], в оценках последствий — результатами моделей. Для контрактов, anchors, trace и обучаемых компонентов достаточно обычной `Program`; отдельная оболочка выбора не нужна.
+Confidence in a program and its application is represented by shared [[Program Layer#“Training” Operators and Transitions|program and operator beliefs]]; confidence in predicted consequences comes from model results. An ordinary `Program` is sufficient for contracts, anchors, traces, and learnable components; a separate selection wrapper is unnecessary.
 
-### Runtime planning
+### Runtime Planning
 
 #topic_core
 
-Код управляющей `exec` или `PolicyProgram` определяет, применить ли готовое правило, получить прямой прогноз или вызвать planner в данной точке решения. Планирование не является обязательным этапом перед действием; оно ищет решение по моделям в пределах выделенного бюджета.
+The code of a managing `exec` or `PolicyProgram` determines whether to apply a ready-made rule, make a direct prediction, or invoke a planner at a particular decision point. Planning is not a mandatory step before an action; it searches for a decision using models within an allocated budget.
 
-**PlanningProgram** — обычная `exec`-программа поиска, вызываемая через композицию программ. Отдельный Python-класс необязателен; ниже `estimate_actions` — точка входа конкретного planner-а.
+**`PlanningProgram`** is an ordinary `exec` search program, called through program composition. A separate Python class is optional; below, `estimate_actions` is the entry point of a particular planner.
 
-Поиск оправдан, когда ожидаемое улучшение решения стоит дополнительных затрат, например:
+Search is justified when the expected improvement in the decision is worth the additional cost, for example:
 
-- проверенная политика для текущих условий ещё не сформирована;
-- сочетания вариантов пока не удаётся покрыть достаточно точными правилами и обобщениями;
-- прежняя политика потеряла применимость, например после смены режима;
-- последствия значимы, а имеющаяся политика недостаточно надёжна и поиск по доступным моделям ожидаемо улучшает решение.
+- a verified policy has not yet been developed for current conditions;
+- combinations of options cannot yet be covered by sufficiently accurate rules and generalizations;
+- the previous policy is no longer applicable, for example after a regime change;
+- consequences are significant, and the current policy is not sufficiently reliable, while search over available models is expected to improve the decision.
 
-Нужны применимые модели и бюджет. Незнание процесса или смена режима сами по себе не делают planner надёжнее: если неверна модель, может потребоваться новый опыт. Условия вызова задаются в коде, а их основания и пересмотр — в [[Program Layer#ProgramDesign|ProgramDesign]].
+Applicable models and a budget are required. Lack of process knowledge or a regime change alone does not make a planner more reliable: an incorrect model may require new experience. Invocation conditions are defined in code; their rationale and revision are described in [[Program Layer#ProgramDesign|`ProgramDesign`]].
 
-#### Вызов в конкретной точке программы
+#### Invocation at a Specific Program Point
 
-Фрагмент политики с готовым правилом и локальным поиском:
+An example policy fragment combining a ready-made rule with local search:
 
 ```python
 def poker_policy(view, legal_actions) -> ProgramResult[ActionDistribution]:
@@ -237,11 +237,11 @@ def poker_policy(view, legal_actions) -> ProgramResult[ActionDistribution]:
     return prepared_policy(view, legal_actions)
 ```
 
-Условия и `prepared_policy` определяются конкретной программой; правило в примере иллюстрирует структуру, а не покерную рекомендацию. Если нет обоснованного автоматического решения, применяется обычная [[Cognition and Attention#^actions-and-user-response|передача выбора сознанию]].
+Conditions and `prepared_policy` are defined by the particular program; this example illustrates the structure, not poker advice. If no justified automatic decision is available, use the ordinary [[Cognition and Attention#^actions-and-user-response|handoff of selection to consciousness]].
 
-#### Оценка продолжений
+#### Evaluating Continuations
 
-Planner для оценки кандидатов может возвращать тот же `SelectionScore`, что и `score_actions`. Общий выход не требует наследования или одинаковых входных интерфейсов:
+A planner that scores candidates may return the same `SelectionScore` as `score_actions`. A shared output does not require inheritance or identical input interfaces:
 
 ```python
 estimate_actions(
@@ -249,22 +249,22 @@ estimate_actions(
 ) -> ProgramResult[list[SelectionScore]]
 ```
 
-Он условно фиксирует каждый первый кандидат и прогнозирует последствия через `ProcessModels`. `continuation_policy` задаёт базовое дальнейшее поведение; если поиск пересматривает последующие решения, оценки относятся к найденному продолжению. Случайные события и ответы участников задают соответствующие модели. Для ожидаемого результата продолжения взвешиваются по вероятностям этих моделей и политики либо сэмплируются по ним. Текущая вероятность выбора первого кандидата не умножается на его оценку. Смысл score, горизонт и предпосылки продолжения задаются контрактом; по готовым оценкам вызывающая политика строит `ActionDistribution`.
+It conditionally fixes each first candidate and predicts consequences through `ProcessModels`. `continuation_policy` defines baseline behavior afterward; if the search revises subsequent decisions, scores apply to the continuation it found. Random events and participant responses use their corresponding models. To estimate the expected continuation outcome, weight continuations by the probabilities in those models and policy, or sample from them. Do not multiply a candidate's score by its current selection probability. The contract defines the score meaning, horizon, and continuation assumptions; the calling policy builds an `ActionDistribution` from the resulting scores.
 
-[[Program Layer#Прямой прогноз результата|Прямой прогноз результата]] позволяет оценить действие без поиска либо завершить поиск оценкой оставшегося результата. Уже включённые промежуточные результаты повторно не прибавляются. Planner соединяет вызовы моделей и политик: `ProcessModel` сама не вызывает `exec`. Политика продолжения обычно проще вызывающей; повторный вызов planner-а допустим только с ограничением общего бюджета и глубины.
+[[Program Layer#Direct Outcome Forecast|Direct outcome prediction]] can score an action without search or evaluate a remaining outcome to complete a search. Do not add intermediate results again if they are already included. A planner composes model and policy calls; a `ProcessModel` does not call `exec`. A continuation policy is usually simpler than the caller; another planner call is allowed only with a limit on total budget and depth.
 
-Для небольшого числа продолжений подходит точное перечисление, для большого — выборка траекторий Monte Carlo; MCTS распределяет поиск между ветвями, а best-first или beam search используют эвристику. Алгоритм выбирается под процесс. Исследование внутри поиска распределяет вычисления, а внешние исследовательские действия выбирает политика. Симуляции соблюдают [[Program Evaluation and Testing#3. Simulation Tests and Optimization|ограничения доступной информации и границы выводов из модели]].
+Exact enumeration suits a small number of continuations; Monte Carlo trajectory sampling suits a large number. MCTS allocates search across branches, while best-first or beam search uses a heuristic. Choose an algorithm for the process. Exploration within search allocates computation; the policy selects external exploratory actions. Simulations follow the [[Program Evaluation and Testing#3. Simulation Tests and Optimization|limits on available information and on conclusions drawn from a model]].
 
-Этот интерфейс относится к оценке кандидатов. Другие `PlanningProgram` могут возвращать план или готовую стратегию; единичное действие оформляется как `certain(action)`, если оно возвращается через интерфейс политики.
+This interface concerns candidate evaluation. Other `PlanningProgram`s may return a plan or ready-made strategy; a single action is represented as `certain(action)` when returned through the policy interface.
 
-### Policy optimization
+### Policy Optimization
 
-`TaskManagingProgram` или `SkillDevelopmentProgram` выбирает опыт, цель и момент обучения. [[Learning system#LearningCoordinator|LearningCoordinator]] организует [[Learning system#LearningCredit and UnresolvedCredit|credit по выбранному LearningTarget]] и обновления состояния estimator-ов или параметров программы, включая политику. Состояние для обновления выбирает `UpdatePlanner`, новое значение вычисляет соответствующий updater.
+`TaskManagingProgram` or `SkillDevelopmentProgram` selects experience, an objective, and a time for learning. [[Learning system#LearningCoordinator|`LearningCoordinator`]] organizes [[Learning system#LearningCredit and UnresolvedCredit|credit for the selected `LearningTarget`]] and updates estimator state or program parameters, including the policy. `UpdatePlanner` selects the state to update; the corresponding updater calculates its new value.
 
-Обучение может идти по наблюдению, batch, окну или эпизоду и не обязано блокировать следующий шаг. Вызов политики применяет текущее состояние; обучение запускается явно. Один плохой исход не означает автоматического обновления участвовавших компонентов.
+Learning may use one observation, a batch, a window, or an episode and does not have to block the next step. A policy call uses the current state; learning is started explicitly. One poor outcome does not automatically update all components involved.
 
-Обучаемые компоненты выбираются по [[Learning system#Выбор обучаемых компонентов и режима обучения|общим правилам]]; для MVP может хватать фиксированного правила или готовой стратегии. [[Program Evaluation and Testing|Evaluation]] проверяет последствия решений на нужном горизонте, включая пользу исследования, затраты и ограничения. Немедленный score или рост [[Evaluative-Control System#^def-TensionReduction|tension_reduction]] сами по себе не подтверждают улучшения. Для модели проверяется качество прогнозов, для политики — качество решений.
+Learnable components are selected under the [[Learning system#Selecting Learnable Components and Learning Mode|shared rules]]; a fixed rule or ready-made strategy may suffice for the MVP. [[Program Evaluation and Testing|Evaluation]] checks decision consequences over the required horizon, including exploration value, cost, and constraints. An immediate score or an increase in [[Evaluative-Control System#^def-TensionReduction|`tension_reduction`]] alone does not confirm improvement. Check prediction quality for a model and decision quality for a policy.
 
-Изменение кода, контракта или состава компонентов проходит [[Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]].
+Changes to code, contracts, or component composition go through the [[Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]].
 
-Повторяющийся поиск даёт материал для гипотез о компактных правилах, концептах и моделях. `SkillDevelopmentProgram` проверяет такие обобщения и перенос способов их получения по [[Self#Self-improvement loop|правилам self-improvement]]. Подтверждённая политика сокращает область повторного планирования; результаты симуляций сами по себе не подтверждают истинность модели внешнего процесса.
+Repeated search provides material for hypotheses about compact rules, concepts, and models. `SkillDevelopmentProgram` tests such generalizations and the transfer of methods used to obtain them under the [[Self#Self-Improvement Loop|self-improvement rules]]. A verified policy reduces the scope of repeated planning; simulation results alone do not establish that the external process model is true.

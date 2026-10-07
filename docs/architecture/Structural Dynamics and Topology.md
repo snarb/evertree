@@ -3,193 +3,189 @@ status: draft
 target_version: next
 ---
 
-## Введение
-#topic_core 
+## Introduction
+#topic_core
 
-> _«Форма связи имеет значение еще до того, как она обретет имя»._
+> _“The shape of a connection matters even before it has a name.”_
 
-Этот раздел описывает эмерджентные свойства графа. Здесь фокус смещается с отдельных ребер на **Геометрию (Geometry)** и **Ансамбли (Ensembles)**. Эти структуры влияют на принятие решений в реальном времени (Online Inference) и служат основой для обучения (Consolidation).
+This section describes emergent properties of the graph. The focus shifts from individual edges to **Geometry** and **Ensembles**. These structures affect real-time decision-making (**Online Inference**) and provide a basis for learning (**Consolidation**).
 
-## Нейро-Геометрия: Топология как Сигнал
-#topic_core 
+## Neurogeometry: Topology as a Signal
+#topic_core
 
-В EverTree геометрическая форма подграфа является **первичным наблюдаемым сигналом** ($o$) доступным агенту.
+In EverTree, the geometric shape of a subgraph is a **primary observable signal** (`o`) available to the agent.
 
-## Активная Геометрия (Topological Perception)
-#topic_core 
+## Active Geometry (Topological Perception)
+#topic_core
 
-Когда агент активирует контекст $S$, **Модуль Рефлексии** агента способен «видеть» не только список узлов, но и топологические примитивы (Shapes) в Плоскости Процесса и Ассоциаций:
+When the agent activates context `S`, its **Reflection Module** can perceive not only a list of nodes, but also topological primitives (**Shapes**) in the Process and Associative Planes:
 
-1. **Циклы (Loops):**
-    - _Паттерн:_ $A \to B \to C \to A$.
-    - _Сигнал:_ Обнаружение "Замкнутого процесса" или "Тупиковой рекурсии".
-    - _Влияние:_ Агент может прервать выполнение, не дожидаясь истощения ресурсов, просто распознав геометрию "Бесконечный цикл".
-2. **Хабы и Звезды (Hubs):**
-    - _Паттерн:_ Один узел имеет аномально много входящих/исходящих связей.
-    - _Сигнал:_ "Ключевая точка" или "Узкое горлышко" (Bottleneck).
-3. **Мосты (Bridges):**
-    - _Паттерн:_ Единственная связь, соединяющая два больших кластера.
-    - _Сигнал:_ "Критический переход" (High structural value).
-4. **Конфликты (Forks):**
-    - _Паттерн:_ Сильная активация двух несовместимых узлов (Inhibitory link).
-    - _Сигнал:_ "Когнитивный диссонанс" $\to$ триггер для запуска _System 2_ (размышления).
+1. **Cycles (loops):**
+   - _Pattern:_ `A → B → C → A`.
+   - _Signal:_ a “closed process” or “dead-end recursion.”
+   - _Effect:_ the agent can stop execution before resources are exhausted simply by recognizing the “infinite loop” geometry.
+2. **Hubs and stars:**
+   - _Pattern:_ one node has an unusually large number of incoming or outgoing connections.
+   - _Signal:_ a “key point” or “bottleneck.”
+3. **Bridges:**
+   - _Pattern:_ a single connection joins two large clusters.
+   - _Signal:_ a “critical transition” with high structural value.
+4. **Conflicts (forks):**
+   - _Pattern:_ two incompatible nodes are strongly activated (an inhibitory link).
+   - _Signal:_ “cognitive dissonance” → trigger for System 2 (deliberation).
 
-> [!important] Механизм
-> Агент может выбрать своим "следующим шагом" не переход в следующий узел процесса/программы, а **реакцию на паттерн** (например, "Разорвать цикл").
+> [!important] Mechanism
+> The agent can choose a **response to a pattern** as its next step (for example, “break the cycle”) instead of moving to the next node in a process/program.
 
-#### Искривление Пространства (Metric Deformation)
+#### Metric Deformation
 
-Реифицированные концепты и сильные ансамбли меняют "расстояния" в графе:
+Reified concepts and strong ensembles change “distances” in the graph:
 
-- **Wormholes (Червоточины):** Паттерн, ставший концептом $E$, позволяет прыгнуть из начала в конец цепочки за 1 шаг ($Cost(A \to Z) \approx 0$).
-- **Gravity Wells (Гравитационные ямы):** Области с высокой плотностью связей "затягивают" процесс рассуждения (Attractors). Агенту трудно "покинуть тему", если она топологически плотная.
+- **Wormholes:** a pattern that has become concept `E` allows a jump from the start to the end of a chain in one step (`Cost(A → Z) ≈ 0`).
+- **Gravity wells:** areas with high connection density draw the reasoning process in (attractors). It is difficult for the agent to “leave a topic” when it is topologically dense.
 
-### Ансамбль
-#topic_core 
+### Ensemble
+#topic_core
 
 (def_id:: entity.Ensemble)
 > [!definition]
-> **Ансамбль**
-> — это устойчивый _динамический режим_ (паттерн активности) на подграфе концептов. Проще говоря - это группа узлов, которая активируется согласованно (ко-активация в _Плоскости Резонанса_ + последовательность в _Плоскости Процесса_).
+> **Ensemble** — a stable _dynamic regime_ (activity pattern) over a subgraph of concepts. In simple terms, it is a group of nodes that activate in coordination (co-activation in the Resonance Plane plus a sequence in the Process Plane).
 ^def-Ensemble
 
-**Ключевые характеристики:**
+**Key characteristics:**
 
-1. **Динамическая природа:** Ансамбль — это не просто список узлов, а _способ их совместной работы_ во времени (траектория активации).
-2. **Внутренняя структура:** Внутри ансамбля связи не обязательно только усиливающие. Он может включать ингибиции, логические условия, конкурентные ветки и обратные связи
-3. **Стохастичность:** Ансамбль часто определяет не один детерминированный исход, а _распределение вероятностей_ будущих состояний (предсказаний, действий, наград).
+1. **Dynamic nature:** an ensemble is not just a list of nodes, but a _way they work together over time_ (an activation trajectory).
+2. **Internal structure:** connections within an ensemble need not only be reinforcing. It may include inhibition, logical conditions, competing branches, and feedback loops.
+3. **Stochasticity:** an ensemble often defines not one deterministic outcome, but a _probability distribution_ over future states (predictions, actions, rewards).
 
-**Практический смысл:**
+**Practical meaning:**
 
-В архитектуре EverTree мы не храним ансамбли как отдельную сущность "ради коллекции". Ансамбль имеет ценность только как **кандидат на реификацию** (превращение в новый Концепт), если он удовлетворяет хотя бы одному из этих критериев:
+In EverTree, ensembles are not stored as separate entities “for the sake of collecting them.” An ensemble is valuable only as a **candidate for reification** (becoming a new Concept) if it meets at least one of these criteria:
 
-- Улучшает **компрессию** опыта (заменяет несколько схожих динамических паттернов одним символом в каждом случае)
-- Улучшает точность **прогнозов** (в том числе распределения наград/исходов).
-- Улучшает **контроль**
-- Обеспечивает **генерализацию** (перенос знания между контекстами) и более быстрое долгосрочное обучение и планирование( поиск путей), - улучшить обобщение (через абстракцию и/или структурное соответствие),  ускорить обучение (перенос обновлений на множество похожих эпизодов). Одним из средств генерилизации есть эффективное мышление и коммуникация и новый концепт должен  упрощать объяснение и коммуниция.
+- improves **compression** of experience (replaces several similar dynamic patterns with one symbol in each case);
+- improves the accuracy of **predictions**, including reward/outcome distributions;
+- improves **control**;
+- supports **generalization** (transferring knowledge across contexts) and faster long-term learning and planning (path search): improving generalization through abstraction and/or structural correspondence, and accelerating learning by transferring updates to many similar episodes. Efficient thinking and communication are among the means of generalization; a new concept should make explanation and communication easier.
 
-при выполнении хотя бы одного из этих условий корреляция ансамбля  наградой (прямо или косвенно) повышает шансы на реификацию.
+If at least one of these conditions is met, correlation between the ensemble and reward, directly or indirectly, increases the chance of reification.
 
-### Процесс Реификации (Reification Process)
-#topic_core 
+### Reification Process
+#topic_core
 
 (def_id:: entity.Reification)
 > [!definition]
-> **Реификация**
-> — это фундаментальный механизм обучения структуры графа. Это процесс превращения выявленного _динамического ансамбля_ / повторяющейся геометрии в новый статический **Концепт-Паттерн (`E`)**.
+> **Reification** — a fundamental mechanism for learning graph structure. It turns a detected _dynamic ensemble_ or recurring geometry into a new static **Concept Pattern (`E`)**.
 ^def-Reification
 
-Реификация вводит концепт для повторяющейся структуры. Его использование для обобщения моделей и [[#Parameter tying|parameter tying]] проходит через [[Process Plane/Program Layer#Обобщение и сжатие моделей|проверку гипотезы общности и рефакторинг программ]].
+Reification introduces a concept for a recurring structure. Using it to generalize models and apply [[#Parameter Tying|parameter tying]] requires [[Process Plane/Program Layer#Generalization and Model Compression|checking the hypothesis that the cases are generalizable and refactoring programs]].
 
 > [!important]
-> простое "название/алиас" подграфа без структурной интеграции может помочь коммуникации, но **не даёт полной выгоды реификации**.
+> Simply “naming” or aliasing a subgraph without integrating its structure may help communication, but **does not provide the full benefit of reification**.
 
-> [!important] про "частоту"
-> Частота сама по себе не критерий. Паттерн может быть редким, но критически важным (опасность, аварии, дорогие ошибки) — и тогда его всё равно стоит реифицировать.
+> [!important] On frequency
+> Frequency alone is not a criterion. A pattern may be rare but critically important (a hazard, accident, or costly error) and still be worth reifying.
 
-За реификацию отвечает Модуль Анализа. Процесс может быть осуществлен полностью автоматически в простых случаях, или с использованием ЛЛМ, Я-концепка и рефлексии в сложных случаях. См. документацию к **Модуль Анализа**.
+The Analysis Module is responsible for reification. The process may be fully automatic in simple cases, or use an LLM, the Self concept, and reflection in complex cases. See the documentation for the **Analysis Module**.
 
-#### Что такое `E` после реификации
-#topic_details 
+#### What `E` Is After Reification
+#topic_details
 
-После реификации `E` — обычный **концепт-узел** в графе.
+After reification, `E` is an ordinary **concept node** in the graph.
 
-`E` отличается от обычного концепта тем, что он представляет **структурный паттерн**: набор взаимосвязей между другими концептами, который удобно использовать как единое целое.
+`E` differs from an ordinary concept in that it represents a **structural pattern**: a set of relationships among other concepts that is useful to treat as a unit.
 
-- `E` может быть:
-    - **instance-bound** (привязан к конкретному инстансу/объекту/ситуации),
-    - или **обобщённым типом** (поднимается по оси абстракции). _Пример:_ В одном эпизоде `Пёс` рычит и кусает. В другом `Волк` скалится и нападает. На уровне конкретных инстансов совпадения нет. Но на уровне абстракции (`Животное` → `Угрожающий сигнал` → `Агрессия`) виден устойчивый скелет (мотив).
+- `E` may be:
+  - **instance-bound** (tied to a particular instance, object, or situation), or
+  - a **generalized type** (raised along the abstraction axis). _Example:_ in one episode, a dog growls and bites; in another, a wolf bares its teeth and attacks. The concrete instances do not match, but at the abstraction level (`Animal` → `Threatening signal` → `Aggression`) a stable skeleton (motif) is visible.
 
-#### Минимальный результат реификации (что реально меняется в графе)
-#topic_details 
+#### Minimal Reification Result (What Actually Changes in the Graph)
+#topic_details
 
-Семантический результат реификации — `E`, подключённый связями к окружающим концептам:
+The semantic result of reification is `E`, connected to surrounding concepts:
 
-- появляются входящие связи в `E` от концептов, которые обычно присутствуют в паттерне,
-- появляются исходящие связи из `E` к концептам, которые обычно следуют/объясняются/ассоциируются с паттерном,
-- связи имеют тип (ось) + веса/уверенность как и любые другие
-- концепт опционально наделен внутренним наполненим (набор связанных узлов), за выбор наполнения, и выбор входящих\исходящих узлов отвечает Модуль Анализа.
+- incoming connections to `E` appear from concepts usually present in the pattern;
+- outgoing connections from `E` appear to concepts that usually follow, are explained by, or are associated with the pattern;
+- connections have a type (axis) and weights/confidence, like any other connections;
+- the concept may optionally have internal content (a set of linked nodes); the Analysis Module selects that content and the incoming/outgoing nodes.
 
-Семантический интерфейс паттерна задаётся входящими и исходящими связями; отдельная сущность для него не нужна. Контракты использующих его программ определены в [[Process Plane/Program Layer#Program Contracts|Program Layer]].
+The pattern's semantic interface is defined by its incoming and outgoing connections; no separate entity is needed. Contracts for programs that use it are defined in the [[Process Plane/Program Layer#Program Contracts|Program Layer]].
 
+## Parameter Tying
+#topic_core
 
-## Parameter tying
-#topic_core 
-
-#### Что такое parameter tying
+#### What Is Parameter Tying?
 
 (def_id:: entity.ParameterTying)
 > [!definition]
-> **Parameter tying**
-> — это когда множество похожих ситуаций начинают "делить" одни и те же параметры, вместо того чтобы учиться отдельно для каждой комбинации признаков.
+> **Parameter tying** is when multiple similar situations begin to “share” the same parameters instead of learning separately for every combination of features.
 ^def-ParameterTying
 
-В графе без `E` часто получается так:
+Without `E`, a graph often ends up with:
 
-- десятки признаков `X1..Xn` напрямую связаны с исходом `Y`,
-- и для каждого контекста/инстанса приходится по сути "заново" учить веса.
+- dozens of features `X1..Xn` connected directly to outcome `Y`;
+- weights that must effectively be “relearned” for each context/instance.
 
-При реализации общей модели на основе `E`:
+When a common model based on `E` is implemented:
 
-- часть структуры проходит через `E`:
+- part of the structure goes through `E`:
 
 `X → E → Y`
 
-Тогда:
+Then:
 
-- `E → Y` становится **общей** связью, используемой многими эпизодами,
-- а `X → E` учит распознавать режим/паттерн.
+- `E → Y` becomes a **shared** connection used by many episodes;
+- `X → E` learns to recognize the regime/pattern.
 
-Parameter tying достигается, когда использующие модель Programs действительно читают общие параметры и направляют совместимый опыт на их обновление. Общий узел и связи сами по себе этого не обеспечивают.
+Parameter tying is achieved only when programs using the model actually read the shared parameters and direct compatible experience toward updating them. A shared node and connections alone do not provide this.
 
-#### Ожидаемая польза, проверяемая при обобщении
+#### Expected Benefits to Check Through Generalization
 
-- Быстрее обучение и меньше переобучение за счёт совместимого опыта разных случаев.
-- Быстрее перенос на новые комбинации `X`.
-- Меньше параметров на "периферии".
-- Более стабильный credit assignment: награда/ошибка легче "попадает" в правильную причину (через `E`), а не расползается по шумным признакам.
+- Faster learning and less overfitting through compatible experience from different cases.
+- Faster transfer to new combinations of `X`.
+- Fewer parameters on the “periphery.”
+- More stable credit assignment: reward/error is more likely to reach the right cause (through `E`) instead of spreading across noisy features.
 
-## Геометричность паттернов в графе
-#topic_core 
+## Geometry of Patterns in the Graph
+#topic_core
 
-"Геометрия" в EverTree понимается **как производное** от структуры графа, а не как отдельное хранимое поле.
+“Geometry” in EverTree is understood as a **derived property** of graph structure, not as a separately stored field.
 
-#### Геометрия концепта = форма связей вокруг него
+#### A Concept's Geometry Is the Shape of Its Surrounding Connections
 
-После реификации `E` становится "геометрическим объектом" в графе в том смысле, что:
+After reification, `E` becomes a “geometric object” in the graph in the sense that it:
 
-- он задаёт локальную топологию переходов,
-- формирует характерные "траектории" активаций (через каузальные/динамические связи),
-- создаёт "краткие пути" (shortcuts) между концептами, которые раньше связывались длинной цепочкой.
+- defines local transition topology;
+- forms characteristic activation “trajectories” through causal/dynamic connections;
+- creates “shortcuts” between concepts that were previously linked by a long chain.
 
-Практически это проявляется как:
+In practice, this appears as:
 
-- уменьшение длины рассуждения (меньше шагов по графу),
-- более устойчивое удержание контекста (активации концентрируются вокруг `E`),
-- возможность применять одинаковый "скелет" объяснения в разных инстансах.
+- shorter reasoning (fewer steps through the graph);
+- more stable context retention (activations concentrate around `E`);
+- the ability to apply the same explanatory “skeleton” to different instances.
 
-#### "Геометрический паттерн" как повторяемая форма подграфа
+#### A “Geometric Pattern” as a Recurring Subgraph Shape
 
-Паттерн может повторяться даже без хорошей словарной/таксономической абстракции — просто по форме связей. Тогда `E` — это "объект, соответствующий форме".
+A pattern may recur even without a good lexical or taxonomic abstraction, simply through the shape of its connections. In that case, `E` is an “object corresponding to the shape.”
 
-### Перенос паттерна через структурное соответствие подграфов
+### Transferring a Pattern Through Structural Subgraph Correspondence
 
-Помимо оси абстракции (типов), EverTree может переносить паттерны по **структурному сходству**:
+In addition to the abstraction axis (types), EverTree can transfer patterns by **structural similarity**:
 
-> Паттерн считается применимым, если в новом месте найден подграф, который структурно соответствует подграфу паттерна (с допустимыми заменами узлов на совместимые по абстракции).
+> A pattern is considered applicable if a subgraph is found in a new location that structurally corresponds to the pattern's subgraph, allowing nodes to be replaced with nodes compatible by abstraction.
 
-Это можно понимать как поиск частичного гомоморфизма/изоморфизма:
+This can be understood as finding a partial homomorphism/isomorphism:
 
-- совпадает "каркас":
-    - какие узлы соединены,
-    - какими типами рёбер (оси),
-    - какие направления/циклы/ингибиции присутствуют,
-- а конкретные узлы могут отличаться, но быть совместимыми по `SUBTYPE_OF/IDENTITY_TYPE`.
+- the “skeleton” matches:
+  - which nodes are connected;
+  - the edge types (axes);
+  - which directions, cycles, and inhibitions are present;
+- the specific nodes may differ, but remain compatible under `SUBTYPE_OF/IDENTITY_TYPE`.
 
-Веса в паттерне-концете вероятно имеет смысл кластеризовавать, так появляется обобщение и адстракия при переходет от конкретных числел к кластерам, и чем меньше кластеров тем выше уровень абстракции.
+It may be useful to cluster weights in a pattern concept. This creates generalization and abstraction by moving from concrete numbers to clusters; fewer clusters correspond to a higher level of abstraction.
 
-Практический смысл:
+Practical meaning:
 
-- паттерн переносится **по форме**, а не по названию;
-- можно распознавать ситуации, для которых нет заранее хорошей таксономии;
-- это усиливает "геометричность" мышления: агент распознаёт знакомые **узоры связей**.
+- a pattern transfers **by shape**, not by name;
+- situations can be recognized even when no suitable taxonomy was defined in advance;
+- this strengthens the “geometric” aspect of reasoning: the agent recognizes familiar **connection patterns**.

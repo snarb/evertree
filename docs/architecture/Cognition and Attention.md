@@ -3,19 +3,16 @@ status: draft
 target_version: next
 ---
 
-## Сознание (`Consciousness`)
+## Consciousness (`Consciousness`)
 
 #topic_core
 
+> [!definition] **Consciousness (`Consciousness`)** — a protected, event-driven, top-level control process that works on the current [[#`Goal`, `Task`, and Task Specification|`Task`]] in [[#Attention (`Attention`)|`Focus`]], observes its state, the [[Process Plane/Program Layer#Program|`Program`s]] it uses, and their execution, and uses this information to choose the next control action.
+^def-Consciousness
 
-> [!definition] **Сознание (`Consciousness`)** — защищённый событийный управляющий процесс верхнего уровня, который работает с текущей [[#Goal, Task и спецификация задачи|`Task`]] в [[#Внимание (Attention)|`Focus`]], наблюдает её состояние, используемые [[Process Plane/Program Layer#Program|`Program`]] и ход их исполнения и на этой основе выбирает следующее управляющее действие.
- ^def-Consciousness
+Consciousness may continue execution, change the solution method, suspend a `Task`, start additional processing, or intervene once in the current [[Memory#^def-ProgramRun|`ProgramRun`]] to test a local hypothesis, fix a detected error, or exit a failed execution path. It may suspend the current `ProgramRun`, change the subsequent solution method, and, through [[#Conscious Program Supervision|`Conscious Program Supervision`]], apply a new committed candidate revision to reloadable code that has not yet run. The revisions actually used and execution results are saved in [[Memory#^def-ResultProvenance|provenance]]. If a discovered change or generated hypothesis should be used in future runs, it is formalized as a candidate `Program` or [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]] and goes through the [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]].
 
-
-Сознание может продолжить выполнение, изменить способ решения, приостановить `Task`, запустить дополнительную обработку или разово вмешаться в текущий [[Memory#^def-ProgramRun|`ProgramRun`]], чтобы проверить локальную гипотезу, исправить обнаруженную ошибку или выйти из неудачной траектории исполнения. Сознание может приостановить текущий `ProgramRun`, изменить дальнейший способ решения и при [[#Сознательный контроль исполнения (Conscious Program Supervision)|`Conscious Program Supervision`]] применить к ещё не выполненному reloadable-коду новую committed candidate revision. Фактически использованные revisions и результаты исполнения сохраняются в [[Memory#^def-ResultProvenance|provenance]]. Если найденное изменение или рожденная гипотеза должны использоваться и в будущих запусках, они оформляется как candidate `Program` или [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]] и проходит [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]].
-
-
-Сознание работает как возобновляемый цикл:
+Consciousness works as a resumable loop:
 
 ```text
 observe current Task / Program / ProgramRun
@@ -29,92 +26,91 @@ observe again
 
 #topic_details
 
-При этом объектом наблюдения является не только уже выполненный trace, но и текущий план, ещё не выполненный код, task specification, beliefs, relevant semantic graph и прошлый опыт. На каждом значимом этапе сознание может использовать retrieval, reasoning, planning, verification, debugging,  LLM, tools и дочерние Programs и другие доступные механизмы; запросить дополнительную информацию или создать отдельную `Task`, приостановить текущую работу и позднее возобновить её с новым контекстом; изменить план или ветвь, исправить candidate revision `Program` и перезапустить её, запустить Reflection, сохранить значимый результат либо завершить обработку.
+The object of observation is not only an already executed trace, but also the current plan, code that has not yet run, task specification, beliefs, relevant semantic graph, and past experience. At every significant stage, consciousness can use retrieval, reasoning, planning, verification, debugging, LLMs, tools, child Programs, and other available mechanisms; request more information or create a separate `Task`; suspend current work and resume it later with new context; change the plan or branch; fix a candidate `Program` revision and restart it; run Reflection; save a significant result; or finish processing.
 
 #topic_core
 
-Готовые процессы [[Self#SelfRegulation|`SelfRegulation`]] и другие Programs являются средствами и навыками сознания, а не заменяют его. В знакомой и достаточно надёжной ситуации большая часть control flow может выполняться автоматически; при новизне, недостаточном основании, конфликте, высокой важности или цене ошибки управление возвращается сознанию, которое гибко определяет дальнейший ход обработки.
+Ready-made processes such as [[Self#SelfRegulation|`SelfRegulation`]] and other Programs are tools and skills of consciousness; they do not replace it. In a familiar and sufficiently reliable situation, most control flow may run automatically. With novelty, insufficient evidence, conflict, high importance, or high cost of error, control returns to consciousness, which flexibly determines what happens next.
 
-Для диагностического сравнения «было — стало» сознанию доступны [[Evaluative-Control System#^aggregate-queries|агрегаты по запросу]] по выбранным периодам и группам процессов. [[Evaluative-Control System#^tension-diagnostics|Изменение напряжения]] помогает выбрать процессы и опыт для разбора; использование агрегатов определяется ожидаемой пользой и затратами.
+For diagnostic “before and after” comparisons, consciousness can request [[Evaluative-Control System#^aggregate-queries|aggregates]] for selected periods and groups of processes. [[Evaluative-Control System#^tension-diagnostics|Changes in tension]] help select processes and experience for investigation; aggregate use is determined by expected value and cost.
 
-Сознательный контроль применяется адаптивно:
+Conscious control is applied adaptively:
 
 ```text
-надёжный знакомый процесс
+reliable, familiar process
 → automatic execution;
 
-новизна / недостаточное основание /
-высокая важность или цена ошибки
+novelty / insufficient evidence /
+high importance or high cost of error
 → conscious supervision;
 
-проверенный повторяющийся механизм
-→ постепенная автоматизация;
+verified recurring mechanism
+→ gradual automation;
 
-аномалия / новый context / потеря уверенности
-→ возврат под сознательный контроль.
+anomaly / new context / loss of confidence
+→ return to conscious control.
 ```
-
 
 ---
 
-## Внимание (`Attention`)
+## Attention (`Attention`)
 
 #topic_core
 
-**Внимание** — механизм распределения ограниченного ресурса сознательной обработки между задачами и релевантными объектами.
+**Attention** allocates the limited resources of conscious processing among tasks and relevant objects.
 
 ```text
 AttentionPriorityQueue
-→ Tasks, ожидающие сознательной обработки;
+→ Tasks waiting for conscious processing;
 
 Focus
-→ текущая Task, получающая сознательный ресурс.
+→ the current Task receiving conscious resources.
 ```
 
-`AttentionPriorityQueue` определяет, какие [[#`Goal`, `Task` и спецификация задачи|`Task`]] конкурируют за сознание.
+`AttentionPriorityQueue` determines which [[#`Goal`, `Task`, and Task Specification|`Task`s]] compete for consciousness.
 
 (def_id:: control.attention_priority)
 > [!definition]
-> **attention_priority** — динамический приоритет `Task`, назначенный управляющей программой для распределения сознательного внимания с учётом оценок, целей и контекста.
+> **`attention_priority`** — a dynamic `Task` priority assigned by a control program to allocate conscious attention based on evaluations, goals, and context.
 ^def-AttentionPriority
 
-Другие программы могут учитывать этот параметр через доступное состояние или сохранённый trace. Само высокое значение не объясняет причину приоритета: для анализа используются исходные оценки и контекст задачи. Отдельный оценочный канал или событие для повторного представления приоритета не требуется.
+Other programs may use this parameter through available state or a saved trace. A high value alone does not explain why the task has priority; analysis uses the source evaluations and task context. A separate evaluation channel or event to represent the priority again is not required.
 
-Нужно также разделять:
+The following must also be distinguished:
 
 ```text
 AttentionRuntime (L4)
-→ фиксированная часть ядра сознания:
-  хранит состояние Focus и очереди,
-  выполняет безопасные suspend / resume / switch,
-  обеспечивает hard execution limits,
-  watchdog и минимальный fallback;
+→ fixed part of the consciousness core:
+  stores Focus and queue state,
+  safely performs suspend / resume / switch,
+  enforces hard execution limits,
+  watchdog, and minimal fallback;
 
 AttentionControl
-→ ProcessConcept в составе SelfRegulation;
-  его active meta-Program использует attention_priority
-  и предлагает решения о Focus / suspend / resume / switch.
+→ ProcessConcept within SelfRegulation;
+  its active meta-Program uses attention_priority
+  and proposes Focus / suspend / resume / switch decisions.
 ```
 
-`AttentionControl` не изменяет runtime-state напрямую: `AttentionRuntime` проверяет предложенное решение по контракту L4 и применяет, отклоняет либо использует fallback. Active [[Process Plane/Program Layer#Program|`Program`]] процесса `AttentionControl` может развиваться как meta-Program уровня L3. `AttentionRuntime` относится к [[Self#Meta-improvement|L4]]: агент может анализировать его, но изменять — только разработчик вне runtime агента.
+`AttentionControl` does not change runtime state directly: `AttentionRuntime` checks the proposed decision under the L4 contract and applies it, rejects it, or uses a fallback. The active [[Process Plane/Program Layer#Program|`Program`]] for `AttentionControl` may evolve as an L3 meta-Program. `AttentionRuntime` belongs to [[Self#Meta-Improvement|L4]]: the agent may analyze it, but only a developer outside the agent runtime may change it.
 
-В основном фокусе находится одна `Task` за раз; всё исполнение подчиняется [[#^sequential-tasks|правилу последовательного выполнения Tasks]]. Атомарность — runtime-свойство текущего scope внимания, в котором `Task` можно отдельно обрабатывать, приостанавливать и возобновлять, а не онтологический тип Task.
+There is one primary focus `Task` at a time; all execution follows the [[#^sequential-tasks|sequential Task execution rule]]. Atomicity is a runtime property of the current attention scope, where a `Task` can be processed, suspended, and resumed independently; it is not an ontological type of Task.
 
-На доступной точке управления `AttentionControl` может сохранить, приостановить, возобновить или сменить текущий фокус. Декомпозиция `Task` относится к planning; внимание лишь распределяет фокус между полученными задачами. Критический сигнал может запросить передачу управления на ближайшей допустимой runtime-границе.
+At an available control point, `AttentionControl` may retain, suspend, resume, or switch the current focus. Task decomposition belongs to planning; attention only allocates focus among the resulting tasks. A critical signal may request control transfer at the nearest allowed runtime boundary.
 
-В очереди внимания находятся задачи, которым нужен сознательный шаг, а не все существующие `Task`. Приём входов, ожидание данных и разрешённое автоматическое исполнение текущей Task не требуют постоянного `Focus`. Перед передачей исполнения другой Task runtime приостанавливает работу текущей по [[#Остановка и освобождение памяти|общему контракту]]. Выбор признаков и размеров фрагментов при подготовке данных относится к [[Process Plane/Program Layer#^granularity-adaptation|управлению гранулярностью]], а не к распределению `Focus`.
+The attention queue contains tasks that need a conscious step, not every existing `Task`. Input reception, waiting for data, and permitted automatic execution of the current Task do not require continuous `Focus`. Before handing execution to another Task, the runtime suspends the current one under the [[#Stopping Execution and Releasing Memory|shared contract]]. Selecting features and chunk sizes while preparing data belongs to [[Process Plane/Program Layer#^granularity-adaptation|granularity management]], not `Focus` allocation.
 
 ---
 
-## `Goal`, `Task` и спецификация задачи
+## `Goal`, `Task`, and Task Specification
 
 #topic_core
 
-**Goal** — желаемый результат или состояние, которого агент стремится достичь.
+**Goal** — a desired result or state that the agent seeks to achieve.
 
-**Task** — семантически определённая единица работы ради `Goal`, внешнего запроса, [[Self#Events|`Event`]], [[Memory#Replay|Replay]] или другого сигнала.
+**Task** — a semantically defined unit of work toward a `Goal`, an external request, an [[Self#Events|`Event`]], [[Memory#Replay|Replay]], or another signal.
 
-`Goal` не является обязательным шлюзом для создания `Task`:
+`Goal` is not a mandatory gateway for creating a `Task`:
 
 ```text
 Values + state + signals
@@ -126,45 +122,45 @@ create / prioritize / revise Goals
 Goal / external request / Event / Replay
         ↓
 create / continue Task
-        ├─ назначенная автоматическая работа → exec Program
-        └─ нужен сознательный шаг → AttentionPriorityQueue
+        ├─ assigned automatic work → exec Program
+        └─ conscious step needed → AttentionPriorityQueue
 ```
 
-Не каждый `Goal` немедленно становится `Task`; [[Self#SelfRegulation|`GoalManagement`]] управляет целями, а внимание — конкуренцией задач за сознательную обработку. Детальный lifecycle целей относится к [[Self#SelfRegulation|`SelfRegulation`]].
+Not every `Goal` immediately becomes a `Task`; [[Self#SelfRegulation|`GoalManagement`]] manages goals, while attention manages competition among tasks for conscious processing. The detailed goal lifecycle belongs to [[Self#SelfRegulation|`SelfRegulation`]].
 
-`TaskFraming` — [[Process Plane/Process Ontology and Semantic Interface#ProcessConcept|`ProcessConcept`]] `SelfRegulation`, active meta-[[Process Plane/Program Layer#Program|`Program`]] которого создаёт и пересматривает структурированную task specification на основании исходного запроса, сигнала и доступного контекста.
+`TaskFraming` is a `SelfRegulation` [[Process Plane/Process Ontology and Semantic Interface#ProcessConcept|`ProcessConcept`]] whose active meta-[[Process Plane/Program Layer#Program|`Program`]] creates and revises a structured task specification from the original request, signal, and available context.
 
-Для первого вызова `TaskFraming` уже существует `Task`: первоначальный `objective` может быть «разобрать поступивший запрос» со ссылкой на источник. Полная предметная спецификация не является условием входа в очередь внимания. Первоначальное оформление и последующее уточнение разграничены в [[#^input-reception|приёме входа]].
+A `Task` already exists for the first call to `TaskFraming`: its initial `objective` may be “interpret the incoming request,” with a reference to the source. A complete subject-matter specification is not required before entry into the attention queue. Initial framing and later refinement are distinguished in [[#^input-reception|input reception]].
 
-Минимальная semantic task specification содержит:
+A minimal semantic task specification contains:
 
 ```text
 objective
-→ желаемый результат;
+→ desired result;
 
 success_criteria?
-→ как определить достижение objective;
+→ how to determine whether the objective was achieved;
 
 constraints?
-→ условия допустимости результата, действий
-  или процесса с заданным scope.
+→ conditions that make the result, actions,
+  or process acceptable within a given scope.
 
 preferences?
-→ мягкие предпочтения между допустимыми решениями.
+→ soft preferences among acceptable solutions.
 ```
 
-`objective` обязателен; он может задавать достигаемый результат или поддерживаемое состояние. `success_criteria` добавляются, когда нужны отдельные условия установления успеха; они могут предусматривать оценку человеком. При их отсутствии результат проверяется по objective, исходному поручению и constraints. Если оснований недостаточно, успех остаётся неустановленным; остановка исполнения сама по себе его не подтверждает.
+`objective` is required; it may specify an outcome to achieve or a state to maintain. Add `success_criteria` when separate conditions are needed to establish success; these may require human evaluation. Without them, assess the result against the objective, original instruction, and constraints. If the evidence is insufficient, success remains undetermined; stopping execution does not itself establish success.
 
-Известные обязательные условия сохраняются в `constraints`, включая требуемый метод, формат результата, границы работы, общий предел расходов и срок, если они заданы. `preferences` выражают конкретные приоритеты при выборе решения, например предпочтение простоты при сопоставимом качестве. Поля опускаются, если соответствующие дополнительные условия или предпочтения не заданы; общие правила агента продолжают действовать. Способ выполнения выбирается в пределах требований задачи.
+Known mandatory conditions are recorded in `constraints`, including a required method, output format, scope of work, overall spending limit, and deadline when specified. `preferences` express concrete priorities when choosing among solutions, such as preferring simplicity when quality is comparable. Omit these fields when no such additional conditions or preferences are given; the agent's general rules still apply. Choose the execution method within the task requirements.
 
-`Requirement` — общее понятие исходного требования. При структурировании оно выражается через один или несколько элементов: `objective`, `success_criteria` или `constraint`. `Invariant` — частный случай scoped `constraint`, который должен оставаться истинным на протяжении своего scope и поэтому повторно проверяется перед действиями, способными его нарушить, и в других предусмотренных точках контроля.
+`Requirement` is a general term for an original requirement. When structured, it is expressed through one or more of `objective`, `success_criteria`, or `constraint`. An `Invariant` is a scoped `constraint` that must remain true throughout its scope, so it is checked again before actions that could violate it and at other defined control points.
 ^def-Requirement
 
-Текстовые требования конкретной `Program` к её входам задаются [[Process Plane/Program Layer#^program-input-requirements|`Program.requirements`]]. Вызывающая программа или сознательный шаг учитывает их при [[Process Plane/Program Layer#^def-ArgumentPreparation|подготовке аргументов]].
+Textual input requirements of a specific `Program` are defined by [[Process Plane/Program Layer#^program-input-requirements|`Program.requirements`]]. The calling program or conscious step accounts for them when [[Process Plane/Program Layer#^def-ArgumentPreparation|preparing arguments]].
 
-Предположение агента остаётся проверяемым знанием и не становится `constraint` без соответствующего требования или policy.
+An agent assumption remains knowledge that may be checked; it does not become a `constraint` without a corresponding requirement or policy.
 
-Существенные элементы спецификации материализуются в semantic graph и сохраняют provenance к исходному запросу или другому основанию:
+Material parts of the specification are materialized in the semantic graph and retain provenance to the original request or other basis:
 
 ```text
 source request / signal
@@ -172,53 +168,53 @@ source request / signal
 structured task specification in semantic graph
 ```
 
-`Task specification` — версионируемая структурированная спецификация `Task`, существенные элементы которой материализуются в semantic graph. Существенное изменение `objective`, `success_criteria`, `constraints` или `preferences` выполняется через `GraphDelta`, сохраняет provenance и создаёт новую revision спецификации. Текущей считается последняя принятая revision. Обязательные решения о ресурсах исполнения хранятся в [[#Бюджеты выполнения|TaskState]] отдельно от спецификации.
+`Task specification` is a versioned, structured specification of a `Task`, whose material parts are materialized in the semantic graph. A material change to `objective`, `success_criteria`, `constraints`, or `preferences` is made through `GraphDelta`, retains provenance, and creates a new specification revision. The latest accepted revision is current. Mandatory execution-resource decisions are stored separately from the specification in [[#Execution Budgets|`TaskState`]].
 
 #topic_details
 
-Context preparation и Verification используют спецификацию, а при необходимости могут обратиться к источнику через provenance. Для значимых решений Verification может запускать программу `SourceToSpecCoverageСheck()`: повторно сопоставляющую первоисточник со структурированной specification и искать пропущенные или искажённые требования. Это позволяет обнаруживать как забытые во время reasoning требования, так и ошибки их первоначального структурирования.
+Context preparation and Verification use the specification and may consult the source through provenance when needed. For material decisions, Verification may run `SourceToSpecCoverageCheck()`, which compares the original source against the structured specification to find omitted or distorted requirements. This can reveal both requirements forgotten during reasoning and errors in the initial structuring.
 
 ---
 
-## Приём входа и восприятие
+## Input Reception and Perception
 ^input-reception
 
 #topic_core
 
-Адаптер источника в runtime принимает данные и сохраняет в [[Memory|Memory]] полное исходное содержимое, источник, порядок поступления, известные времена событий и получения и связь с вызовом или задачей. Эта первичная запись ещё не обязана быть [[Memory#^def-Observation|`Observation`]]: семантический результат получает происхождение от работы, выполненной уже в контексте `Task`.
+At runtime, the source adapter accepts data and saves the full original content, source, arrival order, known event and receipt times, and link to the call or task in [[Memory|Memory]]. This initial record does not have to be an [[Memory#^def-Observation|`Observation`]] yet: the semantic result receives provenance from work performed in the context of a `Task`.
 
-Для входа применяется следующий порядок:
+Handle incoming data in this order:
 
-1. **Однозначный адресат известен:** результат инструмента, ответ на конкретное уточнение или продолжение установленного потока доставляется существующей `Task` и, если определён, её `ProgramRun`. Идентификатор диалога сам по себе не доказывает принадлежность одной задаче.
-2. **Однозначного адресата нет:** runtime по фиксированному правилу создаёт минимальную `Task` для разбора входа, с первоначальным `objective` и provenance к источнику. Это не утверждение, что началась новая предметная работа. После разбора вход может оказаться продолжением прежней задачи.
-3. **Есть заранее заданный допустимый обработчик:** конкретная `exec`-`Program` выполняет начальную работу после допуска установленной `Task` к [[#^sequential-tasks|последовательному исполнению]]. Привязка задаётся источником или проверяемым правилом; при неоднозначном выборе нет автоматического запуска всех кандидатов. Без такого обработчика задача запрашивает сознательный шаг через внимание. Runtime не выбирает произвольную программу по смыслу текста.
+1. **The recipient is unambiguous:** deliver a tool result, answer to a specific clarification, or continuation of an established flow to the existing `Task` and, if defined, its `ProgramRun`. A conversation identifier alone does not prove that items belong to one task.
+2. **There is no unambiguous recipient:** runtime creates a minimal `Task` for interpreting the input according to a fixed rule, with an initial `objective` and provenance to the source. This does not mean that new subject-matter work has begun; after interpretation, the input may turn out to continue an earlier task.
+3. **An allowed handler was configured in advance:** a specific `exec` `Program` performs the initial work after the established `Task` is admitted to [[#^sequential-tasks|sequential execution]]. The binding is specified by the source or a verifiable rule; ambiguity does not trigger every possible candidate. Without such a handler, the task requests a conscious step through attention. Runtime does not choose an arbitrary program based on the text's meaning.
 
-Вход связывается также с известным [[Memory#^def-Episode|`Episode`]] — например, текущим диалогом или экспериментом. Если такой связи ещё нет, создаётся эпизод первоначального разбора входа. Эта связь описывает происходящий эпизод, а не отдельный контейнер задачи: один Episode может относиться к нескольким Tasks, а одна Task — использовать опыт нескольких Episodes. Пока предметный процесс не определён, эпизод диалога или разбора остаётся основанием первоначальной связи; дальнейшее уточнение сохраняет provenance.
+The input is also linked to a known [[Memory#^def-Episode|`Episode`]], such as the current conversation or experiment. If no such link exists, an episode is created for the initial interpretation. This link describes the episode in progress, not a separate task container: one Episode may relate to multiple Tasks, and one Task may draw on multiple Episodes. Until the subject-matter process is defined, the conversation or input-interpretation episode grounds the initial link; later refinement preserves provenance.
 
-Исходный текст может быть представлен стандартным типизированным наблюдением без LLM-разбора. Более сложную интерпретацию и `TaskFraming` выполняет назначенная программа либо организует сознание после получения `Focus`. При переадресации сохраняются identity и provenance источника; первоначальная Task завершается или её спецификация пересматривается, а повторное использование входа не становится независимым опытом.
+The original text may be represented as a standard typed observation without LLM interpretation. More complex interpretation and `TaskFraming` are performed by an assigned program or organized by consciousness after it receives `Focus`. On redirection, the source identity and provenance are retained; the initial Task is completed or its specification revised, and reusing the input does not count as independent experience.
 
-Внутренние [[Self#Events|события]], [[Self#SelfRegulation|Goals]] и [[Memory#^def-MemoryReplay|Replay]] также создают или продолжают `Task`; повторно представлять уже имеющийся внутренний результат как новое внешнее наблюдение не требуется. Каждый запускаемый workflow имеет задачу-владельца по [[#Остановка и освобождение памяти|общему контракту исполнения]].
+Internal [[Self#Events|events]], [[Self#SelfRegulation|Goals]], and [[Memory#^def-MemoryReplay|Replay]] also create or continue a `Task`; there is no need to present an existing internal result again as a new external observation. Every running workflow has an owning task under the [[#Stopping Execution and Releasing Memory|general execution contract]].
 
 ### Perception
 
 > [!definition]
-> **Perception** — процесс получения и представления сведений из источника в форме типизированного результата с ролью [[Memory#^def-Observation|`Observation`]].
+> **Perception** — a process that obtains and represents information from a source as a typed result with the role of an [[Memory#^def-Observation|`Observation`]].
 > ^def-Perception
 
-Это обычный [[Process Plane/Process Ontology and Semantic Interface#ProcessConcept|`ProcessConcept`]], реализуемый операциями и Programs работы с соответствующими источниками. Первичная обработка текста может сохранять сообщение или блок целиком; выделять все атомарные факты до определения задачи не требуется. Первичные границы определяются форматом источника и стоимостью обработки, но не задают автоматически границы аргументов, фактов или шагов обучения. Уже подходящее типизированное наблюдение используется без повторного извлечения.
+This is an ordinary [[Process Plane/Process Ontology and Semantic Interface#ProcessConcept|`ProcessConcept`]], implemented by operations and Programs for the relevant sources. Initial text processing may save the whole message or block; all atomic facts do not need to be extracted before the task is known. Initial boundaries follow the source format and processing cost, but do not automatically define argument, fact, or learning-step boundaries. An already suitable typed observation is reused without extraction again.
 
-Повторное чтение сохранённого источника допускает другое представление или детализацию, сохраняя исходное происхождение. `Perception` выполняет порученную работу с данными и не выбирает и не вызывает доменную программу процесса. Нужную дальнейшую обработку определяют [[#^def-TaskExecution|сознание или конкретная исполняющаяся программа]].
+Rereading a saved source may produce a different representation or level of detail while preserving the original provenance. `Perception` performs the assigned data work; it does not choose or call a domain process program. The required follow-up processing is determined by [[#^def-TaskExecution|consciousness or the specific executing program]].
 
-При известном адресате доставка не требует semantic routing. Когда внутри задачи нужно определить процесс и его исполнение, сознание или исполняющая `exec`-программа вызывает [[Process Plane/Process Ontology and Semantic Interface#^def-ProcessRouter|`ProcessRouter`]]. Выбор процесса, создание или уточнение Task и распределение сознательного фокуса — разные решения.
+When the recipient is known, delivery does not require semantic routing. When a task must identify the process and its execution, consciousness or the executing `exec` program calls [[Process Plane/Process Ontology and Semantic Interface#^def-ProcessRouter|`ProcessRouter`]]. Choosing a process, creating or refining a Task, and allocating conscious focus are separate decisions.
 
 ---
 
-## `TaskState`, `Focus` и `PreparedContext`
+## `TaskState`, `Focus`, and `PreparedContext`
 ^working-context
 
 #topic_core
 
-Нужно различать:
+Distinguish:
 
 ```text
 Task
@@ -228,67 +224,65 @@ TaskState
 → resumable runtime state;
 
 Focus
-→ указатель на Task, получающую сознательный ресурс;
+→ pointer to the Task receiving conscious resources;
 
 PreparedContext
-→ подготовленные данные для следующей обработки Task и Episode.
+→ data prepared for the next processing of a Task and Episode.
 ```
 
-`TaskState` сохраняет progress, текущий [[#Планирование (Planning)|`Plan`]], [[#Бюджеты выполнения|бюджеты и учтённый расход]], нерешённые вопросы, ожидания, статус, revision task specification и ссылки на текущие объекты, связанные Episodes, существенные результаты и [[Memory#^def-ProgramRun|`ProgramRun`]]. Факты исполнения принадлежат `ProgramRun` и [[Memory#^def-TraceEvent|`TraceEvent`]]. [[Memory#^active-state|`active_state`]] — часть Memory, ускоряющая доступ к недавно активным задачам и эпизодам; объём и очисткой этого кэша управляет память.
+`TaskState` stores progress, the current [[#Planning|`Plan`]], [[#Execution Budgets|budgets and recorded spending]], unresolved questions, waits, status, task-specification revision, and references to current objects, related Episodes, material results, and [[Memory#^def-ProgramRun|`ProgramRun`s]]. Execution facts belong to `ProgramRun` and [[Memory#^def-TraceEvent|`TraceEvent`]]. [[Memory#^active-state|`active_state`]] is part of Memory and speeds access to recently active tasks and episodes; Memory controls this cache's size and cleanup.
 
 > [!definition]
-> **PreparedContext** (ранее `WorkingContext`) — типизированный [[Memory#^def-OperatorOutput|`OperatorOutput`]] подготовки данных для работы с Task и связанным Episode: текущий вход, выбранные сведения из памяти и ссылки на их источники.
+> **PreparedContext** (formerly `WorkingContext`) — a typed [[Memory#^def-OperatorOutput|`OperatorOutput`]] that prepares data for work on a Task and its related Episode: current input, selected information from memory, and references to its sources.
 > ^def-PreparedContext
 
-`PreparedContext` собирается для текущей обработки и может включать спецификацию задачи, ход исполнения и выбранный опыт. Его полнота для всех последующих шагов не гарантируется: источники остаются доступны, недостающие сведения запрашиваются по необходимости. [[Core data structures#^def-TaskContext|`TaskContext`]] содержит внешние относительно доменного объекта факты, влияющие на materialization; эти факты при необходимости входят в `PreparedContext`.
+`PreparedContext` is assembled for the current processing step and may include the task specification, execution progress, and selected experience. It is not guaranteed to be complete for every later step: sources remain available, and missing information is requested as needed. [[Core data structures#^def-TaskContext|`TaskContext`]] contains facts external to the domain object that affect materialization; these facts are included in `PreparedContext` when needed.
 
-Повторная подготовка создаёт новый `PreparedContext`. Вычисленные во время исполнения значения передаются отдельно в [[Process Plane/Program Layer#^def-ArgumentPreparation|подготовку аргументов]]: как ссылки на выбранные источники (`sources`) или готовые привязки к параметрам (`known_arguments`). Контекст пересобирается, когда работе нужны новые входы, сведения или уточнённые условия.
+Preparing again creates a new `PreparedContext`. Values computed during execution are passed separately to [[Process Plane/Program Layer#^def-ArgumentPreparation|argument preparation]] as references to selected sources (`sources`) or as ready parameter bindings (`known_arguments`). Rebuild the context when the work needs new inputs, information, or refined conditions.
 
-### Бюджеты выполнения
+### Execution Budgets
 
 #topic_core
 
-До исполнения каждой Task в `TaskState` назначаются оба поля:
+Before a Task runs, both fields are assigned in its `TaskState`:
 
-| Поле                      | Смысл                                                                                                                         |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `execution_budget`        | Конечный объём ресурсов до пересмотра продолжения, включая уже потраченное. Ресурсы и единицы заданы явно.                    |
-| `self_improvement_budget` | Число от `0` до `100`: ориентировочная допустимая доля каждого ресурса из `execution_budget` на дополнительное самоулучшение. |
+| Field | Meaning |
+|---|---|
+| `execution_budget` | Finite resource allowance before continuation must be reviewed, including resources already spent. Resources and units are explicit. |
+| `self_improvement_budget` | A number from `0` to `100`: the approximate permitted share of each `execution_budget` resource for additional self-improvement. |
 
-Бюджеты назначает сознание или управляющая программа в пределах [[Self#SelfRegulation|ResourceControl]]; для первоначального разбора входа runtime использует установленную политику. Оценивать полную стоимость решения заранее не требуется. Жёсткие пределы расходов и сроки, если заданы, сохраняются в `constraints`; продление проходит по [[#Остановка и освобождение памяти|общим правилам]].
+Consciousness or a control program assigns budgets within [[Self#SelfRegulation|ResourceControl]]; for initial input interpretation, runtime uses its established policy. The full cost of a solution does not have to be estimated in advance. Hard spending limits and deadlines, when specified, remain in `constraints`; extensions follow the [[#Stopping Execution and Releasing Memory|general rules]].
 
-Время работы оценивается приблизительно, без строгого поминутного учёта. Небольшое отклонение, например 25 минут вместо 24, само по себе не является нарушением и основанием для штрафа. Существенный перерасход требует пересмотра; явно заданные жёсткие ограничения сохраняют силу.
+Work time is approximate, without strict minute-by-minute accounting. A small deviation, such as 25 minutes instead of 24, is not by itself a violation or reason for a penalty. Material overspending requires review; explicit hard limits remain binding.
 
-Доля самоулучшения выбирается по срочности задачи и ожидаемой пользе доступных улучшений. Она обозначает допустимые дополнительные затраты, без резервирования ресурса и требования его потратить. Самоулучшение выполняется, только если такая возможность оправданна в текущей задаче; если полезного обучения или улучшения нет, тратить бюджет не нужно. Значение `0` допустимо.
+Choose the self-improvement share based on task urgency and the expected value of available improvements. It defines permitted additional spending; it does not reserve resources or require spending them. Self-improvement is performed only when justified by the current task; if there is no useful learning or improvement, the budget need not be spent. A value of `0` is allowed.
 
-Работа, необходимая для objective, включая исследование и обучение, расходует основной бюджет. Доля самоулучшения относится к дополнительной работе ради будущих задач, например обобщению инструмента. Эти затраты учитываются в общем бюджете и подлимите исходной Task, в том числе при делегировании подзадаче. Если самоулучшение само является objective, подлимит относится только к улучшениям сверх этой цели. Бюджет не заменяет разрешение на обучение или изменение программ.
+Work required by the objective, including research and training, uses the main budget. The self-improvement share applies to additional work for future tasks, such as generalizing a tool. These costs count against both the overall budget and the originating Task's sublimit, including when delegated to a subtask. If self-improvement itself is the objective, the sublimit applies only to improvements beyond that goal. A budget does not replace authorization to learn or change programs.
 
 ```python
 execution_budget = {"active_time_minutes": 120}
-self_improvement_budget = 20  # Ориентировочно до 24 минут дополнительного самоулучшения.
+self_improvement_budget = 20  # Approx. up to 24 extra minutes for self-improvement.
 ```
 
-`active_time_minutes` — оценка суммарного активного времени исполнителей без пауз и ожидания пользователя. Процент считается от назначенного бюджета; раннее завершение не требует «добирать» расходы. Учитываются остатки и общего бюджета, и доли самоулучшения; исчерпание последней не мешает основной работе.
+`active_time_minutes` estimates total active time for all workers, excluding pauses and time waiting for the user. The percentage is based on the assigned budget; early completion does not require spending the remainder. Track both the remaining overall budget and remaining self-improvement share; exhausting the latter does not prevent the main work.
 
-
-
-### Подготовка контекста
+### Context Preparation
 
 > [!definition]
-> **ContextPreparation** — процесс выбора и сборки `PreparedContext` из входа, состояния работы и релевантного опыта в Memory.
+> **ContextPreparation** — a process that selects and assembles `PreparedContext` from input, work state, and relevant experience in Memory.
 > ^context-preparation
 
-Task и Episode задают область поиска: подготовка поднимает связанные результаты и историю, а при необходимости — похожий или иной полезный опыт. Недавние данные доступны по ссылкам из `active_state`, давние — через retrieval. Используется точное сохранённое содержание либо его сжатое представление с известной потерей подробностей и происхождением.
+The Task and Episode define the search scope: preparation retrieves related results and history, and, when useful, similar or other relevant experience. Recent data are available through references in `active_state`; older data are found through retrieval. Use the exact saved content or a compressed representation with known loss of detail and preserved provenance.
 
-Последнее входящее сообщение включается целиком. Выбранные предыдущие сообщения пользователя и агента, вызовы инструментов и их результаты могут передаваться как `messages` с сохранением ролей, порядка и связей вызова с результатом.
+Include the latest incoming message in full. Selected earlier messages from the user and agent, tool calls, and tool results may be passed as `messages`, preserving roles, order, and the link between each call and its result.
 
-Минимальный интерфейс самостоятельной программы подготовки:
+Minimal interface for a standalone preparation program:
 
 ```python
 prepare_context(task, episode, incoming) -> ProgramResult[PreparedContext]
 ```
 
-Область работы задаётся этими аргументами и действующими ограничениями задачи. В `incoming` передаётся сохранённый текущий вход; возврат подчиняется общему [[Process Plane/Program Layer#^def-ProgramResult|контракту ProgramResult]]. После допуска Task к исполнению runtime запускает назначенную реализацию подготовки для полученного входа или возобновления; последующую подготовку может вызвать текущий владелец работы. Для этого не требуется сознательный Focus.
+These arguments and the active task constraints define the work's scope. `incoming` contains the saved current input; the return follows the general [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult` contract]]. After a Task is admitted for execution, runtime runs the assigned preparation implementation for the new input or resumption; the current work owner may request later preparation. Conscious `Focus` is not required for this.
 
 #topic_details
 
@@ -301,55 +295,55 @@ ContextPreparation / prepare_context(...)
         ↓
 PreparedContext
         ↓
-TaskManagingProgram или сознание для Task в Focus
-        → дальнейшие шаги по общему циклу задачи
+TaskManagingProgram or consciousness for the focused Task
+        → further steps in the general task cycle
 ```
 
 #topic_core
 
-Начальный способ подготовки использует умеренный объём данных в пределах бюджета: актуальную спецификацию, незавершённое состояние, последний вход и релевантные недавние сведения. Дополнительный опыт извлекается по необходимости. Объём, давность и степень детализации выбранного опыта обучаемы: успешная работа, проверки и feedback помогают определить, что полезно сохранять в контексте для данного класса задач. Фиксированное число последних сообщений не заменяет эту оценку.
+The initial preparation method uses a moderate amount of data within budget: the current specification, unfinished state, latest input, and relevant recent information. Retrieve additional experience as needed. The amount, age, and detail of selected experience are learnable: successful work, checks, and feedback help determine what is useful to include for a class of tasks. A fixed number of latest messages does not replace this evaluation.
 
-Подготовщик и программа выполнения задачи могут использовать весь вход. Конкретная модель процесса получает выбранные для неё данные через свой интерфейс; её фактический LLM-запрос и версии инструкций сохраняются по [[Process Plane/Program Layer#^program-text-dependencies|общему контракту]].
+The preparer and the task execution program may use the full input. A specific process model receives selected data through its interface; its actual LLM request and instruction versions are saved under the [[Process Plane/Program Layer#^program-text-dependencies|general contract]].
 
-Применимые `constraints` остаются в структурированной спецификации, даже если не включены полностью в текущий запрос, и повторно доступны для проверки перед значимым commitment. [[Self#SelfModel|`SelfModel`]], [[Self#Self Regulation Principles|`SelfRegulationPrinciples`]], семантический граф и доменный TaskContext включаются по релевантности. Для первоначального разбора достаточно источника, начального objective и явно сохранённых нерешённых вопросов; полная спецификация ещё не требуется.
+Applicable `constraints` remain in the structured specification even when not fully included in the current request, and are available for review again before a material commitment. Include [[Self#SelfModel|`SelfModel`]], [[Self#Self-Regulation Principles|`SelfRegulationPrinciples`]], the semantic graph, and domain `TaskContext` when relevant. For initial input interpretation, the source, initial objective, and explicitly saved unresolved questions are enough; a complete specification is not yet required.
 
-`ContextPreparation` собирает сведения для владельца работы с Task/Episode; программа [[Process Plane/Program Layer#^def-ArgumentPreparation|подготовки аргументов]] связывает выбранные данные с параметрами конкретного вызова. Получив аргументы, дочерняя программа сама собирает свой LLM-запрос из них и разрешённых чтений. Эти операции могут использовать общий код, но локальная сборка запроса не запускает заново подготовку всей задачи и не даёт модели полный PreparedContext автоматически. Ограничения роли `model` и [[Process Plane/Program Evaluation and Testing#^prediction-quality-protocol|прогнозной проверки]] сохраняются.
+`ContextPreparation` gathers information for the owner of work on a Task/Episode; [[Process Plane/Program Layer#^def-ArgumentPreparation|argument preparation]] binds selected data to parameters of a specific call. After receiving its arguments, a child program assembles its own LLM request from them and permitted reads. The operations may share code, but local request assembly does not restart preparation for the whole task or automatically expose the full `PreparedContext` to the model. The `model` role restrictions and [[Process Plane/Program Evaluation and Testing#^prediction-quality-protocol|forecast-evaluation protocol]] still apply.
 
-Сознание или конкретная вызывающая программа может уточнять подготовку следующих входов и контекста по [[Process Plane/Program Layer#^program-feedback|feedback]] завершившихся вызовов, включая предложения после успешной обработки. Feedback возвращается непосредственному вызывающему и не рассылается автоматически всем модулям подготовки. Сознательное чтение символов или фрагментов использует [[Process Plane/Program Layer#^source-access-preparation|общий доступ к источнику]], а [[Process Plane/Program Layer#^granularity-adaptation|выбор гранулярности]] учитывает задачу, качество и ресурсный бюджет.
+Consciousness or the specific calling program may refine preparation for future inputs and context based on [[Process Plane/Program Layer#^program-feedback|feedback]] from completed calls, including suggestions after successful processing. Feedback goes to the immediate caller and is not broadcast automatically to all preparation modules. Conscious reading of symbols or fragments uses [[Process Plane/Program Layer#^source-access-preparation|shared source access]], while [[Process Plane/Program Layer#^granularity-adaptation|granularity selection]] accounts for the task, quality, and resource budget.
 
-Сознание может наблюдать, какие данные выбрала подготовка, и менять её дальнейшую работу через существующие [[#Сознательный контроль исполнения (Conscious Program Supervision)|supervision]] и [[#Code Anchor как точка управления|Code Anchors]]. Разовое уточнение не требует новой программы; переиспользуемое изменение проходит обычный Program Lifecycle. Уменьшение PreparedContext само по себе не удаляет опыт из Memory: хранение и сжатие источников подчиняются [[Memory|отдельному lifecycle памяти]].
+Consciousness may observe which data preparation selected and change its future work through existing [[#Conscious Program Supervision|supervision]] and [[#Code Anchor as a Control Point|Code Anchors]]. A one-off refinement does not require a new program; a reusable change follows the ordinary Program Lifecycle. Reducing `PreparedContext` does not itself delete experience from Memory: source retention and compaction follow [[Memory|Memory's separate lifecycle]].
 
-Достижение лимита времени или бюджета обработки обрабатывается по [[#Остановка и освобождение памяти|правилам остановки и продления]].
+Reaching a time or processing-budget limit is handled by the [[#Stopping Execution and Releasing Memory|stop and extension rules]].
 
 ---
 
-## Выполнение задачи (`TaskExecution`)
+## Task Execution (`TaskExecution`)
 
 #topic_core
 
 > [!definition]
-> **TaskExecution** — процесс выполнения и возобновления `Task` посредством сознательных шагов и делегированных Programs.
+> **TaskExecution** — the process of executing and resuming a `Task` through conscious steps and delegated Programs.
 > ^def-TaskExecution
 
-Состояние выполнения сохраняется в `TaskState`, [[Memory#^def-ProgramRun|`ProgramRun`]] и trace. Каждый управляющий шаг выполняет сознание или конкретная программа:
+Execution state is retained in `TaskState`, [[Memory#^def-ProgramRun|`ProgramRun`]], and the trace. Each control step is performed by consciousness or a specific program:
 
-| Ответственность                                                      | Владелец                                                                                         |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Выбрать сознательный шаг, изменить план или способ решения           | `Consciousness` для задачи в `Focus`.                                                            |
-| Выполнять порученную задачу и организовывать нужные вызовы           | Конкретная `TaskManagingProgram` в своём `ProgramRun`.                                           |
-| Подготовить вызов и использовать его результат                       | Непосредственный вызывающий: сознательный шаг или программа, соблюдающая ограничения своей роли. |
-| Предложить распределение сознательного фокуса                        | `AttentionControl`; решение проверяет и применяет `AttentionRuntime`.                            |
-| Доставить вход, запустить, приостановить или восстановить исполнение | Runtime по установленным правилам и допустимым управляющим запросам.                             |
+| Responsibility | Owner |
+|---|---|
+| Choose a conscious step, change the plan or solution method | `Consciousness` for the focused task. |
+| Perform assigned work and organize required calls | A specific `TaskManagingProgram` in its `ProgramRun`. |
+| Prepare a call and use its result | The immediate caller: a conscious step or program that respects its role restrictions. |
+| Propose allocation of conscious focus | `AttentionControl`; `AttentionRuntime` checks and applies the decision. |
+| Deliver input, start, suspend, or resume execution | Runtime under established rules and permitted control requests. |
 
 > [!definition]
-> **TaskManagingProgram** — общий класс `exec`-программ, выполняющих задачи определённого вида: например, анализ эссе или игру в NL Texas Hold'em.
+> **TaskManagingProgram** — a general class of `exec` programs that perform a certain kind of task, such as essay analysis or playing NL Texas Hold'em.
 > ^def-TaskManagingProgram
 
-Конкретная программа задаёт способ решения: использует подготовленный контекст, ведёт состояние работы, вызывает нужные подпрограммы и обрабатывает их результаты. Одна программа анализа эссе может выполнить много разных Tasks; программа игры реализует другой способ решения с тем же общим интерфейсом.
+A specific program defines the solution method: it uses prepared context, maintains work state, calls required subprograms, and handles their results. One essay-analysis program may perform many different Tasks; a game-playing program implements another solution method under the same general interface.
 
-Одна из ее специализаций [[Process Plane/Action Selection and Planning#^def-SkillDevelopmentProgram|SkillDevelopmentProgram]] организует развитие способа решения класса задач. Примеры этих назначений — `PokerPlayProgram` для ведения игры и `PokerSkillDevelopmentProgram` для развития игрового навыка.
+One specialization, [[Process Plane/Action Selection and Planning#^def-SkillDevelopmentProgram|`SkillDevelopmentProgram`]], organizes the development of a solution method for a class of tasks. Examples include `PokerPlayProgram` for playing a game and `PokerSkillDevelopmentProgram` for developing the playing skill.
 
-Макет общего Python-интерфейса исполняемого кода:
+Sketch of the shared Python interface for executable code:
 
 ```python
 class TaskManagingProgram:
@@ -358,34 +352,34 @@ class TaskManagingProgram:
     ) -> ProgramResult: ...
 ```
 
-`prepared_context` содержит данные текущей работы; `task_state` — её состояние для продолжения. Они принадлежат конкретному исполнению, а переиспользуемая [[Process Plane/Program Layer#Program|Program]] сохраняет общую identity и версию кода. Реализация конкретизирует тип основного результата в `ProgramResult`. Сознание может выполнять работу непосредственно, пока Task находится в Focus, либо поручать её подходящей `TaskManagingProgram`.
+`prepared_context` contains data for the current work; `task_state` contains its resumable state. Both belong to a specific execution, while the reusable [[Process Plane/Program Layer#Program|Program]] retains its shared identity and code version. An implementation specializes the type of the primary result in `ProgramResult`. Consciousness may perform work directly while the Task is focused or delegate it to a suitable `TaskManagingProgram`.
 
-Связанный новый вход позволяет возобновить работу с сохранённым состоянием и обновлённым контекстом по [[#^sequential-tasks|общему порядку исполнения Tasks]]. Текущий `ProgramRun` может продолжиться; выбор нового входа сам по себе не означает новый запуск программы.
+A related new input may resume work using saved state and updated context under the [[#^sequential-tasks|general Task execution order]]. The current `ProgramRun` may continue; choosing a new input does not itself mean the program has started a new run.
 
-Во вложенной композиции каждая вызывающая программа управляет своими вызовами. Сознание и программа передают управление через установленные границы с записью в истории исполнения; у каждого управляющего шага один исполнитель.
+In nested composition, each calling program manages its own calls. Consciousness and programs transfer control across established boundaries, with execution history recorded; each control step has one executor.
 
-Делегирование задаёт порученную работу, применимые ограничения и ресурсный бюджет. При последовательной обработке текста управляющая программа или сознание использует [[Process Plane/Program Layer#^next-episode-step|`get_next_episode_step`]]; выбранный [[Process Plane/Program Layer#^def-EpisodeStep|`EpisodeStep`]] служит основанием подготовки нужного вызова. Исполняющая программа использует дочерние результаты и при необходимости запрашивает сознательную обработку своей Task с причиной и нужным контекстом. При получении фокуса сознание может продолжить, перепроверить, изменить способ или прекратить работу. Автоматическое и сознательное управление могут чередоваться многократно внутри одной задачи.
+Delegation specifies assigned work, applicable constraints, and resource budget. For sequential text processing, the controlling program or consciousness uses [[Process Plane/Program Layer#^next-episode-step|`get_next_episode_step`]]; the selected [[Process Plane/Program Layer#^def-EpisodeStep|`EpisodeStep`]] grounds preparation of the required call. The executing program uses child results and, when needed, requests a conscious step for its Task with a reason and necessary context. Once focused, consciousness may continue, recheck, change the method, or stop the work. Automatic and conscious control may alternate multiple times within one task.
 
-**В EverTree в каждый момент исполняется не более одной `Task`. Параллельное выполнение разных Tasks запрещено без исключений, включая автоматические, служебные и дочерние задачи.**
+**At any moment, EverTree executes at most one `Task`. Parallel execution of different Tasks is prohibited without exception, including automatic, service, and child tasks.**
 ^sequential-tasks
 
-Вложенные `ProgramRun`, подпроцессы и потоки принадлежат текущей Task. Вспомогательные вычисления могут выполняться параллельно только внутри неё. Перед запуском или возобновлением другой Task runtime приостанавливает все исполнения текущей и подтверждает их фактическую остановку; они не продолжаются и не возобновляются, пока исполняется другая Task. Это относится и к передаче работы отдельной дочерней Task: родитель ожидает её результата. Завершение задачи подчиняется [[#Остановка и освобождение памяти|обязательной остановке оставшихся исполнителей]].
+Nested `ProgramRun`s, subprocesses, and threads belong to the current Task. Helper computations may run in parallel only within it. Before another Task starts or resumes, runtime suspends all executions for the current Task and confirms they have actually stopped; they do not continue or resume while another Task is executing. This also applies when work is delegated to a separate child Task: the parent waits for its result. Task completion follows the [[#Stopping Execution and Releasing Memory|required stop of remaining executors]].
 
-Runtime продолжает принимать и сохранять входы; вход для ожидающей Task обрабатывается после её допуска к исполнению. [[#Планирование (Planning)|`Plan`]], выполнявшийся сознательными шагами, не продолжает себя сам после переключения внимания. Новый результат обрабатывается предусмотренным продолжением текущей Task либо сохраняется до её возобновления. Повторные входы не требуют отдельных Tasks или дублирующих записей одной задачи в очереди внимания.
+Runtime continues accepting and saving inputs; input for a waiting Task is handled after that Task is admitted for execution. A [[#Planning|`Plan`]] performed through conscious steps does not continue by itself after attention switches. A new result is handled by the current Task's defined continuation or saved until it resumes. Repeated inputs do not require separate Tasks or duplicate entries for one task in the attention queue.
 
-`AttentionControl` вызывается внутри текущей Task либо в отдельной служебной Task, когда исполнение других задач остановлено. Его запуск не ждёт получения `Focus`: иначе выбор фокуса зависел бы от уже выполненного выбора фокуса. Сознательный разбор такого управления по-прежнему требует внимания.
+`AttentionControl` runs within the current Task or in a separate service Task while other tasks are stopped. It does not wait to receive `Focus`; otherwise choosing focus would depend on a focus choice that had already been made. Conscious analysis of such control still requires attention.
 
 ---
 
-## Планирование (`Planning`)
+## Planning
 
 #topic_core
 
-**Planning** — построение и пересмотр task-local способа достижения `objective`.
+**Planning** — building and revising a task-local method for achieving the `objective`.
 
-**Plan** — текущая task-local структура предполагаемых действий, подзадач, условий и ветвей. Она хранится в `TaskState` и не обязана становиться отдельным persistent-объектом semantic graph.
+**Plan** — the current task-local structure of proposed actions, subtasks, conditions, and branches. It is stored in `TaskState` and does not have to become a separate persistent semantic-graph object.
 
-**PlanningProgram** — конкретный механизм построения или пересмотра `Plan`.
+**PlanningProgram** — a specific mechanism for building or revising a `Plan`.
 
 #topic_details
 
@@ -393,8 +387,8 @@ Runtime продолжает принимать и сохранять входы
 Task specification + TaskState
         ↓
 retrieve relevant:
-- Programs и ProcessModels;
-- похожие, контрастные и граничные Episodes;
+- Programs and ProcessModels;
+- similar, contrasting, and boundary Episodes;
 - SelfRegulationPrinciples;
         ↓
 construct / revise Plan
@@ -402,36 +396,33 @@ construct / revise Plan
 
 #topic_core
 
-Если существующих механизмов достаточно, `Plan` задаёт композицию их вызовов; шаги выполняет сознание или делегированная `exec`-программа по [[#^def-TaskExecution|общим правилам]]. Одноразовая новая `Task` может выполняться через `Plan` и сознательные шаги, не создавая новую `Program`.
+If existing mechanisms are sufficient, the `Plan` specifies how to compose their calls; consciousness or a delegated `exec` program performs the steps under the [[#^def-TaskExecution|general rules]]. A one-off new `Task` may be handled through a `Plan` and conscious steps without creating a new `Program`.
 
-Candidate [[Process Plane/Program Layer#Program|`Program`]] или [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]] создаётся, только если отсутствующий или изменяемый механизм ожидаемо переиспользуем, достаточно сложен либо его формализация нужна для надёжности или обучения.
+Create a candidate [[Process Plane/Program Layer#Program|`Program`]] or [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]] only when the missing or changing mechanism is expected to be reused, is sufficiently complex, or needs formalization for reliability or learning.
 
 #topic_details
 
-[[Process Plane/Action Selection and Planning#Runtime planning|Runtime planning]] — локальный вызов `PlanningProgram` из управляющей программы, политики или сознательного шага, когда поиск по доступным моделям ожидаемо улучшает решение и оправдывает затраты. Условия вызова и приоритет готовой компактной политики определены там же; MCTS — один из возможных алгоритмов.
+[[Process Plane/Action Selection and Planning#Runtime Planning|Runtime planning]] is a local call to `PlanningProgram` from a control program, policy, or conscious step when searching available models is expected to improve the decision enough to justify its cost. The conditions for calling it and the priority of a ready compact policy are defined there; MCTS is one possible algorithm.
 
 ---
 
-## Сознательное создание и отладка `Program`
+## Conscious Program Creation and Debugging
 
 #topic_details
 
-Если [[#Планирование (Planning)|`Plan`]] требует создания или изменения переиспользуемого механизма, работа проходит через стадию `implementation` общего [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]],.
+If a [[#Planning|`Plan`]] requires creating or changing a reusable mechanism, work goes through the `implementation` stage of the shared [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]].
 
-При работе над новой или недостаточно проверенной candidate [[Process Plane/Program Layer#Program|`Program`]] implementation, локальное исполнение и debugging чередуются.
+When working on a new or insufficiently checked candidate [[Process Plane/Program Layer#Program|`Program`]], implementation, local execution, and debugging alternate.
 
 #topic_core
 
-Единица разработки — semantic block: значимое условие, переход, действие или результат, а не файл или количество строк. Локальные проверки блока не заменяют candidate-level internal verification, program tests и Evaluation.
+The unit of development is a semantic block—a material condition, transition, action, or result—not a file or number of lines. Local checks of a block do not replace candidate-level internal verification, program tests, and Evaluation.
 
-Изменение существующей active `Program` выполняется в [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]]; принципиально новый механизм создаётся как candidate `Program`. Active version не переписывается и не заменяется до [[Process Plane/Program Lifecycle and Evolution#EvaluationChoice|`EvaluationChoice`]].
-
-
-
+Changes to an existing active `Program` are made in a [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]]; a fundamentally new mechanism is created as a candidate `Program`. The active version is not rewritten or replaced before [[Process Plane/Program Lifecycle and Evolution#EvaluationChoice|`EvaluationChoice`]].
 
 ---
 
-## `Verification` и `CommitmentControl`
+## `Verification` and `CommitmentControl`
 
 #topic_core
 
@@ -439,12 +430,12 @@ Candidate [[Process Plane/Program Layer#Program|`Program`]] или [[Process Pla
 
 #topic_core
 
-**Verification** — обучаемая meta-[[Process Plane/Program Layer#Program|`Program`]] [[Self#SelfRegulation|`SelfRegulation`]], аналог общего навыка проверки собственных решений. Она не является одной конкретной проверкой, а **управляет проверкой candidate**:
+**Verification** is a learnable meta-[[Process Plane/Program Layer#Program|`Program`]] in [[Self#SelfRegulation|`SelfRegulation`]], analogous to a general skill for checking the agent's own decisions. It is not one specific check; it **manages verification of a candidate**:
 
 ```text
-что существенно проверить;
-какие проверки для этого нужны;
-достаточно ли уже полученных результатов.
+what is material to check;
+which checks are needed;
+whether the results obtained so far are sufficient.
 ```
 
 ```text
@@ -457,53 +448,54 @@ verified
 | need_checks(...)
 ```
 
-`Verification` не может отменить применимую обязательную проверку или вернуть `verified`, пока обязательный verification obligation не выполнен либо явно не разрешён соответствующим защищённым lifecycle.
+`Verification` cannot waive an applicable mandatory check or return `verified` while a required verification obligation remains incomplete, unless the corresponding protected lifecycle explicitly permits it.
 
-`Verification` вызывается [[#Сознание (Consciousness)|`Consciousness`]] либо процессом, который принимает текущее решение — например [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|`ProgramLifecycleManagement`]] при изменении `Program`. Сама `Verification` при необходимости вызывает проверяющие `Program` как обычные дочерние программы; для candidate `Program` обязательные acceptance-проверки исполняются через защищённый `ProgramLifecycleRuntime`.
+`Verification` is called by [[#Consciousness (`Consciousness`)|`Consciousness`]] or by the process making the current decision—for example, [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|`ProgramLifecycleManagement`]] when changing a `Program`. When needed, `Verification` calls checking Programs as ordinary child programs. Mandatory acceptance checks for a candidate `Program` run through the protected `ProgramLifecycleRuntime`.
 
-После завершения Verification исходный вызывающий процесс отдельно вызывает [[#CommitmentControl|`CommitmentControl`]]; `Verification` и `CommitmentControl` друг друга не вызывают.
+After Verification completes, the original calling process separately calls [[#CommitmentControl|`CommitmentControl`]]. `Verification` and `CommitmentControl` do not call one another.
 
-Проверяющие Programs только выполняют конкретную проверку и возвращают результат. Они не принимают candidate, не вызывают `CommitmentControl` и не управляют дальнейшим lifecycle.
+Checking Programs only perform a specific check and return its result. They do not accept a candidate, call `CommitmentControl`, or manage the rest of the lifecycle.
 
 #topic_details
 
-В начальной архитектуре используется одна общая `Verification`. По мере накопления опыта она может уточняться и использовать специализированные Programs для разных классов решений, например:
+The initial architecture uses one general `Verification`. As experience grows, it may be refined and use specialized Programs for different classes of decision, such as:
 
 ```text
 Program / ProgramBranch
 → code review, tests, Evaluation;
 
-Plan / значимая branch
-→ проверка предпосылок, требований и ожидаемого результата;
+Plan / material branch
+→ check assumptions, requirements, and expected result;
 
 GraphDelta
-→ проверка semantic change и его оснований;
+→ check the semantic change and its grounds;
 
 external action
-→ проверка условий и ожидаемых последствий;
+→ check conditions and expected consequences;
 
 final answer / Task completion
-→ source-to-spec coverage при необходимости
-+ проверка objective, success_criteria
-  и существенных constraints..
+→ source-to-spec coverage when needed
++ check objective, success_criteria,
+  and material constraints.
 ```
 
 #topic_core
 
-Специализированные Programs создаются только когда отдельный повторяемый механизм проверки действительно полезен. `Verification` остаётся единым общим навыком, который решает, какие проверки использовать и достаточно ли их результатов.
+Specialized Programs are created only when a separate, reusable verification mechanism is genuinely useful. `Verification` remains one shared skill that decides which checks to use and whether their results are sufficient.
 
-Verification не принимает проверяемое решение и не выполняет effect.
+Verification does not make the decision being checked and does not perform effects.
 
+---
 ### `CommitmentControl`
 
 #topic_core
 
-**CommitmentControl** — обучаемая meta-[[Process Plane/Program Layer#Program|`Program`]] [[Self#SelfRegulation|`SelfRegulation`]], аналог навыка определения того, **когда решение можно принять автоматически, а когда его следует передать [[#Сознание (Consciousness)|`Consciousness`]]**.
+**`CommitmentControl`** is a learnable meta-[[Process Plane/Program Layer#Program|`Program`]] in [[Self#SelfRegulation|`SelfRegulation`]], analogous to a skill for deciding **when a decision may be made automatically and when it should be referred to [[#Consciousness (`Consciousness`)|`Consciousness`]]**.
 
 ```text
 caller
   ↓
-Verification, если требуется
+Verification, if required
   ↓
 VerificationResult
   ↓
@@ -515,13 +507,13 @@ CommitmentControl(
 )
   ↓
 automatic
-или
+or
 consciousness_selection
 ```
 
 #topic_details
 
-Сначала используется одна общая `CommitmentControl`. По мере обучения она может использовать специализированные политики для разных классов решений: `Program` changes, `GraphDelta`, Plan branches, external actions, final answers и других повторяющихся случаев.
+Initially, use one general `CommitmentControl`. As it learns, it may use specialized policies for different classes of decision: `Program` changes, `GraphDelta`, Plan branches, external actions, final answers, and other recurring cases.
 
 #topic_core
 
@@ -530,90 +522,88 @@ CommitmentDecision {
   mode: "automatic" | "consciousness_selection"
 
   reason?: <string>
-    "Существенная причина передачи или непередачи решения сознанию."
+    "Material reason for or against referring the decision to consciousness."
 
   belief_data?: <BeliefData>
-    "Уверенность в этом решении."
+    "Confidence in this decision."
 }
 ```
 
 ---
 
-## Режимы сознательной обработки
+## Modes of Conscious Processing
 
 #topic_core
 
 ^1101e5
 
-`cognition_mode` задаёт ресурсоёмкость текущей сознательной обработки: доступные модели и tools, reasoning effort, лимиты времени и стоимости.
+`cognition_mode` defines the resource intensity of current conscious processing: available models and tools, reasoning effort, and time and cost limits.
 
 #topic_details
 
-Режимы задаются конфигурацией, например:
+Modes are set through configuration, for example:
 
-- **low** — минимальная стоимость для простых задач;
-- **medium** — стандартная обработка;
-- **high** — увеличенный reasoning budget для сложных задач
-- **max** — максимальный допустимый бюджет для критических случаев.
+- **low** — minimum cost for simple tasks;
+- **medium** — standard processing;
+- **high** — increased reasoning budget for complex tasks;
+- **max** — the highest permitted budget for critical cases.
 
 #topic_core
 
-[[Self#CognitionControl|`CognitionControl`]] выбирает и при необходимости меняет `cognition_mode` в пределах бюджета `ResourceControl` и hard limits L4.
+[[Self#CognitionControl|`CognitionControl`]] selects and, when needed, changes `cognition_mode` within the `ResourceControl` budget and L4 hard limits.
 
-`cognition_mode` не определяет, автоматическим или сознательным будет решение:
+`cognition_mode` does not determine whether a decision is automatic or conscious:
 
 ```text
 CognitionControl
-→ сколько ресурсов использовать;
+→ how many resources to use;
 
 CommitmentControl
-→ automatic или consciousness_selection.
+→ automatic or consciousness_selection.
 ```
 
-Поэтому дорогая обработка может выполняться автоматически, а простое решение — быть передано [[#Сознание (Consciousness)|`Consciousness`]], если этого требует [[#CommitmentControl|`CommitmentControl`]].
-
-
-
+Therefore, expensive processing may run automatically, while a simple decision may be referred to [[#Consciousness (`Consciousness`)|`Consciousness`]] when required by [[#CommitmentControl|`CommitmentControl`]].
 
 ---
 
-## Сознательная разработка и контроль исполнения `Program`
+## Conscious Program Development and Execution Control
 
 #topic_core
 
-Сознание должно уметь создавать и уточнять [[Process Plane/Program Layer#Program|`Program`]] непосредственно в ходе решения [[#Goal, Task и спецификация задачи|`Task`]], наблюдать её фактическое исполнение, проверять локальные альтернативы на текущем состоянии процесса и превращать удачные находки в persistent candidate changes. Такой режим можно рассматривать как **`test-time programming`**: агент может строить и уточнять способ решения одновременно с его применением к текущей задаче.
+Consciousness must be able to create and refine a [[Process Plane/Program Layer#Program|`Program`]] directly while solving a [[#`Goal`, `Task`, and Task Specification|`Task`]], observe its actual execution, check local alternatives against the current process state, and turn successful discoveries into persistent candidate changes. This mode can be viewed as **`test-time programming`**: the agent may build and refine its solution method while applying it to the current task.
 
-Степень сознательного участия зависит от надёжности и зрелости используемой `Program`, новизны текущей ситуации, uncertainty, важности результата и цены ошибки. Надёжная знакомая `Program` обычно исполняется автоматически; грубая, новая или недостаточно подтверждённая может выполняться под более плотным conscious supervision. В ходе такого supervision [[#Сознание (Consciousness)|`Consciousness`]] может перепроверять предпосылки и текущую траекторию, использовать [[#Verification|`Verification`]], изменять способ дальнейшего решения и при необходимости уточнять саму `Program`. [[#CommitmentControl|`CommitmentControl`]] определяет передачу сознанию конкретных решений в соответствующих control boundaries.
+The degree of conscious involvement depends on the reliability and maturity of the `Program` in use, novelty of the current situation, uncertainty, importance of the result, and cost of error. A reliable, familiar `Program` usually runs automatically; a rough, new, or insufficiently verified one may run under closer conscious supervision. During supervision, [[#Consciousness (`Consciousness`)|`Consciousness`]] may recheck assumptions and the current trajectory, use [[#Verification|`Verification`]], change the subsequent solution method, and refine the `Program` itself when needed. [[#CommitmentControl|`CommitmentControl`]] determines whether specific decisions are referred to consciousness at the relevant control boundaries.
 
-При этом EverTree не дублирует возможности Git, coding agent и стандартных Python development/debugging tools. Собственный runtime добавляется только там, где нужна специфическая ответственность EverTree: [[Memory#^def-ProgramRun|`ProgramRun`]], [[Memory#SemanticTrace|semantic trace]], [[Memory#^def-ResultProvenance|provenance]], [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]], управление живым исполнением и безопасное применение изменений.
+EverTree does not duplicate the capabilities of Git, coding agents, and standard Python development/debugging tools. Its own runtime is added only where EverTree-specific responsibility is required: [[Memory#^def-ProgramRun|`ProgramRun`]], [[Memory#SemanticTrace|semantic trace]], [[Memory#^def-ResultProvenance|provenance]], [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]], management of live execution, and safe application of changes.
 
-### Принципы
+### Principles
 
 #topic_core
 
-#### 1. Сначала стандартные инструменты (`Native tools first`)
+#### 1. Native Tools First
 
-> Не создавать EverTree API для операций, которые coding agent, например Codex, уже надёжно выполняет стандартными средствами. Добавлять только операции, несущие специфическую семантику EverTree или обеспечивающие его инварианты.
+> Do not create an EverTree API for operations that a coding agent, such as Codex, already performs reliably with standard tools. Add only operations that carry EverTree-specific semantics or enforce its invariants.
 
 #topic_details
 
-Поэтому coding agent напрямую использует свои обычные средства для:
+Therefore, a coding agent directly uses its ordinary tools for:
 
 ```text
-чтения, поиска и редактирования кода;
-операций с Git;
+reading, searching, and editing code;
+Git operations;
 shell;
-tests, linters и type checks;
-работы с логами и результатами запусков.
+tests, linters, and type checks;
+logs and run results.
 ```
 
 #topic_core
 
-EverTree не вводит собственные аналоги.
+EverTree does not introduce its own equivalents.
 
-#### 2. Изоляция protected core и исполняемых `Program`
+---
+#### 2. Isolation of the Protected Core and Executable Programs
 
-`Consciousness` и authoritative state EverTree находятся в защищённом core process. Обучаемый Python-код `Program` исполняется в управляемых worker processes; [[Core data structures#GraphStore|`GraphStore`]] остаётся в protected core.
+`Consciousness` and EverTree's authoritative state reside in a protected core process. Learnable Python `Program` code runs in managed worker processes; [[Core data structures#GraphStore|`GraphStore`]] remains in the protected core.
 
 ```text
 Core process
@@ -630,39 +620,38 @@ Worker process
     ├── Python runtime state
     ├── ProgramRun
     └── nested ProgramRun
-
 ```
 
-Это позволяет независимо:
+This allows the system to independently:
 
-```
+```text
 pause / resume / terminate ProgramRun;
-сохранять живой runtime-state во время работы Consciousness;
-изолировать ошибочный или candidate-код от protected core.
+retain live runtime state while Consciousness works;
+isolate faulty or candidate code from the protected core.
 ```
 
+#### 3. Reuse of the Worker Process
 
-#### 3. Повторное использование worker process
+Related nested `ProgramRun` instances execute in the same worker process. A new worker is created only when parallel, isolated processing within the current Task is clearly necessary. A worker with unfinished executions for one Task is not reused for another.
 
-Связанные вложенные `ProgramRun` выполняются в одном worker process. Новый worker создаётся только при однозначной необходимости параллельной изолированной обработки внутри текущей Task. Worker с незавершёнными исполнениями одной Task не используется для другой.
+#### 4. A `Program` Does Not Directly Change Authoritative Core State
 
-#### 4. `Program` не изменяет authoritative core state напрямую
+A worker has no direct write access to the authoritative GraphStore, Memory, or protected lifecycle state.
 
-Worker не имеет прямого write-доступа к authoritative
-GraphStore, Memory и protected lifecycle state.
-
+```text
 Program
 → result / proposed GraphDelta / effect request
 
 Core
 → validate
 → apply.
-
-#### 5. Однозначная идентификация фактически выполненного кода
-
-Coding agent может свободно изменять candidate workspace, но версия кода применяется к исполнению только после Git commit.
-
 ```
+
+#### 5. Unambiguous Identification of the Code Actually Executed
+
+A coding agent may freely change the candidate workspace, but a code version is applied to execution only after a Git commit.
+
+```text
 edit
 ↓
 commit
@@ -670,120 +659,119 @@ commit
 execute / apply revision
 ```
 
-Git поэтому остаётся единым механизмом identity исполняемого кода, включая промежуточные экспериментальные revisions.
+Git therefore remains the single mechanism for identifying executable code, including intermediate experimental revisions.
 
-### Сохраняемое исполнение и восстановление через DBOS
+### Durable Execution and Recovery Through DBOS
 
 ^durable-program-execution
 
 #topic_core
 
-В MVP **каждый запуск зарегистрированной [[Process Plane/Program Layer#Program|`Program`]] выполняется как workflow DBOS**. Это единое правило runtime для всех ролей и длительностей исполнения. Runtime регистрирует программу в DBOS и управляет её запуском; отдельный выбор «сохранять или нет» в коде программы не требуется.
+In the MVP, **every run of a registered [[Process Plane/Program Layer#Program|`Program`]] executes as a DBOS workflow**. This is one runtime rule for every role and execution duration. The runtime registers the program with DBOS and manages its launch; program code does not need a separate choice of whether to make a run durable.
 
-**Workflow** — Python-функция с журналом исполнения, по которому DBOS может восстановить её работу. Каждому [[Memory#^def-ProgramRun|`ProgramRun`]] соответствует отдельное исполнение workflow. Вызов дочерней `Program` создаёт дочерний workflow; обычные вспомогательные функции остаются частью вызывающей программы.
+A **workflow** is a Python function with an execution journal that DBOS can use to recover its work. Each [[Memory#^def-ProgramRun|`ProgramRun`]] corresponds to a separate workflow execution. Calling a child `Program` creates a child workflow; ordinary helper functions remain part of the calling program.
 
-Каждая `Program` возвращает [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]]; этот контракт не меняет форму возврата обычных вспомогательных Python-функций.
+Each `Program` returns [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]]; this contract does not change the return shape of ordinary Python helper functions.
 
-Единое правило позволяет восстанавливать и заменять любую `Program` по одному протоколу. Его цена — записи в журнал и дополнительное время на каждый запуск, включая короткие модели. В MVP эта цена принимается ради простоты управления исполнением.
+One rule lets the runtime recover and replace any `Program` through the same protocol. The cost is journal storage and additional time for every run, including short models. The MVP accepts this cost to simplify execution management.
 
-В локальном MVP DBOS хранит журнал в SQLite. Адаптер runtime связывает его записи с `ProgramRun`, [[Memory#^def-TraceEvent|`TraceEvent`]] и результатами. Журнал DBOS нужен для продолжения исполнения, semantic trace — для хранения смысла и происхождения опыта. [Подключение DBOS](https://docs.dbos.dev/python/integrating-dbos)
+In the local MVP, DBOS stores the journal in SQLite. A runtime adapter links its entries to `ProgramRun`, [[Memory#^def-TraceEvent|`TraceEvent`]], and results. The DBOS journal is for continuing execution; the semantic trace stores the meaning and provenance of experience. [DBOS integration](https://docs.dbos.dev/python/integrating-dbos)
 
-#### Как восстанавливается исполнение
+#### How Execution Is Recovered
 
-**Step** — вызов внутри workflow, результат которого DBOS сохраняет. При восстановлении:
+A **step** is a call within a workflow whose result DBOS saves. During recovery:
 
-1. Загружаются версии кода и входы прежнего запуска.
-2. Код workflow выполняется сначала. Вместо уже завершённых steps и дочерних workflows DBOS возвращает их сохранённые результаты. Обычные локальные вычисления выполняются повторно.
-3. Исполнение продолжается с операций, результат которых ещё не сохранён.
+1. The code versions and inputs from the previous run are loaded.
+2. The workflow code runs from the beginning. For completed steps and child workflows, DBOS returns their saved results. Ordinary local computations run again.
+3. Execution continues from operations whose results have not yet been saved.
 
-Так восстанавливаются и локальные переменные. DBOS не сохраняет Python-стек целиком и не продолжает работу с произвольной строки кода. Восстановление продолжает тот же `ProgramRun`; чтение прежнего результата не создаёт новое наблюдение или learning credit.
+This also restores local variables. DBOS does not save the entire Python stack or resume from an arbitrary line of code. Recovery continues the same `ProgramRun`; reading a previous result does not create a new observation or learning credit.
 
-> Всё необходимое для продолжения должно восстанавливаться из сохранённых версий кода, входов и результатов операций.
+> Everything required to continue must be recoverable from saved code versions, inputs, and operation results.
 
-Для этого одинаковые входы и сохранённые результаты должны приводить к тому же порядку вызовов. Это требование к коду программы; подключение DBOS само по себе его не обеспечивает. [Исполнение workflows](https://docs.dbos.dev/python/tutorials/workflow-tutorial)
+For this to work, the same inputs and saved results must lead to the same order of calls. This is a requirement on program code; integrating DBOS does not ensure it by itself. [Workflow execution](https://docs.dbos.dev/python/tutorials/workflow-tutorial)
 
-#### Какие операции становятся steps
+#### Which Operations Become Steps
 
-- LLM-вызовы, чтение изменяемого графа, внешние запросы, действия, получение времени и случайных значений выполняются через steps или готовые сохраняемые операции DBOS.
-- Вычисления, повторяемые по тем же входам, могут оставаться обычными функциями. Дорогой расчёт можно оформить step, чтобы сохранить его результат.
-- Вызовы других `Program` выполняются из workflow-кода. Помещать их внутрь step нельзя: DBOS не разрешает вызывать workflow из step.
+- LLM calls, reads of mutable graph state, external requests, actions, and reads of time or random values run through steps or DBOS operations that already save their results.
+- Computations that repeat with the same inputs may remain ordinary functions. An expensive calculation may be made a step so its result is saved.
+- Calls to other `Program` instances run in workflow code. They cannot be placed inside a step: DBOS does not allow a workflow to be called from a step.
 
-`Code Anchor` отмечает семантически значимый участок программы, а step задаёт границу сохранения результата. Их границы могут различаться. Вложенный вызов step внутри другого step сохраняется только вместе с внешним step; semantic trace при этом может описывать его внутренние операции. [Правила steps](https://docs.dbos.dev/python/tutorials/step-tutorial)
+A `Code Anchor` marks a semantically significant region of a program; a step marks the boundary at which a result is saved. Their boundaries may differ. A nested step call inside another step is saved only with the outer step; the semantic trace may still describe its internal operations. [Step rules](https://docs.dbos.dev/python/tutorials/step-tutorial)
 
-Входы и результаты должны допускать сериализацию. Семантические результаты сохраняются как неизменяемые [[Memory#^def-OperatorOutput|`OperatorOutput`]]. Ссылка вместо значения допустима, если после сбоя она возвращает то же сохранённое содержимое, включая нужную версию объекта.
+Inputs and results must be serializable. Semantic results are saved as immutable [[Memory#^def-OperatorOutput|`OperatorOutput`]]. A reference may be saved instead of a value if it returns the same saved content after failure, including the required object version.
 
-Код, входы, результаты и журнал сохраняются, пока запуск может потребоваться восстановить. Сжатие semantic trace не должно удалять нужные для этого данные.
+Code, inputs, results, and the journal are retained while a run may need recovery. Semantic trace compression must not delete data required for this.
 
-#### Получение наблюдений
+#### Receiving Observations
 
-[[Process Plane/Program Layer#^next-observation|`next_observation()`]] читает общий канал наблюдений данного исполнения через `DBOS.recv_async`. Это обычная async-функция в контексте workflow: дополнительный step ей не нужен, поскольку DBOS уже сохраняет результат получения.
+[[Process Plane/Program Layer#^next-observation|`next_observation()`]] reads the shared observation channel for this execution through `DBOS.recv_async`. It is an ordinary async function in workflow context and needs no additional step because DBOS already saves the receive result.
 
-Отправитель передаёт через `send` типизированный результат или ссылку на него. Адаптер проверяет схему и распознаёт повторную доставку по идентификатору наблюдения. При восстановлении возвращаются прежние входы, затем читаются новые сообщения в порядке доставки. Время описанных событий учитывает программа процесса. [Обмен сообщениями](https://docs.dbos.dev/python/tutorials/workflow-communication)
+The sender passes a typed result or reference through `send`. The adapter validates the schema and detects redelivery by observation ID. On recovery, previous inputs are returned first, then new messages are read in delivery order. The process program accounts for the times of the events being described. [Workflow communication](https://docs.dbos.dev/python/tutorials/workflow-communication)
 
-#### Регулярное сохранение и восстановление агента
+#### Regular Agent Backup and Recovery
 ^agent-backup
 
-Для MVP достаточно регулярно сохранять агент целиком. **После аварии core и журнал DBOS восстанавливаются из одного завершённого backup.** Работа после него может быть потеряна. Отдельный журнал изменений core и немедленное сохранение каждого обновления не требуются.
+For the MVP, it is enough to save the entire agent regularly. **After a failure, core and the DBOS journal are restored from one completed backup.** Work after that backup may be lost. A separate core change journal and immediate persistence of every update are not required.
 
-Общее сохранение выполняет runtime с настраиваемым интервалом:
+The runtime performs a shared backup at a configurable interval:
 
-1. Приостанавливает новые запуски, следующие операции workflows, обработку входов и другие изменения сохраняемого состояния. Начатым steps даёт завершиться и записать результаты в DBOS. Пауза достигается между операциями, когда состояние core и журнал согласованы; ожидание будущего наблюдения не требует дождаться его поступления.
-2. Сохраняет одним комплектом состояние core — граф, память, обученные параметры и задачи — и БД DBOS. В комплект входят привязки к версиям программ; необходимые версии кода и файлы результатов сохраняются вместе с ним либо остаются доступны как неизменяемые зависимости.
-3. Только после полной записи отмечает новый backup как завершённый и продолжает работу. Предыдущее завершённое сохранение остаётся доступным, пока создаётся новое. Если согласованной паузы достичь не удалось, создание backup откладывается.
+1. It pauses new runs, subsequent workflow operations, input handling, and other changes to saved state. It lets already-started steps finish and write their results to DBOS. The pause is reached between operations, when core state and the journal are consistent; waiting for a future observation does not require waiting for that observation to arrive.
+2. It saves core state—the graph, memory, trained parameters, and tasks—and the DBOS database as one set. The set includes bindings to program versions; required code versions and result files are saved with it or remain available as immutable dependencies.
+3. Only after the full write succeeds does it mark the new backup complete and resume work. The previous completed backup remains available while the new one is being created. If a consistent pause cannot be reached, backup creation is deferred.
 
-Для копирования БД используется [SQLite Backup API](https://www.sqlite.org/backup.html). Он обеспечивает согласованность копии SQLite; согласованность всего комплекта обеспечивает описанная пауза runtime.
+The [SQLite Backup API](https://www.sqlite.org/backup.html) is used to copy the database. It ensures consistency of the SQLite copy; the runtime pause described above ensures consistency of the full set.
 
-При восстановлении сначала загружается весь выбранный комплект, затем разрешается возобновление workflows и приём новых входов. Более свежий рабочий журнал DBOS не совмещается со старым состоянием core. Внутренние обновления после backup теряются вместе с отметками о них и могут быть вычислены заново от восстановленного состояния.
+During recovery, the entire selected set is loaded before workflows are allowed to resume and new inputs are accepted. A newer working DBOS journal is not combined with older core state. Internal updates after the backup are lost along with their records and may be recomputed from the restored state.
 
-Внешние действия при таком откате не отменяются. После сбоя возможны их повторное выполнение и повтор отдельных операций, результат которых DBOS не успел сохранить. MVP принимает эти повторы и не требует универсальной защиты каждой команды или автоматического выяснения исхода каждого действия. Существующие проверки повторов в отдельных операциях сохраняются.
+External actions are not undone by this rollback. After a failure, they may be repeated, as may individual operations whose results DBOS did not save in time. The MVP accepts these repeats and does not require universal protection for every command or automatic determination of every action's outcome. Existing repeat checks in specific operations remain in place.
 
-#### Остановка и освобождение памяти
+#### Stopping Execution and Releasing Memory
 
-Каждый workflow принадлежит `Task` и связан с родительским запуском, если он есть. Runtime учитывает всё дерево созданных ею исполнений, включая подпроцессы и потоки, созданные напрямую или через дочерние исполнения. Программа задачи завершает ненужную работу. `AttentionControl` предлагает продолжение, отсрочку или отмену; `AttentionRuntime` применяет решения и ограничивает число живых исполнений и ресурсы workers.
+Each workflow belongs to a `Task` and is linked to a parent run, if one exists. The runtime tracks the entire tree of executions it creates, including subprocesses and threads created directly or through child executions. The task program ends work that is no longer needed. `AttentionControl` proposes continuing, deferring, or canceling; `AttentionRuntime` applies those decisions and limits the number of live executions and worker resources.
 
-**При завершении Task с любым окончательным исходом, включая отмену, runtime принудительно завершает все её оставшиеся workflows, подпроцессы и потоки, которые задача не завершила сама.** При необходимости для этого завершаются владеющие ими workers. Завершение Task считается законченным только после фактической остановки всего дерева; следующая Task до этого не запускается. Запуск и восстановление исполнений завершённой Task запрещены, в том числе автоматическое восстановление DBOS.
+**When a Task ends with any final outcome, including cancellation, the runtime forcibly ends all its remaining workflows, subprocesses, and threads that the task did not end itself.** Workers that own them are terminated if necessary. A Task is considered complete only after its entire tree has actually stopped; another Task does not start before then. Runs belonging to a completed Task cannot be started or recovered, including through automatic DBOS recovery.
 
-Когда по оценке расхода [[#Бюджеты выполнения|execution_budget]] исчерпан, сознание пересматривает продолжение. Оно анализирует `TaskState` и конкретный trace: есть ли продвижение, в чём затруднение, насколько близок результат и оправданы ли дальнейшие затраты с учётом значимости цели. Сознание может продлить работу с новым лимитом, разрешить ожидание, изменить способ решения, отложить задачу или прекратить её исполнение, при необходимости запросив принудительную остановку (`force-kill`). До разрешения продолжения исполнение приостанавливается на допустимой runtime-границе. Промежуточные результаты, состояние Task, решение и его основания сохраняются для разбора и возможного возобновления.
+When estimated [[#Execution Budgets|`execution_budget`]] is exhausted, consciousness reviews whether to continue. It analyzes `TaskState` and the specific trace: whether there is progress, what is blocking it, how close the result is, and whether more cost is justified by the importance of the goal. Consciousness may extend work with a new limit, allow it to wait, change the solution method, defer the task, or stop execution, requesting a forced stop (`force-kill`) if needed. Execution pauses at a permitted runtime boundary until continuation is authorized. Intermediate results, Task state, the decision, and its grounds are retained for review and possible resumption.
 
-Продление допускается в пределах `ResourceControl` и hard limits L4. Эти жёсткие пределы и watchdog runtime применяет независимо от доступности сознания. Продление бюджета исполнения не меняет автоматически срок результата в task specification. Остановка исполнения не удаляет Task и её историю; её дальнейший статус и обязательства определяются отдельным решением.
+An extension is allowed within `ResourceControl` and L4 hard limits. The runtime enforces these hard limits and its watchdog regardless of whether consciousness is available. Extending the execution budget does not automatically change the result deadline in the task specification. Stopping execution does not delete the Task or its history; its subsequent status and obligations are determined separately.
 
-Лимиты проверяются при запуске, возобновлении и автоматическом восстановлении DBOS. Расход дочерних вызовов, делегированных подзадач, параллельной работы внутри Task и повторов входит в применимые общие бюджеты; в каждом бюджете расход учитывается один раз. Продление сохраняет Task и накопленный расход. Перезапуск, новая revision или пересоздание продолжения той же работы не обнуляют учёт и не снимают ограничения. Отдельный workflow не требует отдельного worker-а.
+Limits are checked at launch, resumption, and automatic DBOS recovery. Usage by child calls, delegated subtasks, parallel work within a Task, and retries counts toward applicable shared budgets, with each budget charged once. An extension preserves the Task and its accumulated usage. Restarting, using a new revision, or recreating a continuation of the same work does not reset accounting or remove limits. A separate workflow does not require a separate worker.
 
-Исчерпание пересматриваемого бюджета само по себе не является нарушением. [[Learning system#^outcome-credit|Оценка и обучение по результату Task]] могут учитывать обоснованность распределения ресурсов и своевременность пересмотра; нарушения жёстких ограничений оцениваются отдельно. Факт нарушения сам по себе не устанавливает ответственный механизм.
+Exhausting a revisable budget is not itself a violation. [[Learning system#^outcome-credit|Evaluation and learning from the Task outcome]] may consider whether resources were allocated reasonably and whether the budget was reviewed in time; hard-limit violations are assessed separately. A violation alone does not identify the responsible mechanism.
 
-Пауза перед `Code Anchor` и ожидание через `await` оставляют состояние исполнения в оперативной памяти. Для освобождения памяти runtime отменяет workflow через DBOS, сохраняя в `TaskState` причину отсрочки и условие возвращения. Отмена обычно вступает в силу перед следующим step; для прерываемых async-steps используется `preemptible`. Освобождение ресурсов учитывается после фактической остановки, а не сразу после смены статуса. Если исполнение зависло или штатная остановка не завершилась в допустимый срок, runtime принудительно завершает worker по установленным ограничениям. Это может затронуть другие исполнения на том же worker. Продолжение учитывает [[#^program-restart-continuation|сохранённые сведения об операциях]]; допустимые повторы при утрате записей определены [[#^agent-backup|правилами восстановления MVP]]. [Управление workflows](https://docs.dbos.dev/python/tutorials/workflow-management)
+Pausing before a `Code Anchor` and waiting through `await` leave execution state in memory. To release memory, the runtime cancels the workflow through DBOS, retaining the deferral reason and return condition in `TaskState`. Cancellation usually takes effect before the next step; interruptible async steps use `preemptible`. Resources are counted as released only after execution has actually stopped, not immediately after the status changes. If execution hangs or does not stop within the allowed time, the runtime forcibly terminates the worker under established limits. This may affect other executions on that worker. Continuation uses [[#^program-restart-continuation|saved operation information]]; permitted repeats after lost records follow the [[#^agent-backup|MVP recovery rules]]. [Workflow management](https://docs.dbos.dev/python/tutorials/workflow-management)
 
-При отмене workflows всей Task runtime явно задаёт `cancel_children=True`; созданные процессы и потоки останавливаются по общему правилу выше. Для продолжения незавершённой Task после её допуска к исполнению runtime возобновляет нужные workflows через `resume_workflow`: возобновление родителя само по себе не возобновляет отменённых детей. Неактивные записи в БД не занимают места среди живых исполнений. Их историю удаляют, когда она больше не нужна для восстановления или памяти агента. [Управление деревом исполнений](https://docs.dbos.dev/python/reference/contexts#cancel_workflow)
+When canceling all workflows for a Task, the runtime explicitly sets `cancel_children=True`; processes and threads it created are stopped under the shared rule above. To continue an unfinished Task after it is admitted for execution, the runtime resumes the required workflows with `resume_workflow`: resuming a parent does not itself resume canceled children. Inactive database records do not count against the number of live executions. Their history is deleted when it is no longer needed for recovery or agent memory. [Managing an execution tree](https://docs.dbos.dev/python/reference/contexts#cancel_workflow)
 
-#### Изменение кода и перезапуск
+#### Code Changes and Restart
 ^program-restart-continuation
 
-**В MVP новая зафиксированная версия запускается с начала функции в новом `ProgramRun` / workflow и продолжает ту же Task.** Старый запуск может завершиться на прежней версии; для немедленной замены runtime сначала подтверждает остановку его и ненужных дочерних исполнений. Trace сохраняет оба запуска, причину замены и состояние продолжения.
+**In the MVP, a newly committed version starts from the beginning of the function in a new `ProgramRun` / workflow and continues the same Task.** The old run may finish on its previous version; for immediate replacement, the runtime first confirms that it and any unnecessary child executions have stopped. The trace retains both runs, the reason for replacement, and continuation state.
 
-Вызывающая программа или сознание готовит продолжение по `TaskState` и trace: выполненные операции и результаты, оставшуюся работу, необработанные наблюдения и неизвестные исходы. Новая версия получает их через свой интерфейс. Совместимые по входам, зависимостям и смыслу результаты используются с прежним provenance, без нового observation или learning credit; пересчёт требует основания. Task, память и совершённые эффекты сохраняются; исправление эффекта — отдельное действие.
+The calling program or consciousness prepares continuation from `TaskState` and the trace: completed operations and results, remaining work, unprocessed observations, and unknown outcomes. The new version receives these through its interface. Results compatible in inputs, dependencies, and meaning are reused with their original provenance, without a new observation or learning credit; recomputation requires grounds. The Task, memory, and completed effects remain. Correcting an effect is a separate action.
 
-Для внешнего действия runtime атомарно проверяет и регистрирует identity операции в рамках Task, параметры и статус; результат сохраняется по получении. Identity сохраняется при смене запуска. Повторный запрос получает прежний результат или ждёт начатую операцию без второго исполнения; другие параметры с той же identity отклоняются. Намеренное новое действие получает другую identity, даже при совпадении команды. Для [[Learning system#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|parameter updates]] используется существующий учёт.
+For an external action, the runtime atomically checks and records the operation identity within the Task, its parameters, and status; the result is saved when received. The identity persists across run replacement. A repeated request returns the previous result or waits for the in-progress operation without executing it again; different parameters with the same identity are rejected. An intentional new action gets a different identity, even if the command is the same. Existing accounting is used for [[Learning system#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|parameter updates]].
 
-Принятую внешней системой команду повторно не отправляют; её последствия проверяются отдельно. При неизвестном исходе необходимы сверка с источником или поддерживаемая идемпотентность с прежним ключом; до разрешения исхода зависимое продолжение ждёт.
+A command accepted by an external system is not sent again; its effects are checked separately. If the outcome is unknown, the runtime must reconcile with the source or use supported idempotency with the original key. Dependent continuation waits until the outcome is resolved.
 
-Если новая версия не принимает состояние продолжения или не может сопоставить операции, автоматический перезапуск запрещён: сознание готовит совместимое продолжение либо откладывает замену. При замене ребёнка родитель явно вызывает новую версию; если он этого не поддерживает, его останавливают и заменяют по тем же правилам.
+If the new version does not accept the continuation state or cannot map the operations, automatic restart is prohibited: consciousness prepares a compatible continuation or defers the replacement. When replacing a child, the parent explicitly calls the new version; if it cannot do so, the parent is stopped and replaced under the same rules.
 
-Python-стек и журнал DBOS автоматически в новый запуск не переносятся. Нужные данные продолжения входят в [[#^agent-backup|общий backup]] с его ограничениями. Восстановление после сбоя продолжает прежний `ProgramRun` по сохранённым коду и журналу. Смена кода внутри живого запуска остаётся [[#Интерактивная смена revision внутри текущего `ProgramRun`|необязательной интерактивной возможностью]].
+The Python stack and DBOS journal are not automatically carried into a new run. Required continuation data is included in the [[#^agent-backup|shared backup]], with its limitations. After a failure, recovery continues the old `ProgramRun` using its saved code and journal. Changing code within a live run remains an [[#Interactive Revision Change Within the Current `ProgramRun`|optional interactive capability]].
 
-### Персистентное изменение `Program`
+### Persistent Changes to a `Program`
 
 #topic_core
 
-Persistent изменения `Program` проходят обычный Program Lifecycle. 
-`ProgramLifecycleRuntime` владеет [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]], lifecycle state и merge / activation через [[Process Plane/Program Lifecycle and Evolution#EvaluationChoice|`EvaluationChoice`]].
+Persistent changes to a `Program` follow the ordinary Program Lifecycle. `ProgramLifecycleRuntime` owns [[Process Plane/Program Lifecycle and Evolution#ProgramBranch|`ProgramBranch`]], lifecycle state, and merge/activation through [[Process Plane/Program Lifecycle and Evolution#EvaluationChoice|`EvaluationChoice`]].
 
-### Основной цикл разработки
+### Main Development Loop
 
 #topic_details
 
-Путь по умолчанию:
+Default path:
 
-```
+```text
 write / edit candidate
         ↓
 commit
@@ -798,69 +786,69 @@ edit
         ↺
 ```
 
-Это предпочтительнее пошагового Python debugging: `SemanticTrace` непосредственно показывает значимые [[Process Plane/Program Layer#OperatorConcept, Code Anchors and AnchorResolver|`OperatorConcept`]], их arguments, outputs, вложенные `ProgramRun` и provenance.
+This is preferable to step-by-step Python debugging: `SemanticTrace` directly shows significant [[Process Plane/Program Layer#OperatorConcept, Code Anchors, and AnchorResolver|`OperatorConcept`]] instances, their arguments, outputs, nested `ProgramRun` instances, and provenance.
 
-Новая версия запускается по [[#Изменение кода и перезапуск|общим правилам перезапуска]].
+A new version launches under the [[#Code Changes and Restart|shared restart rules]].
 
-### Сознательный контроль исполнения (`Conscious Program Supervision`)
+### Conscious Program Supervision
 
 #topic_core
 
-Для новой, грубой или недостаточно автоматизированной `Program` сознание может управлять её исполнением непосредственно.
+For a new, rough, or insufficiently automated `Program`, consciousness may directly supervise its execution.
 
 #topic_details
 
-```
+```text
 ProgramRun
 ↓
-выполнение semantic blocks
+execute semantic blocks
 ↓
 Code Anchor
 ↓
-при необходимости:
+when needed:
 pause worker
 ↓
-запросить сознательный шаг Task
-→ Attention, если Task ещё не в Focus
+request a conscious step for the Task
+→ Attention, if the Task is not already in Focus
 ↓
-Consciousness для этой Task в Focus
+Consciousness for this Task in Focus
 → inspect trace / current state
 → retrieval / reasoning / Verification
 → continue
-  или изменить candidate
+  or change the candidate
 ```
 
 #topic_core
 
-`Conscious Program Supervision` не является отдельным `run_mode`.
+`Conscious Program Supervision` is not a separate `run_mode`.
 
-Если подходящей `Program` ещё нет, `Consciousness` решает `Task` через `Plan`, существующие Programs и прямые cognitive steps. Candidate `Program` создаётся, когда найденный механизм ожидаемо стоит формализовать и переиспользовать.
+If a suitable `Program` does not yet exist, `Consciousness` solves the `Task` through a `Plan`, existing Programs, and direct cognitive steps. A candidate `Program` is created when the discovered mechanism is expected to be worth formalizing and reusing.
 
-#### `Code Anchor` как точка управления
+#### `Code Anchor` as a Control Point
 
-[[Process Plane/Program Layer#Code Anchors|`Code Anchor`]] одновременно задаёт semantic observability и доступную границу conscious control.
+[[Process Plane/Program Layer#Code Anchors|`Code Anchor`]] provides semantic observability and a boundary available for conscious control.
 
 #topic_details
 
-Исходный код:
+Source code:
 
-```
+```python
 state = prepare_state(ctx)       # et:op=prepare_state
 decision = choose(state)         # et:op=choose
-result = execute(decision)       # et:op=execute
+result = execute(decision)        # et:op=execute
 ```
 
-при загрузке `Program` инструментируется runtime так, чтобы перед выполнением каждого anchored block существовал control hook:
+When a `Program` is loaded, the runtime instruments it so that a control hook exists before every anchored block:
 
-```
+```text
 before anchor
 ↓
 continue immediately
-или
-pause worker → запросить сознательный шаг Task
-→ получить Focus через Attention, если требуется
-→ Consciousness решает дальнейший ход
-→ resume, если принято решение продолжить
+or
+pause worker → request a conscious step for the Task
+→ obtain Focus through Attention, if required
+→ Consciousness decides what happens next
+→ resume, if continuation is chosen
 ↓
 execute anchored block
 ↓
@@ -869,99 +857,100 @@ TraceEvent
 
 #topic_core
 
-В обычном execution hooks проходят без остановки. Остановка фонового `ProgramRun` сама по себе не захватывает `Focus`: запрос сознательного шага проходит общий механизм внимания. Если задача уже находится в фокусе, контроль продолжается в её текущем сознательном цикле.
+During ordinary execution, hooks pass without stopping. Pausing a background `ProgramRun` does not itself take `Focus`: a request for a conscious step goes through the shared attention mechanism. If the Task is already in Focus, control continues in its current conscious cycle.
 
-Сознание также может запросить:
+Consciousness may also request:
 
-```
+```text
 pause current ProgramRun
-→ остановить его перед ближайшим Code Anchor.
+→ stop it before the nearest Code Anchor.
 ```
 
-Если внутри semantic block есть дополнительный Code Anchor, он создаёт дополнительную доступную точку контроля.
+If a semantic block contains another Code Anchor, it provides an additional available control point.
 
-Таким образом, гранулярность conscious control определяется semantic surface самой `Program`, а не произвольными строками Python.
+Thus, the granularity of conscious control is determined by the `Program`'s semantic surface, not by arbitrary Python lines.
 
-#### Интерактивная смена revision внутри текущего `ProgramRun`
+#### Interactive Revision Change Within the Current `ProgramRun`
 
-Это необязательное расширение интерактивного режима, не требуемое для MVP. Если runtime его поддерживает и текущее состояние исполнения важно сохранить, сознание может изменить ещё не выполненный reloadable operator и продолжить тот же `ProgramRun`.
+This is an optional extension to interactive mode and is not required for the MVP. If the runtime supports it and preserving the current execution state matters, consciousness may change an unexecuted reloadable operator and continue the same `ProgramRun`.
 
 #topic_details
 
 ```text
-ProgramRun выполняется
+ProgramRun executes
 ↓
 pause before Code Anchor
 ↓
-Task в Focus; Consciousness выбирает изменение
+Task in Focus; Consciousness chooses a change
 ↓
-coding agent изменяет future operator
+coding agent changes a future operator
 ↓
 commit new revision
 ↓
-runtime загружает новую implementation
+runtime loads the new implementation
 ↓
-ProgramRun продолжается с сохранённым state
+ProgramRun continues with saved state
 ```
 
-Например:
+For example:
 
 ```python
-x = operator_a(ctx)       # уже выполнено
-y = operator_b(x)         # остановка перед anchor
+x = operator_a(ctx)       # already executed
+y = operator_b(x)         # paused before anchor
 z = operator_c(y)
 ```
 
 #topic_core
 
-После изменения и commit реализации `operator_b` текущий `ProgramRun` может продолжиться, вызвав новую implementation с уже вычисленным `x`.
+After changing and committing `operator_b`, the current `ProgramRun` may continue by calling the new implementation with the already computed `x`.
 
-Это возможно только для ещё не выполненного кода, который runtime может независимо reload / rebind. Уже активный Python frame не переключается на новый code object.
+This is possible only for code not yet executed that the runtime can independently reload or rebind. An already active Python frame does not switch to a new code object.
 
-Runtime сохраняет точные Git revisions и совместимость с версией приложения DBOS. Если меняется порядок сохраняемых операций, используются предусмотренные DBOS versioning или `patch`; одной записи `ProgramRevisionChange` недостаточно. Если изменение затрагивает текущий active frame или нарушает воспроизведение истории, новая версия запускается в новом `ProgramRun` по [[#^program-restart-continuation|правилам продолжения выполненной работы]]. [Обновление кода workflows](https://docs.dbos.dev/python/tutorials/upgrading-workflows)
+The runtime retains exact Git revisions and compatibility with the DBOS application version. If the order of durable operations changes, use DBOS versioning or `patch` as provided; a `ProgramRevisionChange` record alone is not sufficient. If a change affects the active frame or breaks history replay, the new version starts in a new `ProgramRun` under the [[#^program-restart-continuation|rules for continuing completed work]]. [Upgrading workflow code](https://docs.dbos.dev/python/tutorials/upgrading-workflows)
 
-##### Фиксация revisions внутри `ProgramRun`
+##### Recording Revisions Within a `ProgramRun`
 
-`ProgramRun` начинается с одной точной Git revision:
+A `ProgramRun` starts from one exact Git revision:
 
 ```text
 ProgramRun.base_commit_sha
-→ revision, с которой началось исполнение.
+→ revision on which execution began.
 ```
 
-Если во время `Conscious Program Supervision` к ещё не выполненному коду применяется другая committed revision, runtime создаёт immutable запись:
+If another committed revision is applied to code not yet executed during `Conscious Program Supervision`, the runtime creates an immutable record:
 
 ```python
 ProgramRevisionChange {
   commit_sha: <string>
-    "Revision, из которой загружены новые реализации."
-    
+    "Revision from which new implementations were loaded."
+
   applied_before_anchor_id: <string>
-    "Полный anchor id вида op:<code_node_id>:<op_id>, перед следующим
-     выполнением которого revision была применена."
+    "Full anchor ID op:<code_node_id>:<op_id>, before whose next execution
+     the revision was applied."
 
   after_trace_seq?: <int>
-    "Seq последнего уже выполненного TraceEvent этого ProgramRun. Отсутствует, если revision применена до первого TraceEvent."
-    
+    "Sequence of the last already executed TraceEvent in this ProgramRun.
+     Absent if the revision was applied before the first TraceEvent."
+
   applied_anchor_ids: <string[]>
-    "Anchors, реалихации которых были перезагружены из этой revision для дальнейшего исполнения текущего ProgramRun."
+    "Anchors whose implementations were reloaded from this revision for
+     further execution in the current ProgramRun."
 }
 ```
 
-`after_trace_seq` задаёт динамический момент применения. Поэтому повторное исполнение одного anchor в loop или recursion остаётся однозначным.
+`after_trace_seq` identifies the dynamic application point. Therefore, repeated execution of one anchor in a loop or recursion remains unambiguous.
 
-`ProgramRun начинается с base_commit_sha и при live revision накапливает ordered
-ProgramRevisionChange. 
+`ProgramRun` begins with `base_commit_sha` and accumulates ordered `ProgramRevisionChange` records when live revisions are applied.
 
-Уже созданные [[Memory#^def-TraceEvent|`TraceEvent`]] никогда не переписываются.
+Already created [[Memory#^def-TraceEvent|`TraceEvent`]] instances are never rewritten.
 
-Revision может быть применена внутри текущего `ProgramRun` только к code sites, которые runtime способен независимо reload / rebind. Код уже активного Python frame на новую revision не переключается.
+A revision may be applied within the current `ProgramRun` only to code sites the runtime can independently reload or rebind. Code in an already active Python frame does not switch to the new revision.
 
-### Минимальный runtime-интерфейс EverTree
+### Minimal EverTree Runtime Interface
 
 #topic_core
 
-Стандартные coding operations остаются у coding agent. EverTree добавляет только управление `ProgramRun`; `run_ref` — адрес конкретного запуска, разрешаемый core runtime по [[Core data structures#Объекты и ссылки|общему правилу объектов и ссылок]]:
+Standard coding operations remain with the coding agent. EverTree adds only `ProgramRun` control; `run_ref` addresses a specific run, resolved by core runtime under the [[Core data structures#Objects and References|shared object and reference rule]]:
 
 ```python
 request_pause(run_ref)
@@ -969,9 +958,9 @@ resume_program(run_ref)
 terminate_program(run_ref)
 ```
 
-`request_pause` останавливает worker перед ближайшим `Code Anchor`.
+`request_pause` stops the worker before the nearest `Code Anchor`.
 
-Только при поддержке [[#Интерактивная смена revision внутри текущего `ProgramRun`|необязательной интерактивной смены revision]] добавляется:
+Only when the [[#Interactive Revision Change Within the Current `ProgramRun`|optional interactive revision change]] is supported, add:
 
 ```python
 apply_program_revision(
@@ -980,26 +969,26 @@ apply_program_revision(
 ) -> ApplyRevisionResult
 ```
 
-`apply_program_revision` применяет committed revision к ещё не выполненному reloadable-коду текущего run и возвращает:
+`apply_program_revision` applies a committed revision to reloadable code in the current run that has not yet executed, and returns:
 
 ```text
 applied
-→ revision применена;
+→ revision applied;
 
 requires_new_run
-→ изменение затрагивает active frame или несовместимо
-  с восстановлением workflow и требует нового ProgramRun.
+→ the change affects an active frame or is incompatible
+  with workflow recovery and requires a new ProgramRun.
 ```
 
-Retrieval, reasoning, Verification, tests и Evaluation используют существующие Programs и coding tools; отдельные runtime API для них не нужны.
+Retrieval, reasoning, Verification, tests, and Evaluation use existing Programs and coding tools; separate runtime APIs are not needed for them.
 
-### Низкоуровневый отладчик
+### Low-Level Debugger
 
-Полноценный Python debugger не входит в MVP.
+A full Python debugger is not part of the MVP.
 
 #topic_details
 
-По умолчанию используются:
+By default, use:
 
 ```text
 SemanticTrace + logs + tests
@@ -1009,149 +998,146 @@ SemanticTrace + logs + tests
 
 #topic_core
 
-`debugpy` / DAP добавляются только если практика покажет устойчивую необходимость исследовать внутреннее состояние уже выполняющегося Python frame ниже semantic surface.
-
-
-
+Add `debugpy` / DAP only if practice shows a persistent need to inspect the internal state of an executing Python frame below the semantic surface.
 
 ---
 
-## Высокоуровневый цикл сознательной обработки
+## High-Level Conscious Processing Cycle
 ^agent-processing-cycle
 
 #topic_core
 
-Общий цикл связывает поступающие данные с задачей и эпизодом, поднимает нужный опыт из Memory и использует его для выбора следующей работы. [[#^def-PreparedContext|PreparedContext]] даёт владельцу работы общий контекст; [[Process Plane/Program Layer#^def-EpisodeStep|EpisodeStep]] выделяет следующую часть обработки, а подготовка аргументов превращает её в конкретный вызов. Владельцем выступает сознание для Task в Focus либо подходящая [[#^def-TaskManagingProgram|TaskManagingProgram]]. Передача управления сохраняет задачу и её состояние и может повторяться на разных этапах.
+The shared cycle connects incoming data to a task and episode, retrieves relevant experience from Memory, and uses it to choose the next work. [[#^def-PreparedContext|PreparedContext]] gives the work owner shared context; [[Process Plane/Program Layer#^def-EpisodeStep|EpisodeStep]] selects the next portion to process, and argument preparation turns it into a specific call. The owner is consciousness for a Task in Focus or a suitable [[#^def-TaskManagingProgram|TaskManagingProgram]]. Control handoffs preserve the task and its state and may recur at different stages.
 
-Подготовка выбирает полезный опыт, а [[Process Plane/Program Layer#^granularity-adaptation|управление гранулярностью]] — оправданную подробность обработки в пределах бюджета. При обучении модели процесса это позволяет отдельно прогнозировать и проверять существенные переходы; в известных задачах — сокращать затраты на обработку.
+Preparation selects useful experience, while [[Process Plane/Program Layer#^granularity-adaptation|granularity control]] selects an appropriate level of detail within the budget. When learning a process model, this allows significant transitions to be forecast and checked separately; for familiar tasks, it can reduce processing costs.
 
-### Общая схема
+### Overall Flow
 
 #topic_details
 
 ```text
-внешний запрос / данные / результат инструмента
-    → сохранение в Memory; связь с Task и Episode
-Goal / внутренний Event / Replay → создание или продолжение Task
+external request / data / tool result
+    → save to Memory; link to Task and Episode
+Goal / internal Event / Replay → create or continue a Task
                                   ↓
-             Task + Episode + incoming + сохранённый опыт
+             Task + Episode + incoming input + saved experience
                                   ↓
                  ContextPreparation → PreparedContext
                                   ↓
-    ├─ TaskManagingProgram → выполнение задачи программой
-    └─ нужен сознательный шаг → AttentionPriorityQueue
+    ├─ TaskManagingProgram → program-managed task execution
+    └─ conscious step needed → AttentionPriorityQueue
            → AttentionControl → AttentionRuntime → Focus → Consciousness
                                   ↓
-                 программа или сознание выбирает следующую работу
-                 → если нужен фрагмент текста: get_next_episode_step
-                 → целевая Program и её контракт
-                 → готовые аргументы либо arguments_formatter
-                 → вызов ProcessModel или exec-Program
-                 → ProgramResult → продолжение / ожидание / проверка
+                 program or consciousness selects the next work
+                 → if a text fragment is needed: get_next_episode_step
+                 → target Program and its contract
+                 → ready arguments or arguments_formatter
+                 → call ProcessModel or exec-Program
+                 → ProgramResult → continue / wait / check
                                   ↺
 
-при выбранном действии из любого способа управления:
-    применимые Verification и CommitmentControl
-    → исполнение действия / GraphDelta / отправка ответа
-    → наблюдаемый исход → Memory и соответствующие Task / Episode
+for an action selected by either control path:
+    applicable Verification and CommitmentControl
+    → execute action / GraphDelta / send response
+    → observed outcome → Memory and related Task / Episode
 ```
 
 #topic_core
 
-Схема описывает [[#^def-TaskExecution|TaskExecution]]. Приём данных не требует Focus; подготовка контекста и автоматическая работа вне Focus допускаются только для [[#^sequential-tasks|текущей исполняющейся Task]]. Если программе нужен сознательный выбор, Task обращается к вниманию; сознание может затем вернуть ей дальнейшую работу. Дочерние вызовы продолжают работу той же задачи. `Perception`, `TaskFraming`, `Planning` и проверки используются по необходимости: например, восприятие представляет новый источник как Observation, а TaskFraming уточняет ещё неясное поручение.
+The flow describes [[#^def-TaskExecution|TaskExecution]]. Receiving data does not require Focus; preparing context and automated work outside Focus are allowed only for the [[#^sequential-tasks|currently executing Task]]. If a program needs a conscious choice, the Task requests attention; consciousness may then hand further work back to it. Child calls continue the same task. `Perception`, `TaskFraming`, `Planning`, and checks are used as needed: for example, perception represents a new source as an Observation, while TaskFraming clarifies a request that is not yet clear.
 
-Последний вход сохраняется в PreparedContext целиком. Владелец работы и механизм выбора следующего EpisodeStep могут использовать этот вход; целевая модель получает выбранный шаг и необходимые ей данные через свой контракт. Весь PreparedContext ей автоматически не пересылается.
+The latest input is retained in `PreparedContext` in full. The work owner and the mechanism selecting the next EpisodeStep may use it; the target model receives the selected step and the data it needs through its contract. The full `PreparedContext` is not forwarded automatically.
 
-### Выбор следующего шага и вложенные вызовы
+### Selecting the Next Step and Nested Calls
 
 #topic_details
 
 ```text
-Task / Episode + PreparedContext + значения и остаток входа
+Task / Episode + PreparedContext + values and remaining input
     ↓
-TaskManagingProgram либо Consciousness для Task в Focus
-    → при необходимости уточнить задачу / получить сведения / пересмотреть Plan
+TaskManagingProgram or Consciousness for the Task in Focus
+    → clarify the task / obtain information / revise the Plan if needed
     ↓
-выбор следующей работы:
-    ├─ разбор входящего или собранного программой текста
-    │      → собрать TextInput и установить complete
+select next work:
+    ├─ process input or text assembled by a program
+    │      → assemble TextInput and set complete
     │      → get_next_episode_step(...)
-    │      ├─ step есть → сохранить шаг и remaining
-    │      └─ step=None → ждать продолжение, закончить разбор
-    │                     или уточнить способ по состоянию входа
-    ├─ иной вызов на доступных данных
-    └─ действие / передача управления / ожидание / остановка / завершение
+    │      ├─ step returned → retain step and remaining text
+    │      └─ step=None → wait for continuation, finish parsing,
+    │                     or clarify the method based on the input state
+    ├─ another call using available data
+    └─ action / handoff / wait / stop / finish
 
-для вызова: целевая Program и её контракт
-    готовые аргументы либо arguments_formatter(program, prepared_context, ...)
-    ├─ ArgumentsNotReady → уточнить / получить данные / ждать
-    └─ Arguments → runtime вызывает Program → ProgramResult вызывающему
+for a call: target Program and its contract
+    ready arguments or arguments_formatter(program, prepared_context, ...)
+    ├─ ArgumentsNotReady → clarify / obtain data / wait
+    └─ Arguments → runtime calls Program → ProgramResult to caller
     ↓
-результат / feedback / обновлённое состояние и остаток
+result / feedback / updated state and remaining input
     ↓
-продолжить обработку / пересобрать PreparedContext / выбрать действие /
-передать управление / ждать / завершить Task по её условиям
+continue processing / rebuild PreparedContext / select action /
+hand off / wait / finish Task under its conditions
 ```
 
 #topic_core
 
-[[Process Plane/Program Layer#^next-episode-step|`get_next_episode_step`]] получает [[Process Plane/Program Layer#^def-TextInput|`TextInput`]] и возвращает выбранный фрагмент с остатком. Перед вызовом `TaskManagingProgram` или сознание задаёт `complete`: завершена ли передача конкретного входа по условиям задачи или сигналу источника. Планирование, проверки и другие вызовы на готовых данных обходятся без разбиения. Целевая программа может быть уже известна из плана — тогда её контракт учитывается при выборе фрагмента; иначе она определяется по выбранной работе и данным. Пустой остаток означает исчерпание доступного текста, а достижение цели определяется условиями Task.
+[[Process Plane/Program Layer#^next-episode-step|`get_next_episode_step`]] receives [[Process Plane/Program Layer#^def-TextInput|`TextInput`]] and returns a selected fragment with the remainder. Before calling it, `TaskManagingProgram` or consciousness sets `complete`: whether transmission of this specific input is complete under task conditions or a source signal. Planning, checks, and other calls on ready data do not require splitting. A target program may already be known from the plan, in which case its contract informs fragment selection; otherwise, it is determined from the selected work and data. An empty remainder means the available text is exhausted; the Task's conditions determine whether its goal is achieved.
 
-Для подготовки аргументов вызывающая программа или сознание использует [[Process Plane/Program Layer#^def-ArgumentPreparation|`arguments_formatter`]]: передаёт целевую Program, PreparedContext и при необходимости выбранные источники, готовые привязки и уточняющие инструкции. Подготовщик возвращает аргументы либо [[Process Plane/Program Layer#^def-ArgumentsNotReady|`ArgumentsNotReady`]]; текущий EpisodeStep сохраняется для продолжения. Готовый вызов выполняет непосредственный вызывающий. Если все аргументы уже известны и условия выполнены, отдельная подготовка не нужна.
+To prepare arguments, the calling program or consciousness uses [[Process Plane/Program Layer#^def-ArgumentPreparation|`arguments_formatter`]]: it passes the target Program, `PreparedContext`, and, when needed, selected sources, known bindings, and clarifying instructions. The preparer returns arguments or [[Process Plane/Program Layer#^def-ArgumentsNotReady|`ArgumentsNotReady`]]; the current EpisodeStep is retained for continuation. The immediate caller runs the ready call. If all arguments are already known and conditions are met, no separate preparation is needed.
 
-[[Process Plane/Program Layer#^input-preparation-pipeline|Вложенные вызовы]] повторяют тот же принцип с конкретным вызывающим. Для сознательного шага [[Self#CognitionControl|CognitionControl]] выбирает cognition_mode в пределах бюджета; сознание может наблюдать trace, выбирать или создавать программы, проверять результаты и менять способ решения. Подготовка может быть уточнена под выбранный режим. Следующий сознательный шаг возможен, пока Task остаётся в Focus; автоматическая работа продолжается только пока Task допущена к исполнению, иначе сохраняется ожидание.
+[[Process Plane/Program Layer#^input-preparation-pipeline|Nested calls]] follow the same principle with their specific caller. For a conscious step, [[Self#CognitionControl|`CognitionControl`]] chooses `cognition_mode` within budget; consciousness may inspect the trace, select or create programs, check results, and change the solution method. Preparation may be adjusted for the selected mode. Another conscious step is possible while the Task remains in Focus; automated work continues only while the Task is admitted for execution, otherwise it waits.
 
-Возврат обычного вызова идёт ожидавшему его исполнению. Длительная делегированная работа может продолжаться без удержания сознательного фокуса. При [[#Сознательный контроль исполнения (Conscious Program Supervision)|`Conscious Program Supervision`]] запрос сознательного шага возникает на доступной границе, например перед [[#Code Anchor как точка управления|`Code Anchor`]]; это не обходит `Attention`. В обычном автоматическом исполнении такие границы не требуют остановки.
+A normal call returns to the execution that awaited it. Long-running delegated work may continue without holding conscious Focus. During [[#Conscious Program Supervision|`Conscious Program Supervision`]], a request for a conscious step occurs at an available boundary, such as before a [[#`Code Anchor` as a Control Point|`Code Anchor`]]; it does not bypass `Attention`. Such boundaries do not cause pauses during ordinary automated execution.
 
-### Действия, ответ пользователю и завершение задачи
+### Actions, User Responses, and Task Completion
 ^actions-and-user-response
 
 #topic_core
 
-Предложение эффекта может возникнуть и в сознательном шаге, и в автоматической `exec`-программе. Этот владелец решения вызывает [[#Verification|`Verification`]], когда требуется, получает её результат и затем отдельно вызывает [[#CommitmentControl|`CommitmentControl`]] на применимой границе. При `automatic` он сам принимает, отклоняет или дорабатывает кандидат; эффект инициируется только после принятия и выполнения обязательных условий. При `consciousness_selection` сохраняет кандидат и контекст для сознательного шага своей Task; если она уже в `Focus`, решение рассматривается в текущем цикле без повторной постановки в очередь. Ни Verification, ни CommitmentControl не исполняют проверяемый эффект.
+A proposed effect may arise during either a conscious step or an automated `exec` program. When required, the decision owner calls [[#Verification|`Verification`]], receives its result, and then separately calls [[#CommitmentControl|`CommitmentControl`]] at the applicable boundary. In `automatic` mode, the owner accepts, rejects, or revises the candidate itself; the effect is initiated only after acceptance and satisfaction of required conditions. In `consciousness_selection` mode, it retains the candidate and context for a conscious step in its Task; if the Task is already in `Focus`, the decision is considered in the current cycle without queuing it again. Neither Verification nor CommitmentControl executes the effect being checked.
 
-Принятое действие выполняется соответствующим исполнительным механизмом через runtime с проверкой защищённых ограничений и [[#^program-restart-continuation|защитой от повторного исполнения той же операции]]. Runtime применяет допустимый запрос, но не придумывает действие и не выбирает его по смыслу задачи. Результат или ошибка исполнения сохраняется и возвращается связанному вызову или задаче.
+The accepted action is carried out by the appropriate execution mechanism through the runtime, which checks protected constraints and [[#^program-restart-continuation|prevents the same operation from executing twice]]. The runtime applies an admissible request but does not invent an action or select it based on the task's meaning. The execution result or error is saved and returned to the related call or task.
 
-Сформированный текст ответа — внутренний результат. **Отправка ответа пользователю — отдельное внешнее действие**, которое имеет определённого адресата, канал и содержание и подчиняется тем же применимым правилам. Возврат `ProgramResult`, отправка сообщения и завершение Task — разные события. Уточняющий вопрос обычно оставляет задачу ожидающей ответа, промежуточное сообщение — продолжающей работу, а итоговый ответ завершает её только при выполнении objective, success criteria и обязательных условий. Ошибка отправки не считается успешной доставкой.
+The text of a composed response is an internal result. **Sending a response to a user is a separate external action** with a specific recipient, channel, and content, subject to the same applicable rules. Returning `ProgramResult`, sending a message, and completing a Task are different events. A clarifying question usually leaves the task waiting for a reply; an intermediate message leaves it in progress; a final response completes it only when the objective, success criteria, and required conditions are satisfied. A send error is not treated as successful delivery.
 
-Поэтому подготовка, обнаружившая нехватку данных, возвращает её вызывающему. Уже он решает запросить сведения у пользователя, прочитать другой источник, ждать продолжение или изменить способ решения. Сам факт feedback не разрешает отправку сообщения или внешнее действие.
+Therefore, preparation that detects missing data returns that information to the caller. The caller decides whether to request information from the user, read another source, wait for continuation, or change the solution method. Feedback by itself does not authorize sending a message or taking an external action.
 
-### Проверка общей схемы на сценариях
+### Checking the Overall Flow Against Scenarios
 
-| Сценарий | Путь исполнения |
+| Scenario | Execution path |
 | --- | --- |
-| Новый сложный запрос | Runtime сохраняет вход в Memory и связывает его с минимальной Task и Episode. ContextPreparation собирает PreparedContext с полным входом; после выбора Attention сознание уточняет спецификацию и Plan, определяет EpisodeStep, вызывает Programs через подготовку аргументов и отдельно организует отправку результата. |
-| Подсчёт букв в слове из нескольких сообщений | Задача появляется при получении поручения; подготовка собирает аргументы из указанных источников, программа считает буквы, а вызывающий организует отправку ответа. [[#^dialogue-word-count|Пример ниже]]. |
-| Не хватает аргумента | Подготовка возвращает нерешённое условие; владелец шага выбирает уточняющий вопрос, отправляет его и сохраняет ожидание. Связанный ответ пользователя продолжает ту же Task. |
-| Результат долгой команды | Вход сохраняется и доставляется по связи с вызовом независимо от Focus. После допуска Task к исполнению управляющая программа использует его и контекст Task/Episode для продолжения; если следующего автоматического шага нет, Task ждёт сознательной обработки. |
-| Срочное наблюдение при долгом расчёте | Приём сохраняет вход. Обработчик текущей Task выполняет допустимую реакцию или запрашивает сознательный шаг; для другой Task сначала требуется переключение по общему правилу. Сохранение в очереди само по себе не обеспечивает своевременной реакции; [[Process Plane/Program Layer#Типы, условия и подпрограммы|обработка входов]] не должна зависеть от завершения долгого дочернего расчёта. |
-| Replay | Отдельная Task возвращается к сохранённому опыту и использует тот же цикл с сознательными или порученными автоматическими шагами. Источники сохраняют provenance; прежние внешние действия не повторяются автоматически. |
+| New complex request | Runtime saves the input in Memory and links it to a minimal Task and Episode. ContextPreparation builds a PreparedContext with the complete input; after Attention selects it, consciousness clarifies the specification and Plan, determines the EpisodeStep, calls Programs through argument preparation, and separately arranges to send the result. |
+| Count letters in a word spread across messages | The task begins when the instruction arrives; preparation gathers arguments from the specified sources, a program counts the letters, and the caller arranges delivery of the answer. [[#^dialogue-word-count|Example below]]. |
+| Required argument is missing | Preparation returns an unresolved condition; the step owner chooses a clarifying question, sends it, and waits. The related user reply continues the same Task. |
+| Result of a long-running command | Input is saved and delivered through the call link independently of Focus. Once the Task is admitted for execution, its managing program uses the result and Task/Episode context to continue; if no automated step follows, the Task waits for conscious processing. |
+| Urgent observation during a long calculation | Input reception saves it. The current Task's handler takes an allowed response or requests a conscious step; switching to another Task first follows the shared rule. A queued item alone does not ensure a timely response; [[Process Plane/Program Layer#Types, Conditions, and Subprograms|input processing]] must not depend on a long child calculation finishing. |
+| Replay | A separate Task returns to saved experience and uses the same cycle for conscious or delegated automated steps. Sources retain provenance; previous external actions are not automatically repeated. |
 
-### Пример: подсчёт букв в слове из нескольких сообщений
+### Example: Counting Letters in a Word Across Messages
 ^dialogue-word-count
 
 #topic_details
 
-Пользователь отправляет `straw`, затем `berry`, затем: «Соедини два предыдущих сообщения без пробела и посчитай буквы r в полученном слове». Задача подсчёта возникает с третьим сообщением; первые два используются как исходные данные из связанного Episode диалога. ContextPreparation включает последнюю просьбу целиком и поднимает два нужных исходника из Memory.
+The user sends `straw`, then `berry`, then: “Join the previous two messages without a space and count the letter r in the resulting word.” The counting task begins with the third message; the first two are source data from the related dialogue Episode. ContextPreparation includes the full latest request and retrieves the two needed sources from Memory.
 
-Сознание или TaskManagingProgram использует PreparedContext и выбирает следующий EpisodeStep: обработать указанное слово целиком. Для подсчёта выбрана `count_letter_in_word(word: str, letter: str)`; её интерфейс связывает параметры с семантическими понятиями «слово» и «символ». Программа `arguments_formatter` по поручению и исходным фрагментам готовит `word="strawberry"`, `letter="r"`, сохраняя provenance. Готовые значения можно передать напрямую без отдельного вызова подготовки.
+Consciousness or TaskManagingProgram uses PreparedContext and selects the next EpisodeStep: process the specified word as a whole. The selected function is `count_letter_in_word(word: str, letter: str)`; its interface links the parameters to the semantic concepts “word” and “character.” The `arguments_formatter` program prepares `word="strawberry"` and `letter="r"` from the request and source fragments, retaining provenance. Ready values may be passed directly without a separate preparation call.
 
-Вызывающий запускает программу: обычный код считает символы и возвращает `ProgramResult(result=3, feedback=None)`. Затем вызывающий организует [[#^actions-and-user-response|отправку ответа]] пользователю. Таким образом, исходные блоки — сообщения, аргумент — целое слово, а единица подсчёта — символ; LLM-вызов на каждую букву не нужен.
+The caller launches the program: ordinary code counts the characters and returns `ProgramResult(result=3, feedback=None)`. The caller then arranges [[#^actions-and-user-response|sending the response]] to the user. Thus, source blocks are messages, the argument is the complete word, and the unit counted is a character; no LLM call is needed for each letter.
 
-Основание склейки даёт поручение, а не соседство сообщений. Если связь неоднозначна, подготовка возвращает нерешённое условие для уточнения. Если пользователь заранее поручил ждать части слова и посчитать буквы, задача существует до их поступления, а сообщения продолжают её.
+The instruction, not message adjacency, justifies joining the fragments. If their relationship is ambiguous, preparation returns an unresolved condition for clarification. If the user instructed the agent in advance to wait for parts of a word and then count its letters, the task exists before those parts arrive, and the messages continue it.
 
 #topic_details
 
-Фиксация опыта сопровождает обе формы исполнения. Возврат `ProgramResult.result` означает получение результата вызова, но ещё не обязательно [[Process Plane/Program Layer#Outcome|оцениваемого исхода]] процесса. Например, прогноз возвращается сейчас, а наблюдение, по которому его можно проверить, поступает позже. Если результат уже содержит достаточные данные об исходе, оценку можно выполнить сразу; иначе задача сохраняет ожидаемую связь с будущими наблюдениями.
+Experience recording accompanies both execution paths. Returning `ProgramResult.result` means a call has produced a result, but not necessarily an [[Process Plane/Program Layer#Outcome|evaluated process outcome]]. For example, a forecast may be returned now while the observation needed to check it arrives later. If the result already contains enough outcome data, evaluation may happen immediately; otherwise, the task retains the expected link to future observations.
 
 ```text
 Program execution
 → ProgramRunRecorder
 → TraceEvent / Memory;
 
-результат + достаточные данные об оцениваемом исходе
-→ применимая Evaluation
-→ learning credit и разрешённые updates / Learning;
+result + enough data about the evaluated outcome
+→ applicable Evaluation
+→ learning credit and permitted updates / Learning;
 
 Task / Episode completion
 → integration
@@ -1161,4 +1147,4 @@ Task / Episode completion
 
 #topic_core
 
-Reflection может возникнуть и внутри незавершённой [[#Goal, Task и спецификация задачи|`Task`]]. [[Learning system|Обучение по оценённым исходам]] выполняется по мере появления достаточных данных и не ждёт завершения всей `Task` или [[Memory#^def-Episode|`Episode`]]. Сам факт возврата программы или перехода к следующему EpisodeStep не заменяет Evaluation и не создаёт learning credit. Оценка observations как epistemic evidence следует отдельной ветви [[Learning system#LearningCoordinator|LearningCoordinator]] и не требует превращать каждое наблюдение в проверку прогноза. Фиксация опыта [[Memory#ProgramRunRecorder|`ProgramRunRecorder`]] и episode-level integration описаны в [[Memory]], Reflection и Program improvement — в [[Self]], а lifecycle Programs — в [[Process Plane/Program Lifecycle and Evolution]].
+Reflection may also occur within an unfinished [[#`Goal`, `Task`, and Task Specification|`Task`]]. [[Learning system|Learning from evaluated outcomes]] happens as sufficient data arrives and does not wait for the entire `Task` or [[Memory#^def-Episode|`Episode`]] to finish. A program returning or moving to the next EpisodeStep does not replace Evaluation or create learning credit. Assessing observations as epistemic evidence follows a separate [[Learning system#LearningCoordinator|LearningCoordinator]] path and does not require turning every observation into a forecast check. [[Memory#ProgramRunRecorder|`ProgramRunRecorder`]] records experience and episode-level integration is described in [[Memory]]; Reflection and Program improvement are described in [[Self]], and Program lifecycle in [[Process Plane/Program Lifecycle and Evolution]].

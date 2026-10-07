@@ -1,86 +1,79 @@
-
+---
+status: draft
+target_version: next
 ---
 
-## status: draft  
-target_version: next
+## Status: Draft
 
-## Intro
+## Introduction
 
 #concept #topic_intro
 
 (def_id:: et.Memory)
-> [!definition]  
-> **Memory** — система фиксации, сжатия, связывания, поиска и переиспользования опыта агента EverTree.  
-> Память хранит не только факты о мире, но и следы того, как агент действовал, ошибался, рассуждал, менял программы, обновлял убеждения и становился таким, какой он есть.  
+> [!definition]
+> **Memory** — the system for recording, compressing, linking, retrieving, and reusing an EverTree agent's experience. Memory stores not only facts about the world, but traces of how the agent acted, made mistakes, reasoned, changed programs, updated beliefs, and became what it is.
 > ^def-Memory
 
-Память EverTree — не архив прошлого.  
-Её задача — сделать прошлый опыт доступным для будущего действия, обучения, объяснения, проверки и самоулучшения.
+EverTree memory is not an archive of the past. Its purpose is to make past experience available for future action, learning, explanation, evaluation, and self-improvement.
 
-Базовый принцип:
+Core principle:
 
 ```text
-Сохранять щедро.
-Консолидировать умно.
-Извлекать избирательно.
-Удалять осторожно.
+Preserve generously.
+Consolidate intelligently.
+Retrieve selectively.
+Delete cautiously.
 ```
 
-EverTree не должен пытаться идеально решить в момент записи, что окажется важным. Ранние критерии важности могут быть неточными. Поэтому первичная запись ориентирована на высокий recall: лучше временно сохранить больше, чем потерять важное.
+EverTree should not try to determine perfectly, at the time of writing, what will be important. Early importance criteria may be inaccurate. Therefore, initial recording aims for high recall: it is better to temporarily save more than to lose something important.
 
-Но сохранение не означает помещение в рабочий контекст. Память может хранить много, а runtime retrieval должен поднимать только то, что полезно для текущего процесса.
-
----
-
-## Назначение памяти
-
-Память выполняет пять функций. Она
-
-1) хранит опыт: события, [[#^def-Episode|эпизоды]], [[#^def-ProgramRun|ProgramRun]], RunTrace, результаты действий, [[Core data structures#^def-Note|заметки]] с рассуждениями и выводами, ошибки, supervisor feedback, изменения графа и программ.
-
-2) даёт [[Uncertainty and Belief Tracking in the World Model#^def-Evidence|evidence]] для `Strength/Support`. Новое наблюдение не является просто текстом; оно становится основанием для обновления [[Uncertainty and Belief Tracking in the World Model#^def-Belief|belief]], transition weights, hypotheses, process models.
-
-3)  обеспечивает provenance сохраняемых результатов — возможность восстановить, каким вычислением и из каких входов они были получены; см. [[#^def-ResultProvenance|Provenance результата]].```
-
-4) служит источником [[#^def-MemoryReplay|replay]], [[Datasets#^def-Dataset|датасетов]] для обучения и проверки. Сохранённый опыт также используется для анализа и инсайтов.
-
- 5) создаёт основу для retrieval routes: связи между концептами, процессами, программами, outcomes, traces и memories, чтобы агент мог быстро находить релевантный прошлый опыт 
+Preservation does not mean putting everything into the working context. Memory may retain a great deal, while runtime retrieval should surface only what is useful to the current process.
 
 ---
 
-## Главное различие: хранение и доступ
+## Purpose of Memory
 
-Память решает два разных вопроса:
+Memory serves five functions:
+
+1. It stores experience: events, [[#^def-Episode|episodes]], [[#^def-ProgramRun|`ProgramRun`s]], RunTrace, action results, [[Core data structures#^def-Note|notes]] containing reasoning and conclusions, errors, supervisor feedback, graph and program changes.
+2. It provides [[Uncertainty and Belief Tracking in the World Model#^def-Evidence|evidence]] for `Strength/Support`. A new observation is not just text; it becomes a basis for updating [[Uncertainty and Belief Tracking in the World Model#^def-Belief|belief]], transition weights, hypotheses, and process models.
+3. It provides provenance for saved results — the ability to recover which computation and inputs produced them; see [[#^def-ResultProvenance|Result Provenance]].
+4. It serves as a source for [[#^def-MemoryReplay|replay]] and [[Datasets#^def-Dataset|datasets]] for training and evaluation. Saved experience is also used for analysis and insights.
+5. It provides the basis for retrieval routes: links among concepts, processes, programs, outcomes, traces, and memories, allowing the agent to quickly find relevant past experience.
+
+---
+
+## The Key Distinction: Storage and Access
+
+Memory addresses two different questions:
 
 ```text
-что сохранить
+what to store
 ≠
-что извлечь сейчас
+what to retrieve now
 ```
 
-На входе память должна быть широкой.  
-На выходе в runtime — избирательной.
+At input, memory should be broad. At runtime output, it should be selective.
 
 ```text
 storage policy
-→ сохранить потенциально ценный след
+→ preserve a potentially valuable trace
 
 retrieval policy
-→ найти примерно релевантные следы
+→ find roughly relevant traces
 
 context policy
-→ использовать только малую часть найденного
+→ use only a small part of what was found
 ```
 
-Если воспоминание не попало в текущий retrieval, не факт что оно не забыто. Оно просто проиграло локальную конкуренцию за доступ.
-
+If a memory was not returned by the current retrieval, that does not necessarily mean it was forgotten. It simply lost the local competition for access.
 
 ---
 
-## Гранулярность и организация памяти
+## Granularity and Memory Organization
 #topic_core
 
-Опыт исполнения в EverTree организован на трёх уровнях:
+Execution experience in EverTree is organized at three levels:
 
 ```text
 ProgramRun
@@ -88,50 +81,49 @@ ProgramRun
     └── TraceEvent
 ```
 
-- **[[#^def-TraceEvent|`TraceEvent`]]** — атомарный факт исполнения семантически размеченного элемента программы.
-- **[[#^def-SemanticTrace|`SemanticTrace`]]** — текущий сохраняемый упорядоченный набор `TraceEvent` одного `ProgramRun`. Изначально он может содержать весь trace, а со временем сжиматься до наиболее значимой его части.
-- **[[#^def-ProgramRun|`ProgramRun`]]** — конкретный запуск программы и естественная граница одного trace.
+- **[[#^def-TraceEvent|`TraceEvent`]]** — an atomic execution fact for a semantically labeled program element.
+- **[[#^def-SemanticTrace|`SemanticTrace`]]** — the current saved, ordered set of `TraceEvent`s for one `ProgramRun`. Initially it may contain the full trace and later be compressed to its most significant parts.
+- **[[#^def-ProgramRun|`ProgramRun`]]** — one specific program execution and the natural boundary of a trace.
 
-Семантические результаты исполнения — [[Core data structures#^def-Facet|`Facet`]], relation и другие semantic objects — не являются элементами `SemanticTrace`. Они создаются outputs соответствующих `TraceEvent` и сохраняют связь с породившим их событием через provenance.
+Semantic results of execution — [[Core data structures#^def-Facet|`Facet`s]], relations, and other semantic objects — are not elements of `SemanticTrace`. They are created by outputs of the corresponding `TraceEvent` and retain a link to the event that produced them through provenance.
 
-Если программа вызывает другую программу, создаётся дочерний ProgramRun.
-Он связывается с точным TraceEvent родительского запуска через
-caller_event. Связи `caller_event` позволяют восстановить всю иерархию вложенных `ProgramRun`.
+When a program calls another program, a child `ProgramRun` is created. It is linked to the exact `TraceEvent` in the parent run through `caller_event`. The `caller_event` links make it possible to reconstruct the full hierarchy of nested `ProgramRun`s.
 
 ---
+
 ## ProgramRun
 ^ProgramRun
 #topic_core
 
 (def_id:: entity.ProgramRun)
-> [!definition]  
-> **ProgramRun** — конкретный запуск конкретной версии `Program` от её вызова до завершения или прерывания. Он фиксирует контекст выполнения: стабильную identity `Program`, исходную Git revision, применённые в ходе исполнения revision changes, аргументы, режим, время и статус. Семантически значимые события выполнения записываются как связанные [[#^def-TraceEvent|`TraceEvent`]], а текущая сохраняемая часть этого опыта представлена [[#^def-SemanticTrace|`SemanticTrace`]].
+> [!definition]
+> **`ProgramRun`** — one execution of one specific `Program` version, from invocation until completion or interruption. It records execution context: the stable `Program` identity, source Git revision, revision changes applied during execution, arguments, mode, time, and status. Semantically significant execution events are recorded as linked [[#^def-TraceEvent|`TraceEvent`s]], and the currently saved portion of this experience is represented by [[#^def-SemanticTrace|`SemanticTrace`]].
 > ^def-ProgramRun
 
-Это логический запуск: [[Cognition and Attention#^durable-program-execution|восстановление через DBOS]] продолжает тот же `ProgramRun`. Запуск изменённой программы вместо прежней создаёт новый `ProgramRun`. Техническое восстановление не меняет `run_mode` и не является [[#Replay|Memory Replay]] — отдельной работой над сохранённым опытом.
+This is a logical run: [[Cognition and Attention#^durable-program-execution|recovery through DBOS]] continues the same `ProgramRun`. Running a changed program instead of the previous one creates a new `ProgramRun`. Technical recovery does not change `run_mode` and is not [[#Replay|Memory Replay]], which is separate work on saved experience.
 
-Каждый корневой или дочерний `ProgramRun` принадлежит `Task`. Корневой запуск связан с задачей, а дочерние наследуют эту принадлежность через `caller_event`. Отдельный запуск не равен всему [[Cognition and Attention#^def-TaskExecution|`TaskExecution`]]: одна задача может продолжаться через несколько запусков и сознательных шагов.
+Every root or child `ProgramRun` belongs to a `Task`. A root run is linked to the task; child runs inherit that association through `caller_event`. One run is not the same as the entire [[Cognition and Attention#^def-TaskExecution|`TaskExecution`]]: one task may continue across multiple runs and conscious steps.
 
-#topic_details 
+#topic_details
 
 ```python
 ProgramRun {
   program: <Program>
-    "Вызванная программа."
+    "The program that was called."
 
   base_commit_sha: <string>
-    "Точная Git revision Program, с которой началось это исполнение"
-    
-  revision_changes: <ProgramRevisionChange[]> = [] 
-    "Упорядоченные смены revision в необязательном интерактивном режиме; в обычном запуске список пуст."
+    "Exact Git revision of the Program at the start of execution."
+
+  revision_changes: <ProgramRevisionChange[]> = []
+    "Ordered revision changes in optional interactive mode; normally empty."
 
   caller_event?: <TraceEvent>
-    "TraceEvent родительской программы, вызвавший этот ProgramRun.
-     Отсутствует только у корневого ProgramRun."
+    "TraceEvent in the parent program that called this ProgramRun.
+     Absent only for a root ProgramRun."
 
   arguments: <BoundArguments>
-    "Аргументы конкретного вызова, автоматически связанные
-     с параметрами интерфейса программы."
+    "Arguments for this specific call, automatically bound
+     to the program interface parameters."
 
   run_mode: "live" | "replay" | "simulation" | "evaluation" | "test"
 
@@ -144,32 +136,29 @@ ProgramRun {
 
 ---
 
-### Автоматическая фиксация аргументов программы
+### Automatic Recording of Program Arguments
+#topic_details
 
-#topic_details 
+### Program Interface
 
-### Интерфейс программы
+Program arguments and return values are always part of the semantic surface and are recorded automatically.
 
-Аргументы и возвращаемые значения Program всегда считаются частью semantic surface и фиксируются автоматически.
+When a [[#^def-ProgramRun|`ProgramRun`]] is created, the tracer automatically records the actual program-call arguments and binds them to the interface parameters (using Pydantic models). Program return values are recorded too.
 
-При создании [[#^def-ProgramRun|`ProgramRun`]] tracer автоматически фиксирует фактические аргументы вызова программы и связывает их с параметрами её интерфейса (используя Pydantic-модели). Фиксируются и возвращаемые значения программы.
+A successful `Program` return always has the form [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]]: the tracer saves the primary result together with optional textual feedback. Their semantic roles differ; feedback is not included in a domain prediction or observation.
 
-Успешный возврат `Program` всегда имеет форму [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]]: tracer сохраняет основной результат и опциональный текстовый feedback вместе. Их семантические роли различаются; feedback не включается в доменный прогноз или наблюдение.
+If an argument is an object or graph state, save a reference to the corresponding [[Core data structures#^def-Facet|`Facet`]] (usually), or to a [[Core data structures#^def-Concept|`Concept`]], [[Core data structures#^def-Instance|`Instance`]], or relation instance.
 
-Если аргумент является объектом или состоянием графа, сохраняется ссылка на соответствующий [[Core data structures#^def-Facet|Facet]] (как правило), либо [[Core data structures#^def-Concept|Concept]], [[Core data structures#^def-Instance|Instance]] или relation instance.
-
-Небольшое значение, включая ответ LLM, может сохраняться непосредственно в аргументах или output. Большое содержимое может храниться в [[Core data structures#^def-Artifact|`Artifact`]] со ссылкой на его точную использованную версию. Способ хранения не меняет семантический смысл значения и не требует материализовать каждый payload как `Facet` в persistent graph.
+A small value, including an LLM response, may be stored directly in the arguments or output. Large content may be stored in an [[Core data structures#^def-Artifact|`Artifact`]] with a reference to the exact version used. The storage method does not change the semantic meaning of the value and does not require materializing every payload as a `Facet` in the persistent graph.
 
 ---
-## Вложенные вызовы программ
+## Nested Program Calls
 
-#topic_details 
+#topic_details
 
+Every semantically significant `Program` call creates a separate child [[#^def-ProgramRun|`ProgramRun`]]. `caller_event` links the child run to the exact [[#^def-TraceEvent|TraceEvent]] of the anchored call operator.
 
-Каждый семантически значимый вызов `Program` создаёт отдельный дочерний [[#^def-ProgramRun|`ProgramRun`]].
-`caller_event` связывает дочерний запуск с точным [[#^def-TraceEvent|TraceEvent]] anchored-оператора вызова.
-
-Пример:
+Example:
 
 ```text
 TreatmentPlanningRun
@@ -179,7 +168,7 @@ DiseaseProgressionModelRun
 MortalityClassifierRun
 ```
 
-По caller_event можно восстановить всю иерархию вложенных запусков:
+The full hierarchy of nested runs can be reconstructed from `caller_event`:
 
 ```text
 TreatmentPlanningRun
@@ -187,7 +176,7 @@ TreatmentPlanningRun
     └── MortalityClassifierRun
 ```
 
-Для любого результата можно подняться по дереву:
+For any result, follow the tree upward:
 
 ```text
 result
@@ -198,85 +187,79 @@ result
 → ...
 ```
 
-Это задаёт semantic call context результата.
+This defines the result's semantic call context.
 
-### Сценарные ветви
+### Scenario Branches
 
-#topic_details 
+#topic_details
 
-Если программа моделирует несколько независимых возможных сценариев, каждый сценарий, материализующий собственные состояния, запускается как отдельный дочерний [[#^def-ProgramRun|ProgramRun]].
-
-
+When a program models several independent possible scenarios, each scenario that materializes its own states runs as a separate child [[#^def-ProgramRun|`ProgramRun`]].
 
 ---
-
 ## TraceEvent
 
-[#topic_core](https://chatgpt.com/c/6a76ef70-b45c-83eb-b38e-7e97e9e580f9#topic_core)
+#topic_core
 
 (def_id:: entity.TraceEvent)
-> [!definition]  
-> **TraceEvent** — неизменяемая запись одного семантически значимого шага исполнения `Program` внутри конкретного [[#^def-ProgramRun|`ProgramRun`]].
+> [!definition]
+> **TraceEvent** — an immutable record of one semantically significant step in a `Program` execution within a specific [[#^def-ProgramRun|`ProgramRun`]].
 > ^def-TraceEvent
 
-Он фиксирует выполненный `OperatorConcept`, фактические аргументы, результат, порядок и статус выполнения.
+It records the executed `OperatorConcept`, actual arguments, result, execution order, and status.
 
-Каждый `TraceEvent` принадлежит ровно одному `ProgramRun`.
+Each `TraceEvent` belongs to exactly one `ProgramRun`.
 
-[[#^def-SemanticTrace|`SemanticTrace`]] данного `ProgramRun` хранит упорядоченные ссылки на те `TraceEvent`, которые в текущем состоянии памяти сохраняются как значимая часть опыта. Сразу после исполнения он может включать все события run; позднее часть событий может быть исключена при компактизации памяти.
+The `ProgramRun`'s [[#^def-SemanticTrace|`SemanticTrace`]] stores ordered references to the `TraceEvent`s retained as meaningful experience in the current state of memory. Immediately after execution it may include all events from the run; later, compaction may remove some of them.
 
 ```python
 TraceEvent {
   program_run: <ProgramRun>
-    "ProgramRun, внутри которого произошло событие."
+    "The ProgramRun in which the event occurred."
 
   seq: <int>
-    "Монотонный порядок TraceEvent внутри ProgramRun."
+    "Monotonic order of TraceEvents within the ProgramRun."
 
   occurred_at: <time>
-    "Физическое время выполнения события в системе агента."
+    "Physical execution time in the agent system."
 
   operator: <OperatorConcept>
-    "Семантически размеченный оператор Program,
-     выполнение которого зафиксировано событием."
+    "Semantically labeled Program operator recorded by this event."
 
   arguments: <BoundArguments>
-    "Фактические аргументы оператора, связанные
-     с параметрами его интерфейса."
+    "Actual arguments bound to the operator's interface parameters."
 
   output?: <OperatorOutput>
-    "Неизменяемый типизированный результат оператора."
+    "Immutable, typed result of the operator."
 
   status: "completed" | "failed" | "interrupted"
 }
 ```
 
-`seq` задаёт порядок исполнения внутри `ProgramRun`; сам по себе этот порядок не означает причинную связь между событиями.
+`seq` establishes execution order within a `ProgramRun`; by itself, it does not imply a causal link between events.
 
-`TraceEvent` после создания не переписывается. При сжатии памяти изменяется состав `SemanticTrace`, а исходный `TraceEvent` может быть физически удалён только позднее, если больше не требуется для сохраняемого опыта или provenance.
-
----
-### Автоматическая фиксация результата
-
-#topic_details 
-
-Результат каждого anchored-оператора автоматически фиксируется в [[#^def-TraceEvent|`TraceEvent.output`]] как типизированный [[#^def-OperatorOutput|`OperatorOutput`]].
-
-Его semantic projection и provenance строятся tracer-ом согласно контракту типа результата.
-
-Локальное имя Python-переменной не влияет на смысл или identity результата, но предпочтительно, чтобы оно однозначно отражало его смысл.
-
-Присваивание результата другой переменной не создаёт новый semantic object. Промежуточные вычисления могут оставаться обычными Python-переменными; требования к их восстановлению определяет [[Cognition and Attention#^durable-program-execution|контракт исполнения DBOS]].
+A `TraceEvent` is never rewritten after creation. Memory compaction changes the contents of `SemanticTrace`; the original `TraceEvent` may be physically deleted later only if it is no longer needed for retained experience or provenance.
 
 ---
+### Automatic Recording of Results
 
-### OperatorOutput
+#topic_details
+
+The result of each anchored operator is automatically recorded in [[#^def-TraceEvent|`TraceEvent.output`]] as a typed [[#^def-OperatorOutput|`OperatorOutput`]].
+
+The tracer builds its semantic projection and provenance according to the result type's contract.
+
+A local Python variable name does not affect the result's meaning or identity, though it should preferably describe the result clearly.
+
+Assigning a result to another variable does not create a new semantic object. Intermediate computations may remain ordinary Python variables; requirements for resuming them are defined by the [[Cognition and Attention#^durable-program-execution|DBOS execution contract]].
+
+---
+### `OperatorOutput`
 
 #topic_details
 
 (def_id:: entity.OperatorOutput)
-> [!definition]  
-> **OperatorOutput** — неизменяемый типизированный результат anchored-оператора, представляющий одно семантически связное целое и задающий роли его именованных частей. Сохраняется в [[#^def-TraceEvent|`TraceEvent.output`]].
+> [!definition]
+> **`OperatorOutput`** — an immutable, typed result of an anchored operator. It represents one semantically coherent whole and defines the roles of its named parts. It is stored in [[#^def-TraceEvent|`TraceEvent.output`]].
 > ^def-OperatorOutput
 
 ```python
@@ -284,20 +267,19 @@ from pydantic import BaseModel, ConfigDict
 
 class OperatorOutput(BaseModel):
     model_config = ConfigDict(frozen=True)
-```   
+```
 
-[[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]] — частный случай `OperatorOutput` для границы вызова `Program`. Его смысловое целое — результат этого вызова; `result` проецируется по своему доменному контракту, а `feedback` отдельно представляет обратную связь по выполнению.
-    
-Если тип результата имеет самостоятельный и повторно используемый доменный смысл, ему соответствует обычный доменный [[Core data structures#^def-Concept|`Concept`]]. Concept создаётся один раз, а каждое выполнение оператора создаёт новый экземпляр результата.
+[[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]] is a special case of `OperatorOutput` at the `Program` call boundary. The coherent whole is the result of that call; `result` is projected according to its domain contract, while `feedback` separately represents feedback on execution.
+
+If a result type has its own reusable domain meaning, it has an ordinary domain [[Core data structures#^def-Concept|`Concept`]]. Create the Concept once; each operator execution creates a new result instance.
 
 ---
-
-### Семантическая интерпретация OperatorOutput
+### Semantic Interpretation of `OperatorOutput`
 #topic_details
 
-Тип [[#^def-OperatorOutput|`OperatorOutput`]] задаёт semantic contract: как весь output и его именованные части проецируются в trace-local semantic objects и facts.
+The [[#^def-OperatorOutput|`OperatorOutput`]] type defines the semantic contract: how the whole output and its named parts are projected into trace-local semantic objects and facts.
 
-Например, для anchored-оператора, не являющегося отдельной `Program`:
+For example, for an anchored operator that is not itself a separate `Program`:
 
 ```python
 health: HealthState = diagnose(igor)  # et:op=diagnose_health
@@ -325,10 +307,9 @@ HealthState {
 TraceEvent_E19.output = health
 ```
 
+The semantic contract for `HealthState` defines its projection onto a [[Core data structures#^def-Facet|`Facet`]]; epistemic fields use [[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] or [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]]:
 
-Семантический контракт `HealthState` задаёт его проекцию в [[Core data structures#^def-Facet|Facet]]; эпистемические поля используют [[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] или [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]]:
-
-```
+```text
 output
 → Facet F;
 
@@ -353,31 +334,29 @@ output.temperature
    ).
 ```
 
-Поля `health_status` и `temperature` не содержат ручную ссылку на `F`.  
-Согласно контракту `HealthState`, они описывают тот же `Facet`, который  
-представляет весь output. Поэтому их невозможно случайно отнести к другому состоянию.
+The `health_status` and `temperature` fields do not contain a manual reference to `F`. Under the `HealthState` contract, they describe the same `Facet` represented by the whole output, so they cannot be accidentally assigned to another state.
 
-Tracer не выводит этот смысл из имени локальной переменной или значения  
-строки. Он использует тип результата и семантические роли его полей.
+The tracer does not infer this meaning from a local variable name or string value. It uses the result type and the semantic roles of its fields.
 
-После выполнения операторa tracer автоматически:
+After an operator runs, the tracer automatically:
 
-```
-1. создаёт TraceEvent;
-2. сохраняет OperatorOutput;
-3. строит его trace-local semantic projection;
-4. назначает provenance каждому semantic result.
+```text
+1. creates a TraceEvent;
+2. saves the OperatorOutput;
+3. builds its trace-local semantic projection;
+4. assigns provenance to each semantic result.
 ```
 
-Все поля здесь описывают части одного результата `HealthState`; domain-код не связывает их с `Facet F` вручную. Tracer использует тип результата и семантические роли его полей.
+All fields here describe parts of one `HealthState` result; domain code does not manually link them to `Facet F`. The tracer uses the result type and the semantic roles of its fields.
 
-### Составной результат
+---
+### Composite Result
 
-Один [[#^def-OperatorOutput|`OperatorOutput`]] может содержать несколько semantic objects, если вместе они образуют одно смысловое целое. В этом случае результат представляется экземпляром соответствующего доменного [[Core data structures#^def-Concept|`Concept`]].
+A single [[#^def-OperatorOutput|`OperatorOutput`]] may contain several semantic objects when together they form one coherent whole. In that case, represent the result as an instance of the corresponding domain [[Core data structures#^def-Concept|`Concept`]].
 
-Такой `Concept` может уже существовать в графе либо быть сознательно создан агентом, если выявленный тип результата имеет самостоятельный и повторно используемый смысл.
+That `Concept` may already exist in the graph, or the agent may deliberately create it if the identified result type has its own reusable meaning.
 
-Например:
+For example:
 
 ```text
 TransferOutcome#42
@@ -385,77 +364,71 @@ TransferOutcome#42
 └── receiver_state: Facet
 ```
 
-```
+```text
 TransferOutcome
-→ устойчивый Concept результата;
+→ stable Concept for the result type;
 
 TransferOutcome#42
-→ экземпляр результата конкретного выполнения.
+→ result instance for one execution.
 ```
 
-Если несколько результатов не образуют одного смыслового целого, их следует вычислять отдельными anchored-операторами.
+If several results do not form one coherent whole, compute them using separate anchored operators.
 
-Созданные semantic results по умолчанию остаются trace-local. Если результат должен стать частью persistent модели мира, программа явно применяет `GraphDelta`.
+Created semantic results remain trace-local by default. If a result must become part of the persistent world model, the program explicitly applies `GraphDelta`.
 
-Связь результатов с создавшим их `TraceEvent.output` описана в [[#^def-ResultProvenance|Provenance результата]].
+The link from results to the creating `TraceEvent.output` is described in [[#^def-ResultProvenance|Result Provenance]].
 
 ### Observation
 
 (def_id:: entity.Observation)
 > [!definition]
-> **Observation** — типизированный доменный [[#^def-OperatorOutput|`OperatorOutput`]] в роли наблюдения: результат [[Cognition and Attention#^def-Perception|восприятия]], чтения источника или инструмента, описывающий полученные сведения о мире или агенте.
+> **Observation** — a typed domain [[#^def-OperatorOutput|`OperatorOutput`]] in the role of an observation: a result of [[Cognition and Attention#^def-Perception|perception]], source reading, or a tool that describes information received about the world or agent.
 > ^def-Observation
 
-Это роль результата, а не обязательная обёртка `Observation(data=...)`. Например, `EngineState` может быть результатом прогноза или наблюдения; их различают конкретные экземпляры и provenance.
+This is a result role, not a required `Observation(data=...)` wrapper. For example, `EngineState` may be the result of either a forecast or an observation; specific instances and their provenance distinguish them.
 
-Если производитель — `Program`, её [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult.result`]] для доставки как наблюдения должен иметь доменную схему `OperatorOutput` с этой семантической ролью. Оболочка с feedback не становится наблюдением. Произвольный `str` или `float`, возвращённый другой программой, не поступает в канал наблюдений автоматически. Доставка сохраняет тип, identity и provenance доменного результата.
+If the producer is a `Program`, its [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult.result`]] must have a domain `OperatorOutput` schema with this semantic role to be delivered as an observation. The wrapper with feedback is not itself the observation. An arbitrary `str` or `float` returned by another program does not automatically enter the observation channel. Delivery retains the domain result's type, identity, and provenance.
 
-Схема задаёт доступные поля и их смысл: например, значение температуры и единицу измерения. Семантические ссылки связывают результат с объектом, свойствами и понятиями графа. Новое понятие не требует отдельного Python-класса, если его выражает существующая схема. Для интерпретации сохраняются источник, время наблюдаемого события и время получения; неизвестные значения и неоднозначность остаются явными. Типизация не делает сообщение источника достоверным фактом.
+The schema defines available fields and their meaning, such as a temperature value and unit. Semantic references link the result to objects, properties, and graph concepts. A new concept does not require a separate Python class if an existing schema can express it. Interpretation retains the source, the time of the observed event, and the receipt time; unknown values and ambiguity remain explicit. Typing does not make a source's message a reliable fact.
 
-Память сохраняет собственный опыт агента и сведения о чужом опыте из рассказов, документов и других внешних источников. Для внешнего опыта сохраняются происхождение, основания оценки надёжности источника и известные зависимости между сообщениями. Результаты simulation и синтетические примеры остаются различимы с наблюдениями реальных событий.
+Memory retains both the agent's own experience and information about others' experience from accounts, documents, and other external sources. For external experience, it retains provenance, grounds for source-reliability assessment, and known dependencies among messages. Simulation results and synthetic examples remain distinguishable from observations of real events.
 
-Наблюдение может содержать несколько признаков одного состояния или исходный блок с несколькими связанными сведениями, в том числе о разных моментах. Полное разбиение на отдельные утверждения до выбора процесса не требуется. Исходное содержимое, его порядок, известные временные связи и provenance сохраняются для последующего разбора. [[Process Plane/Program Layer#^observation-granularity|Детализация]] выбирается при подготовке данных для конкретной обработки.
+An observation may contain several features of one state or an original block with multiple related details, including details about different times. It does not have to be fully split into individual assertions before the process is selected. Retain the original content, order, known temporal relationships, and provenance for later analysis. Choose [[Process Plane/Program Layer#^observation-granularity|granularity]] when preparing data for specific processing.
 
-Наблюдения по умолчанию сохраняются в trace. Если наблюдаемое состояние нужно в persistent модели мира, оно материализуется через [[Core data structures#Изменение persistent graph|`GraphDelta`]]. Отдельный persistent `Facet` для каждого поступившего значения не обязателен.
+Observations are stored in the trace by default. If an observed state is needed in the persistent world model, materialize it through [[Core data structures#Updating the Persistent Graph|`GraphDelta`]]. A persistent `Facet` for each incoming value is not required.
 
-[[Cognition and Attention#^input-reception|Приём входа]] связывает его с существующей или минимальной новой `Task`. Runtime доставляет результат известному ожидающему вызову напрямую. Если адресата нужно определить по смыслу, сознание или выполняющая задачу `exec`-программа использует [[Process Plane/Process Ontology and Semantic Interface#^def-ProcessRouter|`ProcessRouter`]] и поручает runtime доставку выбранному исполнению. Правила чтения, типизации и ветвления описаны в [[Process Plane/Program Layer#^process-observation-input|общем входе наблюдений]]. Доставка и повторное чтение при восстановлении сохраняют identity исходного наблюдения и его producer provenance; события его использования не превращают его в новый опыт.
+[[Cognition and Attention#^input-reception|Input reception]] links the input to an existing or minimally created `Task`. Runtime delivers a result directly to a known waiting call. If the recipient must be identified by meaning, consciousness or the task's executing `exec` program uses [[Process Plane/Process Ontology and Semantic Interface#^def-ProcessRouter|`ProcessRouter`]] and asks runtime to deliver it to the selected execution. Reading, typing, and branching rules are described in the [[Process Plane/Program Layer#^process-observation-input|shared observation input contract]]. Delivery and rereading during recovery preserve the original observation identity and producer provenance; events that use it do not turn it into new experience.
 
 ---
-
-## SemanticTrace
+## `SemanticTrace`
 ^SemanticTrace
 
 #topic_core
 
-
 (def_id:: entity.SemanticTrace)
-> [!definition]  
-> **SemanticTrace** — сохраняемая упорядоченная часть [[#^def-TraceEvent|`TraceEvent`]] конкретного [[#^def-ProgramRun|`ProgramRun`]]. Он представляет ту часть исполнения программы, которая в текущем состоянии памяти считается полезной для сохранения.
+> [!definition]
+> **`SemanticTrace`** — the retained, ordered subset of [[#^def-TraceEvent|`TraceEvent`s]] from one specific [[#^def-ProgramRun|`ProgramRun`]]. It represents the part of program execution considered worth preserving in the current state of memory.
 > ^def-SemanticTrace
 
-`SemanticTrace` не копирует содержимое событий, а хранит ссылки на них:
+`SemanticTrace` does not copy event contents; it stores references to them:
 
 ```python
 SemanticTrace {
   run: <ProgramRun>
-  events: ordered List<TraceEvent>
+  events: ordered List[TraceEvent]
 }
 ```
 
-Все события принадлежат этому же `ProgramRun` и сохраняют исходный порядок по `TraceEvent.seq`.
+All events belong to that same `ProgramRun` and retain their original order by `TraceEvent.seq`.
 
-Сразу после выполнения `SemanticTrace` обычно содержит все `TraceEvent`
-данного `ProgramRun`. Позднее [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] может оставить
-только ту их часть, которую полезно или необходимо сохранять.
+Immediately after execution, `SemanticTrace` usually contains all `TraceEvent`s from the `ProgramRun`. Later, [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] may retain only the subset useful or necessary to keep.
 
-Детальный lifecycle описан в разделе
-[[#Компактизация SemanticTrace]].
+The detailed lifecycle is described in [[#Compacting SemanticTrace]].
 
+---
+### Full Trace of Nested Execution
 
-
-### Полный trace вложенного исполнения
-
-Каждый [[#^def-ProgramRun|`ProgramRun`]], включая дочерний, имеет собственный [[#^def-SemanticTrace|`SemanticTrace`]].
+Each [[#^def-ProgramRun|`ProgramRun`]], including a child run, has its own [[#^def-SemanticTrace|`SemanticTrace`]].
 
 ```text
 Root ProgramRun
@@ -466,156 +439,151 @@ Root ProgramRun
     └── SemanticTrace(B)
 ```
 
-Связи `caller_event` между родительскими и дочерними `ProgramRun` образуют дерево вызовов. Полный сохранённый опыт корневого запуска восстанавливается обходом этого дерева и чтением `SemanticTrace` каждого `ProgramRun`.
+`caller_event` links between parent and child `ProgramRun`s form a call tree. Recover the complete retained experience of a root run by traversing this tree and reading the `SemanticTrace` of each `ProgramRun`.
 
-Глобальный [[#^def-TraceEvent|`TraceEvent.seq`]] позволяет при необходимости представить все сохранённые события дерева как одну временную последовательность.
-
+The global [[#^def-TraceEvent|`TraceEvent.seq`]] can be used, when needed, to represent all retained events in the tree as one timeline.
 
 ---
-
-### Эпизод
+### Episode
 
 (def_id:: entity.Episode)
-> [!definition]  
-> **Эпизод** — доменная единица опыта с определяемыми границами: например, одна poker hand, один запуск двигателя, один диалог или один эксперимент.
+> [!definition]
+> **Episode** — a domain unit of experience with defined boundaries, such as one poker hand, engine run, conversation, or experiment.
 > ^def-Episode
 
-Эпизод представлен обычным [[Core data structures#^def-Instance|Instance]] соответствующего процесса или события. Его текущее lifecycle-состояние выражается через [[Core data structures#^def-Facet|Facet]].
+An Episode is represented by an ordinary [[Core data structures#^def-Instance|Instance]] of the corresponding process or event. Its current lifecycle state is expressed through a [[Core data structures#^def-Facet|Facet]].
 
-Эпизод не является техническим контейнером trace. Связанные с ним [[#^def-ProgramRun|ProgramRun]], [[#^def-TraceEvent|TraceEvent]] и semantic results находятся через semantic links и provenance.
+An Episode is not a technical trace container. Its related [[#^def-ProgramRun|`ProgramRun`s]], [[#^def-TraceEvent|`TraceEvent`s]], and semantic results are found through semantic links and provenance.
 
-Каждый элемент опыта относится к одному наиболее конкретному `primary Episode`.
-Связи с более крупными Episode, Task, Goal и Process задаются отдельно
-и не меняют его primary episode.
+Each piece of experience belongs to one most-specific `primary Episode`. Links to broader Episodes, Tasks, Goals, and Processes are defined separately and do not change its primary episode.
 
-Одна `Task` может работать с несколькими эпизодами, а один эпизод — использоваться несколькими задачами. Список эпизодов внутри представления задачи содержит ссылки и не задаёт исключительного владения. Время помогает найти подходящий эпизод, но поздний вход может относиться к прежнему эпизоду; выбор учитывает смысл и известные связи, а не только близость поступления.
+One `Task` may work with several episodes, and one episode may be used by several tasks. The list of episodes in a task representation contains references and does not establish exclusive ownership. Time helps find a suitable episode, but a later input may belong to an earlier episode; selection uses meaning and known links, not only arrival proximity.
 
-### Task, Goal и другие организующие концепты
+### Tasks, Goals, and Other Organizing Concepts
 
-Задачи, цели, намерения, наблюдения и [[Core data structures#^def-Note|заметки]] являются обычными семантическими объектами графа. Связь с исходной задачей восстанавливается через цепочку родительских [[#^def-ProgramRun|ProgramRun]] и их caller_event.
+Tasks, goals, intentions, observations, and [[Core data structures#^def-Note|`Note`s]] are ordinary semantic objects in the graph. Reconstruct a link to the originating task through the chain of parent [[#^def-ProgramRun|`ProgramRun`s]] and their `caller_event` links.
 
-Подзадачи и более крупные задачи могут связываться обычными семантическими отношениями:
+Subtasks and larger tasks may be linked by ordinary semantic relations:
 
 ```text
 PART_WHOLE(subtask, task)
 ```
 
-К семантическим организующим концептам могут быть привязаны `Program`, но отдельная `Program` не обязательна для каждой `Task`: одноразовая задача может выполняться через task-local `Plan`. [[Cognition and Attention#^def-TaskExecution|`TaskExecution`]] обозначает весь процесс выполнения задачи, который может включать множество `ProgramRun` и сознательных шагов. Условия создания переиспользуемого механизма определены в [[Cognition and Attention#Планирование (Planning)|`Planning`]], а каждый фактический запуск `Program` сохраняется как [[#^def-ProgramRun|`ProgramRun`]].
+A `Program` may be linked to a semantic organizing concept, but a separate `Program` is not required for every `Task`: a one-off task may be handled through a task-local `Plan`. [[Cognition and Attention#^def-TaskExecution|`TaskExecution`]] denotes the entire task execution process, which may include many `ProgramRun`s and conscious steps. Conditions for creating a reusable mechanism are defined in [[Cognition and Attention#Planning|`Planning`]], and each actual `Program` execution is saved as a [[#^def-ProgramRun|`ProgramRun`]].
 
-Основу семантического графа отвечающую за таксономия планирования и управления активностью агента мы опредляем в отдельном подразделе:   ...
+The foundation of the semantic graph responsible for the taxonomy of planning and control of agent activity is defined in a separate subsection: ...
 
-### Кэш активных задач и эпизодов
+### Cache of Active Tasks and Episodes
 ^active-state
 
-`active_state` — часть Memory: оперативный кэш ссылок на недавно активные `Task` и связанные с ними эпизоды для быстрого доступа. Объекты хранятся в памяти, а кэш содержит восстанавливаемые ссылки на них. Политика памяти ограничивает его объём выделенным бюджетом и пересматривает состав по давности использования и состоянию задач. Начальный способ освобождения места — вытеснять давно неиспользуемые ссылки; стратегия удержания может уточняться по опыту. Удаление ссылки из кэша оставляет объект доступным через обычный поиск в памяти; срок хранения самого объекта определяется [[#Удержание, сжатие и забывание|общим lifecycle памяти]].
+`active_state` is part of Memory: an operational cache of references to recently active `Task`s and related episodes for fast access. The objects are stored in memory; the cache contains recoverable references to them. The memory policy limits its size to an allocated budget and reviews its contents based on last use and task state. The initial eviction method removes references that have not been used for a long time; the retention strategy may be refined through experience. Removing a reference from the cache leaves the object accessible through ordinary memory retrieval; the object's retention period follows the [[#Retention, Compression, and Forgetting|general memory lifecycle]].
 
-Выбор текущего эпизода, текущая версия собираемого объекта и условие ожидания — существенное состояние выполнения. Оно сохраняется в [[Cognition and Attention#^working-context|`TaskState`]], [[#^def-ProgramRun|`ProgramRun`]] или восстанавливается из trace, а не существует только в кэше. Память управляет хранением и временем жизни записей; программа определяет содержательные изменения, которые runtime применяет через действующие интерфейсы.
-
+Selecting the current episode, the current version of an object being assembled, and the condition being awaited are material execution state. This state is stored in [[Cognition and Attention#^working-context|`TaskState`]], [[#^def-ProgramRun|`ProgramRun`]], or recovered from the trace; it does not exist only in the cache. Memory manages storage and record lifetime; a program defines substantive changes that runtime applies through existing interfaces.
 
 ---
-
-## Provenance результата
+## Result Provenance
 
 #topic_core
 
 (def_id:: et.ResultProvenance)
-> [!definition]  
-> **Provenance результата** — вычисляемый подграф его происхождения и использования: каким [[#^def-TraceEvent|`TraceEvent`]] результат был создан, в каком [[#^def-ProgramRun|`ProgramRun`]] и версии `Program`, из каких входов и существенных промежуточных результатов он был получен и где затем использовался.
+> [!definition]
+> **Result Provenance** — a computed subgraph of a result's origin and use: which [[#^def-TraceEvent|`TraceEvent`]] created it, in which [[#^def-ProgramRun|`ProgramRun`]] and `Program` version, which inputs and material intermediate results produced it, and where it was later used.
 > ^def-ResultProvenance
 
-Provenance нужен для:
+Provenance is needed for:
 
-- объяснения результатов и изменений системы;
-- audit и debugging;
-- replay и Evaluation;
-- пересчёта и отзыва belief;
-- безопасного сжатия памяти.
+- explaining results and system changes;
+- audit and debugging;
+- replay and Evaluation;
+- recomputing and retracting beliefs;
+- safe memory compaction.
 
-Provenance не хранится как отдельная текстовая история или дублирующий semantic graph. Он восстанавливается из `TraceOutputRef`, сохранённых `TraceEvent`, их input/output dependencies и соответствующих `ProgramRun`.
+Provenance is not stored as a separate textual history or duplicate semantic graph. It is reconstructed from `TraceOutputRef`, retained `TraceEvent`s, their input/output dependencies, and the corresponding `ProgramRun`s.
 
-### Фиксация происхождения
+### Recording Provenance
 
 #topic_details
 
-Каждый выполненный anchored-оператор создаёт [[#^def-TraceEvent|`TraceEvent`]]. Конкретный semantic result внутри output адресуется неизменяемой ссылкой:
+Every executed anchored operator creates a [[#^def-TraceEvent|`TraceEvent`]]. Address an individual semantic result within its output with an immutable reference:
 
 ```python
 TraceOutputRef {
   event_ref: <TraceEvent identity>
-    "Устойчивый адрес TraceEvent, создавшего результат."
+    "Stable address of the TraceEvent that created the result."
 
   output_path: <OutputPath>
-    "Стабильный именованный путь к результату внутри TraceEvent.output."
+    "Stable named path to the result inside TraceEvent.output."
 }
 ```
 
-`output_path` может указывать на весь output или его именованную semantic part. `TraceOutputRef` является сохраняемым адресом по [[Core data structures#Объекты и ссылки|общему правилу объектов и ссылок]].
+`output_path` may point to the whole output or one of its named semantic parts. `TraceOutputRef` is a persisted address under the [[Core data structures#Objects and References|general object and reference rule]].
 
-У возврата `Program` пути различают `result`, его именованные части и `feedback`. Чтение `.result` не создаёт новый semantic object или независимое evidence. Если программа возвращает уже существующий результат, его исходные identity и producer provenance сохраняются; новая оболочка фиксирует возврат этого значения, а не повторное получение опыта.
+For a `Program` return, paths distinguish `result`, its named parts, and `feedback`. Reading `.result` does not create a new semantic object or independent evidence. If the program returns an existing result, its original identity and producer provenance are retained; a new wrapper records that the value was returned, not that new experience was obtained.
 
-Semantic result, материализованный из output, получает:
+A semantic result materialized from output receives:
 
 ```text
 created_by: <TraceOutputRef>
 ```
 
-`created_by` назначается tracer-ом автоматически.
+The tracer assigns `created_by` automatically.
 
-Аргументы `TraceEvent` сохраняют ссылки на использованные semantic results. Аргументы и возвращаемые значения `Program` всегда входят в его semantic surface и фиксируются tracer-ом автоматически, поэтому provenance не обрывается на границах вызова программы.
+`TraceEvent` arguments retain references to the semantic results they use. Arguments and return values of a `Program` are always part of its semantic surface and are automatically recorded by the tracer, so provenance does not stop at program-call boundaries.
 
-Происхождение восстанавливается обратным проходом:
+Reconstruct provenance by tracing backward:
 
 ```text
 result
 → created_by
 → producer TraceEvent
-→ его inputs
-→ producers этих inputs
-→ существенные control-flow events
+→ its inputs
+→ producers of those inputs
+→ material control-flow events
 → ProgramRun
-→ Program и его версия
+→ Program and its version
 ```
 
-Если вычисление проходило через вложенные программы:
+For nested program execution:
 
 ```text
 child ProgramRun.caller_event
-→ TraceEvent родительского ProgramRun
+→ TraceEvent in the parent ProgramRun
 ```
 
-связывает их provenance.
+links their provenance.
 
-Поэтому provenance обычно является подграфом зависимостей, а не одной линейной цепочкой.
+Therefore, provenance is usually a dependency subgraph, not one linear chain.
 
-### Trace-local и persistent results
+---
+### Trace-Local and Persistent Results
 
-Semantic result может существовать в двух состояниях.
+A semantic result may exist in two states.
 
 (def_id:: entity.TraceLocalResult)
-> [!definition]  
-> **Trace-local result** — результат конкретного вычисления, принадлежащий опыту данного [[#^def-ProgramRun|`ProgramRun`]]. Он доступен последующим операторам этого выполнения и сохраняется вместе с trace, но **не является частью persistent semantic graph** агента.
+> [!definition]
+> **Trace-local result** — the result of a specific computation, belonging to the experience of that [[#^def-ProgramRun|`ProgramRun`]]. It is available to later operators in the run and is retained with the trace, but **is not part of the agent's persistent semantic graph**.
 > ^def-TraceLocalResult
 
 (def_id:: entity.PersistentResult)
-> [!definition]  
-> **Persistent result** — semantic object или relation, который агент явно сохранил в своей долговременной модели мира или самого себя. Он доступен другим `ProgramRun`, обычному graph reasoning и долговременному retrieval независимо от исходного запуска.
+> [!definition]
+> **Persistent result** — a semantic object or relation that the agent explicitly saved in its long-term model of the world or itself. It is available to other `ProgramRun`s, ordinary graph reasoning, and long-term retrieval independently of the original run.
 > ^def-PersistentResult
 
-По умолчанию **все результаты anchored-операторов являются trace-local**.
+By default, **all results of anchored operators are trace-local**.
 
-Это позволяет свободно вычислять:
+This allows the agent to freely compute:
 
 ```text
-гипотезы;
-промежуточные состояния;
+hypotheses;
+intermediate states;
 simulation results;
-временные выводы;
-и т.п.
+temporary inferences;
+and so on.
 ```
 
-не превращая каждый промежуточный результат в долговременный факт.
+without turning every intermediate result into a long-term fact.
 
-Если программа/сознание агента решает сохранить результат как часть persistent модели, она делает это явно через `GraphDelta`:
+If a program or consciousness decides to save a result as part of the persistent model, it does so explicitly through `GraphDelta`:
 
 ```text
 trace-local result
@@ -623,23 +591,23 @@ trace-local result
 → persistent semantic graph
 ```
 
-Таким образом, `GraphDelta` является явной границей:
+Thus, `GraphDelta` is the explicit boundary:
 
 ```text
-вычислить
+compute
 ≠
-сохранить как долговременное знание
+save as long-term knowledge
 ```
 
 #### Provenance
 
-#topic_details 
+#topic_details
 
-Trace-local result получает `created_by`, указывающий на [[#^def-TraceEvent|`TraceEvent`]], который его вычислил.
+A trace-local result gets `created_by`, pointing to the [[#^def-TraceEvent|`TraceEvent`]] that computed it.
 
-При записи в persistent graph graph-writing `TraceEvent` фиксирует `GraphDelta` и исходные semantic results, на основании которых выполняется изменение.
+When writing to the persistent graph, the graph-writing `TraceEvent` records `GraphDelta` and the source semantic results on which the change is based.
 
-Поэтому provenance persistent result остаётся прослеживаемым:
+Therefore, provenance of a persistent result remains traceable:
 
 ```text
 persistent result
@@ -649,118 +617,117 @@ persistent result
 → ...
 ```
 
-`GraphDelta` не делает результат истинным или более уверенным. Он только фиксирует решение поместить его в persistent semantic graph. Истинность и уверенность по-прежнему определяются `Belief_data`.
+`GraphDelta` does not make a result true or more certain. It only records the decision to place the result in the persistent semantic graph. Truth and confidence are still determined by `Belief_data`.
 
 #### Lifecycle
 
-Trace-local results обычно живут вместе со своим [[#^def-SemanticTrace|`SemanticTrace`]] и могут быть сжаты или удалены при компактизации памяти, если больше не нужны для provenance, evidence, replay или других обязательств сохранности.
+Trace-local results usually live with their [[#^def-SemanticTrace|`SemanticTrace`]] and may be compacted or deleted during memory compaction when no longer required for provenance, evidence, replay, or other retention obligations.
 
-Присваивание нового значения локальной переменной или завершение Python-функции не удаляет сохранённые результаты, ещё нужные для продолжения задачи, восстановления или проверки; они защищаются общими [[#Обязательства сохранности|обязательствами памяти]].
+Assigning a new value to a local variable or exiting a Python function does not delete saved results still needed to resume a task, recover, or evaluate it; they are protected by the shared [[#Retention Obligations|memory obligations]].
 
-Persistent results имеют независимый от исходного trace lifecycle и сохраняются в semantic graph, пока сами не будут обновлены, обобщены, отозваны или удалены согласно lifecycle persistent graph.
+Persistent results have a lifecycle independent of the original trace and remain in the semantic graph until updated, generalized, retracted, or deleted under the persistent-graph lifecycle.
 
-### SemanticTrace и сохранение provenance
+### `SemanticTrace` and Provenance Retention
 #topic_details
 
-[[#^def-SemanticTrace|`SemanticTrace`]] содержит упорядоченную сохраняемую часть [[#^def-TraceEvent|`TraceEvent`]] своего [[#^def-ProgramRun|`ProgramRun`]].
+[[#^def-SemanticTrace|`SemanticTrace`]] contains the ordered retained subset of [[#^def-TraceEvent|`TraceEvent`s]] from its [[#^def-ProgramRun|`ProgramRun`]].
 
-Он не задаёт зависимости происхождения: они определяются `TraceOutputRef`, inputs/outputs событий и связями между `ProgramRun`.
+It does not define provenance dependencies: those are determined by `TraceOutputRef`, event inputs/outputs, and links between `ProgramRun`s.
 
-Но `SemanticTrace` участвует в lifecycle provenance, поскольку определяет, какая часть trace переживает компактизацию; необходимые зависимости образуют [[#^def-RetentionClosure|`Retention closure`]]:
+However, `SemanticTrace` participates in provenance lifecycle because it determines which part of the trace survives compaction; required dependencies form the [[#^def-RetentionClosure|`Retention closure`]]:
 
 ```text
 TraceOutputRef + event dependencies
-→ задают provenance
+→ define provenance
 
 retention closure
-→ определяет минимальные trace-данные,
-  которые необходимо сохранить
+→ defines the minimum trace data
+  that must be retained
 
 SemanticTrace
-→ хранит сохраняемую часть опыта ProgramRun
+→ stores the retained experience for a ProgramRun
 ```
 
-Сразу после выполнения trace может сохраняться полностью. Позже [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] оставляет только события и данные, необходимые для будущего использования.
+Immediately after execution, the full trace may be retained. Later, [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] retains only events and data needed for future use.
 
-Если полная raw-форма retained `TraceEvent` компактизируется, его identity и данные, необходимые для разрешения `TraceOutputRef` и обещанного provenance, должны сохраняться. Это не создаёт новый тип события: логически это остаётся тот же `TraceEvent`.
+If the full raw form of a retained `TraceEvent` is compacted, its identity and data needed to resolve `TraceOutputRef` and promised provenance must remain available. This does not create a new event type: logically, it is still the same `TraceEvent`.
 
-### Retention provenance
+### Provenance Retention
 
-#topic_details 
+#topic_details
 
-Пока результат защищён и его provenance должен быть восстановим:
+While a result is protected and its provenance must be recoverable:
 
 ```text
 created_by
-→ защищает producer TraceEvent;
+→ protects the producer TraceEvent;
 
 retention closure
-→ защищает необходимые upstream events,
-   inputs и control-flow dependencies;
+→ protects required upstream events,
+   inputs, and control-flow dependencies;
 
 ProgramRun
-→ сохраняется в объёме, необходимом для
-   program/version и call provenance.
+→ is retained as needed for
+   program/version and call provenance.
 ```
 
-Нельзя физически уничтожить [[#^def-TraceEvent|`TraceEvent`]], на который указывает действующий `created_by`, оставив dangling `TraceOutputRef`.
+Do not physically destroy a [[#^def-TraceEvent|`TraceEvent`]] referenced by an active `created_by` while leaving a dangling `TraceOutputRef`.
 
-Остальные события могут быть удалены из сохраняемого [[#^def-SemanticTrace|`SemanticTrace`]], переведены в холодное хранение и позднее физически удалены, если они не требуются для:
+Other events may be removed from retained [[#^def-SemanticTrace|`SemanticTrace`]], moved to cold storage, and later physically deleted when no longer required for:
 
 ```text
-provenance защищённых результатов;
-evidence и пересчёта belief;
-replay или Evaluation;
-сохраняемого решения или изменения Program;
-других обязательств сохранности.
+provenance of protected results;
+evidence and belief recomputation;
+replay or Evaluation;
+retained decisions or Program changes;
+other retention obligations.
 ```
 
-После проверенного сжатия или обобщения глубина сохраняемого provenance может быть уменьшена, если соответствующие старые зависимости больше не входят в [[#^def-RetentionClosure|`Retention closure`]].
+After verified compaction or generalization, the depth of retained provenance may be reduced if the corresponding old dependencies no longer belong to the [[#^def-RetentionClosure|`Retention closure`]].
 
-### Основные views
+---
+### Main Views
 
 #topic_details
 
 ```text
 producer_of(value)
-→ TraceOutputRef, создавший value
+→ TraceOutputRef that created the value
 
 consumers_of(value)
-→ сохранённые TraceEvents и input slots,
-  где value использовался
+→ retained TraceEvents and input slots
+  where the value was used
 
 provenance_of(value, max_depth?)
-→ upstream-подграф происхождения value
+→ upstream provenance subgraph for the value
 
 dependents_of(value, max_depth?)
-→ сохранённые downstream-зависимости value
+→ retained downstream dependencies of the value
 ```
 
-Эти views вычисляются над trace storage и не создают дублирующих semantic relations.
+These views are computed over trace storage and do not create duplicate semantic relations.
 
-Для защищённого результата `provenance_of(...)` должен оставаться восстановимым в пределах сохранённого `retention closure`.
+For a protected result, `provenance_of(...)` must remain recoverable within its saved `retention closure`.
 
-`consumers_of(...)` и `dependents_of(...)` отражают сохранённую историю и после допустимого удаления старых traces не обязаны представлять все когда-либо существовавшие downstream-использования.
+`consumers_of(...)` and `dependents_of(...)` describe retained history and are not required to represent every downstream use that ever existed after permissible deletion of old traces.
 
-`dependents_of` показывает вычислительную зависимость, но сам по себе не утверждает причинный эффект.
+`dependents_of` shows computational dependency; by itself, it does not assert a causal effect.
 
----
-
-## Semantic relations и память
+## Semantic Relations and Memory
 
 #topic_core
 
-`RelationInstance` подчиняется общему lifecycle semantic results: по умолчанию она trace-local, а при долговременной ценности материализуется через `GraphDelta`.
+`RelationInstance` follows the shared lifecycle for semantic results: by default, it is trace-local; when it has long-term value, it is materialized through a `GraphDelta`.
 
-Persistent semantic relations используются как:
+Persistent semantic relations are used as:
 
 ```text
-факты и обобщения модели мира;
-knowledge cache результатов reasoning;
-retrieval routes между связанными концептами и опытом.
+facts and generalizations in the world model;
+knowledge cache of reasoning results;
+retrieval routes between related concepts and experience.
 ```
 
-При консолидации нескольких случаев может быть создана обобщённая relation:
+Consolidating several cases may produce a generalized relation:
 
 ```text
 scenario results
@@ -770,7 +737,7 @@ scenario results
 → generalized relation
 ```
 
-Например:
+For example:
 
 ```text
 CAUSES_UNDER(
@@ -780,47 +747,41 @@ CAUSES_UNDER(
 )
 ```
 
-
----
-
-
-
-
-## Извлечение памяти
+## Memory Retrieval
 
 #topic_details
 
-Память извлекается из двух связанных хранилищ:
+Memory is retrieved from two related stores:
 
 ```text
 persistent semantic graph
-→ долговременные Facets, facts, relations и обобщения;
+→ long-term Facets, facts, relations, and generalizations;
 
 trace storage
-→ опыт выполнения программ:
+→ program execution experience:
    ProgramRun,
    SemanticTrace,
-   сохранённые TraceEvent,
-   их arguments и OperatorOutput.
+   retained TraceEvents,
+   their arguments and OperatorOutput.
 ```
 
-Исходные сообщения пользователя, фактически отправленные ответы, вызовы инструментов и их результаты сохраняются как источники и соответствующий опыт в trace. Для восстановления контекста сохраняются автор или роль, порядок, известные времена и связи с задачей, эпизодом или вызовом. Запись попытки отправки или неизвестного исхода не выдаётся за подтверждённую доставку; внутренний ответ LLM сам по себе не является сообщением пользователю.
+Original user messages, responses actually sent, tool calls, and their results are retained as sources and corresponding experience in the trace. To restore context, the system retains the author or role, ordering, known times, and links to the task, episode, or call. A record of an attempted send or an unknown outcome is not presented as confirmed delivery; an internal LLM response is not itself a message to the user.
 
-[[Cognition and Attention#^context-preparation|`ContextPreparation`]] извлекает нужные недавние и более ранние источники и результаты для задачи, эпизода и текущей работы. Ему доступно точное сохранённое содержимое либо уже сжатое представление с известной потерей подробностей. Сжатие представления для конкретного вызова не удаляет исходник: срок его хранения определяется [[#Удержание, сжатие и забывание|общим lifecycle памяти]].
+[[Cognition and Attention#^context-preparation|`ContextPreparation`]] retrieves relevant recent and earlier sources and results for the task, episode, and current work. It can access the exact saved content or a compressed representation with known loss of detail. Compressing a representation for a specific call does not delete the source: its retention period is determined by the [[#Retention, Compression, and Forgetting|shared memory lifecycle]].
 
-[[#^def-SemanticTrace|`SemanticTrace`]] определяет, какие [[#^def-TraceEvent|`TraceEvent`]] конкретного [[#^def-ProgramRun|`ProgramRun`]] сохраняются как доступная часть его опыта.
+[[#^def-SemanticTrace|`SemanticTrace`]] determines which [[#^def-TraceEvent|`TraceEvent`]] instances from a particular [[#^def-ProgramRun|`ProgramRun`]] are retained as accessible experience.
 
-Смысл события задаётся:
+An event's meaning is specified by:
 
 ```text
 operator;
-типизированными arguments;
-контрактом TraceEvent.output.
+typed arguments;
+the TraceEvent.output contract.
 ```
 
-Контракт [[#^def-OperatorOutput|`OperatorOutput`]] предоставляет trace-local semantic projection результата. Её элементы адресуются через `TraceOutputRef`, но не являются отдельным источником памяти.
+The [[#^def-OperatorOutput|`OperatorOutput`]] contract provides a trace-local semantic projection of the result. Its elements are addressed through `TraceOutputRef`, but are not separate memory sources.
 
-Если результат должен стать частью долговременной модели мира, программа материализует соответствующие semantic objects или facts через `GraphDelta`:
+If a result should become part of the long-term world model, the program materializes the corresponding semantic objects or facts through `GraphDelta`:
 
 ```text
 TraceEvent.output
@@ -828,9 +789,9 @@ TraceEvent.output
 → persistent semantic object / fact
 ```
 
-Persistent-объект сохраняет provenance к исходному `TraceEvent.output`.
+The persistent object retains provenance to the original `TraceEvent.output`.
 
-Основные пути извлечения:
+Main retrieval paths:
 
 ```text
 persistent semantic object
@@ -843,15 +804,15 @@ Program / Task / time range
 → ProgramRun
 → SemanticTrace
 → retained TraceEvent
-→ arguments и output;
+→ arguments and output;
 
 semantic query
 → persistent semantic graph
-   и semantic indexes над сохранёнными TraceEvent.output
-→ соответствующие semantic objects или TraceEvents.
+   and semantic indexes over retained TraceEvent.output
+→ corresponding semantic objects or TraceEvents.
 ```
 
-Поиск может начинаться, например, с [[Core data structures#^def-Instance|Instance]], [[Core data structures#^def-Facet|Facet]], [[Core data structures#^def-Concept|Concept]] или [[Semantics Plane#^def-RelationType|RelationType]]:
+A search may start, for example, from [[Core data structures#^def-Instance|Instance]], [[Core data structures#^def-Facet|Facet]], [[Core data structures#^def-Concept|Concept]], or [[Semantics Plane#^def-RelationType|RelationType]]:
 
 ```text
 Instance;
@@ -868,63 +829,57 @@ SignalSample;
 time range.
 ```
 
+## Retention, Compression, and Forgetting
 
-
----
----
-
-
-## Удержание, сжатие и забывание
-
-### Мотивация и базовая модель
+### Motivation and Basic Model
 
 (def_id:: concept.Forgetting)
-> [!definition]  
-> **Забывание в EverTree** — управляемое уменьшение объёма памяти при сохранении того, что ещё необходимо для действия, обучения, пересмотра знаний, объяснения и генерализации.
+> [!definition]
+> **Forgetting in EverTree** is the managed reduction of memory volume while preserving what is still needed for action, learning, knowledge revision, explanation, and generalization.
 > ^def-Forgetting
 
-Ценность опыта часто становится понятна только позже.. Рутинный сегодня [[#^def-ProgramRun|`ProgramRun`]] может оказаться важным после обнаружения новой зависимости, ошибки модели или изменения оценки источника. Поэтому исходный опыт сначала сохраняется достаточно полно, а необратимое удаление выполняется только после проверки.
+The value of experience often becomes clear only later. A routine [[#^def-ProgramRun|`ProgramRun`]] today may become important after a new dependency, model error, or source reassessment is discovered. Therefore, experience is initially retained in enough detail, and irreversible deletion occurs only after review.
 
-Память и применимые к данному опыту `ProcessModel` развиваются совместно: новый опыт уточняет модели процесса, а достаточно подтверждённые модели позволяют компактнее представлять уже объясняемый ими повторяющийся опыт. **Сжимается не просто то, что модель объясняет, а то, чья детализация обоснованно признана избыточной.**
+Memory and the `ProcessModel` applicable to the experience develop together: new experience refines process models, while sufficiently confirmed models allow recurring experience they explain to be represented more compactly. **What is compressed is not simply whatever a model explains, but whatever has been justified as redundant in detail.**
 
-Память не обязана обеспечивать точное восстановление всего прошлого или обучение любой будущей модели. Она сохраняет достаточно сведений для текущих обязательств и ожидаемо полезного дальнейшего обучения, включая возможность пересмотреть нынешнее понимание опыта.
+Memory does not have to provide exact recovery of the entire past or support learning for every future model. It retains enough information for current obligations and expected useful future learning, including the ability to reconsider today's understanding of experience.
 
-Есть две базовые операции:
+There are two basic operations:
 
 ```text
 compact
-→ уменьшить сохраняемую подробность опыта,
-  при необходимости создав компактную замену;
+→ reduce the retained detail of experience,
+  creating a compact replacement when needed;
 
 delete
-→ поместить ненужные данные в очередь на удаление.
+→ queue data that is no longer needed for deletion.
 ```
 
-Обычный lifecycle:
+The ordinary lifecycle is:
 
 ```text
-полное зарегистрированное представление опыта
-на протяжении initial_full_retention_period
+full registered representation of experience
+for the initial_full_retention_period
         ↓
 review
         ↓
 keep / compact / delete
         ↓
-для данных, получивших delete:
-восстановимость на протяжении deleted_protection_period
+for data marked for deletion:
+recoverable during the deleted_protection_period
         ↓
-повторная проверка обязательств сохранности
+review retention obligations again
         ↓
-физическое удаление
+physical deletion
 ```
 
-Каждый объект памяти периодически рассматривается [[#^def-ExpirienceCompactionJob|`expirience_compaction_job`]] по [[#Сроки пересмотра памяти|расписанию пересмотра]]. **Полнота относится к semantic surface опыта**, а не ко всем техническим деталям исполнения.
+Each memory object is periodically reviewed by [[#^def-ExpirienceCompactionJob|`expirience_compaction_job`]] according to the [[#Memory Review Schedule|review schedule]]. **Completeness applies to the semantic surface of experience**, not to every technical detail of execution.
 
-Также агент может сознательно запустить компактизацию.
+The agent may also deliberately start compaction.
 
-#### Сроки пересмотра памяти
+#### Memory Review Schedule
 
-**`memory_compaction_ladder`** — задаваемая разработчиком обязательная лестница пересмотров в конфигурации runtime: непустой Python-кортеж положительных, строго возрастающих длительностей **от создания объекта**. Пример с фиксированными длительностями в днях:
+**`memory_compaction_ladder`** is a developer-defined mandatory sequence of reviews in runtime configuration: a non-empty Python tuple of positive, strictly increasing durations **measured from object creation**. Example with fixed intervals in days:
 
 ```python
 from datetime import timedelta
@@ -939,113 +894,110 @@ memory_compaction_ladder: tuple[timedelta, ...] = (
 initial_full_retention_period = memory_compaction_ladder[0]
 ```
 
-`initial_full_retention_period` — используемое далее имя первой ступени, вычисляемое из лестницы; отдельного параметра конфигурации нет. После последней ступени пересмотры повторяются с периодом `memory_compaction_ladder[-1]`: в примере следующие сроки — 7300 и 10950 дней от создания.
+`initial_full_retention_period` is the name used below for the first rung, derived from the ladder; it is not a separate configuration parameter. After the last rung, reviews repeat at intervals of `memory_compaction_ladder[-1]`: in the example, the next review dates are 7300 and 10950 days from creation.
 
-`CompactExpirienceProgram` или сознание может назначить более ранний пересмотр с указанием причины, но не отодвинуть обязательный срок или изменить лестницу. Досрочная проверка не сдвигает последующие сроки и не отменяет очередную обязательную. Засчитать её вместо ближайшей обязательной можно только в пределах небольшого допуска до этой даты, заданного в конфигурации.
+`CompactExpirienceProgram` or consciousness may schedule an earlier review with a reason, but may not postpone a required date or change the ladder. An early review does not shift later dates or cancel a required review. It can count in place of the nearest required review only within a small configured allowance before that date.
 
-Существенное изменение объекта через `GraphDelta`, завершение связанной задачи, изменение [[#Обязательства сохранности|обязательств сохранности]], обнаруженная ошибка или более подходящее обобщение также ставят затронутые записи на досрочный пересмотр. Уже учтённые при проверке изменения не создают повторную заявку. Лестница ограничивает ожидание регулярной проверки, но не заменяет реакцию на новые обстоятельства.
+A material change to an object through `GraphDelta`, completion of a related task, a change to [[#Retention Obligations|retention obligations]], a discovered error, or a better generalization also schedules affected records for early review. Changes already accounted for during a review do not create duplicate requests. The ladder limits how long a regular review can wait, but does not replace responses to new circumstances.
 
-Срок означает обязательное включение объекта в `review batch` ближайшего запуска job. Обработка проходит через [[Cognition and Attention#^sequential-tasks|общий порядок последовательного исполнения]]; наступивший пересмотр остаётся ожидающим до фактической проверки. Постановка в очередь или неудачная попытка не считаются выполненным пересмотром.
+A review date means the object must be included in the review batch of the next job run. Processing follows the [[Cognition and Attention#^sequential-tasks|shared sequential execution order]]; an overdue review remains pending until it is actually performed. Queuing or a failed attempt does not count as a completed review.
 
-Runtime сохраняет выполненные и ожидающие пересмотры. Решение `keep`, изменение существующего объекта или его сжатие не обнуляют возраст и расписание; при замене компактным представлением обязательства пересмотра переносятся на него.
+Runtime retains completed and pending reviews. A `keep` decision, a change to an existing object, or its compaction does not reset its age or schedule; when it is replaced by a compact representation, review obligations transfer to that representation.
 
-При каждой проверке выбирается `keep / compact / delete` по [[#Проверка сжатия и ответственность|общим правилам]]. Досрочный пересмотр не сокращает `initial_full_retention_period` и не отменяет обязательств сохранности. Для `delete` действует [[#Delete и deleted_protection_period|lifecycle удаления]] без ожидания следующей ступени; отмена `delete` возвращает объект к прежнему расписанию, включая ожидающие пересмотры.
+At each review, choose `keep / compact / delete` under the [[#Compaction Review and Accountability|shared rules]]. An early review does not shorten `initial_full_retention_period` or cancel retention obligations. `delete` follows the [[#Delete and deleted_protection_period|deletion lifecycle]] without waiting for the next rung; canceling `delete` returns the object to its previous schedule, including pending reviews.
 
-#### Адаптивная подробность хранения
+#### Adaptive Storage Detail
 
-#topic_details 
+#topic_details
 
-Подробность выбирает  `CompactExpirienceProgram` учитывая давность, [[#^def-MemorySignificance|значимость]] и воспроизводимость опыта, применимость моделей, их `BeliefData`, незавершённые задачи и общий бюджет памяти.
+`CompactExpirienceProgram` selects the level of detail based on age, [[#^def-MemorySignificance|significance]], and reproducibility of experience; applicability of models and their `BeliefData`; unfinished tasks; and the overall memory budget.
 
-**Недавний опыт сохраняется подробнее независимо от уверенности модели.** Он нужен для проверки прогнозов, выявления неучтённых зависимостей и обнаружения изменений процесса. При решении о дальнейшем сжатии учитываются количество подходящих наблюдений, задержки outcomes и временной масштаб процесса: одной давности недостаточно.
+**Recent experience is kept in greater detail regardless of model confidence.** It is needed to check forecasts, detect unaccounted dependencies, and detect process changes. Decisions about further compression also consider the number of suitable observations, outcome delays, and the process timescale; age alone is not enough.
 
-**Уверенность и `BeliefData` влияют на допустимость потери информации.** При прочих равных подтверждённая закономерность позволяет сильнее сжимать её повторяющиеся проявления. Недостаточное основание, сомнительная применимость, противоречия или конкурирующие объяснения требуют сохранять больше различающих их подробностей.
+**Confidence and `BeliefData` affect how much information may be lost.** Other things equal, a confirmed regularity permits stronger compression of its recurring instances. Weak grounds, uncertain applicability, contradictions, or competing explanations require retaining more detail that distinguishes them.
 
-**Вариативность процесса не равна незнанию его закономерностей.** Подтверждённое распределение может компактно представлять случайные outcomes без хранения каждого случая. Обратимое сжатие возможно и без объясняющей модели: например, «50 нулей `[t0,t1]`, затем 50 единиц `[t1,t2]`» точно сохраняет существенную временную структуру.
+**Process variability is not the same as ignorance of its regularities.** A confirmed distribution can compactly represent random outcomes without retaining every case. Reversible compression is also possible without an explanatory model; for example, “50 zeros over `[t0,t1]`, then 50 ones over `[t1,t2]`” preserves the important temporal structure exactly.
 
+#### What a Compact Representation Preserves
 
-#### Что сохраняет компактное представление
-#topic_details 
+#topic_details
 
-Консолидация сохраняет не только исключения, но и **общий вид наблюдавшегося опыта с необходимой точностью**: характерные значения, частоты, разброс и существенные зависимости, включая временные.
+Consolidation preserves not only exceptions, but also **the overall shape of observed experience at the necessary precision**: characteristic values, frequencies, spread, and significant dependencies, including temporal ones.
 
-Для этого используются модели, правила, агрегаты, квантили и отдельные representative cases. Сама модель не всегда достаточна: например, `y ≈ 2x` не описывает распределение `x` и отклонений `y`, поэтому необходимые характеристики сохраняются отдельно в компактной форме.
+Models, rules, aggregates, quantiles, and selected representative cases are used for this. A model alone is not always enough: for example, `y ≈ 2x` does not describe the distribution of `x` or the deviations in `y`, so required characteristics are retained separately in compact form.
 
-В пределах бюджета сохраняются представители типичных групп и редких значимых случаев. Подробность распределяется с учётом частоты, разнообразия внутри группы и важности её сохранения: распространённые группы требуют представления существенных вариаций и шума, а редкие не должны теряться из-за малой частоты. При необходимости представители сохраняются с более широким контекстом, чем использует текущая модель. Их отбор не зависит исключительно от ошибки модели: неучтённая зависимость может существовать и среди внешне обычных случаев.
+Within the budget, representatives are kept for typical groups and rare, significant cases. Detail is allocated based on frequency, within-group diversity, and the importance of retention: common groups need representations of important variation and noise, while rare groups must not be lost just because they are infrequent. When necessary, representatives retain more context than the current model uses. Selection does not depend only on model error: an unaccounted dependency may also exist among apparently ordinary cases.
 
-Повторяющиеся исключения также могут обобщаться, если сохраняются их особенности, частоты и необходимый контекст. Необычность сама по себе не требует бессрочного хранения каждого случая.
+Recurring exceptions may also be generalized when their characteristics, frequencies, and required context are retained. Unusualness alone does not require keeping every case indefinitely.
 
-Это представление служит общей основой [[Datasets#^def-Dataset|датасетов]] для обучения и проверки. Для будущей модели могут понадобиться признаки или зависимости, которых обобщение уже не сохраняет; нужную подробность защищают по [[Datasets#Жизненный цикл|назначению датасета]].
+This representation is a shared foundation for [[Datasets#^def-Dataset|datasets]] used for training and evaluation. A future model may need features or dependencies the generalization no longer retains; the required detail is protected according to the [[Datasets#Lifecycle|dataset's purpose]].
 
-Если представление зависит от конкретной версии модели, сохраняется необходимая revision, чтобы последующее обучение модели не меняло смысл прошлого.
+If a representation depends on a specific model version, retain the required revision so future training does not change the meaning of the past.
 
-#### Частоты сохранённого опыта
+#### Frequencies of Retained Experience
 #topic_core
-
-Если группа, представитель или [[Core data structures#^def-Prototype|Prototype]] заменяет множество наблюдений, сохраняется их исходное количество. Иначе после сжатия один редкий случай и один представитель тысячи обычных выглядели бы одинаково частыми. Для интерпретации нужны:
 ^experience-frequency
 
-- **Единица счёта:** события, эпизоды, исходы или сообщения.
-- **Количество и знаменатель:** сколько случаев представлено и среди какого опыта считается их доля.
-- **Область наблюдения:** условия включения, период, источники и известные правила отбора.
-- **Точность:** точное число либо оценка с методом и неопределённостью; неизвестные значения не подменяются догадкой.
+If a group, representative, or [[Core data structures#^def-Prototype|Prototype]] replaces many observations, retain their original count. Otherwise, after compression, one rare case and a representative of a thousand ordinary cases would appear equally frequent. Interpretation requires:
 
-#topic_details 
+- **Unit of count:** events, episodes, outcomes, or messages.
+- **Count and denominator:** how many cases are represented and which experience is used to calculate their share.
+- **Observation scope:** inclusion conditions, period, sources, and known selection rules.
+- **Precision:** an exact count or an estimate with method and uncertainty; unknown values are not replaced by guesses.
 
-Статистика может храниться в общих агрегатах. Наблюдения учитываются до отбора представителей; сжатие переносит их количества, соотношения и достигнутую точность. Переотбор или удаление избыточных записей не уменьшает представленный объём. Новые наблюдения, исправления и смена окна либо условий учёта меняют статистику.
+#topic_details
 
-При объединении групп исключается повторный учёт исходного опыта. Сведения о пересечениях сохраняются в объёме, нужном для объединения и исправлений; неизвестное пересечение не позволяет считать сумму точной. Несколько рассказов об одном событии могут быть несколькими сообщениями, но одним событием. Retrieval, replay и повторное обучение не добавляют исходных событий.
+Statistics may be stored in shared aggregates. Observations are counted before representatives are selected; compression carries forward their counts, ratios, and achieved precision. Re-selection or removal of redundant records does not reduce the volume represented. New observations, corrections, or changes to the window or counting conditions change the statistics.
 
-Частота в собранном опыте не гарантирует ту же частоту в мире: это зависит от источников и отбора. Она также не задаёт число независимых подтверждений, `Strength/Support` или обучающий вес; для них действуют правила [[Uncertainty and Belief Tracking in the World Model#^def-Evidence|evidence]] и [[Learning system#Данные и автоматические обновления|обучения]].
+When groups are merged, source experience is not counted twice. Information about overlaps is retained as needed for merging and correction; an unknown overlap prevents treating the sum as exact. Several accounts of one event may be several messages but still one event. Retrieval, replay, and repeated training do not add source events.
 
-### Проверка сжатия и ответственность
+Frequency in collected experience does not guarantee the same frequency in the world; that depends on sources and selection. It also does not determine the number of independent confirmations, `Strength/Support`, or learning weight; those follow the [[Uncertainty and Belief Tracking in the World Model#^def-Evidence|evidence]] and [[Learning system#Data and Automatic Updates|learning]] rules.
 
-`CompactExpirienceProgram` выбирает форму хранения, при необходимости вызывает `MemoryConsolidationProgram` для построения обобщения и `CompactionValidationProgram` для проверки допустимости потерь.
+### Compaction Review and Accountability
 
-Проверяется не только соответствие текущей модели, но и сохранение необходимых свойств опыта: частот, разброса, значимых зависимостей, временных различий, evidence и provenance. При повторном сжатии учитывается уже утраченная точность.
+`CompactExpirienceProgram` chooses the storage form and, when needed, calls `MemoryConsolidationProgram` to create a generalization and `CompactionValidationProgram` to check whether information loss is acceptable.
 
-Хорошее соответствие модели не отменяет обязательств сохранности. Случай может оставаться необходимым для другой модели, проверки, объяснения или незавершённой задачи.
+The review checks not only fit to the current model but also retention of required properties of experience: frequencies, spread, significant dependencies, temporal distinctions, evidence, and provenance. Repeated compaction accounts for precision already lost.
+
+Good model fit does not cancel retention obligations. A case may still be needed by another model, for evaluation, explanation, or an unfinished task.
 
 ```text
-подробность ещё необходима
+detail is still needed
 → keep;
 
-необходимая информация сохранена
-в проверенном компактном представлении
+needed information is preserved
+in a verified compact representation
 → compact;
 
-данные больше не имеют достаточной ожидаемой ценности,
-не защищены обязательствами сохранности
-и удаление прошло проверки
+data no longer has enough expected value,
+is not protected by retention obligations,
+and has passed deletion checks
 → delete.
 ```
 
+### Storage and Access
 
-### Хранение и доступ
-
-Lifecycle хранения и retrieval решают разные вопросы:
+Storage lifecycle and retrieval answer different questions:
 
 ```text
 storage lifecycle
-→ какие данные продолжают существовать
-  и в каком виде;
+→ which data continue to exist
+  and in what form;
 
 retrieval policy
-→ какие из существующих данных
-  и в каком приоритете находятся
-  в обычном поиске.
+→ which existing data are found
+  and in what order during ordinary search.
 ```
 
-Низкая частота использования может влиять на оценку будущей ценности опыта, но сама по себе не доказывает его избыточность и не разрешает удаление.
+Low usage frequency may affect the estimate of future experience value, but by itself does not prove redundancy or authorize deletion.
 
----
+### Trace-Local and Persistent Results
 
-### Trace-local и persistent results
+TODO: partial duplicate of the Trace-Local and Persistent Results section above.
 
-ToDO:  частичный дубликат с. Trace-local  выше
-**[[#^def-TraceLocalResult|Trace-local result]]** — результат anchored-оператора, сохранённый в [[#^def-TraceEvent|`TraceEvent.output`]] и адресуемый через `TraceOutputRef`.
+**[[#^def-TraceLocalResult|Trace-local result]]** is the result of an anchored operator, saved in [[#^def-TraceEvent|`TraceEvent.output`]] and addressable through `TraceOutputRef`.
 
-Он принадлежит конкретному исполнению:
+It belongs to a specific execution:
 
 ```text
 TraceOutputRef
@@ -1053,73 +1005,71 @@ TraceOutputRef
 → ProgramRun
 ```
 
-По умолчанию семантические объекты и relations, построенные из такого результата, остаются локальными для trace.
+By default, semantic objects and relations built from such a result remain local to the trace.
 
-**[[#^def-PersistentResult|Persistent result]]** — semantic object или relation, которые программа явно поместила в persistent graph через `GraphDelta`.
+**[[#^def-PersistentResult|Persistent result]]** is a semantic object or relation that a program explicitly placed in the persistent graph through `GraphDelta`.
 
-Persistent result может использоваться независимо от исходного запуска, но сохраняет provenance к trace, из которого был получен.
+A persistent result can be used independently of its original run, but retains provenance to the trace from which it was derived.
 
-Переход результата в persistent graph не означает, что весь исходный trace должен храниться бессрочно. После консолидации может остаться только его `retention closure`.
+Moving a result into the persistent graph does not mean that the entire source trace must be retained indefinitely. After consolidation, only its `retention closure` may remain.
 
-Trace-local result обычно сжимается раньше, если он:
+A trace-local result is usually compacted sooner if it:
 
 ```text
-не был материализован через GraphDelta;
-не использовался downstream;
-не стал evidence;
-не повлиял на решение, belief или Program;
-не нужен для replay, Evaluation или debugging.
+was not materialized through GraphDelta;
+was not used downstream;
+did not become evidence;
+did not affect a decision, belief, or Program;
+is not needed for replay, Evaluation, or debugging.
 ```
 
-Persistent result сохраняется дольше, поскольку участвует в долговременном reasoning и retrieval, но также может быть позднее сжат, заменён или поставлен в очередь на удаление по общим правилам памяти.
+A persistent result is retained longer because it participates in long-term reasoning and retrieval, but it too may later be compacted, replaced, or queued for deletion under the shared memory rules.
 
----
+### Memory Lifecycle Components
 
-### Компоненты lifecycle памяти
+The compaction and deletion lifecycle is distributed across several components with non-overlapping responsibilities.
 
-Lifecycle сжатия и удаления распределён между несколькими компонентами с непересекающимися обязанностями.
-
-Все компоненты типа `Program` являются обучаемыми и развиваются через общий lifecycle программ EverTree. Jobs и системные инварианты являются инфраструктурой и не обучаются.
+All components of type `Program` are learnable and evolve through EverTree's shared program lifecycle. Jobs and system invariants are infrastructure and are not trained.
 
 #### ProgramRunRecorder
 
-`ProgramRunRecorder` автоматически фиксирует исполнение:
+`ProgramRunRecorder` automatically records executions:
 
 ```text
 ProgramRun;
 TraceEvent;
 SemanticTrace;
-arguments и outputs;
-связи вложенных ProgramRun.
+arguments and outputs;
+links between nested ProgramRun instances.
 ```
 
-Он не оценивает ценность опыта и не принимает решений о его дальнейшем хранении.
+It does not assess the value of experience or decide how it should be retained later.
 
-#### Оценка опыта
+#### Experience Evaluation
 
-[[Learning system#^def-PredictionEvaluator|`PredictionEvaluator`]] использует память для поиска прогнозов и связанных наблюдений через `match_predictions`, затем проверяет их через `evaluate_prediction`. `handle_unmatched_observations` обрабатывает несопоставленный опыт: отсутствие прогноза известного выбранного target фиксирует через [[Learning system#LearningCredit and UnresolvedCredit|UnresolvedCredit]], требующие разбора случаи передаёт сознанию. Результаты сохраняются в trace.
+[[Learning system#^def-PredictionEvaluator|`PredictionEvaluator`]] uses memory to find predictions and related observations through `match_predictions`, then checks them through `evaluate_prediction`. `handle_unmatched_observations` handles unmatched experience: it records a missing prediction for a known selected target through [[Learning system#LearningCredit and UnresolvedCredit|UnresolvedCredit]] and passes cases requiring analysis to consciousness. Results are saved in the trace.
 
-Оценка опыта выполняется отдельно от сжатия памяти.
+Experience evaluation is separate from memory compaction.
 
 #### expirience_compaction_job
 
 (def_id:: entity.ExpirienceCompactionJob)
-> [!definition]  
-> **`expirience_compaction_job`** — периодическая инфраструктурная job, которая формирует `review batch`: набор накопленных memory и persistent semantic results, для которых наступило время пересмотра.
+> [!definition]
+> **`expirience_compaction_job`** is a periodic infrastructure job that creates a `review batch`: a set of accumulated memory and persistent semantic results whose review date has arrived.
 > ^def-ExpirienceCompactionJob
 
-В batch входят trace experience и persistent semantic objects / facts, для которых наступил первый, повторный или досрочный [[#Сроки пересмотра памяти|пересмотр]]. Ранее оставленные или сжатые объекты и просроченные проверки также учитываются. Один объект включается один раз; уже ожидающая обработки заявка не дублируется.
+The batch includes trace experience and persistent semantic objects or facts due for first, recurring, or early [[#Memory Review Schedule|review]]. Previously retained or compacted objects and overdue reviews are included as well. Each object appears once; a request already pending is not duplicated.
 
-Job не решает, что с ними делать. Она ставит служебную [[Cognition and Attention#Goal, Task и спецификация задачи|Task]] обработки review batch через [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] в [[Cognition and Attention#^sequential-tasks|общий порядок последовательного исполнения]].
+The job does not decide what to do with the objects. It schedules an internal [[Cognition and Attention#Goal, Task, and Task Specification|Task]] for the review batch through [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] in the [[Cognition and Attention#^sequential-tasks|shared sequential execution order]].
 
 ### CompactExpirienceProgram
 
 (def_id:: entity.CompactExpirienceProgram)
-> [!definition]  
-> **CompactExpirienceProgram** — основная обучаемая программа, которая получает `review batch` и выбирает форму дальнейшего хранения его элементов, максимизируя ожидаемую долгосрочную ценность при ограниченной стоимости памяти и обработки.
+> [!definition]
+> **CompactExpirienceProgram** is the main learnable program that receives a `review batch` and chooses how its items should be retained, maximizing expected long-term value within memory and processing costs.
 > ^def-CompactExpirienceProgram
 
-Сжатие связано с генерализацией: если несколько случаев полезнее представить общей структурой, программа может передать их в [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]], сохранить полученное обобщение и уменьшить подробность исходного опыта.
+Compaction is connected to generalization: if several cases are more useful as a shared structure, the program may pass them to [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]], save the resulting generalization, and reduce the detail of the source experience.
 
 ```text
 review batch
@@ -1127,40 +1077,40 @@ review batch
 CompactExpirienceProgram
         ↓
 keep / delete
-или
+or
 related experiences
         ↓
 MemoryConsolidationProgram
         ↓
-обобщённое / агрегированное представление
+generalized / aggregated representation
         ↓
 validation
         ↓
-финальное keep / compact / delete
+final keep / compact / delete
 ```
 
-Программа выбирает:
+The program chooses:
 
 ```text
 keep
-→ исходное представление сохраняет самостоятельную будущую ценность;
+→ the original representation retains independent future value;
 
 compact
-→ полезная информация сохранена в более компактном
-  или обобщённом представлении;
+→ useful information is preserved in a more compact
+  or generalized representation;
 
 delete
-→ данные больше не дают достаточной ожидаемой ценности
-  и не защищены обязательствами сохранности.
+→ data no longer provide enough expected value
+  and are not protected by retention obligations.
 ```
 
-Для обнаружения возможной общей структуры программа может группировать элементы `review batch` по semantic structure, [[#^def-Episode|Episode]] / Process, объектам, типам отношений, [[Uncertainty and Belief Tracking in the World Model#^def-BeliefTarget|`BeliefTarget`]], provenance и другим релевантным признакам.
+To find possible shared structure, the program may group review-batch items by semantic structure, [[#^def-Episode|Episode]] or Process, objects, relation types, [[Uncertainty and Belief Tracking in the World Model#^def-BeliefTarget|`BeliefTarget`]], provenance, and other relevant features.
 
-Один или несколько связанных случаев передаются в `MemoryConsolidationProgram`. Та при необходимости использует retrieval, чтобы найти похожие, контрастные или исключающие случаи в более ранней памяти. Retrieval строится относительно уже переданного опыта; consolidation не начинается с произвольного поиска по всей памяти.
+One or more related cases are passed to `MemoryConsolidationProgram`. When needed, it uses retrieval to find similar, contrasting, or excluding cases in earlier memory. Retrieval is conditioned on the experience already passed in; consolidation does not begin with an arbitrary search across all memory.
 
-После успешной генерализации сохраняются необходимые evidence, provenance, representatives, exceptions и детали, которые обобщение ещё не заменяет.
+After successful generalization, retain required evidence, provenance, representatives, exceptions, and details not yet replaced by the generalization.
 
-Финальное решение `keep / compact / delete` принимает `CompactExpirienceProgram`. `MemoryConsolidationProgram` строит предлагаемое обобщение, а [[#^def-CompactionValidationProgram|`CompactionValidationProgram`]] проверяет допустимость потери исходной детализации.
+The final `keep / compact / delete` decision belongs to `CompactExpirienceProgram`. `MemoryConsolidationProgram` constructs a proposed generalization, and [[#^def-CompactionValidationProgram|`CompactionValidationProgram`]] checks whether the loss of original detail is acceptable.
 
 ```text
 CompactExpirienceProgram
@@ -1168,93 +1118,91 @@ CompactExpirienceProgram
 └── CompactionValidationProgram?
 ```
 
-#### Обязательства сохранности
+#### Retention Obligations
 
-#topic_details 
+#topic_details
 
-
-**Обязательства сохранности** определяют, какой опыт или результат сейчас нельзя потерять и почему.
+**Retention obligations** specify which experience or result must not currently be lost, and why.
 
 ```text
-операционное
-→ опыт нужен действующему result, belief, claim,
+operational
+→ experience is needed by an active result, belief, claim,
   Program, TrainingDataset, EvaluationDataset, EvaluationCase,
-  анализу, инсайту, решению или действию;
+  analysis, insight, decision, or action;
 
-эпистемическое
-→ опыт или его compact representation нужны для корректных
+epistemic
+→ experience or its compact representation is needed for correct
   BeliefData / EvidenceStats, revise/retract,
-  переоценки источника или сохранения значимого противоречия;
-  
-→ релевантные неразличающие проверки
-  (`Δ = 0`, `evidence_mass = 0`) также сохраняются,
-  если они нужны для корректного EvidenceStats.
+  source reassessment, or preserving a significant contradiction;
 
-аудитное
-→ опыт нужен, чтобы восстановить основания
-  значимого изменения агента;
+→ relevant non-distinguishing checks
+  (`Δ = 0`, `evidence_mass = 0`) are also retained
+  when needed for correct EvidenceStats;
+
+audit
+→ experience is needed to recover the grounds for
+  a significant agent change;
 
 coverage
-→ опыт нужен как edge case, counterexample,
-  представитель режима, плохо объяснённый случай
-  или контрольный routine-example.
+→ experience is needed as an edge case, counterexample,
+  representative of a regime, poorly explained case,
+  or control routine example.
 ```
 
-Явные требования пользователя, supervisor-а, safety или retention policy также запрещают потерю соответствующего опыта.
+Explicit requirements from a user, supervisor, safety system, or retention policy also prohibit losing the corresponding experience.
 
-Обязательство требует сохранить необходимую информацию, но не обязательно исходный опыт: после корректной consolidation достаточно compact representation, сохраняющего требуемые инварианты.
+An obligation requires retaining the necessary information, but not necessarily the original experience: after correct consolidation, a compact representation preserving the required invariants is sufficient.
 
-[[Datasets#Жизненный цикл|Требования действующего датасета]] защищают нужную детализацию и при продолжающемся сборе данных. После прекращения соответствующей потребности защита снимается, если её не требует другая задача или обязательство. Сохранение результата обучения или проверки само по себе не требует бессрочно хранить весь набор: сохраняются зависимости, необходимые для заявленного дальнейшего использования результата.
+[[Datasets#Lifecycle|Requirements of an active dataset]] protect the required level of detail while data collection continues. When that need ends, the protection is removed unless another task or obligation requires it. Retaining a training or evaluation result does not by itself require indefinite retention of the entire dataset; retain dependencies required for the stated future use of the result.
 
-Для восстанавливаемого запуска дополнительно сохраняются необходимые версии кода, входы, результаты и журнал [[Cognition and Attention#^durable-program-execution|DBOS]]. Сжатие `SemanticTrace` не разрешает удалять данные, ещё необходимые для продолжения запуска; технический журнал исполнения имеет собственный срок хранения.
+For a recoverable run, also retain the required code versions, inputs, results, and [[Cognition and Attention#^durable-program-execution|DBOS journal]]. Compressing a `SemanticTrace` does not allow deleting data still needed to continue the run; the technical execution journal has its own retention period.
 
-Данные для [[Cognition and Attention#^program-restart-continuation|продолжения Task без повторов]] сохраняются, пока нужны задаче, включая после завершения заменённого `ProgramRun`.
+Data needed for [[Cognition and Attention#^program-restart-continuation|continuing a Task without repeats]] are retained while the Task needs them, including after a replaced `ProgramRun` ends.
 
-В MVP сохранность опыта после аварии ограничена [[Cognition and Attention#^agent-backup|последним общим backup]]: последующий опыт может быть потерян. Зависимости хранимых backups также защищены от удаления.
+In the MVP, experience retention after a failure is limited to the [[Cognition and Attention#^agent-backup|last shared backup]]: later experience may be lost. Dependencies of retained backups are also protected from deletion.
 
----
-
-#### Retention closure
+#### Retention Closure
 
 (def_id:: entity.RetentionClosure)
-> [!definition]  
-> **Retention closure** — минимальный набор зависимостей, который необходимо сохранить **вместе с уже защищённым объектом**, чтобы не потерять его происхождение, существенное evidence и контекст получения или использования.
+> [!definition]
+> **Retention closure** is the minimal set of dependencies that must be preserved **together with an already protected object** to retain its provenance, significant evidence, and context of creation or use.
 > ^def-RetentionClosure
 
-В него при необходимости входят:
+It may include:
 
 ```text
 producer TraceEvent;
-существенные inputs и их producers;
-branch conditions и ключевые alternatives;
+significant inputs and their producers;
+branch conditions and key alternatives;
 comparison / decision events;
-существенное evidence;
+significant evidence;
 ProgramRun;
 graph-writing event;
-необходимая часть caller chain.
+required portion of the caller chain.
 ```
 
-То есть:
+In other words:
 
 ```text
-Обязательства сохранности
-→ определяют, что нельзя потерять;
+retention obligations
+→ determine what must not be lost;
 
 Retention closure
-→ распространяет эту защиту
-  только на необходимые зависимости.
+→ propagates that protection
+  only to necessary dependencies.
 ```
 
-Само присутствие события в upstream provenance не создаёт обязательства сохранности. Оно входит в `retention closure` только если без него защищённый объект нельзя корректно использовать, пересчитать, объяснить или воспроизвести.
+The mere presence of an event in upstream provenance does not create a retention obligation. It belongs to the `retention closure` only if the protected object cannot be correctly used, recomputed, explained, or reproduced without it.
 
-После проверенного сжатия или обобщения `retention closure` пересчитывается и может быть сокращён, если часть прежних зависимостей больше не нужна.
+After verified compaction or generalization, `retention closure` is recalculated and may be reduced if some former dependencies are no longer needed.
 
-`Retention closure` — вычисляемый view, а не отдельная сущность или программа.
+`Retention closure` is a computed view, not a separate entity or program.
 
-#### Сжатие 
-##### Компактизация SemanticTrace
+#### Compaction
 
-После `initial_full_retention_period` [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] может сократить `SemanticTrace`, оставив события, которые необходимо или ожидаемо полезно сохранить:
+##### Compacting SemanticTrace
+
+After `initial_full_retention_period`, [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] may shorten `SemanticTrace`, retaining events that must or are expected to remain useful:
 
 ```text
 [E1, E2, E3, E4, E5]
@@ -1262,48 +1210,49 @@ Retention closure
 [E1, E3, E5]
 ```
 
-#topic_details 
+#topic_details
 
-Все [[#^def-TraceEvent|`TraceEvent`]], необходимые актуальным `retention closure`, должны оставаться в соответствующих [[#^def-SemanticTrace|`SemanticTrace`]]. Относительный порядок оставшихся событий не меняется; сами immutable `TraceEvent` не переписываются.
+All [[#^def-TraceEvent|`TraceEvent`]] instances required by the current `retention closure` must remain in their corresponding [[#^def-SemanticTrace|`SemanticTrace`]]. The relative order of retained events does not change; immutable `TraceEvent` instances themselves are not rewritten.
 
-Каждый вложенный [[#^def-ProgramRun|`ProgramRun`]] compact-ится независимо. Его `SemanticTrace` может сократиться вплоть до пустого, при этом сам `ProgramRun` сохраняется, если ещё необходимы его metadata, call context или provenance.
+Each nested [[#^def-ProgramRun|`ProgramRun`]] is compacted independently. Its `SemanticTrace` may be shortened to empty, while the `ProgramRun` itself is retained if its metadata, call context, or provenance is still needed.
 
-Исключение `TraceEvent` из `SemanticTrace` не означает `delete`: решение об удалении принимается отдельно по общим правилам lifecycle.
+Excluding a `TraceEvent` from `SemanticTrace` does not mean `delete`: deletion is decided separately under the shared lifecycle rules.
 
 ---
 
-##### Сжатие persistent graph
+##### Compressing the Persistent Graph
 
-Persistent result также может быть compact или получить `delete` по общим правилам памяти: например, если он дублируется, заменён более актуальным представлением или лучше выражен обобщением.
+A persistent result may also be compacted or marked for `delete` under the general memory rules; for example, if it is duplicated, replaced by a more current representation, or better expressed by a generalization.
 
-#topic_details 
+#topic_details
 
-То, что состояние стало историческим, ошибочным или было позднее отозвано, само по себе не делает его ненужным. Оно может сохраняться, если повлияло на действие, изменение `Program` или belief, стало существенным evidence, представляет важный редкий случай или необходимо для реконструкции истории.
+A state becoming historical, incorrect, or later retracted does not by itself make it unnecessary. It may be retained if it affected an action, a `Program` change or belief, became significant evidence, represents an important rare case, or is needed to reconstruct history.
 
-Lifecycle persistent result и породившего его trace независимы:
+The lifecycle of a persistent result and its source trace are independent:
 
 ```text
-persistent result сохранён
-≠ весь source trace должен сохраняться;
+persistent result retained
+≠ entire source trace must be retained;
 
-persistent result получил delete
-≠ source trace автоматически удаляется.
+persistent result marked for delete
+≠ source trace is automatically deleted.
 ```
 
-Достаточно сохранить ту часть source trace, которую требуют его собственные обязательства сохранности и `retention closure`.
+It is enough to retain the portion of the source trace required by its own retention obligations and `retention closure`.
 
 ---
 
-#####  Сжатие дочернего ProgramRun
+##### Compacting a Child ProgramRun
 
-Каждый вложенный [[#^def-ProgramRun|`ProgramRun`]] compact-ится независимо; те же правила рекурсивно применяются ко всему дереву вложенных запусков.
+Each nested [[#^def-ProgramRun|`ProgramRun`]] is compacted independently; the same rules apply recursively to the entire tree of nested runs.
 
 ---
-### Сжатие evidence
 
-[[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] является производным view и не заменяет evidence, необходимое для последующего `revise`, `retract` или переоценки belief.
+### Compressing Evidence
 
-Повторяющиеся совместимые [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]] могут быть консолидированы программой [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]]:
+[[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] is a derived view and does not replace evidence needed for later belief `revise`, `retract`, or reassessment.
+
+Repeated compatible [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]] instances may be consolidated by [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]]:
 
 ```text
 EvidenceAssignment[]
@@ -1313,7 +1262,7 @@ MemoryConsolidationProgram
 consolidated EvidenceAssignment
 ```
 
-Консолидация должна сохранять эквивалентность evidence для поддерживаемых способов чтения belief, включая `Support` и [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceStats|`EvidenceStats`]]:
+Consolidation must preserve evidence equivalence for supported ways of reading belief, including `Support` and [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceStats|`EvidenceStats`]]:
 
 ```text
 belief before consolidation
@@ -1321,56 +1270,57 @@ belief before consolidation
 belief after consolidation
 ```
 
-При этом сохраняется минимальная информация, необходимая для temporal/dependency adjustments, idempotency и требуемой гранулярности `revise/retract`, а также значимые различия: существенные dependency branches, разные источники или режимы, подтверждения и опровержения, exceptions и минимум один representative experience для каждой схлопнутой группы.
+Retain the minimum information needed for temporal or dependency adjustments, idempotency, and required `revise/retract` granularity, as well as significant distinctions: important dependency branches, different sources or regimes, confirmations and refutations, exceptions, and at least one representative experience for each collapsed group.
 
-После успешной консолидации избыточные исходные `EvidenceAssignment`, routine observations и детали provenance могут получить `delete`, если consolidated representation сохраняет требуемую информацию и они больше не входят в актуальный `retention closure`.
+After successful consolidation, redundant source `EvidenceAssignment` instances, routine observations, and provenance details may be marked for `delete` if the consolidated representation preserves required information and they are no longer part of the current `retention closure`.
 
 ---
-##### Сжатие содержимого отдельных объектов
 
-[[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] может уменьшать объём отдельного большого объекта опыта без объединения его с другими случаями и без создания более общей модели.
+##### Compacting the Content of Individual Objects
 
-Например:
+[[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] may reduce the size of one large experience object without merging it with other cases or creating a more general model.
+
+For example:
 
 ```text
-длинная Note или другой текст
+long Note or other text
 → summary;
 
-большой внешний документ
-→ сокращённое содержание;
+large external document
+→ shortened content;
 
-длинный числовой ряд
+long numeric series
 → aggregate statistics / quantiles / sketch;
 
-большой structured result
-→ более компактное representation.
+large structured result
+→ more compact representation.
 ```
 
-Такое сжатие отличается от [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]]:
+This differs from [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]]:
 
 ```text
-сжатие одного объекта
-→ уменьшает его подробность;
+compaction of one object
+→ reduces its detail;
 
-consolidation нескольких случаев
-→ выделяет общую повторяющуюся структуру
-  и создаёт обобщённое знание.
+consolidation of several cases
+→ identifies shared recurring structure
+  and creates generalized knowledge.
 ```
 
-`ContentCompactionProgram` создаёт compact representation содержимого одного объекта. Если исходные детали после этого предполагается удалить, `CompactExpirienceProgram` проверяет, достаточно ли нового представления для дальнейшего использования этого опыта.
+`ContentCompactionProgram` creates a compact representation of the content of one object. If the source details are then to be deleted, `CompactExpirienceProgram` checks whether the new representation is sufficient for future use of the experience.
 
 ### MemoryConsolidationProgram
 
 #topic_core
 
 (def_id:: entity.MemoryConsolidationProgram)
-> [!definition]  
-> **MemoryConsolidationProgram** — обучаемая программа генерализации памяти. Она получает от [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] один или несколько конкретных связанных случаев опыта и проверяет, можно ли представить их вместе с релевантным прошлым опытом более общим и переиспользуемым знанием.
+> [!definition]
+> **MemoryConsolidationProgram** is a learnable memory-generalization program. It receives one or more specific, related cases of experience from [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]] and checks whether they can be represented together with relevant past experience as more general, reusable knowledge.
 > ^def-MemoryConsolidationProgram
 
-При необходимости программа использует retrieval для поиска сходных, контрастных и исключающих прошлых случаев. Запрос строится относительно переданного опыта и его semantic structure / provenance; консолидация не начинается с произвольного поиска темы.
+When needed, the program uses retrieval to find similar, contrasting, and excluding past cases. Its query is based on the passed experience and its semantic structure/provenance; consolidation does not begin with an arbitrary topic search.
 
-При каждом запуске консолидация рассматривает значимые изменения, успехи и затруднения переданного опыта. По необходимости и в пределах бюджета она сопоставляет их с [[Evaluative-Control System#^aggregate-queries|агрегатами]] и инициирует [[Learning system#^outcome-credit|назначение credit по результату Task или процесса]].
+Each run considers significant changes, successes, and difficulties in the supplied experience. When needed and within budget, it compares them with [[Evaluative-Control System#^aggregate-queries|aggregates]] and initiates [[Learning system#^outcome-credit|credit assignment for a Task or process outcome]].
 
 ```text
 related experience
@@ -1384,25 +1334,25 @@ generalized representation / aggregate
 
 #topic_details
 
-Типичные формы генерализации:
+Common forms of generalization:
 
 ```text
-повторяющиеся Facets одного Instance
-→ более устойчивая модель / обобщение Instance;
+repeated Facets of one Instance
+→ more stable model / generalization of the Instance;
 
-сходные Instances
+similar Instances
 → Prototype;
 
-повторяющиеся observations, Claims, relations или ProgramRun
+repeated observations, Claims, relations, or ProgramRun instances
 → aggregate / generalized semantic representation;
 
-совместимое повторяющееся evidence
+compatible recurring evidence
 → consolidated EvidenceAssignment.
 ```
 
-Так консолидация одновременно выполняет сжатие и генерализацию: повторяющаяся структура становится доступна для prediction, reasoning и дальнейшего learning без необходимости каждый раз анализировать все исходные случаи.
+Consolidation therefore performs compaction and generalization at once: recurring structure becomes available for prediction, reasoning, and further learning without analyzing every source case each time.
 
-Если результат должен стать persistent knowledge:
+If a result should become persistent knowledge:
 
 ```text
 consolidation result
@@ -1410,77 +1360,78 @@ consolidation result
 → persistent semantic graph
 ```
 
-Если обнаруженная закономерность требует изменения `Program`, она передаётся в structural revision / Program Lifecycle; `MemoryConsolidationProgram` сама программы не изменяет.
+If a discovered regularity requires a `Program` change, it is passed to structural revision / Program Lifecycle; `MemoryConsolidationProgram` does not change programs itself.
 
-Для конкретной консолидации программа должна:
+For a specific consolidation, the program must:
 
 ```text
-выделить общую структуру;
-создать обобщённое представление;
-определить его границы применимости;
-указать, какие source cases оно покрывает;
-выделить необходимые representatives и exceptions;
-зафиксировать существенные различия и потерю детализации.
+identify shared structure;
+create a generalized representation;
+define its applicability boundaries;
+identify which source cases it covers;
+select required representatives and exceptions;
+record significant distinctions and loss of detail.
 ```
 
-Обобщение не должно сводить опыт только к среднему случаю. При необходимости сохраняются:
+A generalization must not reduce experience to an average case alone. When needed, retain:
 
 ```text
-существенное evidence и provenance;
+significant evidence and provenance;
 representative cases;
-различающиеся regimes;
-edge cases и counterexamples;
-редкие или противоречащие outcomes;
-неразрешённые противоречия;
-небольшая контрольная выборка routine-опыта.
+different regimes;
+edge cases and counterexamples;
+rare or contradictory outcomes;
+unresolved contradictions;
+a small control sample of routine experience.
 ```
 
-Иначе последовательная консолидация может уничтожить evidence против собственной модели.
+Otherwise, successive consolidation may destroy evidence against the model itself.
 
-Например:
+For example:
 
 ```text
-1000 сходных успешных ProgramRun
+1000 similar successful ProgramRun instances
         ↓
 MemoryConsolidationProgram
         ↓
 generalized model / aggregate
 + representatives
 + exceptions
-+ необходимое provenance
++ necessary provenance
         ↓
 CompactExpirienceProgram
         ↓
-избыточные source traces могут получить compact / delete
+redundant source traces may be marked compact / delete
 ```
 
-Частота сама по себе не является основанием ни для генерализации, ни для удаления. Консолидация считается полезной, если более общее представление сохраняет или улучшает способность агента:
+Frequency alone does not justify generalization or deletion. Consolidation is useful if the more general representation preserves or improves the agent's ability to:
 
 ```text
-предсказывать;
-переносить знание;
-различать существенные случаи;
-обнаруживать отклонения;
-продолжать учиться.
+predict;
+transfer knowledge;
+distinguish significant cases;
+detect deviations;
+continue learning.
 ```
 
-`MemoryConsolidationProgram` не принимает финальное решение о сохранении исходных данных. Она возвращает обобщение и информацию о том, какие source cases оно покрывает и какие детали необходимо сохранить.
+`MemoryConsolidationProgram` does not make the final decision about retaining source data. It returns the generalization and information about which source cases it covers and which details must be retained.
 
 ```text
 MemoryConsolidationProgram
 → ConsolidationResult
         ↓
 CompactExpirienceProgram
-→ при необходимости CompactionValidationProgram
+→ CompactionValidationProgram, if needed
 → keep / compact / delete
 ```
 
-Финальное решение ограничено retention obligations, `retention closure` и системными инвариантами памяти. Защищённый исходный опыт сохраняется независимо от того, насколько хорошо он покрывается обобщением.
+The final decision is constrained by retention obligations, `retention closure`, and memory system invariants. Protected source experience remains retained regardless of how well a generalization covers it.
 
-#### Example: experience → Instance generalization
-#topic_details 
+#### Example: Experience → Instance Generalization
 
-В отдельных poker hands агент получает beliefs о конкретных действиях Игоря:
+#topic_details
+
+Across separate poker hands, the agent obtains beliefs about Igor's specific actions:
 
 ```text
 BLUFFS(Igor, Bet#17)
@@ -1488,10 +1439,10 @@ BLUFFS(Igor, Bet#83)
 BLUFFS(Igor, Bet#124)
 ```
 
-При review похожие случаи становятся источниками для [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]], которая при необходимости извлекает дополнительный прошлый опыт и обобщает его:
+During review, similar cases become source material for [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]], which may retrieve additional past experience and generalize it:
 
 ```text
-конкретные bluff / non-bluff cases
+specific bluff / non-bluff cases
         ↓
 MemoryConsolidationProgram
         ↓
@@ -1500,68 +1451,66 @@ BluffTendency(Igor)
 CLASSIFIED_AS(Igor, BluffProne)
 ```
 
-Так опыт отдельных действий становится обученным знанием о самом [[Core data structures#^def-Instance|`Instance`]].
+Thus, experience from individual actions becomes learned knowledge about the [[Core data structures#^def-Instance|Instance]] itself.
 
-#### Provenance и ссылочная целостность
+#### Provenance and Referential Integrity
 
-Не допускаются:
+The following are prohibited:
 
 ```text
-ссылки на физически отсутствующий TraceEvent;
-TraceOutputRef на отсутствующий output;
-caller_event на отсутствующее событие;
-защищённый результат без необходимого provenance.
+references to a physically missing TraceEvent;
+TraceOutputRef to a missing output;
+caller_event referring to a missing event;
+a protected result without required provenance.
 ```
 
-Это системные инварианты. Обучаемая программа не может их отменить.
-
+These are system invariants. A learnable program cannot override them.
 
 #### CompactionValidationProgram
 
-#topic_details 
+#topic_details
 
 (def_id:: entity.CompactionValidationProgram)
-> [!definition]  
-> **CompactionValidationProgram** —  программа проверки предложенного сжатия.
+> [!definition]
+> **CompactionValidationProgram** is a program that validates proposed compaction.
 > ^def-CompactionValidationProgram
 
-Она вызывается, когда compaction предполагает потерю исходных деталей, и проверяет, сохранились ли жёсткая ссылочная целостность, обязательный `retention closure` способности reasoning и retrieval; возможности revise и retract. Она не отвечает за семантику, она отвечает за ссылочную и структурную валидацию и проверяет инварианты [[#^def-ResultProvenance|provenance результата]] и ссылочной целостности [[#^def-Memory|Memory]].
+It is called when compaction would lose source details. It checks whether hard referential integrity, required `retention closure`, reasoning and retrieval abilities, and `revise` / `retract` capabilities are preserved. It is not responsible for semantics; it validates references and structure and checks the [[#^def-ResultProvenance|result provenance]] and [[#^def-Memory|Memory]] referential integrity invariants.
 
 #### DeletionFinalizationJob
 
-#topic_details 
+#topic_details
 
-`delete` не уничтожает данные физически.
+`delete` does not physically destroy data.
 
-После него данные остаются восстановимыми на протяжении:
+Afterward, data remain recoverable for the duration of:
 
 ```text
 deleted_protection_period
 ```
 
-По окончании периода `DeletionFinalizationJob` повторно проверяет обязательные условия сохранности.
+When the period ends, `DeletionFinalizationJob` checks required retention conditions again.
 
-Если новых зависимостей не возникло:
+If no new dependencies have appeared:
 
 ```text
 → physical deletion
 ```
 
-Если возникли:
+If they have:
 
 ```text
-→ delete отменяется
-→ данные возвращаются в обычный lifecycle.
+→ cancel delete
+→ return data to the ordinary lifecycle.
 ```
 
-`DeletionFinalizationJob` не принимает нового семантического решения о ценности памяти. Она только завершает или отменяет уже принятое решение `delete`.
+`DeletionFinalizationJob` does not make a new semantic decision about the value of memory. It only completes or cancels an existing `delete` decision.
 
 ---
 
+### Delete and deleted_protection_period
 
-### Delete и deleted_protection_period
-
-`delete` означает решение прекратить долговременное хранение данных, но не их немедленное физическое уничтожение.
+`delete` means a decision to stop retaining data long term, not to destroy it physically at once.
 
 ```text
 delete
@@ -1570,112 +1519,107 @@ delete
 → physical deletion
 ```
 
-В течение `deleted_protection_period` данные остаются восстановимыми.
+During `deleted_protection_period`, data remain recoverable.
 
-Если обнаруживается:
+If any of the following is discovered:
 
 ```text
-новая dependency;
+new dependency;
 retrieval failure;
 regression;
-ошибка обобщения;
-необходимость revise;
-потребность в replay;
-другая потерянная способность,
+generalization error;
+need to revise;
+need for replay;
+another lost capability,
 ```
 
-`delete` отменяется.
+cancel `delete`.
 
-Для [[#^def-TraceEvent|`TraceEvent`]] это означает возможность вернуть его ссылку в [[#^def-SemanticTrace|`SemanticTrace`]] на исходную позицию по `seq`.
+For a [[#^def-TraceEvent|`TraceEvent`]], this means its reference can be returned to its original position in [[#^def-SemanticTrace|`SemanticTrace`]] by `seq`.
 
-Такой случай становится новым evidence для обучения [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]], [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] или [[#^def-CompactionValidationProgram|`CompactionValidationProgram`]] — в зависимости от того, какое решение оказалось ошибочным.
+Such a case becomes new evidence for training [[#^def-CompactExpirienceProgram|`CompactExpirienceProgram`]], [[#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]], or [[#^def-CompactionValidationProgram|`CompactionValidationProgram`]], depending on which decision was wrong.
 
-После окончания `deleted_protection_period` `DeletionFinalizationJob` повторно проверяет обязательные retention conditions и либо физически удаляет данные, либо отменяет `delete`.
+After `deleted_protection_period` ends, `DeletionFinalizationJob` checks required retention conditions again and either physically deletes the data or cancels `delete`.
 
 ---
 
+## Memory Signals
 
-
-## Сигналы памяти
-
-Память использует существующие сигналы EverTree. Они выполняют роли:
+Memory uses EverTree's existing signals. They serve these roles:
 
 ```text
-при записи
-→ пометить потенциально важный опыт
+when recording
+→ mark potentially important experience;
 
-при learning
-→ определить credit по выбранным LearningTarget и контексту опыта
+when learning
+→ assign credit based on selected LearningTargets and experience context;
 
-при consolidation
-→ решить, что сжать, связать, закрепить или удалить
+when consolidating
+→ decide what to compact, link, retain, or delete;
 
-при replay
-→ выбрать, какой прошлый опыт переиграть
+when replaying
+→ select which past experience to replay;
 
-при retrieval
-→ помочь ранжировать кандидатов, если их слишком много
+when retrieving
+→ help rank candidates when there are too many.
 ```
-
 
 ---
 
-### Значимость памяти
+### Memory Significance
 
 (def_id:: concept.MemorySignificance)
 > [!definition]
-> **Значимость памяти (`significance`)** — пересматриваемая оценка ожидаемой долгосрочной ценности сохранения и доступности воспоминания или элемента графа для будущих задач, понимания и развития агента.
+> **Memory significance (`significance`)** is a revisable estimate of the expected long-term value of retaining and making a memory or graph item accessible for future tasks, understanding, and agent development.
 > ^def-MemorySignificance
 
 ```text
 significance: "baseline" | "elevated" | "exceptional" | null = null
 ```
 
-| Уровень | Значение |
+| Level | Meaning |
 | --- | --- |
-| `baseline` — базовая | Объект оценён; оснований для повышенной значимости не установлено. Объединяет обычную и низкую значимость. |
-| `elevated` — повышенная | Ожидается заметная дополнительная ценность для будущей работы, но оснований для исключительной значимости нет. |
-| `exceptional` — исключительная | Ожидаемая ценность особенно велика, либо глобально для долгосроного самоулучшения и генерализации агента  либо даже в отдельной области: например, существенное расширение понимания или возможностей. |
+| `baseline` | The object has been assessed; no grounds for elevated significance have been established. Combines ordinary and low significance. |
+| `elevated` | Noticeable added value for future work is expected, but there are no grounds for exceptional significance. |
+| `exceptional` | Expected value is especially high, either globally for the agent's long-term self-improvement and generalization or within a particular domain, such as substantially extending understanding or capabilities. |
 
-`null` означает отсутствие оценки: объект ещё не рассматривали либо оценку пока не удалось обосновать. Это состояние вне шкалы; оно не подменяется `baseline`.
+`null` means there is no assessment: the object has not been considered or the assessment cannot yet be justified. It is outside the scale and is not treated as `baseline`.
 
-При оценке выбирается наивысший обоснованный уровень. Шкала [[Attribution Plane#2. Ранговая ось (Ordinal)|порядковая]]: границы оценочны, числовые расстояния между уровнями не заданы. Исключительная значимость не требует незаменимости для агента: её может иметь прорывной математический метод, полезный в своей области.
+Choose the highest level justified by the assessment. The scale is [[Attribution Plane#2. Ordinal Axis|ordinal]]: boundaries are evaluative and no numeric distances between levels are defined. Exceptional significance does not require that the agent cannot replace the item; a breakthrough mathematical method may be significant within its field.
 
-Оценка назначается выборочно при содержательном разборе [[#^def-CompactExpirienceProgram|компактизацией]], [[#^def-MemoryConsolidationProgram|консолидацией]], [[Self#От опыта к подтверждённой проблеме|рефлексией]] или [[Cognition and Attention#^def-Consciousness|сознанием]]. Краткое основание и область применения сохраняются в результате разбора с обычным [[#^def-ResultProvenance|provenance]]. Оценку можно повышать и понижать; оценивать каждый объект при создании необязательно. Для неизменяемых trace-объектов она хранится отдельно со ссылкой на объект.
+Assess selectively during substantive review by [[#^def-CompactExpirienceProgram|compaction]], [[#^def-MemoryConsolidationProgram|consolidation]], [[Self#From Experience to a Confirmed Problem|Reflection]], or [[Cognition and Attention#^def-Consciousness|consciousness]]. Retain a brief rationale and scope in the review result with ordinary [[#^def-ResultProvenance|provenance]]. Significance may be raised or lowered; it need not be assessed when every object is created. For immutable trace objects, store it separately with a reference to the object.
 
-`significance` используется как дополнительный признак в [[#^def-RankMemories|RankMemories]] и при выборе подробности хранения в [[#^def-CompactExpirienceProgram|CompactExpirienceProgram]]. Это оценка для управления памятью; итоговый retrieval score определяется текущим запросом.
+`significance` is an additional feature for [[#^def-RankMemories|RankMemories]] and for selecting storage detail in [[#^def-CompactExpirienceProgram|CompactExpirienceProgram]]. It is an assessment for memory management; the final retrieval score depends on the current query.
 
-#### Предостережения
+#### Cautions
 
-- Новизна, частота извлечения, использования и повторный разбор одного опыта сами по себе не обосновывают повышение значимости; оценка не распространяется автоматически по связям или на обобщение.
-- Значимость не повышает достоверность и не задаёт [[Learning system#LearningCredit and UnresolvedCredit|learning credit]] или вес обучающего примера.
-- Выделение значимого не должно вытеснять типичный опыт и контрпримеры; подробность хранения учитывает [[#Обязательства сохранности|обязательства сохранности]] и ценность информации, которую ещё не сохраняет компактное представление.
+- Novelty, retrieval frequency, use, or repeated review of the same experience do not by themselves justify increasing significance; it does not propagate automatically through relations or to a generalization.
+- Significance does not increase reliability or define [[Learning system#LearningCredit and UnresolvedCredit|learning credit]] or training-example weight.
+- Highlighting significant cases must not displace typical experience and counterexamples; storage detail accounts for [[#Retention Obligations|retention obligations]] and the value of information not yet retained by a compact representation.
 
-### ExplanatoryTension и [[Evaluative-Control System#^def-TensionReduction|tension_reduction]]
+### ExplanatoryTension and [[Evaluative-Control System#^def-TensionReduction|tension_reduction]]
 
-[[Evaluative-Control System#^def-ExplanatoryTension|`ExplanatoryTension`]] — относительное напряжение по выбранным процессам, а не свойство отдельного воспоминания. Оно агрегирует уже полученные `prediction_unexpectedness` из обычной работы.
+[[Evaluative-Control System#^def-ExplanatoryTension|`ExplanatoryTension`]] is relative tension across selected processes, not a property of an individual memory. It aggregates `prediction_unexpectedness` already obtained during ordinary work.
 
-Снижение `ExplanatoryTension`, выраженное положительным `tension_reduction`, может быть поводом разобрать traces связанных обновлений и рассмотреть их полезность. Provenance устанавливает путь зависимости, а не доказывает полезность; назначение credit выполняет Learning system.
-
-
+A reduction in `ExplanatoryTension`, expressed as positive `tension_reduction`, may prompt review of traces for related updates and consideration of their usefulness. Provenance establishes a dependency path; it does not prove usefulness. Learning System assigns credit.
 
 ---
 
-## Projection to process and program
+## Projection to Process and Program
 
-Для [[Datasets#^def-Dataset|обучения и проверки]] EverTree строит проекцию сохранённого опыта на конкретный process и program, используя:
+For [[Datasets#^def-Dataset|training and evaluation]], EverTree projects saved experience onto a specific process and program using:
 
 ```text
-process lens 
-→ что относится к смыслу процесса
+process lens
+→ what is relevant to the process's meaning;
 
 program lens
-→ что конкретная программа читает, предсказывает или меняет
+→ what a particular program reads, predicts, or changes.
 ```
 
-Для проверочного `EvaluationCase` см. [[Process Plane/Program Evaluation and Testing#Contract-based Evaluation|Contract-based Evaluation]].
+For `EvaluationCase`, see [[Process Plane/Program Evaluation and Testing#Contract-Based Evaluation|Contract-based Evaluation]].
 
-Факты, не прошедшие проекцию, не участвуют в подготовленном примере. Они остаются в памяти и могут стать важными позже.
+Facts that do not pass through the projection are not included in the prepared example. They remain in memory and may become relevant later.
 
 ---
 
@@ -1683,29 +1627,29 @@ program lens
 
 #topic_core
 
-Retrieval находит и упорядочивает сохранённый опыт относительно конкретного запроса. Результаты группируются в [[#^def-MemoryCandidateGroup|`MemoryCandidateGroup`]] и ранжируются [[#^def-RankMemories|`RankMemories`]].
+Retrieval finds and orders saved experience for a specific query. Results are grouped into [[#^def-MemoryCandidateGroup|`MemoryCandidateGroup`]] instances and ranked by [[#^def-RankMemories|`RankMemories`]].
 
-Единая публичная программа:
+One public program:
 
 ```text
 RetrieveMemories(query, limit)
 → ordered MemoryCandidateGroup[]
 ```
 
-`MemoryQuery` описывает, какой опыт нужен потребителю. Помимо semantic anchors он может содержать явные ограничения по process, Program, объектам, времени, сигналам или provenance/dependencies. Точная структура `MemoryQuery` уточняется по мере появления реальных use cases.
+`MemoryQuery` describes the experience a consumer needs. In addition to semantic anchors, it may include explicit constraints on process, Program, objects, time, signals, or provenance/dependencies. The precise `MemoryQuery` structure will be refined as concrete use cases appear.
 
-Retrieval работает с двумя связанными источниками памяти:
+Retrieval uses two related memory sources:
 
 ```text
 persistent semantic graph
-→ Facets, facts, relations, обобщения и другие persistent results;
+→ Facets, facts, relations, generalizations, and other persistent results;
 
 trace storage
-→ ProgramRun, SemanticTrace, retained TraceEvent
-  и их arguments / outputs.
+→ ProgramRun, SemanticTrace, retained TraceEvent,
+  and their arguments / outputs.
 ```
 
-Они связаны provenance, поэтому поиск может переходить между semantic knowledge и породившим его опытом:
+They are linked by provenance, so search can move between semantic knowledge and the experience that produced it:
 
 ```text
 persistent result
@@ -1719,7 +1663,7 @@ persistent result
 ```text
 MemoryQuery
   ↓
-recall по доступным retrieval routes
+recall through available retrieval routes
   ↓
 explicit constraints
   ↓
@@ -1727,41 +1671,40 @@ deduplication and grouping
   ↓
 RankMemories(query, candidate groups)
   ↓
-первые limit групп
+first limit groups
 ```
 
-Retrieval routes — независимые пути к памяти:
+Retrieval routes are independent paths to memory:
 
 ```text
 direct references;
-semantic graph и provenance dependencies;
+semantic graph and provenance dependencies;
 process / Program / operator / task links;
-semantic indexes над persistent и trace memory;
-signal и time indexes;
+semantic indexes over persistent and trace memory;
+signal and time indexes;
 fallback semantic search.
 ```
 
-`Explicit constraints` исключают только кандидатов, явно несовместимых с запросом. Неуверенная релевантность не является основанием для исключения и учитывается при ranking.
+`Explicit constraints` exclude only candidates that are clearly incompatible with the query. Uncertain relevance is not grounds for exclusion and is considered during ranking.
 
+### Deduplication and Grouping
 
-### Deduplication and grouping
+Before ranking, results from different retrieval routes are consolidated into groups.
 
-Перед ranking результаты разных retrieval routes сворачиваются в группы.
+Deduplication combines multiple references to the same memory. Grouping combines closely related, redundant experience so many nearly identical cases do not crowd out other results.
 
-Дедупликация объединяет несколько ссылок на одну и ту же memory. Grouping объединяет близкий избыточный опыт, чтобы множество почти одинаковых случаев не вытесняло остальные результаты.
-
-При этом нельзя объединять случаи, различия между которыми могут быть существенны для query.
+Cases must not be combined if their differences may matter to the query.
 
 (def_id:: entity.MemoryCandidateGroup)
-> [!definition]  
-> **MemoryCandidateGroup** — локальный view текущего retrieval-вызова, а не новая persistent-сущность памяти.
+> [!definition]
+> **MemoryCandidateGroup** is a local view for the current retrieval call, not a new persistent memory entity.
 > ^def-MemoryCandidateGroup
 
 ### RankMemories
 
 (def_id:: entity.RankMemories)
-> [!definition]  
-> **RankMemories** — обучаемая дочерняя Program `RetrieveMemories`, которая упорядочивает уже найденные candidate groups относительно того же `MemoryQuery`.
+> [!definition]
+> **RankMemories** is a learnable child Program of `RetrieveMemories` that orders already found candidate groups for the same `MemoryQuery`.
 > ^def-RankMemories
 
 ```text
@@ -1769,233 +1712,225 @@ RankMemories(query, candidate groups)
 → ordered candidate groups
 ```
 
-Она не ищет новые memories, не применяет explicit constraints и не изменяет lifecycle памяти.
+It does not search for new memories, apply explicit constraints, or change the memory lifecycle.
 
-Основной критерий ranking:
+The main ranking criterion is:
 
 ```text
-ожидаемая полезность candidate group
-для текущего query.
+expected usefulness of a candidate group
+for the current query.
 ```
 
-В зависимости от query могут учитываться:
+Depending on the query, ranking may consider:
 
 ```text
 semantic relevance;
-Strength / Support и применимость evidence;
+Strength / Support and evidence applicability;
 temporal applicability;
 signal samples;
-provenance и downstream dependencies;
-история использования;
-стоимость доступа и обработки.
+provenance and downstream dependencies;
+history of use;
+cost of access and processing.
 ```
 
-Эти признаки не являются универсальными множителями. Например, высокий `Support` полезен при поиске надёжного evidence, низкий — при поиске сомнительных случаев; recency важна для time-sensitive query, но не обязательно для audit; provenance показывает зависимости, но не является универсальным scalar score.
+These features are not universal multipliers. For example, high `Support` is useful when seeking reliable evidence and low `Support` when seeking doubtful cases; recency matters for a time-sensitive query but not necessarily an audit; provenance shows dependencies but is not a universal scalar score.
 
-Поэтому у memory нет постоянного общего `retrieval score`. Score, если он используется, относится только к конкретному вызову `RankMemories`.
+Therefore, memory has no permanent global `retrieval score`. Any score is specific to a particular `RankMemories` call.
 
-В MVP используется одна общая `RankMemories`, интерпретирующая `MemoryQuery`. Специализированные rankers добавляются только если Evaluation покажет систематическую проблему общего механизма.
-
+In the MVP, one shared `RankMemories` program interprets `MemoryQuery`. Specialized rankers are added only if Evaluation reveals a systematic problem with the shared mechanism.
 
 ### Learning
 
-`RetrieveMemories` и [[#^def-RankMemories|`RankMemories`]] обучаются через обычную [[Learning system#^def-LearningSystem|Learning System]] по downstream-результатам использования найденной памяти.
+`RetrieveMemories` and [[#^def-RankMemories|`RankMemories`]] are trained through the ordinary [[Learning system#^def-LearningSystem|Learning System]] using downstream outcomes from the use of retrieved memory.
 
-Ключевое разделение ошибок:
+Distinguish these error types:
 
 ```text
-нужная memory не попала в candidate groups
+needed memory was not in the candidate groups
 → retrieval / recall error;
 
-нужная memory была найдена,
-но получила слишком низкий rank
+needed memory was found,
+but ranked too low
 → ranking error.
 ```
 
-Аналогично систематическая ошибочная фильтрация или grouping получают evidence соответствующим решениям retrieval.
+Similarly, evidence about systematic incorrect filtering or grouping is assigned to the corresponding retrieval decisions.
 
-[[#^def-ResultProvenance|Provenance]] показывает, какие решения участвовали в результате. `CreditAssignmentProgram` связывает [[Learning system#LearningCredit and UnresolvedCredit|learning credit]] с выбранным [[Learning system#^def-LearningTarget|LearningTarget]] и его применением в контексте evaluated outcome; конкретные параметры для обновления выбирает `UpdatePlanner`.
-
+[[#^def-ResultProvenance|Provenance]] shows which decisions contributed to the result. `CreditAssignmentProgram` links [[Learning system#LearningCredit and UnresolvedCredit|learning credit]] to the selected [[Learning system#^def-LearningTarget|LearningTarget]] and its use in the context of an evaluated outcome; `UpdatePlanner` selects the parameters to update.
 
 ## Replay
 
-### Определение
+### Definition
 
-#topic_core 
+#topic_core
 
 (def_id:: entity.MemoryReplay)
-> [!definition]  
-> **Memory replay** — механизм возврата выбранного сохранённого опыта в отдельную обработку как [[Cognition and Attention#Goal, Task и спецификация задачи|Task]], чтобы продолжить его незавершённую интеграцию, переосмыслить его или использовать для обучения относительно вопроса либо цели.
+> [!definition]
+> **Memory replay** is a mechanism for returning selected saved experience to a separate processing pass as a [[Cognition and Attention#Goal, Task, and Task Specification|Task]], to continue its unfinished integration, reinterpret it, or use it for learning against a question or goal.
 > ^def-MemoryReplay
 
-```
-текущий опыт 
-→ cognition / analysis; 
+```text
+current experience
+→ cognition / analysis;
 
-завершённый опыт анализируется постфактум
-в рамках той же обработки
-→ reflection (replay не требуется); 
+completed experience analyzed afterward
+within the same processing pass
+→ Reflection (replay is not needed);
 
-выбранный прошлый опыт возвращается из памяти в отдельную обработку
-→ replay (может включать reflection).
-```
-
-`ReplayTask` может быть выбран сразу после завершения [[#^def-Episode|эпизода]] или значительно позже. Важен отдельный проход обработки, а не физическая длительность паузы. Replay создается только при обоснованной неободимости.
-
-`ReplayTask` может охватывать один или несколько эпизодов, связанных общим вопросом либо целью. Для сознательного шага [[Cognition and Attention#^context-preparation|`ContextPreparation`]] загружает необходимые части выбранного опыта, сохраняя контекст, нужный для их интерпретации. Использование памяти внутри текущей `Task` само по себе не является Replay.
-
-> **Replay не имеет отдельного learning pipeline. Он создаёт новый опыт внутренней обработки, который проходит через те же [[#^def-ProgramRun|`ProgramRun`]], [[#^def-TraceEvent|`TraceEvent`]], evaluation, credit assignment и episode integration, что и live-опыт.**
-
-### Когда нужен replay
-
-#topic_core 
-
-
-Replay нужен, когда повторная обработка прошлого опыта имеет ожидаемую обучающую ценность: может помочь объяснить произошедшее, правильнее назначить credit, уточнить модель, улучшить policy или извлечь переносимый вывод.
-
-Типичные причины:
-
-```
-неожиданный плохой outcome
-+ причина не ясна;
-
-неожиданный успех
-+ не понятно, что именно сработало;
-
-неоднозначный credit assignment;
-
-сильный supervisor_feedback_signal
-+ неясно, какое решение или действие его вызвало;
-
-высокий prediction_unexpectedness
-+ обычный belief / parameter update
-  не объясняет mismatch;
-
-редкий или необычный случай;
-
-предполагаемая смена режима;
-
-противоречие между эпизодами
-или внутри одного эпизода;
-
-новая Claim или модель,
-которая позволяет по-новому интерпретировать
-старый опыт;
-
-regression или Evaluation gap,
-для понимания которых полезен прошлый опыт.
+selected past experience is returned from memory to a separate pass
+→ replay (may include Reflection).
 ```
 
-Высокий [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] или сильный / необычный outcome сами по себе не требуют replay.
+`ReplayTask` may be selected immediately after an [[#^def-Episode|Episode]] ends or much later. What matters is a separate processing pass, not the physical length of the pause. Replay is created only when justified.
 
+`ReplayTask` may cover one or several episodes related by a shared question or goal. For a conscious step, [[Cognition and Attention#^context-preparation|`ContextPreparation`]] loads the necessary parts of selected experience while retaining the context needed to interpret them. Using memory within the current `Task` is not by itself Replay.
+
+> **Replay has no separate learning pipeline. It creates new internal processing experience that passes through the same [[#^def-ProgramRun|`ProgramRun`]], [[#^def-TraceEvent|`TraceEvent`]], Evaluation, credit assignment, and episode integration as live experience.**
+
+### When Replay Is Needed
+
+#topic_core
+
+Replay is needed when reprocessing past experience has expected learning value: it may help explain what happened, assign credit more accurately, refine a model, improve a policy, or extract a transferable conclusion.
+
+Common reasons:
+
+```text
+unexpected poor outcome
++ cause is unclear;
+
+unexpected success
++ unclear what made it work;
+
+ambiguous credit assignment;
+
+strong supervisor_feedback_signal
++ unclear which decision or action caused it;
+
+high prediction_unexpectedness
++ ordinary belief / parameter update
+   does not explain the mismatch;
+
+rare or unusual case;
+
+possible regime change;
+
+contradiction between episodes
+or within one episode;
+
+new Claim or model
+that allows past experience to be interpreted differently;
+
+regression or Evaluation gap
+that may be understood through past experience.
 ```
-сильный outcome
-+ причина понятна
-+ необходимое learning уже выполнено
-→ replay обычно не нужен;
 
-существенный outcome
-+ причина, credit или границы применимости неясны
-→ хороший кандидат на replay.
+High [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] or a strong/unusual outcome does not by itself require replay.
+
+```text
+strong outcome
++ cause is understood
++ required learning is done
+→ replay is usually unnecessary;
+
+significant outcome
++ cause, credit, or applicability boundaries are unclear
+→ good replay candidate.
 ```
 
-Replay может быть запланирован сразу после эпизода либо значительно позже, когда новое знание, гипотеза или проблема делает старый опыт снова информативным.
+Replay may be planned immediately after an episode or much later, when new knowledge, a hypothesis, or a problem makes old experience informative again.
 
-Поводом может быть и цель улучшить уже работающую стратегию на накопленном опыте, если ожидаемая польза оправдывает стоимость. Ошибка или незавершённая интеграция для этого не обязательны.
+Another reason may be improving an already working strategy using accumulated experience if the expected benefit justifies the cost. An error or unfinished integration is not required.
 
-### Replay и сигналы
+### Replay and Signals
 
-#topic_details 
+#topic_details
 
-Сигналы помогают обнаруживать опыт, который может требовать повторного анализа, но сами по себе не определяют необходимость replay.
+Signals help detect experience that may need reanalysis, but do not by themselves determine whether replay is needed.
 
-`ReplaySelectionProgram` учитывает сигналы совместно с:
+`ReplaySelectionProgram` considers signals together with:
 
+```text
+BeliefData and EvidenceStats; provenance;
+current model;
+rarity;
+contradictions;
+previous replay attempts;
+cost;
+similar and contrasting episodes.
 ```
-BeliefData и EvidenceStats; provenance;
-текущей моделью;
-редкостью;
-противоречиями;
-предыдущими replay attempts;
-стоимостью;
-похожими и контрастными эпизодами.
-```
-
 
 ### ReplaySelectionProgram
 
-#topic_core 
+#topic_core
 
-Упрощенный интерфейс:
+Simplified interface:
 
 ```python
 ReplaySelectionProgram(
   source_episode? = None,
-  reason: str? = None,  # пример: "почему я получил негативный supervisor_feedback?"
+  reason: str? = None,  # e.g. "why did I receive negative supervisor_feedback?"
 )
 → ReplayTask[]
 ```
 
-
-`reason` — вопрос или цель Replay. Необязательный `source_episode` задаёт отправную точку отбора, но не ограничивает Replay одним эпизодом. `ReplaySelectionProgram` при необходимости использует [[#Retrieval|общий retrieval]] для отбора и дополнения эпизодов по `reason` и релевантным сигналам.
-
+`reason` is the question or goal for Replay. Optional `source_episode` gives the selection process a starting point but does not restrict Replay to one episode. When needed, `ReplaySelectionProgram` uses [[#Retrieval|shared retrieval]] to select and supplement episodes based on `reason` and relevant signals.
 
 ---
 
-### Планирование replay
+### Scheduling Replay
 
-#topic_core 
+#topic_core
 
-`ReplayTask` использует обычный [[Cognition and Attention#^def-TaskExecution|цикл выполнения задачи]] и runtime без отдельного scheduler. Готовая разрешённая `exec`-программа может выполнять replay автоматически; для нужного сознательного шага задача помещается в общую `AttentionPriorityQueue`.
+`ReplayTask` uses the ordinary [[Cognition and Attention#^def-TaskExecution|task execution cycle]] and runtime without a separate scheduler. A ready, authorized `exec` program may run Replay automatically; a task needing a conscious step is added to the shared `AttentionPriorityQueue`.
 
-Период «сна» — время, выделенное на внутреннюю обработку опыта, — может использоваться для таких задач с общим бюджетом и той же очередью сознательной обработки. Рефлексия может инициировать `ReplayTask` или выполнить анализ и simulation внутри текущей `Task`, если отдельный возврат опыта не требуется.
+“Sleep” time—time allocated for internal processing of experience—may be used for these tasks with a shared budget and the same conscious-processing queue. Reflection may initiate a `ReplayTask` or perform analysis and simulation within the current `Task` if a separate return to experience is not needed.
 
-Для задачи, ожидающей сознательной обработки, динамически вычисляется:
+For a task waiting for conscious processing, `attention_priority` is calculated dynamically by:
 
+```text
+EstimateAttentionPriority(task)
 ```
-attention_priority.
-```
-программой EstimateAttentioPriority(task)
 
 ---
 
-### Выполнение replay
+### Executing Replay
 
-#topic_details 
+#topic_details
 
-Содержательная работа `ReplayTask`:
+The substantive work of a `ReplayTask` is:
 
-```
+```text
 ReplayTask
   ↓
-восстановить relevant observations,
+restore relevant observations,
 predictions, decisions, actions,
-outcomes и signal samples
+outcomes, and signal samples
   ↓
-добавить похожие и контрастные episodes
+add similar and contrasting episodes
   ↓
-выполнить анализ делегированной программой
-или сознанием после получения Focus,
-при необходимости — simulation и policy optimization
+analyze using a delegated program
+or consciousness after obtaining Focus,
+using simulation and policy optimization when needed
   ↓
-получить результаты интеграции.
+obtain integration results.
 ```
 
-Replay создаёт новый [[#^def-Episode|Episode]] внутренней обработки, связанный с исходными episode(s).
+Replay creates a new [[#^def-Episode|Episode]] for internal processing, linked to the source episode(s).
 
-Внутри него создаются обычные [[#^def-ProgramRun|ProgramRun]], включая
+It creates ordinary [[#^def-ProgramRun|ProgramRun]] instances, including:
 
 ```python
 ProgramRun(run_mode="replay")
 ```
 
-Replay может вызывать обычные Programs для [[Process Plane/Program Evaluation and Testing#3. Simulation Tests and Optimization|simulation и policy optimization]]. Дочерние simulation-запуски имеют `run_mode="simulation"`; вызывающий replay-run сохраняет `run_mode="replay"`.
+Replay may call ordinary Programs for [[Process Plane/Program Evaluation and Testing#3. Simulation Tests and Optimization|simulation and policy optimization]]. Child simulation runs have `run_mode="simulation"`; the calling replay run retains `run_mode="replay"`.
 
-Исходные Episode и [[#^def-TraceEvent|TraceEvent]] не изменяются. Новые [[Core data structures#^def-Note|заметки]] с рассуждениями, выводы, решения и updates относятся к новому Episode и сохраняют [[#^def-ResultProvenance|provenance]] к использованному прошлому опыту.
+Source Episodes and [[#^def-TraceEvent|`TraceEvent`]] instances are not changed. New [[Core data structures#^def-Note|notes]] with reasoning, conclusions, decisions, and updates belong to the new Episode and retain [[#^def-ResultProvenance|provenance]] to the past experience used.
 
-Некоторые возможные результаты, включая [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]], [[Learning system#LearningCredit and UnresolvedCredit|`LearningCredit`]] и [[Core data structures#^def-Claim|`Claim`]]:
+Possible outcomes include [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]], [[Learning system#LearningCredit and UnresolvedCredit|`LearningCredit`]], and [[Core data structures#^def-Claim|`Claim`]]:
 
-```
+```text
 EvidenceAssignment
 → belief update;
 
@@ -2003,58 +1938,51 @@ LearningCredit
 → UpdatePlanner → parameter update;
 
 Claim
-→ дальнейшая проверка;
+→ further checking;
 
 structural revision request
 → ProgramBranch / new Program / semantic change;
 
-generalized relation или prototype
-→ переносимое знание;
+generalized relation or prototype
+→ transferable knowledge;
 
 EvaluationCase
-→ проверка конкретной гипотезы или Program;
+→ check a specific hypothesis or Program;
 
 experiment / action proposal
-→ обычная задача planning и action selection;
+→ ordinary planning and action selection task;
 
 no justified update
-→ имеющегося evidence недостаточно.
+→ available evidence is insufficient.
 ```
 
-[[#^def-MemoryReplay|Replay]] никогда автоматически не повторяет внешнее действие. Он может только создать предложение эксперимента или action task, которое затем проходит обычные planning, commitment и safety-механизмы.
+[[#^def-MemoryReplay|Replay]] never automatically repeats an external action. It may only create an experiment proposal or action task, which then follows the ordinary planning, commitment, and safety mechanisms.
 
-#### Пример: улучшение игры против конкретного соперника
+#### Example: Improving Play Against a Specific Opponent
 
-`ReplaySelectionProgram(reason="Как улучшить игру против Игоря?")` может создать задачу со следующим планом:
+`ReplaySelectionProgram(reason="How can I improve my play against Igor?")` may create a task with this plan:
 
-1. **Собрать опыт.** Через [[#Retrieval|retrieval]] выбрать раздачи с Игорем и уже усвоенные [[#Example: experience → Instance generalization|обобщения о нём]]. Зафиксировать текущую policy для сравнения. Восстановить ситуации выбора: доступные тогда карты, ставки, размеры банка и оставшихся фишек, наблюдавшиеся действия и результаты. Выборка включает разные исходы, а не только проигрыши.
-
-2. **Уточнить модель соперника.** По реальным действиям оценить вероятности сброса карт, уравнивания и повышения ставки в зависимости от ситуации и действий агента. Нераскрытые карты остаются неизвестными; возможные руки соперника представлены распределением, согласованным с доступной историей. Уже учтённый опыт переиспользуется по [[Learning system#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|правилам повторного учёта и обновления параметров]].
-
-3. **Смоделировать альтернативы.** Из выбранных ситуаций запускать продолжения с разными действиями агента. Обычная Program перебирает или сэмплирует допустимые карты, моделирует ответы Игоря и вычисляет результат по правилам покера. Для заданных карт и действий результат вычисляется точно; ожидаемый выигрыш стратегии зависит также от модели скрытых карт и поведения соперника. Policy видит только информацию игрока, даже если симулятор знает все карты. Анализ задаёт варианты и бюджет, а многочисленные численные прогоны выполняются без LLM-вызова на каждую раздачу.
-
-4. **Улучшить policy.** Сравнить текущую стратегию и кандидатов по ожидаемому чистому выигрышу фишек с учётом заданных ограничений риска. Проверять преимущество при правдоподобных вариантах неопределённой модели Игоря. Выбранные результаты simulation используются для [[Process Plane/Program Evaluation and Testing#3. Simulation Tests and Optimization|policy optimization]] через общий learning pipeline; анализ, прогоны и обновления можно повторять в пределах бюджета задачи.
-
-5. **Проверить и сохранить результат.** Отложенные реальные раздачи проверяют прогнозы модели Игоря; отдельные simulation-прогоны — выигрыш policy внутри модели. Улучшение сохраняется с областью применимости «против Игоря при таких условиях» и provenance исходного опыта, модели и прогонов. Разрешённые parameter updates идут через Learning System, изменения кода или контракта — через [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]]. Последующие реальные игры проверяют перенос и дают опыт для следующего цикла.
+1. **Gather experience.** Use [[#Retrieval|retrieval]] to select hands involving Igor and existing [[#Example: Experience → Instance Generalization|generalizations about him]]. Record the current policy for comparison. Recover decision situations: cards available at the time, bets, pot and remaining chip sizes, observed actions, and outcomes. Include different outcomes, not only losses.
+2. **Refine the opponent model.** From actual actions, estimate probabilities of folding, calling, and raising based on the situation and the agent's actions. Hidden cards remain unknown; possible opponent hands are represented by a distribution consistent with the available history. Experience already accounted for is reused under the [[Learning system#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|rules for duplicate accounting and parameter updates]].
+3. **Simulate alternatives.** From selected situations, run continuations with different agent actions. An ordinary Program enumerates or samples legal cards, models Igor's responses, and computes results under poker rules. For specified cards and actions, the result is computed exactly; expected strategy winnings also depend on the model of hidden cards and opponent behavior. The policy sees only the player's information, even if the simulator knows all cards. Analysis defines options and budget, while many numeric simulations run without an LLM call for each hand.
+4. **Improve the policy.** Compare the current strategy and candidates by expected net chip winnings under specified risk constraints. Check advantage under plausible variants of the uncertain Igor model. Selected simulation results are used for [[Process Plane/Program Evaluation and Testing#3. Simulation Tests and Optimization|policy optimization]] through the shared learning pipeline; analysis, runs, and updates may repeat within the task budget.
+5. **Check and retain the result.** Held-out real hands test the predictions of Igor's model; separate simulation runs check policy winnings inside the model. Retain the improvement with its scope (“against Igor under these conditions”) and provenance to source experience, the model, and runs. Permitted parameter updates go through Learning System; code or contract changes go through [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]]. Later real games check transfer and provide experience for another cycle.
 
 ---
 
-### Replay и lifecycle памяти
+### Replay and Memory Lifecycle
 
-Незавершённый `ReplayTask` создаёт обязательство сохранности для необходимой части исходного опыта..
-
+An unfinished `ReplayTask` creates a retention obligation for the parts of source experience it needs.
 
 ---
 
-
-## Общий heigh level  lifecycle обработки и интеграции опыта
+## Overall High-Level Lifecycle for Processing and Integrating Experience
 
 #topic_core
 
-Cхема для удобства, не является источником истины (им являются секции выше):
+This diagram is for convenience and is not the source of truth; the sections above are.
 
-Это представление [[Cognition and Attention#^agent-processing-cycle|общего цикла агента]] со стороны памяти: сознательная и автоматическая обработка принадлежат `Task`, включая наблюдение, ожидание или рефлексию. Доставка наблюдений выполняется по [[Process Plane/Program Layer#^process-observation-input|правилам входа исполнения]]; смысловая маршрутизация нужна только при неизвестном или пересматриваемом адресате.
-
+It presents the [[Cognition and Attention#^agent-processing-cycle|overall agent cycle]] from the perspective of memory: conscious and automated processing belong to a `Task`, including observation, waiting, and Reflection. Observation delivery follows the [[Process Plane/Program Layer#^process-observation-input|execution input rules]]; semantic routing is needed only when the recipient is unknown or subject to review.
 
 ```text
 new experience
@@ -2066,7 +1994,7 @@ and, when needed, Attention → Consciousness
         ↓
 new observations / notes / decisions / actions / outcomes
         ↓
-Memory + online Learning 
+Memory + online Learning
         ↓
 Episode continues
         │
@@ -2079,7 +2007,7 @@ Episode continues
         │ → no additional work now     │
         │                              │
         │ needs further analysis       │
-        │ → Cognition / reflection     │
+        │ → Cognition / Reflection     │
         │                              │
         │ structural revision needed   │
         │ → Program Lifecycle          │
@@ -2089,11 +2017,11 @@ Episode continues
         └───────────────────────────────┘
 ```
 
-Learning выполняется по мере появления evaluable evidence и не ждёт завершения `Episode`.
+Learning happens as evaluable evidence becomes available and does not wait for the `Episode` to end.
 
-После завершения `Episode` выполняется episode-level integration: учитывается evidence, которое требует контекста эпизода целиком. Её результаты не взаимоисключающие: например, reflection может породить structural revision или `ReplayTask`.
+After the `Episode` ends, episode-level integration accounts for evidence that requires the entire episode context. Its outcomes are not mutually exclusive: for example, Reflection may produce a structural revision or a `ReplayTask`.
 
-Replay возвращает сохранённый опыт в тот же общий цикл обработки:
+Replay returns saved experience to the same shared processing cycle:
 
 ```text
 ReplayTask

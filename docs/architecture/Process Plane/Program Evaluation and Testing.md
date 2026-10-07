@@ -1,115 +1,114 @@
 ## Program Evaluation and Testing
 ^Evaluation and Testing
 
+This section describes quantitative evaluation of programs and qualitative checks that they meet requirements. New real-world events are not Evaluation tests by themselves; checking predictions against them uses the shared [[#EvaluationResult|`EvaluationResult`]]. Saved experience becomes an evaluation case after a scenario and scoring rule have been prepared.
 
+## Types of Testing
 
-Раздел описывает количественную оценку программ и качественную проверку их соответствия требованиям. Новые реальные события сами по себе не являются Evaluation tests; проверка прогнозов по ним использует общий [[#EvaluationResult|EvaluationResult]]. Сохранённый опыт становится проверочным case после подготовки сценария и правила оценки.
+### Program Tests (Qualitative)
 
-## Типы тестирования
+The agent writes tests for a given program (unit, behavioral, adversarial, property-based, smoke, and other suitable test types), runs them immediately, and revises the program and tests as needed, debugging or rewriting them. This is the standard developer workflow.
 
-### Программные тесты (качественные)
+`ProgramTestManager` is the module responsible for testing Programs. By default, it is the Codex agent with its internal decision-making; it is gradually improved and expanded like other modules. These tests are not used to compare programs or select candidates. They are tools for creating candidate hypotheses and preventing regressions as programs change.
 
-Агент пишет програмные тесты (юнит, Behavioral, Adversarial , Property-based  Smoke  и пр. подходящие типы  тестов) под данную программу,  сразу запускает, правит если нужно программу и тесты, дебажит, переписывает. Стандратный пайплайн разработчика. 
-Название модуля, который отвечает за тестрование ProgramTestManager - который по умолчанию  - агент Codex с его внутренними решениями, и мы постепенно улучшаем и расширяем его, как и с другими модулями. Эти тесты не используются в сравнении программ и выборе кандидотов. Они - это средство  создания кандидатов-гипотез и поддержания (чтобы не было регрессии при изменении). 
+### Evaluation (Quantitative)
 
+**Evaluation** is a system for quantitatively checking models, programs, policies, and process hypotheses.
 
-### Evaluation  (количественные)
+Evaluation tests return metrics, including metrics for the evaluative channels in [[Evaluative-Control System]], and are used to compare, select, reject, or continue checking candidates.
 
-**Evaluation** — система количественной проверки моделей, программ, политик и процессных гипотез.
-Evaluation tests возвращают метрики, в том числе по оценочным каналам [[Evaluative-Control System]], и используются для сравнения, выбора, отклонения или продолжения проверки кандидатов.
+Candidates are compared using quality metrics declared in advance. [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] measures how unusual a discrepancy is relative to a saved prediction, but it is not an independent measure of model quality: reducing it, including by widening predicted dispersion, is not by itself an improvement.
 
-Кандидаты сравниваются по заранее объявленным метрикам качества. [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] показывает необычность расхождения с сохранённым прогнозом, но не является самостоятельной мерой качества модели: уменьшение этого сигнала, в том числе расширением прогнозируемого разброса, само по себе не считается улучшением.
-
-#### Метрики прогнозного качества
+#### Prediction Quality Metrics
 ^prediction-quality-metrics
 
 (def_id:: metric.PredictionError)
-> [!definition] **prediction_error** — ошибка конкретного прогноза по выбранной метрике: например, направленное отклонение, абсолютная или квадратичная ошибка, потеря вероятностного прогноза. Метрика задаёт формулу, смысл значений, шкалу, единицы и правила агрегации. Общая шкала и обязательная калибровка не предполагаются.
+> [!definition] **prediction_error** — the error of a particular prediction under a selected metric, such as directional deviation, absolute or squared error, or probabilistic prediction loss. The metric defines its formula, meaning of values, scale, units, and aggregation rules. No common scale or mandatory calibration is assumed.
 ^def-PredictionError
 
-Это общее понятие, а не отдельное обязательное поле или канал: в [[#EvaluationResult|`MetricSample`]] указываются конкретная `metric` и её `value`. Калиброванная необычность расхождения оценивается отдельно как [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]].
+This is a general concept, not a separate required field or channel: [[#EvaluationResult|`MetricSample`]] specifies the particular `metric` and its `value`. Calibrated unusualness of a discrepancy is evaluated separately as [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]].
 
-Пусть $q(y\mid c)$ — прогноз модели, $y$ — проверяемый исход, а $c$ — доступные до исхода признаки, необходимая история и горизонт прогноза. **Функция потерь** $S(q,y)$ задаёт, как оценивать прогноз: меньшее значение лучше. Её выбирают по смыслу выхода и решениям, для которых он нужен; [[Learning system|Learning System]] определяет соответствующий способ обучения.
+Let `q(y | c)` be the model prediction, `y` the outcome being checked, and `c` the features, necessary history, and prediction horizon available before the outcome. A **loss function** `S(q, y)` defines how to evaluate the prediction: lower values are better. Choose it based on the output's meaning and the decisions it supports; [[Learning system|Learning System]] defines the corresponding learning method.
 
-Для вероятностного прогноза используется **proper scoring rule**: для любого истинного распределения $p$ из области применимости правила ожидаемая потеря минимальна на $q=p$. **Strictly proper** означает, что это единственный оптимум как распределение, но не обязательно как набор параметров. Если требуется проверять всё заявленное распределение, выбирается strictly proper rule на соответствующем классе распределений. [Определения и область применимости](https://arxiv.org/html/2504.01781v4).
+For probabilistic predictions, use a **proper scoring rule**: for any true distribution `p` in the rule's domain, expected loss is minimized at `q = p`. **Strictly proper** means that this is the unique optimum as a distribution, though not necessarily as a parameter set. If the entire claimed distribution must be checked, use a strictly proper rule for the corresponding class of distributions. [Definitions and applicability](https://arxiv.org/html/2504.01781v4).
 
-Основные варианты:
+Common options:
 
-- **Log loss:** $S(q,y)=-\ln q(y\mid c)$. Для категорий $q(y\mid c)$ — вероятность исхода; её отрицательный логарифм также называется исходным **surprisal**, неожиданностью этого исхода. Среднее этих потерь — средняя отрицательная логарифмическая правдоподобность (**NLL**), для категориальных меток — cross-entropy.
-- Для непрерывного исхода log loss использует **плотность относительно общей для сравниваемых моделей меры**, а не вероятность отдельной точки. Значение может быть отрицательным и зависит от единиц измерения; оно не задаёт универсальную шкалу неожиданности разных процессов. Нулевая вероятность или плотность наблюдаемого исхода даёт бесконечную потерю.
-- **Brier:** для бинарного исхода $y\in\{0,1\}$ и вероятности события $r$ это $(r-y)^2$. Для категорий используется $\sum_k(q_k-\mathbf 1\{y=k\})^2$, где $q_k$ — вероятность категории $k$, а индикатор равен 1 при совпадении категории и 0 иначе. Нормировку фиксируют перед сравнением.
-- **CRPS** для одномерного числового распределения с конечным первым абсолютным моментом: $\mathbb E|X-y|-\tfrac12\mathbb E|X-X'|$, где $X,X'$ — независимые величины с прогнозным распределением $q$. Оценка имеет те же единицы, что и исход. [Формула и условия](https://arxiv.org/html/2504.01781v4#S2.SS1).
+- **Log loss:** `S(q, y) = −ln q(y | c)`. For categories, `q(y | c)` is the probability of the outcome; its negative logarithm is also called the outcome's **surprisal**. The mean loss is the mean negative log-likelihood (**NLL**), or cross-entropy for categorical labels.
+- For a continuous outcome, log loss uses a **density with respect to a measure shared by the models being compared**, not the probability of an individual point. Its value may be negative and depends on units; it does not define a universal unusualness scale across processes. Zero probability or density for the observed outcome gives infinite loss.
+- **Brier:** for a binary outcome `y ∈ {0, 1}` and event probability `r`, the score is `(r − y)²`. For categories it is `Σₖ(qₖ − 1{y=k})²`, where `qₖ` is the probability of category `k`, and the indicator is 1 for a matching category and 0 otherwise. Fix normalization before comparison.
+- **CRPS** for a one-dimensional numerical distribution with a finite first absolute moment: `E|X − y| − ½E|X − X′|`, where `X, X′` are independent draws from predictive distribution `q`. The score has the same units as the outcome. [Formula and conditions](https://arxiv.org/html/2504.01781v4#S2.SS1).
 
-Proper loss задаёт правильное направление **в ожидании**, но не гарантирует калибровки обученной модели. Истинное распределение может быть недостижимо выбранным параметрическим классом; тогда выбирается приближение среди доступных моделей. Ограниченные данные и ошибки оптимизации также остаются; минимизация training cross-entropy может сопровождаться переуверенностью на новых данных. Разные proper losses могут по-разному ранжировать несовершенные модели. [Калибровка нейросетей](https://proceedings.mlr.press/v70/guo17a.html).
+A proper loss points in the right direction **in expectation**, but does not guarantee that a trained model is calibrated. The true distribution may not be expressible within the chosen parameterized class; in that case, choose the best available approximation. Limited data and optimization errors remain; minimizing training cross-entropy may still produce overconfidence on new data. Different proper losses may rank imperfect models differently. [Neural network calibration](https://proceedings.mlr.press/v70/guo17a.html).
 
-Высокий surprisal одного исхода не доказывает дефект модели: событие с правильно предсказанной вероятностью 1% остаётся неожиданным. Средняя NLL оценивает прогнозы по серии исходов, но включает собственную случайность процесса. Ни raw surprisal, ни средняя NLL не тождественны [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]].
+A high surprisal for one outcome does not prove a model defect: an event with a correctly predicted 1% probability is still surprising. Mean NLL evaluates predictions over a series of outcomes but includes the process's inherent randomness. Neither raw surprisal nor mean NLL is the same as [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]].
 
-**Точечную ошибку и результат использования прогноза проверяют отдельно**, когда они важны задаче. Для точечного прогноза $a$ квадратичная потеря $(y-a)^2$ соответствует среднему, абсолютная $|y-a|$ — медиане. Квантильная потеря $u(\tau-\mathbf1\{u<0\})$, где $u=y-a$ и $0<\tau<1$, соответствует квантилю уровня $\tau$. Для конечной ожидаемой квадратичной потери нужен конечный второй момент исхода, для абсолютной и квантильной — конечный первый абсолютный момент. Лучшее доступное распределение по выбранному score не обязано давать лучший результат по каждой прикладной метрике. Выбор представления и получение точечных ответов из распределения описаны в [[Learning system#Представление прогноза и цель обучения]]. [Оценка точечных прогнозов](https://arxiv.org/abs/0912.0902).
+**Check point-prediction error and the outcome of using a prediction separately** when they matter to the task. For a point prediction `a`, squared loss `(y − a)²` targets the mean, absolute loss `|y − a|` targets the median. Quantile loss `u(τ − 1{u < 0})`, where `u = y − a` and `0 < τ < 1`, targets the quantile at level `τ`. Finite expected squared loss requires a finite second moment of the outcome; absolute and quantile loss require a finite first absolute moment. The best available distribution under one score need not give the best result under every application metric. Choosing a representation and deriving point estimates from a distribution are described in [[Learning system#Forecast Representation and Learning Objective]]. [Evaluating point predictions](https://arxiv.org/abs/0912.0902).
 
-#### Калибровка, sharpness и различение контекстов
+#### Calibration, Sharpness, and Distinguishing Contexts
 ^prediction-calibration-sharpness
 
-[[Uncertainty and Belief Tracking in the World Model#^def-Calibration|Калибровка]] проверяется для значимых вероятностных утверждений. Для прогнозных интервалов проверяется покрытие — доля исходов внутри интервала — относительно заявленного уровня, с учётом дискретности и предусмотренной консервативности. Выборка даёт оценку соответствия с неопределённостью, а не доказательство точной калибровки.
+[[Uncertainty and Belief Tracking in the World Model#^def-Calibration|Calibration]] is checked for probabilistic claims that matter. For prediction intervals, check coverage — the proportion of outcomes inside the interval — relative to the stated level, accounting for discreteness and intended conservatism. A sample estimates agreement with uncertainty; it does not prove exact calibration.
 
-**Sharpness** — концентрация прогнозного распределения. Предпочтителен более конкретный прогноз при сохранении обоснованной калибровки. Конкретность повышают за счёт полезной информации, учёта режимов и исправления систематических ошибок. Правильное широкое распределение действительно шумного процесса не является дефектом. [Калибровка и sharpness](https://arxiv.org/abs/1106.1638).
+**Sharpness** is the concentration of a predictive distribution. Prefer a more specific prediction while retaining justified calibration. Specificity is improved by using helpful information, accounting for regimes, and correcting systematic errors. A properly broad distribution for a genuinely noisy process is not a defect. [Calibration and sharpness](https://arxiv.org/abs/1106.1638).
 
-**Resolution** — способность различать ситуации с разными распределениями исходов. Это не синоним концентрации: модель, всегда предсказывающая 50%, может быть калибрована по общей частоте, но не различать два одинаково частых контекста с вероятностями 20% и 80%. Поэтому проверяют значимые для применения контексты, а не только общую калибровку. [Диагностика и разложение score](https://arxiv.org/abs/2008.03033).
+**Resolution** is the ability to distinguish situations with different outcome distributions. It is not the same as concentration: a model that always predicts 50% may be calibrated to the overall frequency but fail to distinguish two equally common contexts with probabilities of 20% and 80%. Therefore, check contexts material to use, not only overall calibration. [Score diagnostics and decomposition](https://arxiv.org/abs/2008.03033).
 
-Улучшение proper score не гарантирует отдельного улучшения калибровки, sharpness или каждой прикладной метрики. Их диагностируют соразмерно задаче и данным. Нельзя добавлять произвольную награду за уверенность, низкую энтропию или узкий интервал: это поощряет необоснованное сужение. Нельзя и считать расширение разброса улучшением только потому, что оно снизило сигнал необычности.
+An improved proper score does not guarantee separate improvement in calibration, sharpness, or every application metric. Diagnose them in proportion to the task and data. Do not add arbitrary rewards for confidence, low entropy, or narrow intervals: this encourages unjustified narrowing. Nor should widening a distribution count as improvement solely because it reduced an unusualness signal.
 
-Отдельный калибратор — обучаемое преобразование прогнозов для исправления калибровки — вводится при подтверждённой необходимости и достаточных данных. Его подгонка и окончательная проверка используют разные данные; выигрыш проверяется вместе с остальными значимыми свойствами прогноза.
+Introduce a separate calibrator — a learnable transformation of predictions used to correct calibration — only when need is confirmed and sufficient data are available. Fit it and perform its final check on different data; evaluate its gains together with other material prediction properties.
 
-#### Протокол проверки прогнозов
+#### Prediction Evaluation Protocol
 ^prediction-quality-protocol
 
-Следующие правила применимы и к сохранённым tests, и к оценке новых реальных исходов. Сам реальный исход не становится от этого Evaluation test.
+The following rules apply to both saved tests and evaluation of new real-world outcomes. A real-world outcome does not thereby become an Evaluation test.
 
-- **Заранее определить задачу:** проверяемые исходы, информацию на момент прогноза, горизонт, метрики, контексты применения и правила отбора и взвешивания cases. Для связанных переменных или последовательностей проверять существенные зависимости; верные отдельные частоты не подтверждают правильность совместного распределения.
-- **Сохранять смысл оцениваемых вероятностей:** выборка и веса должны представлять целевой процесс либо корректировать известное смещение отбора. Произвольное увеличение веса определённых исходов обычно меняет оптимальные вероятности даже для proper loss; одного предварительного объявления весов недостаточно. Практическую цену таких исходов оценивают отдельно либо явно задают другую прогнозную задачу.
-- **Сначала сохранить прогноз, затем оценить исход, затем обновить модель.** В последовательной проверке (*prequential evaluation*) оценённое наблюдение можно использовать для следующих прогнозов. Это применимо к реальному опыту и к изолированной [[#^evaluation-modes|проверке способности обучаться]]; при проверке готовой модели обучение отключено.
-- **Проверять нужный перенос:** на будущие наблюдения, новые объекты или новые группы — в зависимости от использования модели. Для временного процесса случайное перемешивание не заменяет проверку будущего; для новых объектов зависимые примеры одного объекта не должны создавать утечку между обучением и итоговой проверкой. [Протоколы разделения данных](https://scikit-learn.org/stable/modules/cross_validation.html).
-- **Сравнивать с простой базовой моделью или предыдущей версией на одних и тех же новых случаях**, недоступных при подгонке соответствующих прогнозов. При проверке адаптации заранее фиксировать доступ к данным и правила обновления каждого кандидата. Оценивать величину выигрыша и её неопределённость с учётом зависимостей между наблюдениями.
-- **Отделять подбор от итоговой проверки:** выбор модели, гиперпараметров и калибратора не использует итоговые outcomes. Повторный подбор по одному проверочному набору делает его данными подбора; для окончательного вывода нужны новые основания.
-- **Указывать объём и актуальность данных, охваченные контексты, предположения и неопределённость оценки.** Старый результат не подтверждает качество в новом режиме. Отсутствие выявленных ошибок при малом опыте не означает хорошую модель; равные результаты кандидатов не означают правильность ни одного из них.
+- **Define the task in advance:** outcomes to check, information available at prediction time, horizon, metrics, application contexts, and rules for selecting and weighting cases. For related variables or sequences, check material dependencies; correct marginal frequencies do not establish a correct joint distribution.
+- **Preserve the meaning of evaluated probabilities:** the sample and weights must represent the target process or correct a known selection bias. Arbitrarily increasing the weight of certain outcomes usually changes optimal probabilities even under proper loss; declaring weights in advance is not enough. Evaluate the practical cost of such outcomes separately or explicitly define a different prediction task.
+- **Save the prediction first, then evaluate the outcome, then update the model.** In prequential evaluation, an evaluated observation may be used for later predictions. This applies to real experience and isolated [[#^evaluation-modes|evaluation of learning ability]]; learning is disabled when evaluating a ready-made model.
+- **Check the required transfer:** to future observations, new objects, or new groups, depending on how the model will be used. For a temporal process, random shuffling does not replace testing on future data; for new objects, dependent examples of one object must not leak between training and final evaluation. [Data-splitting protocols](https://scikit-learn.org/stable/modules/cross_validation.html).
+- **Compare with a simple baseline or previous version on the same new cases**, unavailable when the corresponding predictions were fitted. When checking adaptation, fix each candidate's data access and update rules in advance. Evaluate the size and uncertainty of the gain, accounting for dependencies between observations.
+- **Separate tuning from final evaluation:** do not use final outcomes to choose the model, hyperparameters, or calibrator. Repeated tuning on one evaluation set turns it into tuning data; a final conclusion requires new evidence.
+- **Report data volume and freshness, covered contexts, assumptions, and evaluation uncertainty.** An old result does not establish quality in a new regime. No errors found with little experience does not mean the model is good; equal results for candidates do not mean either is correct.
 
-**Обобщение — свойство, проверяемое таким протоколом, а не дополнительная универсальная функция потерь.** Метрики качества, калибровки, необычности, обеспеченность данными и важность задачи не складываются в произвольный общий score.
+**Generalization is a property checked by this protocol, not an additional universal loss function.** Quality, calibration, unusualness, data coverage, and task importance metrics are not combined into an arbitrary overall score.
 
-Качество и изменения процесса проверяются отдельно от адаптации нормы необычности. Пересчёт нормы может скрыть ухудшение; при улучшении модели он также не обязан снижать процентили ошибок: верхние 10% остаются верхними 10%. Исправление нормы не означает исправления прогноза. Один редкий исход не позволяет безошибочно отличить предусмотренную случайность от изменения процесса.
+Quality and changes in the process are evaluated separately from adaptation of the unusualness norm. Recalculating the norm may hide deterioration; even when the model improves, error percentiles need not fall: the largest 10% remain the largest 10%. Correcting the norm does not correct the prediction. One rare outcome cannot distinguish with certainty between anticipated randomness and a process change.
 
-#### Неустранимая потеря и ошибка описания процесса
+#### Irreducible Loss and Process Description Error
 ^prediction-excess-risk
 
-Пусть $p(y\mid c)$ — истинное распределение исходов при заданной информации, $q(y\mid c)$ — прогноз, а распределение проверяемых контекстов $c$ зафиксировано. Для proper loss и конечных соответствующих ожиданий:
+Let `p(y | c)` be the true outcome distribution given information `c`, `q(y | c)` the prediction, and the distribution of evaluated contexts `c` be fixed. For a proper loss and finite corresponding expectations:
 
 $$
 R(q)=\mathbb E_c\mathbb E_{Y\sim p(\cdot\mid c)}[S(q(\cdot\mid c),Y)]
 =R(p)+D(p,q),\qquad D(p,q)\ge0.
 $$
 
-**$R(p)$** — неустранимый уровень потерь при этой информации; **$D(p,q)$** — избыточная ожидаемая потеря (*excess risk*), то есть ошибка описания процесса относительно выбранной функции потерь. Для strictly proper rule $D=0$ только при совпадении распределений, кроме контекстов нулевой вероятности. Правильная модель случайного процесса имеет $D=0$, хотя отдельные исходы продолжают быть неожиданными.
+**`R(p)`** is the irreducible loss level given this information; **`D(p,q)`** is excess expected loss (*excess risk*), the error in describing the process under the selected loss. For a strictly proper rule, `D = 0` only when distributions match, except in contexts with zero probability. A correct model of a random process has `D = 0`, although individual outcomes may still be surprising.
 
-**Обучать можно по полному loss:** при фиксированной задаче $R(p)$ не зависит от модели. Вычитать шум перед обновлением параметров не требуется. При сравнении моделей на одинаковой задаче этот компонент сокращается в разности ожидаемых потерь; поэтому относительное качество можно оценивать без восстановления $p$.
+**Learning can use the full loss:** for a fixed task, `R(p)` does not depend on the model. It is not necessary to subtract noise before updating parameters. When models are compared on the same task, this component cancels in the difference of expected losses; relative quality can therefore be evaluated without recovering `p`.
 
-Для log loss:
+For log loss:
 
 $$
 D(p,q)=\mathbb E_c\!\left[\mathrm{KL}\bigl(p(\cdot\mid c)\Vert q(\cdot\mid c)\bigr)\right],
 \qquad \mathrm{KL}(p\Vert q)=\mathbb E_{Y\sim p}\!\left[\ln\frac{p(Y)}{q(Y)}\right].
 $$
 
-Здесь неустранимый компонент — усреднённая по контекстам энтропия **истинного** распределения (для непрерывного исхода — дифференциальная): $R(p)=\mathbb E_c H(p(\cdot\mid c))$, где $H(p)=\mathbb E_{Y\sim p}[-\ln p(Y)]$. **Вычитать энтропию модели $H(q)$ из NLL нельзя:** это не даёт $D$. Например, постоянный исход и прогноз 50/50 дают NLL $=H(q)=\ln2$; их разность равна нулю, хотя процесс полностью предсказуем и прогноз неверен. [Разложение proper score](https://arxiv.org/html/2504.01781v4#S2.SS2).
+Here, the irreducible component is the entropy of the **true** distribution averaged over contexts (differential entropy for continuous outcomes): `R(p) = E_c H(p(· | c))`, where `H(p) = E_{Y~p}[−ln p(Y)]`. **Subtracting model entropy `H(q)` from NLL does not give `D`.** For example, a constant outcome predicted as 50/50 has NLL = `H(q) = ln 2`; their difference is zero, even though the process is fully predictable and the prediction is wrong. [Proper-score decomposition](https://arxiv.org/html/2504.01781v4#S2.SS2).
 
-Неустранимость зависит от принятой информации. Кандидаты сравниваются для одного целевого процесса, общего набора доступной информации $c$ и распределения проверяемых случаев; знать истинное $p(y\mid c)$ для этого не требуется. Кандидат может не использовать часть $c$ ради экономии ресурсов, но объяснимая этой информацией вариация остаётся в его $D$, а не переносится в общий неустранимый компонент. Отдельная оценка относительно сокращённого набора информации допустима с явным указанием этого ограничения; значения $D$ с разными информационными основаниями напрямую не сравниваются.
+Irreducibility depends on the chosen information. Candidates are compared for one target process, a shared set of available information `c`, and a common distribution of evaluated cases; knowing the true `p(y | c)` is not required. A candidate may ignore part of `c` to save resources, but variation explained by that information remains in its `D`, rather than becoming part of the shared irreducible component. Evaluation relative to a reduced information set is allowed if that limitation is explicit; `D` values based on different information are not directly comparable.
 
-Абсолютный $D$ не получается из одного наблюдения: $p$ неизвестно. Для простых устойчивых процессов допустимо оценивать частоты или параметры и их расхождение с прогнозом, учитывая неопределённость этих оценок. Когда основания слабы, сообщаются относительное качество и диагностика. «Расхождение не обнаружено» не означает «$D=0$ доказано».
+Absolute `D` cannot be obtained from one observation because `p` is unknown. For simple, stable processes, frequencies or parameters and their discrepancy from the prediction may be estimated while accounting for uncertainty in those estimates. When the basis is weak, report relative quality and diagnostics. “No discrepancy detected” does not mean “`D = 0` has been proved.”
 
-Сравнение или агрегация $D$ разных процессов требует согласовать scoring rule и её нормировку, единицу прогноза, горизонт, распределение контекстов и веса. KL не меняется при взаимно однозначной смене единиц: множители плотностей сокращаются в отношении. Это не делает сопоставимыми ошибку одного скалярного шага и ошибку многомерной траектории.
+Comparing or aggregating `D` across processes requires a common scoring rule and normalization, prediction unit, horizon, context distribution, and weights. KL does not change under a one-to-one change of units: density multipliers cancel in the ratio. This does not make the error for one scalar step comparable to the error for a multidimensional trajectory.
 
-Если интерфейсу нужна ограниченная шкала, допустимо заранее определить $Q=e^{-D/s}$, где $s>0$ — фиксированный масштаб в единицах $D$; для log loss с натуральным логарифмом можно взять $s=1$. Обязательного поля для этой шкалы нет. При strictly proper rule значение 1 соответствует правильному распределению, но оценённое $Q=0.9$ не означает 90%-ю вероятность правильности. Одинаковое $Q$ не означает одинакового ущерба, а преобразование не устраняет неопределённость оценки $D$.
+If an interface needs a bounded scale, it may define `Q = e^(−D/s)` in advance, where `s > 0` is a fixed scale in units of `D`; for log loss with the natural logarithm, `s = 1` is possible. This scale is not a required field. Under a strictly proper rule, a value of 1 corresponds to the correct distribution, but an estimated `Q = 0.9` does not mean a 90% probability of correctness. Equal `Q` values do not imply equal harm, and the transformation does not remove uncertainty in the estimate of `D`.
 
 #### EvaluationTestManager
 
-**EvaluationTestManager** — запускает [[Program Layer#Program|Program]] в проверочном окружении и оценивает результат по [[#EvaluationCase|EvaluationCase]]; для прогнозов использует [[Learning system#^def-PredictionEvaluator|PredictionEvaluator]].
+**`EvaluationTestManager`** runs a [[Program Layer#Program|`Program`]] in an evaluation environment and scores it against an [[#EvaluationCase|`EvaluationCase`]]; for predictions, it uses [[Learning system#^def-PredictionEvaluator|`PredictionEvaluator`]].
 
 ```python
 EvaluationTestManager.evaluate_case(
@@ -125,91 +124,87 @@ EvaluationTestManager.evaluate_dataset(
 ) -> DatasetEvaluationResult
 ```
 
-`S` — конкретный тип состояния программы; если состояния нет, передаётся `None`. Для сравнения кандидатов фиксируются код, исходные состояния, контекст чтения, метрики и бюджет.
+`S` is the concrete type of the program state; pass `None` if there is no state. For candidate comparison, fix the code, initial states, read context, metrics, and budget.
 
-Перед каждым независимым прогоном кандидата создаётся отдельная копия объявленного исходного состояния либо песочница. Изоляция охватывает всё доступное программе изменяемое состояние: память, граф, файлы, обучаемые компоненты, состояние updater-а и учёт применённых updates. Чтения и записи кандидата и его дочерних Programs направляются в это окружение; `GraphDelta` и parameter updates изменяют только его состояние. Доступ к данным подчиняется правилам проверки.
+Before each independent candidate run, create a separate copy of the declared initial state or a sandbox. Isolation covers all mutable state available to the program: memory, graph, files, learnable components, updater state, and accounting for applied updates. Route candidate and child Program reads and writes to this environment; `GraphDelta` and parameter updates change only its state. Data access follows evaluation rules.
 
-`evaluate_dataset` последовательно выполняет cases в порядке датасета, сохраняя окружение и состояние кандидата между ними до конца прогона. Отдельный вызов `evaluate_case` — прогон одного примера.
+`evaluate_dataset` runs cases sequentially in dataset order, preserving the candidate environment and state between cases until the run ends. A separate `evaluate_case` call runs one example.
 
-Evaluation не добавляет собственных транзакций для изоляции или отката прогона; штатный [[Learning system#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|механизм обновлений]] работает внутри копии или песочницы. После завершения или ошибки прогона временное окружение удаляется. Результаты сохраняются обычным [[Memory#^def-TraceLocalResult|trace-local]] способом; до удаления сохраняются их trace и необходимые зависимости по [[Memory#^def-RetentionClosure|правилам сохранности provenance]]. Изменения проверочного окружения автоматически не переносятся в рабочее состояние агента.
+Evaluation does not add its own transactions for run isolation or rollback; the standard [[Learning system#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|update mechanism]] operates inside the copy or sandbox. Remove the temporary environment after the run ends or fails. Save results through ordinary [[Memory#^def-TraceLocalResult|trace-local]] storage; before deletion, preserve their traces and required dependencies under the [[Memory#^def-RetentionClosure|provenance retention rules]]. Changes in the evaluation environment are not automatically transferred to the agent's working state.
 
-Методы manager-а — инфраструктурный API, а не отдельные `Program`. При вызове проверяемой `Program` manager получает [[Program Layer#^def-ProgramResult|`ProgramResult[T]`]] и оценивает его `result`; provenance ведёт к соответствующей части сохранённого output.
+The manager's methods are infrastructure APIs, not separate `Program`s. When the tested `Program` is called, the manager receives [[Program Layer#^def-ProgramResult|`ProgramResult[T]`]] and evaluates its `result`; provenance points to the corresponding part of the saved output.
 
-`DatasetEvaluationResult` содержит результаты всех cases и агрегированные метрики по правилам [[#EvaluationDataset|dataset]]; непроверенные cases сохраняют свои статусы. Результат связан с использованной версией набора. Manager выполняет проверку; набором управляют [[Datasets#Жизненный цикл|отдельные Task]].
+`DatasetEvaluationResult` contains results for all cases and aggregate metrics under the [[#EvaluationDataset|dataset rules]]; untested cases retain their statuses. The result is linked to the dataset version used. The manager performs evaluation; datasets are managed by [[Datasets#Lifecycle|separate Tasks]].
 
-`EvaluationTestManager` использует `EvaluationTestCacheManager` (в той же папке) для [[#^3162cf|кеширования]].
+`EvaluationTestManager` uses `EvaluationTestCacheManager` (in the same directory) for [[#^3162cf|caching]].
 
-##### Режимы проверки
+##### Evaluation Modes
 ^evaluation-modes
 
-Режим задаётся правилом проверки; по умолчанию проверяется готовая модель.
+The evaluation rule specifies the mode; the default is to evaluate a ready-made model.
 
-| Режим | Что проверяется | Что может изменяться |
+| Mode | What is evaluated | What may change |
 |---|---|---|
-| Готовая модель | Качество текущей модели или политики. | Рабочее состояние исполнения; обучаемые параметры фиксированы. |
-| Способность обучаться | Качество адаптации на новом опыте и затраты на обучение. | Изолированное состояние кандидата по заранее зафиксированному алгоритму обучения. |
+| Ready-made model | Quality of the current model or policy. | Working execution state; learnable parameters are fixed. |
+| Ability to learn | Adaptation quality on new experience and training cost. | Isolated candidate state under a learning algorithm fixed in advance. |
 
-Во втором режиме до запуска задаются правила и моменты обновления и доступ к данным. Кандидаты получают одинаковые условия проверки.
+In the second mode, define data access, update rules, and update times before the run. Candidates receive the same evaluation conditions.
 
-При проходе по датасету manager выполняет цикл: сохранить прогноз или решение → получить исход и оценить результат → выполнить разрешённое обучение → перейти к следующему case. Обновления выполняются по [[Learning system|контракту обучения кандидата]] в его изолированном состоянии. Проверяемые outcomes скрыты от программы, включая входы и retrieval, до фиксации соответствующего прогноза или решения; после оценки они доступны для следующих обновлений только по заданным правилам. Сравниваются последующие результаты и затраты; обучение не меняет уже сохранённые прогнозы и оценки.
+During a dataset run, the manager performs this cycle: save prediction or decision → obtain the outcome and evaluate the result → perform permitted learning → move to the next case. Updates follow the [[Learning system|candidate learning contract]] in its isolated state. Evaluation outcomes remain hidden from the program, including through inputs and retrieval, until the corresponding prediction or decision has been saved; after evaluation they are available for future updates only under the stated rules. Compare later results and costs; learning does not change predictions and evaluations already saved.
 
-Код кандидата, алгоритм обучения и правила оценки остаются зафиксированными на весь прогон. Их подбор по результатам набора подчиняется [[Datasets#Границы обучения и проверки|общим ограничениям независимости проверки]]. Режим, исходные состояния и ход обновлений сохраняются в правиле проверки и provenance результата.
+Candidate code, learning algorithm, and evaluation rules remain fixed for the entire run. Tuning them on the dataset's results follows the [[Datasets#Training and Evaluation Boundaries|shared evaluation independence constraints]]. The mode, initial states, and update sequence are saved in the evaluation rule and result provenance.
 
-#### Contract-based Evaluation
+#### Contract-Based Evaluation
 
-Task выбирает назначение, область и требования проверки согласно [[Datasets#Версии и правила использования|контракту датасета]]. При построении case из опыта его semantic scope согласуется с семантикой процесса и контрактами программы.
-Memory, ProgramRun или dataset row содержат много фактов. Чтобы проверить конкретную программу, EverTree строит **проекцию этого опыта на проверяемую задачу и интерфейс программы**.
+A Task selects the purpose, scope, and evaluation requirements under the [[Datasets#Versions and Usage Rules|dataset contract]]. When a case is built from experience, its semantic scope is aligned with process semantics and program contracts.
 
-Проекция строится через две линзы:
+Memory, `ProgramRun`, or a dataset row contains many facts. To evaluate a specific program, EverTree builds a **projection of this experience onto the task being checked and the program interface**.
 
-1. **Линза процесса**  
-    Показывает, что в опыте относится к смыслу `ProcessConcept`, связанного с программой через [[Process Ontology and Semantic Interface#^semantic-program-organization|`PROGRAM_FOR_PROCESS`]]: `PART_WHOLE`, `PROCESS_VARIABLE`, `TRAJECTOR`, semantic links и description.
+The projection uses two lenses:
 
-2. **Линза программы**  
-    Показывает, что конкретная программа фактически читает и возвращает: `read_contract`, `output_contract`, общий runtime trace / ProgramRun, operator anchors.
+1. **Process lens** — shows which experience concerns the meaning of the `ProcessConcept` linked to the program through [[Process Ontology and Semantic Interface#^semantic-program-organization|`PROGRAM_FOR_PROCESS`]]: `PART_WHOLE`, `PROCESS_VARIABLE`, `TRAJECTOR`, semantic links, and description.
+2. **Program lens** — shows what a specific program actually reads and returns: `read_contract`, `output_contract`, shared runtime trace / `ProgramRun`, and operator anchors.
 
-В результате:
+As a result:
 
-```
+```text
 read_contract
-→ даёт input facts / context
+→ supplies input facts / context
 
 output_contract
-→ показывает, что программа фактически предсказывает или меняет
+→ shows what the program actually predicts or changes
 
 PROCESS_VARIABLE
-→ помогает определить semantic scope EvaluationCase и обнаружить непокрытые части модели
+→ helps define EvaluationCase semantic scope and reveal uncovered parts of the model
 
 TRAJECTOR
-→ задаёт перспективу и помогает retrieval, но не задаёт метрику
+→ defines perspective and helps retrieval, but does not define a metric
 ```
 
-Факты источника, которые не проходят эту проекцию, не участвуют в данном EvaluationCase. Они могут остаться в memory, попасть в другой процесс или позже стать важными после structural alignment.
+Source facts outside this projection do not participate in this `EvaluationCase`. They may remain in memory, belong to another process, or become important later after structural alignment.
 
-При сравнении разных программ сохраняются общие проверяемые исходы, доступная информация и правила оценки. Проекции учитывают интерфейсы кандидатов, но не позволяют каждому выбирать только удобную ему часть общей задачи. Непокрытые требования остаются явными.
+When programs are compared, keep the evaluated outcomes, available information, and evaluation rules shared. Projections account for candidate interfaces but do not let each candidate choose only a convenient part of the common task. Uncovered requirements remain explicit.
 
-Отсутствие output/prediction, обязательного по [[Program Layer#Output contract|контракту программы]], — нарушение контракта и основание для structural revision. Связь [[Process Ontology and Semantic Interface#PROCESS_VARIABLE|PROCESS_VARIABLE]] сама по себе не делает прогноз обязательным для каждой модели процесса. Отсутствие необязательного прогноза само по себе не является ошибкой модели. В обоих случаях `prediction_unexpectedness` вместо отсутствующего прогноза не создаётся. Если прогноз для известного выбранного `PredictionTarget` не найден, это фиксируется через [[Learning system#LearningCredit and UnresolvedCredit|UnresolvedCredit]] по [[Learning system#^def-PredictionEvaluator|правилам PredictionEvaluator]].
+Missing output/prediction required by the [[Program Layer#Output Contract|program contract]] is a contract violation and a reason for structural revision. A [[Process Ontology and Semantic Interface#PROCESS_VARIABLE|`PROCESS_VARIABLE`]] link alone does not make a prediction mandatory for every process model. The absence of an optional prediction is not itself a model error. In either case, do not create `prediction_unexpectedness` for a missing prediction. If a prediction is missing for a known selected `PredictionTarget`, record it as [[Learning system#LearningCredit and UnresolvedCredit|`UnresolvedCredit`]] under [[Learning system#^def-PredictionEvaluator|`PredictionEvaluator` rules]].
 
-По сохранённому прогнозу и наблюдениям рассчитываются применимые метрики; [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] — при наличии основы для калибровки. Оценка относится к конкретному прогнозу, его [[Program Layer#^def-PredictionTarget|PredictionTarget]] и условиям проверки. Проверка может охватывать событие, набор наблюдений или эпизод; оценивать каждое событие отдельно не обязательно.
+Calculate applicable metrics from the saved prediction and observations; calculate [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] when there is a basis for calibration. The evaluation applies to a specific prediction, its [[Program Layer#^def-PredictionTarget|`PredictionTarget`]], and its evaluation conditions. A check may cover an event, a set of observations, or an episode; it does not need to evaluate every event separately.
 
-Если выявлено противоречие между `ProcessConcept`, semantic links и program contracts либо подтверждён пробел по [[Process Ontology and Semantic Interface#Semantic scope and implementation contracts|правилам покрытия процесса]], происходит:
+If a contradiction is found among `ProcessConcept`, semantic links, and program contracts, or a coverage gap is confirmed under the [[Process Ontology and Semantic Interface#Semantic Scope and Implementation Contracts|process coverage rules]], then:
 
-```
+```text
 structural revision
 ```
 
-Управляющая программа повышает `attention_priority` для выявленного расхождения и передаёт конфликт сознанию агента для разрешения и выравнивания definition/description ProcessConcept, его семантического наполнения (semantic links / PART_WHOLE / responsibility structure) и/или конкретной программы (включая program read/output contracts). Граф автоматически не исправляется.
+The managing program raises `attention_priority` for the discrepancy and passes it to consciousness for resolution and alignment of the `ProcessConcept` definition/description, its semantic content (semantic links / `PART_WHOLE` / responsibility structure), and/or the specific program (including its read/output contracts). The graph is not repaired automatically.
 
-
-Опыт не является тестом сам по себе.  
-Для case из памяти проекция опыта дополняется исходом или способом его получения и правилом оценки — по контракту [[#EvaluationCase|EvaluationCase]].
+Experience is not a test by itself. To make a case from memory, add to the experience projection an outcome or a way to obtain one, and an evaluation rule, under the [[#EvaluationCase|`EvaluationCase` contract]].
 
 #### EvaluationDataset
 
 (def_id:: entity.EvaluationDataset)
-> [!definition] **EvaluationDataset** — версия [[Datasets#^def-Dataset|Dataset]] с фиксированной последовательностью проверочных [[#EvaluationCase|cases]], метриками и правилами агрегации для заданной проверки. ^def-EvaluationDataset
+> [!definition] **`EvaluationDataset`** — a version of [[Datasets#^def-Dataset|`Dataset`]] with a fixed sequence of evaluation [[#EvaluationCase|cases]], metrics, and aggregation rules for a specified evaluation. ^def-EvaluationDataset
 
-Набор позволяет сравнивать программы в одинаковых условиях. Его состав зависит от вопроса: качество на типичном опыте, в отдельном режиме или на сложных случаях. Версии и разделение данных следуют [[Datasets|общим правилам datasets]].
+A dataset lets programs be compared under the same conditions. Its composition depends on the question: quality on typical experience, in a particular mode, or on difficult cases. Versions and data splitting follow the [[Datasets|shared dataset rules]].
 
 ```python
 EvaluationDataset {
@@ -225,32 +220,32 @@ EvaluationDataset {
 
 #### EvaluationCase
 
-**EvaluationCase** — один проверочный пример (семпл), который может проверяться отдельно или входить в dataset. Он задаёт набор входов, проверочные исходы или способ их получения и правило оценки.
+**`EvaluationCase`** is one evaluation example (sample), evaluated on its own or included in a dataset. It defines inputs, evaluation outcomes or how to obtain them, and the evaluation rule.
 
 ```python
 EvaluationCase {
   id: <string>
   name?: <string>
   inputs?: <Node[]>
-  outcomes?: <(Observation | Outcome)[]> # известные проверочные исходы с provenance
-  evaluation_rule: <string> # критерий, способ получения outcome и поддерживаемая проверка
+  outcomes?: <(Observation | Outcome)[]> # known evaluation outcomes with provenance
+  evaluation_rule: <string> # criterion, how to obtain an outcome, and supported check
   target_metrics?: <MetricDefinition[]>
-  weight?: <float> = 1.0 # вес по объявленному правилу агрегации
-  belief_data?: <BeliefData> # надёжность case
+  weight?: <float> = 1.0 # weight under the declared aggregation rule
+  belief_data?: <BeliefData> # case reliability
 }
 ```
 
-`outcomes` и правило проверки доступны evaluator-у; программа получает только разрешённые входы и контекст, а при [[#^evaluation-modes|проверке способности обучаться]] — также уже оценённые исходы по правилам их раскрытия. Правило однозначно задаёт требование, режим, метрики, получение исхода и нужную версию реализации проверки. Исход берётся из сохранённых данных, запуска или simulation; цель или ожидание его не заменяют.
+The evaluator can access `outcomes` and the evaluation rule. The program receives only permitted inputs and context and, in [[#^evaluation-modes|learning-ability mode]], previously evaluated outcomes under the rules for exposing them. The rule unambiguously specifies the requirement, mode, metrics, how to obtain the outcome, and the version of the evaluation implementation to use. The outcome comes from saved data, a run, or a simulation; a goal or expectation does not substitute for it.
 
-Источник, подготовка и доступная программе информация прослеживаются через [[Memory#^def-ResultProvenance|provenance]]. Неприменимость, нехватка данных и частичный расчёт метрик отражаются в [[#EvaluationResult|статусах результата]].
+Source, preparation, and information available to the program are traceable through [[Memory#^def-ResultProvenance|provenance]]. Inapplicability, insufficient data, and partial metric calculations are represented by [[#EvaluationResult|result statuses]].
 
-Содержимое входов, исходов и правила [[Datasets#Версии и правила использования|фиксируется в версии case]]. Один case может входить в несколько наборов. Исключение из набора не удаляет сам case или его источник: действуют [[Datasets#Удаление|общие правила удаления]].
+Inputs, outcomes, and rules are [[Datasets#Versions and Usage Rules|fixed in the case version]]. One case may belong to multiple datasets. Excluding it from a dataset does not delete the case or its source; the [[Datasets#Deletion|general deletion rules]] apply.
 
-Метрика определяет способ измерения, канал — смысл сигнала. `weight` задаётся [[Datasets#Версии и правила использования|правилами взвешивания]] и не равен автоматически частоте или важности случая.
+A metric defines how something is measured; a channel defines what a signal means. `weight` is set by [[Datasets#Versions and Usage Rules|weighting rules]] and does not automatically represent case frequency or importance.
 
 #### EvaluationResult
 
-**`EvaluationResult`** — общий результат проверки одного case или одного prediction независимо от того, выполнялась проверка на сохранённом `EvaluationCase` или после получения real-time observation. Поля содержат объекты по [[Core data structures#Объекты и ссылки|общему правилу объектов и ссылок]]. Схема описывает payload: при возврате из `Program` он находится в `result` общего [[Program Layer#^def-ProgramResult|`ProgramResult`]].
+**`EvaluationResult`** is the shared result of evaluating one case or prediction, whether evaluation was run on a saved `EvaluationCase` or after a real-time observation arrived. Fields contain objects under the [[Core data structures#Objects and References|shared object and reference rule]]. The schema describes a payload; when returned from a `Program`, it is in `result` of the shared [[Program Layer#^def-ProgramResult|`ProgramResult`]].
 
 ```python
 EvaluationResult =
@@ -272,29 +267,30 @@ EvaluationResult =
   }
 ```
 
-Статус определяет, какие данные гарантированно доступны:
+Status determines which data are guaranteed to be available:
 
 ```text
 evaluated
-→ outcome существует;
-→ проверяемая trace восстановима;
-→ рассчитана хотя бы одна metric;
+→ an outcome exists;
+→ the trace being checked is recoverable;
+→ at least one metric has been calculated;
 
 not_applicable
-→ условия проверки не реализовались;
-→ learning по этому result не запускается;
+→ evaluation conditions did not occur;
+→ this result does not start learning;
 
 unresolved
-→ ни одна выбранная метрика не рассчитана: недостаточно данных или поддержки правила либо расчёт пропущен по стоимости;
-→ повтор возможен при изменении основания пропуска, но не обязателен;
-→ learning по этому result не запускается.
+→ no selected metric was calculated: data or rule support was insufficient,
+  or calculation was skipped because of cost;
+→ a retry is possible if the reason for omission changes, but is not required;
+→ this result does not start learning.
 ```
 
-`not_applicable` и `unresolved` не заменяются нулевым `prediction_unexpectedness` и не учитываются как успешная проверка.
+`not_applicable` and `unresolved` are not replaced with zero `prediction_unexpectedness` and are not counted as a successful evaluation.
 
-Если рассчитана хотя бы одна выбранная метрика, `evaluated` содержит доступные `MetricSample`; причины пропуска остальных фиксируются в trace. Потребитель проверяет наличие нужных ему метрик: `evaluated` не означает, что рассчитан весь запрошенный набор. Если ни одна метрика не рассчитана, возвращается `not_applicable` при неприменимости условий либо `unresolved` по указанным выше причинам.
+If at least one selected metric was calculated, `evaluated` contains the available `MetricSample`s; reasons for omitting others are recorded in the trace. A consumer checks for the metrics it needs: `evaluated` does not mean the entire requested set was calculated. If no metric was calculated, return `not_applicable` when conditions did not apply or `unresolved` for the reasons above.
 
-`EvaluationBasis` — неизменяемая фактическая основа проверки:
+`EvaluationBasis` is the immutable factual basis of an evaluation:
 
 ```python
 EvaluationBasis {
@@ -303,9 +299,9 @@ EvaluationBasis {
 }
 ```
 
-Проверяемая Program, case или prediction, runtime trace и контекст восстанавливаются через `EvaluationRun` и его provenance. `outcomes` делает обязательную основу evaluated result явной и доступной следующему этапу.
+The tested Program, case or prediction, runtime trace, and context are recovered through `EvaluationRun` and its provenance. `outcomes` makes the required basis of an evaluated result explicit and available to the next stage.
 
-`MetricSample` хранит одно измерение, полученное при evaluation:
+`MetricSample` stores one measurement obtained during evaluation:
 
 ```python
 MetricSample {
@@ -315,21 +311,21 @@ MetricSample {
 }
 ```
 
-`MetricSample` является неизменяемой частью evaluation output, поэтому Learning System может ссылаться на выбранные samples без копирования их значений.
+`MetricSample` is an immutable part of the evaluation output, so Learning System can refer to selected samples without copying their values.
 
-`MetricSample.channel` и `EvaluationDataset.target_channels` обозначают [[Evaluative-Control System#^def-SignalChannel|каналы получаемых оценок]]. Например, `prediction_unexpectedness` имеет одноимённый канал и при проверке прогноза supervisor feedback. Проверяемый прогноз, его PredictionTarget и условия восстанавливаются через `EvaluationRun` и provenance.
+`MetricSample.channel` and `EvaluationDataset.target_channels` denote [[Evaluative-Control System#^def-SignalChannel|the channels of the resulting evaluations]]. For example, `prediction_unexpectedness` uses the identically named channel when evaluating a supervisor feedback prediction. The prediction being checked, its `PredictionTarget`, and its conditions are recovered through `EvaluationRun` and provenance.
 
-`EvaluationResult` описывает результат проверки, но сам по себе не является командой обучения. Learning System отдельно выбирает outcome, metrics и objective, из которых можно создать `LearningSignal`.
+`EvaluationResult` describes an evaluation result but is not itself a learning command. Learning System separately selects outcomes, metrics, and an objective from which it may create a `LearningSignal`.
 
-### Создание тестов
+### Creating Tests
 
-Источником case может быть опыт или проверочное требование. Включение в набор описано в [[Datasets#Жизненный цикл|lifecycle Dataset]].
+A case may come from experience or an evaluation requirement. Adding it to a set is described by the [[Datasets#Lifecycle|Dataset lifecycle]].
 
-#### Воспоминания
+#### Memories
 
-Источником `EvaluationCase` может быть подробный или компактный [[Memory#Observation|непосредственный и внешний опыт]] по [[Datasets#Назначение и связь с памятью|общим правилам Dataset]].
+An `EvaluationCase` may come from detailed or compact [[Memory#Observation|first-hand or external experience]] under the [[Datasets#Purpose and Relationship to Memory|shared Dataset rules]].
 
-Само воспоминание не является тестом. Для Evaluation релевантная часть опыта проецируется на конкретный process и Program согласно `Contract-based Evaluation`:
+A memory is not a test by itself. For Evaluation, project the relevant experience onto the specific process and Program under `Contract-Based Evaluation`:
 
 ```text
 memory / episode
@@ -338,18 +334,17 @@ memory / episode
 → Evaluation
 ```
 
-Например, прошлый эпизод, в котором двигатель заглох после попадания воды, может стать `EvaluationCase` для новой версии модели работы двигателя.
+For example, a past episode in which an engine stalled after water entered it may become an `EvaluationCase` for a new version of an engine model.
 
-Надёжность такого case определяется качеством и применимостью исходного evidence через `Belief_data`.
+Case reliability is determined by the quality and applicability of its source evidence through `Belief_data`.
 
-Replay для этого не требуется. Replay может независимо анализировать тот же эпизод и в результате создать новый `EvaluationCase`, если в процессе анализа был сформулирован полезный проверочный сценарий.
+Replay is not required. Replay may independently analyze the same episode and produce a new `EvaluationCase` if a useful evaluation scenario is formulated during analysis.
 
-#### Goal / Expectation/ Рассуждения/Imagination Tests
+#### Goal / Expectation / Reasoning / Imagination Tests
 
-Цели и ожидания агента задают критерии проверочных сценариев. LLM также может предложить edge cases и воображаемые ситуации на основе общих знаний; они сохраняются как сгенерированные сценарии со своим происхождением.
+The agent's goals and expectations define criteria for evaluation scenarios. An LLM may also propose edge cases and imagined situations based on general knowledge; save them as generated scenarios with their own provenance.
 
-
-Пример:
+Examples:
 
 ```text
 goal: income grows
@@ -361,63 +356,46 @@ expected: stick is broken
 check: check_relation(stick_facet, Broken)
 ```
 
+The desired increase in income or broken stick defines the requirement here. Evaluation values come from data or a run result with a specified source. Conclusions from simulation are limited by the environment model's conditions.
 
-Рост дохода и сломанная палка здесь задают требования. Проверяемые значения берутся из данных или результата запуска с указанным источником. Для simulation вывод ограничен условиями модели среды.
+A desired result does not substitute for an observation when training a model. Matching a generated expectation alone does not confirm the quality of a prediction about an external process.
 
-Желаемый результат не заменяет наблюдение для обучения модели. Соответствие сгенерированному ожиданию само по себе не подтверждает качество прогноза внешнего процесса.
-
-
+Additional checks may cover imagined situations and edge cases, alignment with the goal vector (`goal_progess_delta`), LLM unit tests, simulation, and related approaches.
 
 #### 3. Simulation Tests and Optimization
 
-Программа может запускаться в simulation mode. Режим конкретного запуска фиксируется существующим [[Memory#^def-ProgramRun|`ProgramRun.run_mode`]] и не изменяет [[Program Layer#Program roles|`Program.roles`]].
+A program may run in simulation mode. The mode of a specific run is stored in the existing [[Memory#^def-ProgramRun|`ProgramRun.run_mode`]] and does not change [[Program Layer#Program Roles|`Program.roles`]].
 
-В simulation mode:
+In simulation mode:
 
 ```text
-- запусков много;
-- часть операторов и среды может быть mocked;
-- можно проводить self-play;
-- можно оптимизировать параметры или policy 
-- действует жесткий time / compute budget.
+- there are many runs;
+- some operators and parts of the environment may be mocked;
+- self-play may be used;
+- parameters or a policy may be optimized;
+- a strict time / compute budget applies.
 ```
 
+Simulation may combine two ways of obtaining outcomes:
 
-Simulation может сочетать два способа получения outcomes:
+- **Reuse history.** Use saved outcomes without repeating the original actions when policy changes preserve the conditions under which those outcomes were obtained. For example, change the selection, ordering, or stopping time of independent search branches while respecting dependencies within each branch. If evaluation uses only history, a request for an unrecorded continuation means data are insufficient.
+- **Generate from a model.** Memory provides initial situations and data for refining a process model; a simulator creates new continuations, including consequences of alternative actions absent from history. Evaluate these outcomes under the model used. This can combine known environment rules with a learnable model of a particular participant's behavior.
 
-- **Повторное использование истории.** Сохранённые outcomes используются без повторного выполнения исходных действий, если изменения policy сохраняют условия их получения. Например, можно менять выбор, порядок и момент остановки независимых ветвей поиска, соблюдая зависимости внутри ветвей. При оценке только по истории запрос незаписанного продолжения означает недостаток данных.
-- **Генерация по модели.** Память задаёт исходные ситуации и данные для уточнения модели процесса; симулятор строит новые продолжения, включая последствия альтернативных действий, которых не было в истории. Эти outcomes оцениваются в рамках использованной модели. Так можно сочетать известные правила среды с обучаемой моделью поведения конкретного участника.
+In the standard path, [[Action Selection and Planning#Process Management and Skill Development|`TaskManagingProgram`]] selects simulation evaluation results to train a policy and passes them to the [[Learning system#LearningCoordinator|shared learning pipeline]]. Updates alternate with new runs within the budget. The separate path for a specialized trainer is described in [[Learning system#Specialized Learning]]. [[#EvaluationTestManager|Isolated Evaluation]] compares the current policy and candidates using a fixed environment model and evaluation conditions; whether training is allowed depends on the selected [[#^evaluation-modes|evaluation mode]].
 
-В стандартном пути [[Process Plane/Action Selection and Planning#Управление процессом и развитие навыка|`TaskManagingProgram`]] выбирает [[#EvaluationResult|результаты проверки]] simulation для обучения policy и передаёт их в [[Learning system#LearningCoordinator|общий learning pipeline]]. Обновления чередуются с новыми прогонами в пределах бюджета. Отдельный путь для специализированного trainer-а описан в [[Learning system#Специализированное обучение]]. [[#EvaluationTestManager|Изолированная Evaluation]] сравнивает текущую policy и кандидатов при фиксированных модели среды и условиях проверки; допустимость обучения определяется выбранным [[#^evaluation-modes|режимом проверки]].
+The policy being evaluated receives only information available at the corresponding step in the scenario, including restrictions on hidden simulation state. The shared rules for [[Learning system#Data and Automatic Updates|using training data]] apply. Transfer to new cases requires a [[Learning system#Budget and Review|separate evaluation]].
 
-Проверяемая policy получает только информацию, доступную к соответствующему шагу сценария, включая ограничения на скрытое состояние симулятора. Применяются общие правила [[Learning system#Данные и автоматические обновления|использования обучающих данных]]. Перенос улучшения на новые случаи требует [[Learning system#Бюджет и пересмотр|отдельной проверки]].
+How much a conclusion from simulation is justified depends on the checked [[Uncertainty and Belief Tracking in the World Model#Belief and BeliefTarget|`BeliefTarget`]] and on the applicability of the data and model used. Simulated outcomes are not by themselves new observations of the corresponding external process; reusing historical outcomes does not create independent new evidence. Their accounting follows the shared [[Uncertainty and Belief Tracking in the World Model#Evidence Sources|Evidence source rules]].
 
-Обоснованность вывода из simulation зависит от проверяемого [[Uncertainty and Belief Tracking in the World Model#Belief and BeliefTarget|BeliefTarget]] и применимости использованных данных и модели. Симулированные outcomes сами по себе не являются новыми observations соответствующего внешнего процесса; повторное использование исторических outcomes не создаёт нового независимого evidence. Их учёт определяется общими правилами [[Uncertainty and Belief Tracking in the World Model#Evidence sources|Evidence sources]].
+An end-to-end example combining memory, an opponent model, and simulation: [[Memory#Example: Improving Play Against a Specific Opponent|improving play against a specific opponent]].
 
-Сквозной пример сочетания памяти, модели соперника и simulation: [[Memory#Пример: улучшение игры против конкретного соперника|улучшение игры против конкретного соперника]].
-
-
-
-
-
-
-
-ожаемых систуациях и эдж кейсах, на соответсвии вектору цели (goal_progess_delta), юнит тестование ЛЛМ, симуляция и т.д. 
-
-
-### Механика кеширования
-
+### Caching Mechanics
 ^3162cf
 
-`EvaluationTestCacheManager` сохраняет подготовленный case, когда повторное использование экономит затраты на генерацию. Task выбирает, что кешировать. Объект памяти, JSON и код — возможные формы одного сценария, сохраняющие его источник, версию и правила проверки.
+`EvaluationTestCacheManager` saves a prepared case when reuse reduces generation costs. A Task selects what to cache. A memory object, JSON, and code are possible forms of the same scenario, retaining its source, version, and evaluation rules.
 
-Кеш, включая самостоятельные cases, подчиняется [[Datasets#Удаление|общим правилам удаления]]. Удаление исходной записи после сжатия не удаляет case автоматически, если нужная ему информация сохранена. Case с утраченными основаниями нельзя продолжать использовать для проверки.
+The cache, including standalone cases, follows the [[Datasets#Deletion|shared deletion rules]]. Deleting a source record after compression does not automatically delete a case if the information it needs has been retained. A case with lost supporting evidence cannot continue to be used for evaluation.
 
 ### Debugging
 
-Отладка осуществляется модулем ProgramDebugger . По умолчания стандартная стратегия агента Codex c постепенным улучшеним.
-
-
-
-
----
+Debugging is handled by `ProgramDebugger`. By default, it uses the standard Codex-agent strategy, with gradual improvement.

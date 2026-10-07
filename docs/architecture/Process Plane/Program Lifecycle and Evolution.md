@@ -1,36 +1,35 @@
-## Эволюция, отбор и улучшение программ
+## Program Evolution, Selection, and Improvement
 
-Программы EverTree развиваются как проверяемые гипотезы.
+EverTree programs evolve as testable hypotheses.
 
-`Program` — стабильная identity механизма, который моделирует или исполняет процесс.
+`Program` is a stable identity for a mechanism that models or executes a process.
 
-`ProgramBranch` — временная линия изменения существующей `Program`.
+`ProgramBranch` is a temporary change line for an existing `Program`.
 
-Новая `Program` создаётся, если меняется сам принцип решения.
-`ProgramBranch` создаётся, если основной механизм сохраняется, но уточняются детали, параметры, edge cases, contracts, локальная структура или реализация.
+Create a new `Program` when the solution principle itself changes. Create a `ProgramBranch` when the main mechanism remains, but its details, parameters, edge cases, contracts, local structure, or implementation are refined.
 
-Любая новая программа или branch должна иметь явную гипотезу:
+Every new program or branch must have an explicit hypothesis:
 
 ```text
-какое изменение предлагается
-→ почему оно должно помочь
-→ какие сигналы или метрики должны улучшиться
-→ как это будет проверено
+what change is proposed
+→ why it should help
+→ which signals or metrics should improve
+→ how it will be evaluated
 ```
 
-Программа не становится активной только потому, что идея кажется разумной.
+A program does not become active just because an idea seems reasonable.
 
-Reasoning, LLM, литература, память, аналогии и внешние источники создают candidates и priors. Активной программа становится только после проверки, Evaluation и `EvaluationChoice`.
+Reasoning, LLMs, literature, memory, analogies, and external sources produce candidates and priors. A program becomes active only after verification, Evaluation, and `EvaluationChoice`.
 
-Evaluation не обязана сразу завершаться принятием или отклонением. Если evidence недостаточно, кандидат может остаться кандидатом, а агент продолжает копить данные: через replay, simulation, новые ProgramRun, реальные наблюдения или специально созданные EvaluationCase.
+Evaluation does not have to end immediately in acceptance or rejection. If evidence is insufficient, a candidate may remain under consideration while the agent gathers more data through replay, simulation, new `ProgramRun`s, real observations, or specially created `EvaluationCase`s.
 
-Это не отдельный lifecycle и не отдельная сущность `LiveValidation`. Это обычное состояние незавершённого выбора: несколько альтернатив остаются живыми, пока поддержки недостаточно.
+This is not a separate lifecycle or a separate `LiveValidation` entity. It is the ordinary state of an unfinished choice: multiple alternatives remain live while support is insufficient.
 
 ---
 
-### Общий lifecycle Program
+### General Program Lifecycle
 
-Все Programs независимо от набора [[Program Layer#Program roles|ролей]] проходят один общий lifecycle.
+All Programs go through the same lifecycle, regardless of their [[Program Layer#Program Roles|roles]].
 
 ```text
 trigger
@@ -47,77 +46,75 @@ trigger
 → merge / activate / continue / reject / archive / keep alternatives
 ```
 
-Кандидата можно предварительно обучить на [[Learning system#^def-TrainingDataset|TrainingDataset]]. При сравнении на [[Program Evaluation and Testing#EvaluationDataset|EvaluationDataset]] базовая модель и кандидат используют одну версию набора с соблюдением [[Datasets#Границы обучения и проверки|независимости проверки]]. Управление наборами следует [[Datasets#Жизненный цикл|общему lifecycle datasets]].
+A candidate may first be trained on a [[Learning system#^def-TrainingDataset|`TrainingDataset`]]. For comparison on an [[Program Evaluation and Testing#EvaluationDataset|`EvaluationDataset`]], the baseline model and candidate use the same dataset version, respecting [[Datasets#Training and Evaluation Boundaries|evaluation independence]]. Dataset management follows the [[Datasets#Lifecycle|shared dataset lifecycle]].
 
-Разница между Programs не в lifecycle, а в проверяемых требованиях к их основной роли и модификаторам.
+Programs differ not in their lifecycle, but in the requirements checked for their primary roles and modifiers.
 
-При создании и пересмотре программы выбирается и заполняется профиль [[Program Layer#ProgramDesign|ProgramDesign]]. Проверка сопоставляет заявленные решения с реализацией, включая ветвления до выбора действия, адаптацию, исследование и путь обучения; проверяемые поведенческие требования входят в tests и Evaluation.
+When creating or revising a program, select and complete a [[Program Layer#ProgramDesign|`ProgramDesign`]] profile. Verification compares declared design decisions with the implementation, including branches before action selection, adaptation, exploration, and the learning path. Behavioral requirements are checked through tests and Evaluation.
 
-#### Подготовка начальных моделей
+#### Preparing Initial Models
 #topic_core
 
-Сначала переиспользуются подходящие программы, правила, таблицы и обученные состояния. Если их недостаточно, ограниченная сессия сознания с использованием LLM и внешнего исследования готовит недостающую реализацию и её область применимости.
+First reuse suitable programs, rules, tables, and trained state. If they are insufficient, a bounded consciousness session using an LLM and external research prepares the missing implementation and defines its scope of applicability.
 
-Это общий путь подготовки разных начальных предположений:
+This is the shared preparation path for different kinds of initial assumptions:
 
-| Что подготавливается | Смысл результата |
+| What is prepared | Meaning of the result |
 |---|---|
-| Начальная policy | Правило выбора, предпочтения действий или начальные параметры стратегии |
-| Epistemic prior | Вероятность target до собственного evidence |
-| Модель наблюдений | Вероятность результата наблюдения при каждом состоянии target |
+| Initial policy | Action-selection rule, action preferences, or initial strategy parameters |
+| Epistemic prior | Probability of a target before the agent's own evidence |
+| Observation model | Probability of an observation result under each target state |
 
-Общими являются подготовка, сохранение, проверка и последующее обучение. Эти выходы сохраняют свои типы и не объединяются в универсальную сущность `Prior`. Начальное предпочтение политики не является вероятностью истинности belief и не создаёт epistemic `Support`.
+Preparation, storage, evaluation, and later learning are shared. These outputs retain their own types; they are not combined into a universal `Prior` entity. An initial policy preference is not a probability that a belief is true and does not create epistemic `Support`.
 
-Результат сохраняется как код, настройки или модельный артефакт существующей Program с типизированным интерфейсом. Приблизительная модель может исполняться кодом с первого дня; качество её оснований проверяется отдельно. Evaluation может обосновать применение ограниченного fallback до накопления точной калибровки, если соблюдены контракт, область применения и пределы влияния. Это решение проходит обычный `EvaluationChoice`.
+The result is saved as code, settings, or a model artifact for an existing Program with a typed interface. An approximate model may run as code from day one; the quality of its supporting basis is checked separately. Evaluation may justify using a limited fallback before precise calibration is available, provided the contract, scope of applicability, and influence limits are respected. This decision goes through the ordinary `EvaluationChoice`.
 
-Новый экземпляр процесса, target или состояние в известных условиях не требует повторной подготовки. Новые данные обновляют предусмотренные параметры; существенные различия условий могут потребовать отдельного состояния или версии. Замена LLM-пути кодом выбирается по качеству и полной стоимости, включая сопровождение и проверки. Конкретный путь для belief описан в [[Uncertainty and Belief Tracking in the World Model#Жизненный цикл assessment|жизненном цикле assessment]].
+A new instance of a process, target, or state under known conditions does not require preparation again. New data update planned parameters; material differences in conditions may require separate state or a new version. Replacing an LLM-based path with code is decided by quality and total cost, including maintenance and evaluation. The specific belief preparation path is described in the [[Uncertainty and Belief Tracking in the World Model#Assessment Lifecycle|assessment lifecycle]].
 
-#### Primary role: model
+#### Primary Role: `model`
 
-`Program` с `model ∈ Program.roles` отвечает за вопрос:
+A `Program` with `model ∈ Program.roles` answers:
 
 ```text
-как устроен процесс и что он предсказывает?
+how does the process work, and what does it predict?
 ```
 
-Её стартовая версия должна быть минимально достаточной, чтобы:
+Its initial version must be sufficient to:
 
 ```text
-- делать ключевые прогнозы переходов по данному процессу;
+- make the key transition predictions for this process;
 ```
 
-Стартовый пример:
+Starting example:
+
 ```text
-в ситуации S
-если происходит transition/action X
-то вероятен outcome/profile Y
+in situation S
+if transition/action X occurs
+then outcome/profile Y is likely
 ```
 
-Типичные начальные sources:
+Typical initial sources:
 
 ```text
-memory 
-similar ProcessConcept и TransitionType
+memory
+similar ProcessConcept and TransitionType
 LLM/general priors
 simulation / dataset
 ```
 
-Такая `Program` не выбирает действие напрямую. Она возвращает predictions, profiles или expected signals, которые могут использоваться `Program` с основной ролью `exec`, [[Action Selection and Planning|локальной политикой выбора]], planning или consciousness selection.
+This `Program` does not select an action directly. It returns predictions, profiles, or expected signals that may be used by an `exec`-role `Program`, a [[Action Selection and Planning|local selection policy]], planning, or consciousness selection.
 
----
+#### Primary Role: `exec`
 
-#### Primary role: exec
-
-`Program` с `exec ∈ Program.roles` отвечает за вопрос:
+A `Program` with `exec ∈ Program.roles` answers:
 
 ```text
-что агент делает в этом процессе?
+what does the agent do in this process?
 ```
 
-Её минимальная стартовая версия — рабочая структура действий агента в данном процессе.
+Its minimal initial version is a working structure for the agent's actions in this process.
 
-
-Типичные начальные источники:
+Typical initial sources:
 
 ```text
 similar executable programs
@@ -126,8 +123,7 @@ LLM/general priors
 dual model program
 ```
 
-
-`Program` с основной ролью `exec` может использовать `Program` с основной ролью `model`:
+A `Program` with primary role `exec` may use a `Program` with primary role `model`:
 
 ```text
 model ∈ Program.roles
@@ -137,131 +133,126 @@ exec ∈ Program.roles
 → candidates / control flow / policy programs / actions
 ```
 
-Declarative model не выбирает действие напрямую.  
-Executable program выбирает действие через обычный control flow, программу политики, planning или consciousness selection.
+A declarative model does not select an action directly. An executable program selects actions through ordinary control flow, a policy program, planning, or consciousness selection.
 
-#### Candidate change
+#### Candidate Change
 
-Результат `reasoning_and_synthesis` не обязан сразу быть кодом.
+The result of `reasoning_and_synthesis` does not have to be code immediately.
 
-Он может породить разные типы изменений:
+It may produce different kinds of changes:
 
 ```text
 semantic change
-→ уточнение ProcessConcept, relation, PROCESS_VARIABLE, contract или scoped semantic link
+→ refine ProcessConcept, relation, PROCESS_VARIABLE, contract, or scoped semantic link
 
 parametric update
-→ изменение весов, priors, values, probabilities или других параметров без смены структуры
+→ change weights, priors, values, probabilities, or other parameters without changing structure
 
 ProgramBranch
-→ изменение существующей Program при сохранении основного механизма
+→ change an existing Program while preserving the main mechanism
 
 new Program
-→ альтернативный подход с другим принципом решения
+→ an alternative approach with a different solution principle
 
 EvaluationCase
-→ новый проверочный сценарий, если проблема пока лучше выражается как тест
+→ a new evaluation scenario, when the problem is better expressed as a test for now
 ```
 
-Если изменение требует правки кода, оно идёт через `ProgramBranch` или новую `Program`.
+If a change requires code edits, it proceeds through a `ProgramBranch` or a new `Program`.
 
-Если изменение касается только графа, semantic links или contracts, оно всё равно должно быть проверяемым: через replay, EvaluationCase, ProgramRun, simulation или последующие observations.
+If it affects only the graph, semantic links, or contracts, it must still be testable through replay, `EvaluationCase`, `ProgramRun`, simulation, or subsequent observations.
 
-#### Verification and program tests
+#### Verification and Program Tests
 
-Candidate `Program` или `ProgramBranch` после implementation проходит общую `Verification`. `Verification` определяет, какие дополнительные проверки необходимы и достаточно ли полученных результатов.
+A candidate `Program` or `ProgramBranch` undergoes general `Verification` after implementation. `Verification` determines which additional checks are needed and whether the results are sufficient.
 
-`program tests` — обычные качественные тесты разработки: unit, behavioral, adversarial, property-based, smoke и другие подходящие проверки.
+`Program tests` are ordinary qualitative development tests: unit, behavioral, adversarial, property-based, smoke, and other suitable checks.
 
-Для `exec` с effects проверяется [[Cognition and Attention#^program-restart-continuation|контракт продолжения без повторов]], если поддерживается замена во время Task, включая замену родителя.
+For an `exec` program with effects, verify the [[Cognition and Attention#^program-restart-continuation|continuation-without-duplication contract]] when replacement during a `Task` is supported, including replacement of a parent program.
 
-Program tests не являются главным механизмом выбора между конкурирующими программами. Их роль:
+Program tests are not the primary way to choose between competing programs. They are used to:
 
 ```text
-- найти ошибки реализации;
-- предотвратить регрессии;
-- уточнить candidate;
-- помочь довести branch до состояния, пригодного для Evaluation.
+- find implementation defects;
+- prevent regressions;
+- refine a candidate;
+- bring a branch to a state suitable for Evaluation.
 ```
 
-Сравнение кандидатов выполняется через `Evaluation`.
+Candidates are compared through `Evaluation`.
 
 #### Evaluation
 
-`Evaluation` — количественная проверка программы, branch или гипотезы на `EvaluationCase` или `EvaluationDataset`, построенных из памяти, simulation, offline data, сгенерированных сценариев и других источников evidence.
+`Evaluation` is a quantitative check of a program, branch, or hypothesis on an `EvaluationCase` or `EvaluationDataset` built from memory, simulation, offline data, generated scenarios, and other evidence sources.
 
-Evaluation возвращает метрики результата, в том числе оценки по каналам [[Evaluative-Control System]]:
+Evaluation returns outcome metrics, including signals from [[Evaluative-Control System]]:
 
 ```text
 prediction_unexpectedness
 supervisor_feedback_signal
 tension_reduction
-и другие target metrics
+and other target metrics
 ```
 
-[[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] помогает обнаружить расхождение для анализа; его минимизация не является критерием выбора модели. Прогностическое качество кандидатов сравнивается на независимых данных по одинаковым заранее фиксированным критериям, учитывающим и соответствие исходам, и информативность прогноза.
+[[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] helps detect discrepancies for analysis; minimizing it is not a model-selection criterion. Candidates' predictive quality is compared on independent data using the same criteria fixed in advance, accounting for both outcome fit and forecast informativeness.
 
-Evaluation не равна реальному новому опыту. Реальные события могут дать evidence, но они становятся частью выбора только после проекции на процесс, программу и проверяемые метрики.
+Evaluation is not the same as new real-world experience. Real events can provide evidence, but they enter the choice only after projection onto the process, program, and measurable criteria.
 
-#### Evidence accumulation
+#### Evidence Accumulation
 
-Если данных недостаточно, агент не обязан принимать или отклонять кандидата сразу.
+If the data are insufficient, the agent does not have to accept or reject a candidate immediately. It can keep one or more alternatives in candidate status while continuing to gather evidence.
 
-Он может оставить одну или несколько альтернатив в статусе candidate и продолжить накапливать evidence
-
-```
-
-Кандидат остаётся кандидатом, пока:
+A candidate remains under consideration while:
 
 ```text
-- есть несколько живых альтернатив;
-- активная версия ещё не выбрана;
-- evidence/support недостаточны для EvaluationChoice.
+- several alternatives are still viable;
+- no active version has been selected;
+- evidence/support is insufficient for EvaluationChoice.
 ```
 
-Если программа одна и она уже принята как рабочая, отдельный статус накопления evidence не нужен. Новые observations просто обновляют belief, параметры, contracts или порождают следующий trigger для улучшения.
+If there is one program and it has already been accepted for use, a separate evidence-accumulation status is unnecessary. New observations simply update beliefs, parameters, or contracts, or create the next improvement trigger.
 
 #### EvaluationChoice
 
-`EvaluationChoice` — сознательное решение о судьбе кандидата после Evaluation и накопления evidence.
+`EvaluationChoice` is a conscious decision about a candidate's fate after Evaluation and evidence accumulation.
 
-Evaluation предоставляет метрики.
-EvaluationChoice принимает решение.
+Evaluation provides metrics. EvaluationChoice makes the decision.
 
-Возможные исходы:
+Possible outcomes:
 
 ```text
 merge_branch
-→ изменение существующей Program принято; branch мержится в main
+→ accept the change to an existing Program and merge the branch into main
 
 continue_branch
-→ данных недостаточно или candidate нужно доработать; branch остаётся живой
+→ evidence is insufficient or the candidate needs more work; keep the branch active
 
 reject_branch
-→ branch-гипотеза не получила достаточной поддержки; branch архивируется или удаляется
+→ the branch hypothesis lacks sufficient support; archive or delete the branch
 
 create_new_program
-→ стало ясно, что изменение уже не является branch, а требует отдельной Program
+→ the change is no longer a branch and needs a separate Program
 
 activate_program
-→ связанная через PROGRAM_FOR_PROCESS Program становится
-  ProcessConcept.active_model или ProcessConcept.active_exec
+→ the Program linked through PROGRAM_FOR_PROCESS becomes
+  ProcessConcept.active_model or ProcessConcept.active_exec
 
 reject_program
-→ alternative Program проиграла и получает lifecycle_status="rejected"
+→ the alternative loses and receives lifecycle_status="rejected"
 
 keep_alternatives
-→ несколько программ остаются candidates, потому что evidence пока недостаточно
+→ several programs remain candidates because evidence is insufficient
 
 archive_program
-→ программа больше не нужна как активный candidate, но сохраняется для истории, replay или будущих аналогий
+→ the program is no longer needed as an active candidate but is kept
+  for history, replay, or future analogy
 ```
 
-Активные слоты процесса (`ProcessConcept.active_model` и `ProcessConcept.active_exec`) обновляются только через `EvaluationChoice`.
+Active process slots (`ProcessConcept.active_model` and `ProcessConcept.active_exec`) are updated only through `EvaluationChoice`.
 
-#### Operational flows
+#### Operational Flows
 
-Улучшение текущей программы:
+Improving the current program:
 
 ```text
 active code is in main
@@ -275,7 +266,7 @@ active code is in main
 → merge / continue / reject / archive
 ```
 
-Проверка альтернативной программы:
+Evaluating an alternative program:
 
 ```text
 create new Program
@@ -285,229 +276,223 @@ create new Program
 → run comparable Evaluation
 → compare EvaluationRuns
 → activate if better
-→ reject or keep as candidate if not enough support
+→ reject or keep as candidate if support is insufficient
 ```
 
-Текущая active Program остаётся активной до `EvaluationChoice`.
-Candidate Program или ProgramBranch не заменяет active slot автоматически.
+The current active Program remains active until `EvaluationChoice`. A candidate Program or ProgramBranch does not replace the active slot automatically.
 
-#### Meta-program lifecycle safety
+#### Meta-Program Lifecycle Safety
 
-Усиленные требования этого раздела применяются только при `meta ∈ Program.roles`. `ProgramLifecycleManagement` управляет lifecycle программ и имеет `roles = {exec, meta}`.
+The stronger requirements in this section apply only when `meta ∈ Program.roles`. `ProgramLifecycleManagement` manages program lifecycles and has `roles = {exec, meta}`.
 
-Meta-программы влияют на множество будущих решений и могут изменять механизмы собственного обучения. В пределах [[Self#^meta-improvement-mvp|ограничения MVP на изменение процедуры принятия улучшений]] они улучшаются через тот же lifecycle, но консервативнее обычных программ:
+Meta-programs affect many future decisions and may change the mechanisms used for their own learning. Within the [[Self#^meta-improvement-mvp|MVP limit on changing the improvement-acceptance procedure]], they use the same lifecycle but are improved more conservatively than ordinary programs:
 
 ```text
-- реже запускать self-improvement;
-- требовать больше support/evidence;
-- проводить более широкую Evaluation, включая сравнение старой и новой версий
-  на историях успешного и неуспешного улучшения программ;
-- усиливать regression checks;
-- учитывать стоимость ошибок выше, чем у обычных domain-программ;
-- применять более осторожные updates;
-- требовать более высокий порог evidence перед activation;
-- использовать упрощённые tests для дорогих meta-evaluation, если полная проверка слишком затратна.
+- run self-improvement less often;
+- require more support/evidence;
+- run broader Evaluation, including old and new versions
+  on histories of successful and unsuccessful program improvements;
+- strengthen regression checks;
+- account for a higher cost of errors than for ordinary domain programs;
+- apply updates more cautiously;
+- require a higher evidence threshold before activation;
+- use simplified tests for expensive meta-evaluation when a full check costs too much.
 ```
 
-Для разрешённых изменений meta-механизмов сначала нужны сильные свидетельства, что новая версия улучшает качество, стоимость, стабильность или безопасность lifecycle. Накопление таких свидетельств не снимает ограничение MVP на изменение окончательной проверки и принятия улучшений.
+For permitted changes to meta mechanisms, strong evidence is first required that the new version improves lifecycle quality, cost, stability, or safety. Accumulating such evidence does not remove the MVP restriction on changing the final review and acceptance of improvements.
 
-Моделирование self-improvement само по себе не делает `Program` meta. Например:
+Modeling self-improvement does not by itself make a `Program` meta. For example:
 
 ```text
 ImprovementOutcomeModel.roles = {model}
 ProgramLifecycleManagement.roles = {exec, meta}
 ```
 
-
-
 ---
 
-### Stage 1: gather_relevant_info
+### Stage 1: `gather_relevant_info`
 
-`gather_relevant_info(Program | ProcessConcept)` собирает материал для построения или улучшения программы.
+`gather_relevant_info(Program | ProcessConcept)` gathers material for building or improving a program.
 
-Это не planning и не action selection.
-Эта стадия не выбирает действие и не меняет программу напрямую.
+This is not planning or action selection. This stage does not choose an action or directly change the program.
 
-Она отвечает на вопрос:
+It answers:
 
 ```text
-что агент уже знает или может узнать, чтобы построить лучшую гипотезу программы?
+what does the agent already know or could learn to form a better program hypothesis?
 ```
 
-Источники:
+Sources include:
 
 ```text
 memory
-→ прошлые эпизоды, failures, wins, ProgramRun, EvaluationRun
+→ past episodes, failures, wins, ProgramRun, EvaluationRun
 
 semantic graph
-→ похожие ProcessConcept, TransitionType, ActionConcept, OperatorConcept, relations
+→ similar ProcessConcept, TransitionType, ActionConcept,
+  OperatorConcept, and relations
 
 existing programs
-→ Programs связанного процесса во всех lifecycle statuses,
-  а также siblings и prototypes
+→ Programs for the related process in all lifecycle statuses,
+  plus siblings and prototypes
 
 LLM general knowledge
-→ первичные priors, edge cases, возможная структура модели
+→ initial priors, edge cases, and possible model structure
 
 external research
-→ литература, документация, статьи, domain guides, deep research
+→ literature, documentation, articles, domain guides, deep research
 
 simulation / datasets
 → synthetic episodes, offline evidence, self-play, benchmark cases
 ```
 
-`gather_relevant_info` создаёт evidence и context для мышления. Оно не создаёт финальную программу само по себе.
+`gather_relevant_info` creates evidence and context for reasoning. It does not create the final program by itself.
 
-Внешнее исследование запускается для конкретного пробела, если ожидаемая польза оправдывает стоимость: например, для поиска модели теста, характеристик измерения или статистики ошибок источника. Сохраняются источник, версия и условия применимости; найденная публикация не подтверждает перенос на текущий процесс автоматически. Пересмотр запускается при существенном изменении условий или используемых оснований; обязательного периодического LLM / web research нет.
+Run external research to address a specific gap when the expected benefit justifies the cost—for example, to find a test model, measurement characteristics, or source error statistics. Retain the source, version, and applicability conditions; a publication does not automatically establish that its findings transfer to the current process. Reconsider the research when conditions or the underlying evidence change materially; periodic LLM or web research is not mandatory.
 
 ---
 
-### Stage 2: reasoning_and_synthesis
+### Stage 2: `reasoning_and_synthesis`
 
-`reasoning_and_synthesis` превращает собранную информацию, ошибки, наблюдения и цели в проверяемые объяснения и возможные способы улучшения модели или программы.
+`reasoning_and_synthesis` turns gathered information, errors, observations, and goals into checkable explanations and possible ways to improve a model or program.
 
-На этой стадии есть два взаимосвязанных процесса.
+This stage contains two related processes.
 
-**Анализ** разбирает доступный материал: ищет повторяющиеся ошибки, противоречия, missing variables, скрытые факторы, разные режимы процесса, границы применимости модели и полезные аналогии.
+**Analysis** examines the available material for recurring errors, contradictions, missing variables, hidden factors, different process modes, model applicability limits, and useful analogies.
 
-**Синтез** строит новые объяснения и подходы, комбинируя memories, похожие процессы, semantic structure, rejected alternatives, внешние источники, контрфакты и LLM/general-knowledge priors.
+**Synthesis** builds new explanations and approaches by combining memories, similar processes, semantic structure, rejected alternatives, external sources, counterfactuals, and LLM/general-knowledge priors.
 
-Агент поэтому не только находит готовую гипотезу. Он может построить новую идею из нескольких частичных наблюдений или аналогий, которых по отдельности недостаточно для вывода.
-Начальная гипотеза обычно не является программой и не равна конкретной реализации.
+The agent therefore does not only find a ready-made hypothesis. It may build a new idea from several partial observations or analogies that would not support a conclusion individually. An initial hypothesis is usually not yet a program and is not the same as a specific implementation.
 
-Например:
+For example:
 
+```text
+"Perhaps the current model does not account for an important factor X."
 ```
-"Возможно, текущая модель не учитывает важный фактор X."
-```
 
-Такая идея может быть записана в [[Core data structures#^def-Note|`Note`]].
+Such an idea may be recorded as a [[Core data structures#^def-Note|`Note`]].
 
-Если утверждение нужно проверять и обновлять отдельно, агент оформляет [[Core data structures#^def-Claim|`Claim`]]:
+If the statement must be checked and updated independently, the agent records a [[Core data structures#^def-Claim|`Claim`]]:
 
-```
+```text
 Claim G:
-"X существенно влияет на Y."
+"X has a material effect on Y."
 ```
 
-`Claim` — проверяемое утверждение и может быть самостоятельным `BeliefTarget`; целую `Note` также можно оценивать без обязательного разбиения по [[Core data structures#^note-claim-prompt-evaluation|общему контракту оценки]].
+A `Claim` is a checkable assertion and may be an independent `BeliefTarget`; a whole `Note` can also be evaluated without necessarily decomposing it, under the [[Core data structures#^note-claim-prompt-evaluation|shared evaluation contract]].
 
-**Гипотеза** здесь не отдельный тип данных, а роль `Claim`: Claim является гипотезой, когда агент рассматривает его как возможное объяснение, prediction, способ улучшения и собирает evidence для его проверки.
-### Уточнение гипотез
+Here, **hypothesis** is not a separate data type, but a role of a `Claim`: a Claim is a hypothesis when the agent considers it as a possible explanation, prediction, or improvement approach and gathers evidence to check it.
 
-Reasoning может разворачивать общий Claim в несколько более конкретных и конкурирующих объяснений:
+---
 
-```
+### Refining Hypotheses
+
+Reasoning may elaborate a general Claim into several more specific competing explanations:
+
+```text
 general Claim
         ↓ reasoning / elaboration
 specific Claims
 ```
 
-Например:
+For example:
 
-```
+```text
 G:
-"Текущая модель смешивает разные режимы процесса."
+"The current model conflates different process modes."
 
         ↓
 
 C1:
-"Высокий prediction_unexpectedness возникает из-за смешения режима A и режима B."
+"High prediction_unexpectedness is caused by conflating modes A and B."
 
 C2:
-"Режим один, а mismatch объясняется фактором X."
+"There is one mode, and the mismatch is explained by factor X."
 ```
 
-Общий и конкретные Claims являются самостоятельными `BeliefTarget`.
+The general and specific Claims are independent `BeliefTarget`s.
 
-Уровень общности Claim не задаётся отдельным типом или полем. Он выражается
-его семантикой: более общий Claim использует более общие Concepts, ProcessConcept,
-Prototype или условия; более конкретный относится к более узким объектам,
-механизмам или context.
+A Claim's level of generality is not defined by a separate type or field. It is expressed through its semantics: a more general Claim uses more general Concepts, `ProcessConcept`, `Prototype`, or conditions; a more specific one refers to narrower objects, mechanisms, or context.
 
-Если persistent Claim создаётся как уточнение другого Claim, это явно
-фиксируется semantic relation: `REFINES_CLAIM(specific, general)`.
+When a persistent Claim is created as a refinement of another Claim, record this explicitly with the semantic relation `REFINES_CLAIM(specific, general)`.
 
-Так Claims образуют навигируемую структуру от общих гипотез к более конкретным.
-Связь не означает истинность Claims и не переносит evidence автоматически. `EvidenceAssessmentProgram` назначает evidence каждому Claim только тогда, когда фактическая проверка действительно информативна относительно него.
+Claims thereby form a navigable structure from general hypotheses to more specific ones. The relation does not imply that the Claims are true or automatically transfer evidence. `EvidenceAssessmentProgram` assigns evidence to a Claim only when the actual check is informative about that Claim.
 
-Поэтому:
+Therefore:
 
-```
-specific Claim false
+```text
+specific Claim is false
 ≠
-general Claim автоматически false.
+general Claim is automatically false.
 ```
 
-Несколько независимых результатов могут дать evidence более общему Claim, если вместе действительно проверяют его содержание.
+Several independent results may provide evidence for a more general Claim if together they genuinely check its meaning.
 
 ---
 
-### Claims о проблеме и Claims о способе улучшения
+### Claims About a Problem and Claims About an Improvement Method
 
-Reasoning может создавать Claims разных ролей.
+Reasoning may create Claims with different roles:
 
-```
+```text
 explanatory Claim
-→ что, вероятно, объясняет наблюдаемую проблему;
+→ what likely explains the observed problem;
 
 change Claim
-→ какое изменение, вероятно, улучшит результат.
+→ what change is likely to improve the result.
 ```
 
-Это роли одного типа `Claim`, а не отдельные классы.
+These are roles of the same `Claim` type, not separate classes.
 
-Например:
+For example:
 
-```
+```text
 Claim G:
-"Высокий prediction_unexpectedness возникает из-за смешения режимов A и B."
+"High prediction_unexpectedness is caused by conflating modes A and B."
 
         ↓ reasoning
 
 Claim A:
-"Явное разделение режимов A и B
-через отдельную model branch объяснит наблюдаемое расхождение
-и улучшит качество прогнозов относительно текущей модели
-на независимой проверке по фиксированным критериям."
+"Explicitly separating modes A and B
+through a separate model branch will explain the observed discrepancy
+and improve forecast quality over the current model
+on an independent evaluation with fixed criteria."
 ```
 
-`Claim A` описывает **подход**, а не его конкретную реализацию.
+`Claim A` describes an **approach**, not its specific implementation.
 
-Reasoning может создать несколько альтернативных change Claims:
+Reasoning may create several alternative change Claims:
 
-```
+```text
 A:
-"Использовать отдельные branches для режимов A и B."
+"Use separate branches for modes A and B."
 
 B:
-"Использовать continuous latent regime variable."
+"Use a continuous latent regime variable."
 
 C:
-"Сохранить одну модель, но добавить factor X."
+"Keep one model but add factor X."
 ```
 
-Именно на этом уровне происходит поиск и сравнение разных подходов.
+This is the level at which different approaches are explored and compared.
 
-Reasoning само по себе не является сильным evidence. Оно может создать Claim, задать initial prior и повысить ожидаемую ценность его проверки, но не увеличивает `Support` только потому, что объяснение кажется убедительным.
+Reasoning itself is not strong evidence. It may create a Claim, set an initial prior, and raise the expected value of checking it, but it does not increase `Support` merely because an explanation seems convincing.
 
-Проверка происходит через независимые observations, Evaluation, simulation, experiments, replay или live experience.
+Check Claims through independent observations, Evaluation, simulation, experiments, replay, or live experience.
 
 ---
 
-### Реализация выбранного подхода
+### Implementing the Selected Approach
 
-Один change Claim может быть реализован несколькими способами.
+A single change Claim may be implemented in several ways.
 
-Например:
+For example:
 
-```
+```text
 Claim A:
-"Отдельная branch для режима B объяснит наблюдаемое расхождение
-и улучшит качество прогнозов на независимой проверке
-по фиксированным критериям."
+"A separate branch for mode B will explain the observed discrepancy
+and improve forecast quality on an independent evaluation
+with fixed criteria."
 
         ↓ implementation generation
 
@@ -516,117 +501,113 @@ ProgramBranch A2
 ProgramBranch A3
 ```
 
-`A1`, `A2` и `A3` могут отличаться:
+`A1`, `A2`, and `A3` may differ by:
 
+```text
+different prompts;
+different LLMs;
+several stochastic runs using one LLM and prompt;
+subsequent refinement or debugging.
 ```
-разными prompts;
-разными LLM;
-несколькими stochastic runs одного LLM и prompt;
-последующим refinement или debugging.
-```
 
-Это **несколько concrete implementations одного и того же подхода**, а не несколько разных Claims.
+These are **several concrete implementations of the same approach**, not different Claims.
 
+An **implementation candidate** is the role of a specific native artifact that implements a change Claim; a separate `ImplementationCandidate` entity is unnecessary.
 
-**Implementation candidate** — это роль конкретного native artifact, реализующего change Claim (отдельная сущность `ImplementationCandidate` не требуется).
+Depending on the change, the artifact is:
 
-В зависимости от изменения таким artifact является:
-
-```
-изменение существующей Program (тот же основной механизм)
+```text
+change to an existing Program (same main mechanism)
 → ProgramBranch;
 
-принципиально другой механизм
+fundamentally different mechanism
 → candidate Program;
 
-semantic изменение
+semantic change
 → candidate semantic change;
 
-изменение существующих параметров
-→ candidate parametric update;
+change to existing parameters
+→ candidate parameter update;
 
-изменение шаблона инструкций или placeholders
+change to instruction template or placeholders
 → candidate Prompt revision;
 
-новый проверочный сценарий
+new evaluation scenario
 → EvaluationCase.
 ```
 
-[[Core data structures#^def-Prompt|`Prompt`]] имеет собственные revisions и [[Core data structures#^note-claim-prompt-evaluation|контракт оценки]]. Если изменение Prompt меняет код, семантику или контракт использующей его `Program`, оно также проходит [[#Общий lifecycle Program|lifecycle этой Program]].
-
-### Проверка подхода и реализации
-
-Нужно различать проверку подхода и его конкретной реализации. Провал отдельной реализации сам по себе не опровергает underlying `Claim`. Однако повторяющиеся неудачи достаточно разных и корректных реализаций могут становиться evidence против `Claim`, если их нельзя лучше объяснить ошибками реализации, недостатком ресурсов или другими внешними ограничениями.
-
-**Evaluation, evidence assessment и credit assignment**
-Evaluation даёт проверяемый result. `EvidenceAssessmentProgram` создаёт evidence для непосредственно проверяемой реализации и связанных `Claim`; `CreditAssignmentProgram` назначает learning credit соответствующим [[Learning system#^def-LearningTarget|LearningTarget]] в контексте опыта. Конкретное состояние для обновления выбирает `UpdatePlanner`. Verification и program tests используются до Evaluation, чтобы отделять ошибки реализации от слабости подхода.
-
-####  Belief update across hypothesis levels
-
-Evaluation обновляет тот уровень, который реально был проверен постепенно генерализуясь от конкртеных реализация к самой идеи (что бы зафиксировать насколько она валидна)
-
-### Parametric update vs structural revision
-
+[[Core data structures#^def-Prompt|`Prompt`]] has its own revisions and [[Core data structures#^note-claim-prompt-evaluation|evaluation contract]]. If a Prompt change also changes the code, semantics, or contract of the `Program` that uses it, it goes through that Program's [[#General Program Lifecycle|lifecycle]] as well.
 
 ---
 
+### Checking the Approach and Its Implementation
 
+Distinguish checking an approach from checking one specific implementation. Failure of one implementation does not by itself refute the underlying `Claim`. However, repeated failures across sufficiently different and correct implementations may become evidence against the `Claim` if they are not better explained by implementation defects, insufficient resources, or other external limits.
 
-### Parametric update
+**Evaluation, evidence assessment, and credit assignment**
 
-Parametric update — это изменение параметров внутри уже существующей структуры программы. Автоматический parameter learning применяется к [[Program Layer#Обучаемые и фиксированные компоненты|обучаемым компонентам]] по [[Learning system#Выбор обучаемых компонентов и режима обучения|выбранному режиму обучения]]; он не превращает фиксированные части в обучаемые.
+Evaluation produces a checkable result. `EvidenceAssessmentProgram` creates evidence for the implementation directly checked and related `Claim`s; `CreditAssignmentProgram` assigns learning credit to the relevant [[Learning system#^def-LearningTarget|`LearningTarget`s]] in the context of experience. `UpdatePlanner` selects the specific state to update. Use Verification and program tests before Evaluation to distinguish implementation defects from weaknesses in the approach.
 
-Он применяется, когда опыт можно учесть в существующей структуре, уточнив веса, priors, values, probabilities и другие параметры. Для такого обновления не требуется неожиданное расхождение: обычные ожидаемые исходы также дают обучающие данные.
+#### Belief Updates Across Hypothesis Levels
 
-В стандартном пути состояние estimator-а или параметры программы обновляются через [[Learning system#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|parameter learning pipeline]]. Для узких задач допустим [[Learning system#Специализированное обучение|отдельный путь специализированного обучения]]. Связанные epistemic beliefs обновляются через [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|evidence lifecycle]]. Изменение значений, закреплённых в коде или версионируемом артефакте самой программы, проходит через `ProgramBranch`.
+Evaluation updates the level it actually checked, then generalizes gradually from specific implementations toward the underlying idea to record how valid the idea is.
 
-Критерий:
+---
+
+### Parametric Update vs. Structural Revision
+
+---
+
+### Parametric Update
+
+A parametric update changes parameters within the existing program structure. Automatic parameter learning applies to [[Program Layer#Learnable and Fixed Components|learnable components]] under the [[Learning system#Selecting Learnable Components and Learning Mode|selected learning mode]]; it does not make fixed components learnable.
+
+Use it when experience can be incorporated into the existing structure by refining weights, priors, values, probabilities, or other parameters. A surprising discrepancy is not required; ordinary expected outcomes also provide training data.
+
+In the standard path, update estimator state or program parameters through the [[Learning system#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|parameter-learning pipeline]]. A separate [[Learning system#Specialized Learning|specialized learning path]] is allowed for narrow tasks. Related epistemic beliefs are updated through the [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|evidence lifecycle]]. Changing values embedded in the program's code or versioned artifact goes through a `ProgramBranch`.
+
+Criterion:
 
 ```text
-если можно улучшить программу, не меняя её структуру и contracts
+if the program can be improved without changing its structure or contracts
 → parametric update
 ```
 
 ---
+### Structural Revision
 
-### Structural revision
+**Structural revision** is a non-parametric change to a model, program, or its semantic boundaries.
 
-`Structural revision` — непараметрическое изменение модели, программы  
-или её смысловых границ.
+Structural revision includes:
 
-К structural revision относятся:
+```text
+adding, removing, or changing a control-flow branch or operator;
 
-```
-добавление, удаление или изменение ветви control flow или operator-а;
+changing read_contract or output_contract;
 
-изменение read_contract или output_contract;
+adding, removing, replacing, or moving a learnable component;
 
-добавление, удаление, замена или перенос обучаемого компонента;
-
-и т.д.
+and so on.
 ```
 
-Несоответсвие контракта является обычным частным случаем structural revision.
+A contract mismatch is a common special case of structural revision.
 
-Критерий:
+Criterion:
 
+```text
+if the problem cannot be resolved by changing existing parameter values or beliefs
+→ structural revision is required.
 ```
-если проблему нельзя устранить изменением значений
-уже существующих параметров или beliefs
-→ требуется structural revision.
-```
 
-Structural revision проходит через `ProgramBranch`, semantic change  
-или новую `Program` и проверяется через Evaluation.
+Structural revision proceeds through a `ProgramBranch`, semantic change, or new `Program` and is checked through Evaluation.
 
-При таком пересмотре сознание выбирает, какие части программы должны обучаться и как. Новый предиктор и, если предусмотрено обучение, его updater проверяются и активируются вместе с изменением программы; затем parameter updates идут по выбранной схеме. Приостановка или возобновление уже предусмотренного обучения сама по себе не меняет структуру программы.
-
+During the revision, consciousness selects which program parts should be learnable and how. A new predictor and, if training is intended, its updater are verified and activated together with the program change; parameter updates then follow the selected scheme. Pausing or resuming already-defined training does not itself change program structure.
 
 ---
 
-### Dual development of Declarative and Executable Programs
+### Dual Development of Declarative and Executable Programs
 
-Declarative и Executable программы часто развиваются вместе.
+Declarative and Executable programs often develop together.
 
 ```text
 Declarative Model improves process understanding
@@ -641,44 +622,38 @@ Evaluation finds mismatch
 → update model, exec, or both
 ```
 
-
-
-
-
+---
 ## Program Versioning in Git
 
-### Core principle
+### Core Principle
 
-Код программ EverTree версионируется через Git.
+EverTree program code is versioned through Git.
 
-`main` branch репозитория является **активным состоянием программ**.  
-Активная версия программы — это код этой программы в `main`.
+The repository's `main` branch is the **active state of programs**. A program's active version is its code in `main`.
 
 ```text
-main branch = текущая активная версия всех программ
-codex/program/<process-graph-path>/<role>/<candidate-name> = кандидат изменения
+main branch = current active version of all programs
+codex/program/<process-graph-path>/<role>/<candidate-name> = candidate change
 ```
 
-`Program` задаёт стабильную идентичность программы, а Git хранит её версии. Epistemic belief относится к конкретной revision, а не безусловно ко всей истории стабильной identity `Program`.
-
+`Program` defines a program's stable identity; Git stores its versions. Epistemic belief applies to a specific revision, not unconditionally to the full history of a stable `Program` identity.
 
 ---
+### `ProgramBranch`
 
-### ProgramBranch
+**`ProgramBranch`** is a metadata record for a Git branch created to change a program.
 
-**ProgramBranch** — metadata-запись о Git branch, созданной для изменения программы.
+Use a branch when improving, repairing, or extending an existing `Program` without changing its fundamental mechanism.
 
-Branch используется, когда агент улучшает, чинит или расширяет существующую `Program`, не меняя её принципиальный механизм.
-
-Branch технически относится ко всему репозиторию, но metadata `ProgramBranch.program` показывает, ради какой программы он был создан.
+Technically, a branch belongs to the whole repository, but `ProgramBranch.program` metadata indicates which program it was created for.
 
 ```python
 ProgramBranch: Node {
   program: <Program>
-  git_ref: <string> # e.g. codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget
+  git_ref: <string>  # e.g. codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget
 
-    change_claim: <Claim>
-    "Проверяемое утверждение о том, почему предлагаемый подход должен улучшить программу."
+  change_claim: <Claim>
+    "Checkable claim explaining why the proposed approach should improve the program."
 
   source_memory?: <MemoryFact>
 
@@ -689,7 +664,7 @@ ProgramBranch: Node {
 }
 ```
 
-Примеры branch:
+Examples of branches:
 
 ```text
 codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget
@@ -697,43 +672,40 @@ fix/enterprise_edge_cases
 refactor/negotiation_state_tracking
 ```
 
+---
+### Active Code
+
+The active version of a program is always read from `main`. Once a branch passes verification successfully, merge it into `main`; it then becomes active automatically.
 
 ---
+### Repository Organization
 
-### Active code
+Program code is stored in one Git repository. Each commit contains one version of every Program; alternative changes to a Program are kept in Git branches at the same path, without variant directories. The managed repository's active/default branch is `main`; alternatives use `codex/program/<process-graph-path>/<role>/<candidate-name>`. A process path begins with `Self/Process`; the role is `exec` or `model`; a descriptive candidate name contains one to three hyphenated words, with a numeric suffix for repeated names. Invalid path-component characters are percent-encoded. Stable internal IDs are kept separately from branch names. A precise version is addressed by commit. The remote active branch `evertree/programs` publishes the `main` tree and retains the alternative history; a commit being in history does not mean it was activated.
 
-Активная версия программы всегда читается из `main`. При успешной проверке branch мержится в `main` и автоматически становится активной.
+- **Placement by taxonomy.** `src/evertree/processes/` matches the agent's own Self/Process branch (`SelfProcess`), which belongs to Self through `PART_WHOLE` and is a subtype of the general `Process`. Nested folders for own processes follow [[Semantics Plane#Taxonomy Axis: Type Taxonomy (Type → SuperType → …)|`SUBTYPE_OF`]] with one parent. Implemented process roles live alongside one another as `_exec.py` and `_model.py`; a multi-module role becomes a `_exec/` or `_model/` package. The roles are separate Programs, and their alternatives live in branches. Nesting depth follows the existing taxonomy; composite steps are linked through `PART_WHOLE`.
+- **Direct access.** The currently selected program is available through [[Process Ontology and Semantic Interface#PROGRAM_FOR_PROCESS|`ProcessConcept.active_model` / `active_exec`]]; the `PROGRAM_FOR_PROCESS` relation can find all programs for a process, including candidates and archived programs. Code is addressed by [[Program Layer#Program|`Program.git_path`]], the path to its Python file or module. Repeated access does not require walking directories or reading files to find the program.
+- **Consistent moves.** A parent or name change that affects placement is performed as one operation: update the graph, folders, and `git_path`; check consistency against the exact commit before Evaluation and activation. CI separately compares the initial graph for the current code against its source files. Process and Program identities and their learning history are retained; previous paths and code remain available in their Git revisions.
+- **Other search paths.** [[Process Ontology and Semantic Interface#Semantic Organization: Concept → ProcessConcept → Program|Semantic links]] can find a process by subject, participants, and other useful properties without adding a second taxonomy parent or copying code into multiple folders.
+- **Shared code.** `common/` contains packages and modules not tied to a specific process or domain concept and reused by different programs. Ordinary Python package organization by responsibility is allowed within it. Models for different processes may [[Program Layer#Generalization and Model Compression|reuse a shared algorithm]] with different features, parameters, and weights; process folders retain their bindings and specific code. A change in `common/` requires considering all programs that depend on changed files as affected.
 
----
+#### Modules and Imports
 
-### Организация репозитория
+Related functionality is organized in a Python module; start with one function and add functions and classes as needed. Each program module has a corresponding `ProgramModule` concept for organization, search, and analysis.
 
-Код программ хранится в одном Git-репозитории. В каждом commit находится одна версия каждой Program; альтернативные изменения одной Program сохраняются в Git-ветках по тому же пути, без каталогов вариантов. Активная/default ветка managed-репозитория — `main`; альтернативы — `codex/program/<process-graph-path>/<role>/<candidate-name>`. Путь процесса начинается с `Self/Process`, роль — `exec` или `model`, осмысленное название кандидата содержит 1–3 слова с дефисами; повторные названия получают числовой суффикс. Недопустимые символы компонентов пути кодируются percent-encoding. Стабильные внутренние ID сохраняются отдельно от имени ветки. Точная версия адресуется commit. Удалённая активная ветка `evertree/programs` публикует дерево `main`, сохраняя также историю альтернатив; наличие commit в истории не означает активации.
+- The standard library, external packages, and helper modules for one program are imported normally.
+- Shared utilities are imported from `common/`.
+- Other independent EverTree `Program`s are called through their declared interfaces and [[Cognition and Attention#Task Execution (`TaskExecution`)|runtime]], without directly importing their internal implementation.
 
-- **Размещение по таксономии.** Каталог `src/evertree/processes/` соответствует собственной ветви Self/Process (`SelfProcess`), принадлежащей Self через `PART_WHOLE` и являющейся подтипом общего `Process`. Вложенные папки собственных процессов следуют [[Semantics Plane#Ось Taxonomy: Таксономия типов (Type → SuperType → …)|`SUBTYPE_OF`]] с одним родителем. Реализованные роли процесса располагаются рядом как `_exec.py` и `_model.py`; многомодульная роль становится пакетом `_exec/` или `_model/`. Роли являются разными Programs, их альтернативные версии находятся в ветках. Глубина вложенности определяется существующей структурой таксономии; составные шаги связываются через `PART_WHOLE`.
-- **Прямой доступ.** Текущая выбранная программа доступна через [[Process Ontology and Semantic Interface#PROGRAM_FOR_PROCESS|`ProcessConcept.active_model` / `active_exec`]]; связь `PROGRAM_FOR_PROCESS` позволяет найти все программы процесса, включая кандидатов и архивные. Код адресуется по [[Program Layer#Program|`Program.git_path`]] — пути к её Python-файлу или модулю. Повторный доступ не требует обхода каталогов или чтения файлов для поиска программы.
-- **Согласованное перемещение.** Изменение родителя или имени, затрагивающее размещение, выполняется одной операцией: обновляются граф, папки и `git_path`; согласованность проверяется относительно точного commit до оценки и перед активацией. CI отдельно сопоставляет начальный граф текущего кода с исходниками. Идентичности процессов и программ и их история обучения сохраняются; прежние пути и код остаются доступны в соответствующих Git revisions.
-- **Другие пути поиска.** [[Process Ontology and Semantic Interface#Semantic organization: Concept → ProcessConcept → Program|Семантические связи]] позволяют находить процесс по предмету, участникам и другим полезным признакам без второго таксономического родителя и копирования кода в разные папки.
-- **Общий код.** `common/` содержит пакеты и модули, не привязанные к конкретному процессу или предметному концепту и переиспользуемые разными программами. Внутри него разрешена обычная организация Python-пакетов по ответственности. Модели разных процессов могут [[Program Layer#Обобщение и сжатие моделей|переиспользовать общий алгоритм]] с разными признаками, параметрами и весами; в папках процессов остаются их привязки и специфический код. Изменение `common/` требует считать затронутыми все программы, зависящие от изменённых файлов.
-
-#### Модули и импорты
-
-Связанный функционал оформляется Python-модулем; начинают с одной функции, добавляя функции и классы по необходимости. Каждому программному модулю соответствует `ProgramModule` — концепт для его организации, поиска и анализа.
-
-- Стандартная библиотека, внешние пакеты и вспомогательные модули собственной программы импортируются обычным способом.
-- Общие утилиты разных программ импортируются из `common/`.
-- Другие самостоятельные EverTree `Program` вызываются через их объявленные интерфейсы и [[Cognition and Attention#Выполнение задачи (`TaskExecution`)|runtime]], без прямого импорта их внутренней реализации.
-
-Эти границы сохраняют управляемость межпрограммных вызовов и позволяют разбивать одну реализацию на несколько файлов.
+These boundaries keep inter-program calls manageable and allow one implementation to be split across several files.
 
 ---
+### Branch Management
 
-### Branch management
+Rule:
 
-Правило:
-
-```
-active/paused branches — остаются Git branches до принятия решения(EvaluationChoice)
-merged branches — удаляются после merge
-история есть в main.rejected branches — архивируются, branch ref удаляется.
+```text
+active / paused branches — remain Git branches until a decision (EvaluationChoice);
+merged branches — are deleted after merge;
+the history remains in main;
+rejected branches — are archived and their branch ref is deleted.
 ```

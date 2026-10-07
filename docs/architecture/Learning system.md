@@ -2,16 +2,16 @@
 status: draft
 target_version: next
 ---
-## Intro
+
+## Introduction
 
 #concept #topic_intro
 
 (def_id:: et.LearningSystem)
 
-> [!definition]  
-> **Learning System** — система, которая оркестрирует обработку оценённого опыта, владеет назначением learning credit и маршрутизацией parameter updates и вызывает Belief System, когда требуется assessment epistemic evidence.
+> [!definition]
+> **Learning System** — a system that orchestrates the processing of evaluated experience, owns learning credit assignment and parameter-update routing, and calls the Belief System when epistemic evidence needs to be assessed.
 > ^def-LearningSystem
-
 
 ---
 
@@ -19,200 +19,202 @@ target_version: next
 
 #topic_core
 
-Программы EverTree могут предсказывать состояния, переходы и сигналы по отдельным каналам. Новые [[Memory#^def-Observation|наблюдения]] поступают через [[Process Plane/Program Layer#^process-observation-input|программу выбранного процесса]]. [[Process Plane/Action Selection and Planning#Управление процессом и развитие навыка|`TaskManagingProgram`]], включая её специализаци, например `SkillDevelopmentProgram`, организует нужные Evaluation, выбирает опыт, цель и момент обучения в рамках текущей `Task`; эту работу можно делегировать подпрограмме. Обучение может запускаться по наблюдению, batch, эпизоду или оценённому результату Task либо процесса, отдельно от вызова политики для выбора действия.
+EverTree programs can predict states, transitions, and signals through separate channels. New [[Memory#^def-Observation|observations]] arrive through the [[Process Plane/Program Layer#^process-observation-input|program for the selected process]]. [[Process Plane/Action Selection and Planning#Process Management and Skill Development|`TaskManagingProgram`]], including specializations such as `SkillDevelopmentProgram`, organizes the required Evaluations and selects experience, an objective, and a time for learning within the current `Task`; this work may be delegated to a subprogram. Learning may be triggered by an observation, batch, episode, or evaluated outcome of a Task or process, separately from the policy call that selects an action.
 
-[[#^def-PredictionEvaluator|`PredictionEvaluator`]] находит прогнозы для выбранных [[Process Plane/Program Layer#^def-PredictionTarget|PredictionTarget]] и оценивает их по наблюдениям. Для известного target без назначенного прогноза фиксируется [[#LearningCredit and UnresolvedCredit|UnresolvedCredit]]. `LearningCoordinator` организует обработку выбранного для обучения опыта: оценку epistemic evidence, назначение credit выбранным [[#^def-LearningTarget|LearningTarget]] и подготовку обновлений. Наблюдение может быть основанием для beliefs без проверяемого прогноза; выполнение Evaluation само по себе не означает training.
+[[#^def-PredictionEvaluator|`PredictionEvaluator`]] finds predictions for selected [[Process Plane/Program Layer#^def-PredictionTarget|PredictionTargets]] and evaluates them against observations. For a known target with no assigned prediction, record [[#LearningCredit and UnresolvedCredit|`UnresolvedCredit`]]. `LearningCoordinator` organizes the processing of experience selected for learning: assessing epistemic evidence, assigning credit to selected [[#^def-LearningTarget|`LearningTarget`s]], and preparing updates. An observation may support beliefs without a verifiable prediction; performing an Evaluation does not itself mean training.
 
-Наблюдения можно накапливать и проверять за окно или эпизод. Вычислять [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] для каждого отдельного исхода не требуется.
+Observations may be accumulated and evaluated over a window or episode. It is not necessary to calculate [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] for every individual outcome.
 
-Основной поток обучения по опыту:
+Main experience-based learning flow:
 
 ```text
-В контексте Task:
+Within a Task context:
 ProgramRun → prediction / epistemic Profile / OutcomeProfile / expected signals
-Observations + контекст процесса + метрики → PredictionEvaluator
-├─ найденные соответствия → evaluate_prediction → EvaluationResult для каждого прогноза
-└─ наблюдения без прогноза → handle_unmatched_observations
-   →  PredictionTarget's → CreditAssignmentProgram
-     → UnresolvedCredit(target, missing_prediction) → сохранить → Attention
-   → другие несопоставленные случаи → учесть прежние решения / разобрать
+Observations + process context + metrics → PredictionEvaluator
+├─ matches found → evaluate_prediction → EvaluationResult for each prediction
+└─ observations without predictions → handle_unmatched_observations
+   → PredictionTargets → CreditAssignmentProgram
+     → UnresolvedCredit(target, missing_prediction) → save → Attention
+   → other unmatched cases → account for prior decisions / investigate
 
-Выбранные observations / Evaluation прогнозов, результатов Task или процесса → LearningCoordinator
+Selected observations / Evaluation of predictions, Task outcomes, or process outcomes
+→ LearningCoordinator
 ├─ Belief System
 │  → EvidenceAssessmentProgram
 │  → EvidenceAssignment[]
 │  → Evidence lifecycle / belief recomputation
 │
-└─ LearningSignal, только для EvaluatedResult
-   → CreditAssignmentProgram: назначить credit LearningTarget в контексте опыта
+└─ LearningSignal, only for EvaluatedResult
+   → CreditAssignmentProgram: assign credit to LearningTarget in experience context
    → CreditAssignmentResult[]
       ├─ LearningCredit(target, signal)
-      │  → UpdatePlanner: выбрать конкретный estimator или параметры Program
+      │  → UpdatePlanner: select a specific estimator or Program parameters
       │  → PreparedUpdate
       │  → UpdateTransactionManager.apply
       │  → UpdateDispatcher
-      │  → estimator / optimizer по контракту состояния
+      │  → estimator / optimizer under the state contract
       │  → atomic commit: updated parametric state + UpdateReceipt
       │
       └─ UnresolvedCredit(target, ambiguous_attribution)
-         → сохранить для анализа
-         → не обновлять parameters
+         → save for analysis
+         → do not update parameters
 ```
 
-Learning System владеет `LearningCoordinator`, `CreditAssignmentProgram`, `UpdatePlanner`, [[#^def-UpdateTransactionManager|`UpdateTransactionManager`]] и `UpdateDispatcher`. Belief System владеет [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]], [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]] и его lifecycle. Определения сигналов находятся в `Evaluative-Control System`; контракт Belief System — в [[Uncertainty and Belief Tracking in the World Model]].
+Learning System owns `LearningCoordinator`, `CreditAssignmentProgram`, `UpdatePlanner`, [[#^def-UpdateTransactionManager|`UpdateTransactionManager`]], and `UpdateDispatcher`. The Belief System owns [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]], [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]], and its lifecycle. Signal definitions are in `Evaluative-Control System`; the Belief System contract is in [[Uncertainty and Belief Tracking in the World Model]].
 
-В схемах потока показаны payload из `ProgramResult.result` по [[Process Plane/Program Layer#^def-ProgramResult|общему контракту Program]]. Поле [[Process Plane/Program Layer#^program-feedback|`feedback`]] само по себе не создаёт `LearningSignal`.
+Flow diagrams show the payload from `ProgramResult.result` under the [[Process Plane/Program Layer#^def-ProgramResult|shared Program contract]]. The [[Process Plane/Program Layer#^program-feedback|`feedback`]] field does not create a `LearningSignal` by itself.
 
-### Типы обновлений (во время обучения)
+### Types of Updates (During Learning)
 
-[[#^def-LearningSystem|Learning System]] различает:
+[[#^def-LearningSystem|Learning System]] distinguishes:
 
 ```text
 belief update
-→ Strength, Support и Profile;
+→ Strength, Support, and Profile;
 
 parameter update
-→ параметры существующего predictor-а или policy;
+→ parameters of an existing predictor or policy;
 
 structural revision
-→ изменение semantics, contracts или структуры Program.
+→ changes to semantics, contracts, or Program structure.
 ```
 
-Внутри parameter update механизм задаётся контрактом обучаемого компонента:
+Within a parameter update, the mechanism is defined by the learnable component's contract:
 
 ```text
 frequency / categorical process value
-→ FrequencyEstimator с counts / Beta / Dirichlet state;
+→ FrequencyEstimator with counts / Beta / Dirichlet state;
 
 numeric / distribution model value
-→ model-specific estimator с sufficient statistics;
+→ model-specific estimator with sufficient statistics;
 
 policy parameters
 → policy-specific optimizer.
 ```
 
-Belief update и предусмотренный parameter update, включая параметры политики, могут выполняться автоматически. Для конкурирующих альтернатив belief update вычисляет [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]]. Structural revision передаётся в общий lifecycle программ и гипотез.
+Belief updates and planned parameter updates, including policy parameters, may run automatically. For competing alternatives, a belief update computes [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]]. Structural revision is passed to the shared lifecycle for programs and hypotheses.
 
-У политики могут обучаться параметры стратегии, оценщик полезности или другие явно объявленные части. [[#LearningCredit and UnresolvedCredit|LearningCredit]] относится к выбранному [[#^def-LearningTarget|LearningTarget]]; `UpdatePlanner` по контексту и цели обучения выбирает параметры для обновления, а способ обновления задаёт контракт optimizer-а. Сам вызов политики для выбора действия не запускает обучение неявно; отдельный метод `learn()` у каждой политики не требуется.
+A policy may have learnable strategy parameters, a utility evaluator, or other explicitly declared components. [[#LearningCredit and UnresolvedCredit|`LearningCredit`]] applies to the selected [[#^def-LearningTarget|`LearningTarget`]]; `UpdatePlanner` selects parameters to update based on context and learning objective, while the optimizer contract defines the update method. A policy call for action selection does not implicitly start learning; each policy does not need its own `learn()` method.
 
-### Выбор обучаемых компонентов и режима обучения
+### Selecting Learnable Components and Learning Mode
 
-При создании или пересмотре программы [[Cognition and Attention#^def-Consciousness|сознание]] в контексте `Task` выбирает, какие её части будут [[Process Plane/Program Layer#Обучаемые и фиксированные компоненты|обучаемыми, а какие — фиксированными]]. Эти решения можно делегировать программе в установленных сознанием пределах.
+When creating or revising a program, [[Cognition and Attention#^def-Consciousness|consciousness]] selects, within a `Task` context, which parts are [[Process Plane/Program Layer#Learnable and Fixed Components|learnable and which remain fixed]]. These decisions may be delegated to a program within bounds set by consciousness.
 
-Основное правило: выбирать простейшую модель, достаточную для нужных решений, следуя [[Process Plane/Program Layer#Обобщение и сжатие моделей|стратегии обобщения и сжатия]]. Простота учитывает число параметров, стоимость входных данных, прогнозирования, обучения, проверки и хранения. Существующая общая модель, фиксированное правило или оценка могут быть дешевле нового обучаемого компонента. Пригодность обязательна: модель должна учитывать допустимые исходы и существенные для задачи зависимости. Перебирать заведомо неподходящие простые модели не требуется.
+The main rule is to choose the simplest model sufficient for the required decisions, following the [[Process Plane/Program Layer#Generalization and Model Compression|generalization and compression strategy]]. Simplicity accounts for the number of parameters and the cost of input data, prediction, training, evaluation, and storage. An existing shared model, fixed rule, or evaluation may cost less than a new learnable component. Suitability is mandatory: a model must account for valid outcomes and dependencies material to the task. There is no need to consider simple models known to be unsuitable.
 
-#### Правила выбора для сознания
+#### Selection Questions for Consciousness
 
-Сознание решает следующие вопросы по мере необходимости, начиная с минимума для текущей задачи. Не требуется заранее определять все детали: можно использовать подходящие готовые механизмы и настройки по умолчанию, уточняя решения по опыту в пределах бюджета задачи.
+Consciousness answers the following questions as needed, starting with the minimum required for the current task. It does not have to decide every detail in advance: suitable ready-made mechanisms and defaults may be used and refined from experience within the task budget.
 
-- **Назначение:** какой [[Process Plane/Program Layer#^def-PredictionTarget|PredictionTarget]] и в какой точке программы предсказывается, для какого решения; наблюдаемый исход, условия применения, доступные признаки и история, горизонт и единицы измерения.
-- **Представление и обучение:** что означает выход, какой estimator или optimizer его обновляет, предпосылки алгоритма, начальное состояние и согласованные с целью метрики. Проверяется возможность использовать существующую модель, общие знания или подходящий [[#^def-TrainingDataset|TrainingDataset]].
-- **Опыт:** какие наблюдения допустимы, как учитываются их зависимости и отбор; какие исходы действительно наблюдаемы и как обрабатываются исправления и [[#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|повторный учёт]].
-- **Режим:** обучение по наблюдению, batch или эпизоду, условия запуска и размер batch; накопление статистики либо явно выбранное правило адаптации к изменению процесса.
-- **Проверка:** базовая модель для сравнения, нужный тип переноса на новые случаи, критерии достаточности и условия пересмотра по [[Process Plane/Program Evaluation and Testing#^prediction-quality-protocol|протоколу проверки качества]].
-- **Ресурсы и память:** пределы затрат на получение данных, прогнозирование, обновления и проверки; достаточные статистики, выбранные примеры или история в артефакте. Сохранённых данных и provenance должно хватать для алгоритма, проверок и поддерживаемого пересчёта состояния.
+- **Purpose:** which [[Process Plane/Program Layer#^def-PredictionTarget|PredictionTarget]] is predicted, at which point in the program, and for which decision; the observed outcome, conditions of use, available features and history, horizon, and units of measurement.
+- **Representation and training:** what the output means, which estimator or optimizer updates it, the algorithm's assumptions, initial state, and metrics aligned with the objective. Consider reusing an existing model, general knowledge, or a suitable [[#^def-TrainingDataset|`TrainingDataset`]].
+- **Experience:** which observations are allowed and how their dependencies and selection are handled; which outcomes are actually observable, and how corrections and [[#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|duplicate accounting]] are handled.
+- **Mode:** learning from an observation, batch, or episode; trigger conditions and batch size; accumulation of statistics or an explicitly selected rule for adapting to process changes.
+- **Evaluation:** a baseline model, the required type of transfer to new cases, sufficiency criteria, and revision conditions under the [[Program Evaluation and Testing#^prediction-quality-protocol|quality evaluation protocol]].
+- **Resources and memory:** cost limits for obtaining data, prediction, updates, and evaluation; sufficient statistics, selected examples, or history in an artifact. Saved data and provenance must be sufficient for the algorithm, checks, and supported state recomputation.
 
-Для конкретного прогноза должны быть определены смысл выхода и условия; для обновления — совместимые алгоритм, данные и состояние. Режим, размер batch, бюджет и проверки могут выбираться и меняться во время работы, в том числе автоматически в делегированных пределах. Изменение кода, семантики или контракта проходит через [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]]; изменение настроек в пределах возможностей действующей программы этого не требует.
+For a specific prediction, define the output meaning and conditions; for an update, define a compatible algorithm, data, and state. Mode, batch size, budget, and checks may be selected and changed during operation, including automatically within delegated limits. Code, semantic, or contract changes go through the [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]]; changing settings within the active program's capabilities does not.
 
-[[Process Plane/Program Layer#^granularity-adaptation|Обучаемый выбор подготовки и гранулярности]] подчиняется тем же правилам. Границы исходных блоков не задают автоматически точки прогнозирования и обновления; их связь и ограничения доступа к будущему описаны в [[Process Plane/Program Layer#^granularity-learning-sequence|подготовке последовательного опыта]].
+[[Process Plane/Program Layer#^granularity-adaptation|Learnable selection of preparation and granularity]] follows the same rules. Boundaries of source chunks do not automatically define prediction and update points; their relationships and limits on access to future data are described in [[Process Plane/Program Layer#^granularity-learning-sequence|preparing sequential experience]].
 
-#### Представление прогноза и цель обучения
+#### Forecast Representation and Learning Objective
 
-Когда польза для решений оправдывает затраты, предпочтительно обучать распределение возможных исходов при заданных условиях и получать нужный конкретный прогноз из него. Это особенно полезно для оценки риска и получения нескольких характеристик одного процесса. Подходящее уже имеющееся распределение переиспользуется. Если для задачи достаточно одной характеристики, а моделирование распределения не даёт оправданного выигрыша, допустим её прямой прогноз. [[Process Plane/Program Evaluation and Testing#^prediction-quality-metrics|Функция потерь]] выбирается по смыслу этого выхода:
+When its decision value justifies the cost, prefer learning a distribution of possible outcomes under specified conditions and deriving the needed forecast from it. This is especially useful for assessing risk and obtaining several characteristics of one process. Reuse an existing suitable distribution. If one characteristic is enough for the task and modeling the full distribution offers no justified gain, directly forecasting that characteristic is acceptable. Choose the [[Process Plane/Program Evaluation and Testing#^prediction-quality-metrics|loss function]] according to the meaning of the output:
 
-| Нужный прогноз | Простой начальный механизм | Критерий прогнозного качества |
+| Required forecast | Simple starting mechanism | Predictive quality criterion |
 |---|---|---|
-| Вероятность события или категории | Сглаженные counts, Beta / Dirichlet estimator | Brier или log loss |
-| Условное среднее | Накопитель среднего, таблица или регрессия | Квадратичная потеря |
-| Медиана или заданный квантиль | Соответствующий estimator или регрессия | Абсолютная или квантильная потеря |
-| Числовое распределение | Подходящее простое семейство распределений | Log loss или CRPS при их применимости |
-| Связанные исходы или траектория | Модель существенных зависимостей | Метрика совместного прогноза и нужных горизонтов |
+| Event or category probability | Smoothed counts, Beta / Dirichlet estimator | Brier or log loss |
+| Conditional mean | Running mean, table, or regression | Squared error |
+| Median or specified quantile | Suitable estimator or regression | Absolute or quantile loss |
+| Numeric distribution | Suitable simple distribution family | Log loss or CRPS, when applicable |
+| Related outcomes or trajectory | Model of material dependencies | Joint forecast metric and required horizons |
 
-Если пригодное распределение уже имеется, среднее, медиану, квантили и вероятности событий обычно получают из него; отдельное обучение каждой характеристики требует обоснования. Например, для исходов `10` с вероятностью `0.9` и `30` с вероятностью `0.1` среднее равно `12`, медиана — `10`: это разные ответы одной модели. Прикладная точность используемого ответа проверяется отдельно от качества распределения.
+When a suitable distribution already exists, derive the mean, median, quantiles, and event probabilities from it; training each characteristic separately needs justification. For example, if outcomes are `10` with probability `0.9` and `30` with probability `0.1`, the mean is `12` and the median is `10`: these are different answers from one model. Check the practical accuracy of the forecast used by the application separately from the quality of the distribution.
 
-Статистика без признаков, оценки и регрессия используют общий [[Process Plane/Program Layer#Estimator|интерфейс estimator-а]]. Обновление его достаточных статистик — parameter learning; отдельный алгоритм обучения для каждой точки программы не требуется. Сводка исторических значений сама по себе не задаёт прогноз: нужны выбранная характеристика, горизонт и условия применимости.
+Featureless statistics, estimates, and regression use the shared [[Process Plane/Program Layer#Estimator|estimator interface]]. Updating its sufficient statistics is parameter learning; a separate learning algorithm for each program point is unnecessary. A summary of historical values is not itself a forecast: the selected statistic, horizon, and applicability conditions are also needed.
 
-Для вероятностного прогноза используется подходящая strictly proper loss: её смысл и пределы гарантии определены в [[Process Plane/Program Evaluation and Testing#^prediction-quality-metrics|метриках качества]]. Обновление не обязано быть градиентным: накопление достаточных статистик и байесовское обновление также допустимы. Если optimizer использует другую внутреннюю цель, контракт объясняет её связь с обучаемым выходом; результат проверяется по объявленным метрикам. Цель policy optimizer-а задаётся последствиями решений в контексте задачи, а не автоматически loss прогнозной модели.
+Probabilistic forecasts use an appropriate strictly proper loss, whose meaning and limits are defined in [[Process Plane/Program Evaluation and Testing#^prediction-quality-metrics|quality metrics]]. Updates do not have to use gradients: accumulating sufficient statistics and Bayesian updates are also valid. If an optimizer uses a different internal objective, its contract explains how that objective relates to the learnable output; results are checked against the declared metrics. The objective of a policy optimizer is defined by decision consequences in the task context, not automatically by a predictive-model loss.
 
-#### Данные и автоматические обновления
+#### Data and Automatic Updates
 
-Обучающий опыт должен соответствовать смыслу прогноза: величине и её характеристике, горизонту, доступной при прогнозе информации и условиям, включая политику продолжения агента и поведение других участников. Изменение этих условий требует проверки совместимости опыта; совпадения PredictionTarget или anchor-а недостаточно.
+Training experience must match the meaning of the forecast: the quantity and characteristic, horizon, information available when the forecast was made, and conditions—including the agent's continuation policy and the behavior of other participants. If these conditions change, check that the experience is still compatible; matching the `PredictionTarget` or anchor is not enough.
 
-Отбор только ошибок, проигрышей или неожиданных случаев может исказить наблюдаемые частоты. Если отбор меняет целевое распределение, для оценки исходного процесса требуется поддерживаемая коррекция с выполненными предпосылками; если намеренно оценивается другое распределение, это явно указывается. Важность уже случившегося исхода сама по себе не даёт основания увеличивать его вес при оценке вероятностей. Ненаблюдавшийся исход не считается нулём или неудачей; последствия невыбранного действия не становятся наблюдением о нём.
+Selecting only errors, losses, or surprising cases may distort observed frequencies. If selection changes the target distribution, estimate the original process only with a supported correction whose assumptions hold; if a different distribution is intentional, state that explicitly. The importance of an outcome after it occurs is not by itself a reason to increase its weight when estimating probabilities. An unobserved outcome is not treated as zero or failure, and the consequences of an unchosen action do not become observations about that action.
 
-Предсказательная способность проверяется по прогнозу, сохранённому до исхода, либо в проверочном прогоне на материале из памяти. Во втором случае исход скрыт от модели и не использован при подгонке проверяемого прогноза. После оценки этот исход можно использовать для обучения; повторное обучение на нём не становится новой независимой проверкой качества. Редкость события сама по себе не означает ошибку источника. Ограничение влияния больших отклонений должно соответствовать целевой характеристике и предпосылкам estimator-а: оно может быть оправдано и для достоверных данных с тяжёлыми хвостами. Признание исхода недостоверным требует отдельного основания; модель не должна систематически игнорировать реальные редкие исходы.
+Check predictive ability using a forecast saved before the outcome, or in an evaluation run on material from memory. In the latter case, the model does not see the outcome, and that outcome was not used to fit the forecast under evaluation. After evaluation, the outcome may be used for training; training on it again is not a new independent quality check. An event's rarity alone does not mean its source is unreliable. Limiting the influence of large deviations must match the target statistic and estimator assumptions; it may be justified even for reliable data with heavy tails. Treating an outcome as unreliable requires separate grounds; a model must not systematically ignore real rare outcomes.
 
-Для устойчивого процесса можно накапливать достаточные статистики. Для меняющегося процесса выбираются окно, забывание или модель динамики с подходящими предпосылками. Программа процесса может сама отслеживать изменение условий и адаптировать модель. Пересчёт нормы необычности не заменяет изменение прогнозной модели. Алгоритм конкретного updater-а определяет величину обновления и допустимые правила забывания и взвешивания наблюдений.
+For a stable process, sufficient statistics may be accumulated. For a changing process, choose a window, forgetting mechanism, or dynamics model with suitable assumptions. A process program may itself track changing conditions and adapt the model. Recalibrating a measure of unexpectedness does not replace changing the predictive model. The specific updater algorithm determines update size and permissible rules for forgetting and weighting observations.
 
-В стандартном пути предусмотренные parameter updates выполняются автоматически через [[#LearningCoordinator|`LearningCoordinator`]], без нового сознательного выбора алгоритма на каждом примере. Он организует разрешённые обновления существующих компонентов; состав предикторов через этот путь не меняется. Переиспользуемый estimator может иметь отдельное обученное состояние для разных процессов. Общее состояние выбирается только для одной и той же зависимости в совместимых условиях. Отдельный путь для специализированного trainer-а описан [[#Специализированное обучение|ниже]].
+In the standard path, designated parameter updates are performed automatically through [[#LearningCoordinator|`LearningCoordinator`]], without consciously choosing an algorithm for every example. It organizes permitted updates to existing components; it does not change the set of predictors through this path. A reusable estimator may keep separate learned state for different processes. Shared state is used only for the same dependency under compatible conditions. A specialized trainer has a separate path, described [[#Specialized Learning|below]].
 
-#### Начальное состояние estimator-а
+#### Estimator Initial State
 
-Встроенные estimator-ы начинают с объявленного начального прогноза — prior-оценки — либо переиспользуют подходящее обученное состояние. Новый бакет использует объявленный prior или общий estimator. Prior не является наблюдением и не увеличивает число реальных примеров. Начальный прогноз можно оценить по первому фактическому исходу и обновить компонент через обычный learning pipeline; его пригодность для действия проверяется отдельно от возможности обучения.
+Built-in estimators start from a declared initial forecast—a prior estimate—or reuse suitable trained state. A new bucket uses a declared prior or shared estimator. A prior is not an observation and does not increase the number of real examples. The initial forecast may be evaluated against the first actual outcome and the component updated through the ordinary learning pipeline; its suitability for action is checked separately from whether it can be trained.
 
-Подготовка и повторное использование начальных моделей следуют [[Process Plane/Program Lifecycle and Evolution#Подготовка начальных моделей|общему Program Lifecycle]]. Отсутствие обучающих примеров не требует LLM-вызова при каждом прогнозе.
+Preparation and reuse of initial models follow the [[Process Plane/Program Lifecycle and Evolution#Preparing Initial Models|general Program Lifecycle]]. The lack of training examples does not require an LLM call for every forecast.
 
-Если осмысленный начальный прогноз для выбранного target недоступен, создаётся [[#LearningCredit and UnresolvedCredit|UnresolvedCredit(target, missing_prediction)]]; опыт сохраняется для выбора или пересмотра модели. Отсутствие прогноза не заменяется фиктивной метрикой и не создаёт `LearningSignal`. Обучение по накопленным данным следует [[#TrainingDataset|общему пути]], а изменение модели — [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]].
+If a meaningful initial forecast for the selected target is unavailable, create [[#LearningCredit and UnresolvedCredit|`UnresolvedCredit(target, missing_prediction)`]]; retain the experience for model selection or revision. Do not replace a missing forecast with a fictitious metric or create a `LearningSignal`. Training on accumulated data follows the [[#TrainingDataset|general path]], while model changes follow the [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]].
 
-#### Бюджет и пересмотр
+#### Budget and Review
 
-Ресурсы выделяются по ожидаемой пользе улучшения будущих решений, включая перенос на другие задачи, и цене ошибок. Частота использования — один фактор, а не определение важности: редкое дорогое решение может оправдывать тщательную модель, а частый хорошо изученный процесс — почти не требовать дальнейшего обучения. Для редкой малозначимой задачи может хватать простых правил и имеющихся знаний.
+Allocate resources according to the expected benefit of improving future decisions, including transfer to other tasks, and the cost of errors. Usage frequency is one factor, not the definition of importance: a rare, costly decision may justify a careful model, while a frequent, well-understood process may need little further training. Simple rules and available knowledge may be enough for a rare, low-impact task.
 
-Польза сопоставляется с полной стоимостью получения данных, обучения, проверки, будущего применения и хранения в пределах [[Cognition and Attention#Бюджеты выполнения|бюджетов Task]]. Оценка этой пользы сама ограничена бюджетом; точный расчёт перед каждым update не требуется. Важность влияет на бюджет и требования к качеству, но не повышает достоверность или статистический вес наблюдения.
+Compare expected benefit with the full cost of data acquisition, training, evaluation, future use, and storage within the [[Cognition and Attention#Execution Budgets|Task budgets]]. Estimating this benefit is itself budget-limited; an exact calculation before every update is unnecessary. Importance affects the budget and quality requirements, but does not increase the reliability or statistical weight of an observation.
 
-Усложнение принимается при подтверждённом на новых случаях практически значимом выигрыше, оправдывающем дополнительные затраты. Обучение можно приостановить, если достигнутого качества достаточно или дальнейшие затраты не оправданы; отсутствие выявленных ошибок при малом опыте не подтверждает качество модели.
+Accept added complexity when a practically meaningful gain, confirmed on new cases, justifies the added costs. Training may be paused when quality is sufficient or further costs are not justified; the absence of discovered errors with little experience does not establish model quality.
 
-При рефлексии, сознательном анализе, структурной ревизии, существенных ошибках, неожиданных сигналах или изменении значимости процесса сознание может пересмотреть состав компонентов, режим и объём обучения, включая его возобновление. Отсутствие прогноза тоже может стать основанием для такого разбора — численный `prediction_unexpectedness` для этого не требуется. Высокий сигнал сам по себе не оправдывает неограниченные затраты. Отдельная периодическая проверка каждого приостановленного компонента не обязательна; нужные проверки выбираются для конкретного процесса.
+During reflection, conscious analysis, structural revision, material errors, unexpected signals, or a change in process importance, consciousness may review the components, learning mode, and training volume, including whether to resume training. A missing forecast may also trigger this review; no numeric `prediction_unexpectedness` signal is required. A high signal alone does not justify unlimited spending. A separate periodic review of every paused component is not mandatory; choose checks for the specific process.
 
-### TrainingDataset
+### `TrainingDataset`
 
 (def_id:: entity.TrainingDataset)
 
 > [!definition]
-> **TrainingDataset** — [[Datasets#^def-Dataset|Dataset]] для обучения: его версия фиксирует допустимый опыт и правила подготовки данных для совместимого estimator-а или optimizer-а.
+> **`TrainingDataset`** — a [[Datasets#^def-Dataset|Dataset]] for training; its version fixes the admissible experience and data-preparation rules for a compatible estimator or optimizer.
 > ^def-TrainingDataset
 
-Набор позволяет повторно обучать модель или обучить нового кандидата на накопленном опыте. Для обновления по наблюдению, batch или эпизоду сохраняемый dataset необязателен. Подготовка данных соответствует контракту модели и [[Datasets|общим правилам datasets]].
+The dataset makes it possible to retrain a model or train a new candidate on accumulated experience. A saved dataset is not required for updates from an observation, batch, or episode. Data preparation follows the model contract and the [[Datasets|general dataset rules]].
 
-В стандартном пути при обучении нового кандидата оценивается его собственный запуск на выбранном опыте. Полученные trace и [[Process Plane/Program Evaluation and Testing#EvaluationResult|EvaluatedResult]] позволяют [[#LearningCoordinator|общему learning pipeline]] назначить credit соответствующим targets и обучать кандидата. Credit прежней реализации не переносится автоматически на новую по одному совпадению target; повторные проходы соблюдают [[#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|правила учёта опыта]].
+In the standard path, when a new candidate is trained, its own run is evaluated on selected experience. The resulting trace and [[Process Plane/Program Evaluation and Testing#EvaluationResult|`EvaluatedResult`]] let the [[#LearningCoordinator|shared learning pipeline]] assign credit to the relevant targets and train the candidate. Credit from the previous implementation is not automatically transferred to the new one merely because the target matches; repeated passes follow the [[#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|experience-accounting rules]].
 
-Чтобы повторить обучение, trace сохраняет связь с версиями данных, подготовки и кода, начальным и полученным состоянием, настройками updater-а и seed, если используется случайность. Перенос на новые случаи проверяется на [[Datasets#Границы обучения и проверки|независимых данных]].
+For reproducible training, the trace retains links to versions of the data, preparation, and code; initial and resulting state; updater settings; and random seed, if applicable. Transfer to new cases is checked on [[Datasets#Training and Evaluation Boundaries|independent data]].
 
-### LearningCoordinator
+### `LearningCoordinator`
 
-`LearningCoordinator` — техническая дочерняя программа в контексте `Task`. Вызывающая программа передаёт выбранный опыт и цель обучения, связанную с целью задачи; coordinator не выбирает задачу, не запускает тесты и не решает самостоятельно, какие Evaluation проводить. Нужные проверки выполняются до передачи их результатов на обучение.
+`LearningCoordinator` is a technical child program in a `Task` context. The calling program passes selected experience and a learning objective related to the task objective; the coordinator does not choose the task, run tests, or decide independently which Evaluations to perform. Required checks are completed before their results are passed to training.
 
-Для observations и результатов проверок coordinator вызывает [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]], когда они могут дать epistemic evidence. Эта ветвь не требует проверяемого прогноза. Для выбранного на обучение `EvaluatedResult` с outcome, metrics и восстановимым контекстом coordinator создаёт [[#^def-LearningSignal|LearningSignal]] и вызывает `CreditAssignmentProgram` для соответствующих [[#^def-LearningTarget|LearningTarget]]. Оцениваться может прогноз или результат Task либо процесса. Уже выполненная проверка повторно не запускается. [[#PredictionEvaluator|Ветка отсутствующего прогноза]] создаёт `UnresolvedCredit` отдельно, без фиктивной Evaluation и без `LearningSignal` для этой прогнозной проверки.
+For observations and evaluation results, the coordinator calls [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] when they may provide epistemic evidence. This path does not require a checkable forecast. For a selected `EvaluatedResult` to train on, with outcome, metrics, and recoverable context, the coordinator creates a [[#^def-LearningSignal|`LearningSignal`]] and calls `CreditAssignmentProgram` for the relevant [[#^def-LearningTarget|`LearningTarget`]]. A forecast or a Task/process outcome may be evaluated. A completed evaluation is not rerun. The [[#PredictionEvaluator|missing-forecast branch]] creates `UnresolvedCredit` separately, without a fictitious evaluation or a `LearningSignal` for that forecast check.
 
-Если соответствие outcome target-у и привязка обучения к estimator-у или параметрам программы заданы контрактом, credit assignment и подготовка update выполняются детерминированно, в том числе для batch. Так стандартный pipeline обновляет средние, частоты и статистики bucket-ов без вызова LLM на каждом примере. Вызов `predict(inputs)` и запись значения в trace сами по себе не разрешают update. Неоднозначное назначение credit и невозможность подготовить update различаются по правилам ниже.
+When the mapping from outcome to target and the learning binding to an estimator or program parameters are defined by contract, credit assignment and update preparation are deterministic, including for batches. Thus, the standard pipeline updates means, frequencies, and bucket statistics without an LLM call for each example. Calling `predict(inputs)` and recording the value in the trace do not by themselves authorize an update. Ambiguous credit assignment and inability to prepare an update are distinguished by the rules below.
 
-`EvidenceAssessmentProgram` и `CreditAssignmentProgram` являются независимыми ветвями и не вызывают друг друга. Вызов `EvidenceAssessmentProgram` не передаёт ownership Learning System. `LearningCoordinator` сам не оценивает evidence, не назначает learning credit и не изменяет parameters.
+`EvidenceAssessmentProgram` and `CreditAssignmentProgram` are independent branches and do not call each other. Calling `EvidenceAssessmentProgram` does not transfer ownership of evidence assessment to the Learning System. `LearningCoordinator` does not itself assess evidence, assign learning credit, or change parameters.
 
-Связанный опыт передаётся в assessment общим пакетом по [[Uncertainty and Belief Tracking in the World Model#Жизненный цикл assessment|правилам объединения вызовов и бюджета]]. Сама модель evidence и модели ошибок источников обучаются через обычные credit и parameter updates по [[Uncertainty and Belief Tracking in the World Model#Обучение модели evidence|независимо разрешённым случаям]]; отдельного пути самоподтверждения beliefs нет.
+Related experience is passed to assessment in a shared batch under the [[Uncertainty and Belief Tracking in the World Model#Assessment Lifecycle|call-grouping and budget rules]]. The evidence model itself and source-error models are trained through ordinary credit and parameter updates on [[Uncertainty and Belief Tracking in the World Model#Training the Evidence Model|independently resolved cases]]; there is no separate self-confirming belief path.
 
-`UpdatePlanner` по готовому `LearningCredit` и объявленным привязкам программы выбирает estimator или параметры для обновления, извлекает исходные входы и outcomes из evaluation и provenance. [[#^def-UpdateTransactionManager|UpdateTransactionManager.apply]] выполняет подготовленное обновление в общей транзакции; `UpdateDispatcher` выбирает updater по контракту выбранной реализации. Updater вычисляет новое состояние; transaction manager сохраняет его вместе с `UpdateReceipt`.
+Given a `LearningCredit` and the program's declared bindings, `UpdatePlanner` selects the estimator or parameters to update, and retrieves original inputs and outcomes from evaluation and provenance. [[#^def-UpdateTransactionManager|`UpdateTransactionManager.apply`]] performs the prepared update in a shared transaction; `UpdateDispatcher` selects the updater under the chosen implementation's contract. The updater computes new state; the transaction manager saves it with an `UpdateReceipt`.
 
-### Специализированное обучение
+### Specialized Learning
 
-Для узких задач `SkillDevelopmentProgram` может вызвать специализированную обучающую подпрограмму, например CFR / self-play на NumPy или CUDA через Python. Это дополнительный путь(исключение которое должно быть строго оправдано) вне стандартного `LearningCoordinator` pipeline: подпрограмма управляет внутренними итерациями кастомного пайплайна обучения, рабочим состоянием и checkpoints без отдельного `LearningCredit` на каждый шаг. Основной подход EverTree — развитие и переиспользование программ и знаний и обучение их через LearningCoordinator. Специальное обучение кастомного бекенда (например на безе нейронной сети) может быть дорогим, а результат — трудно интерпретируемым. Этот подход может помочь решить локальную задачу где нужно специальная формуа обучения, но это обучение скорей всего не может улучить агента, не поможет генерализоваться на другие процессы.  Успех в узкой задаче сам по себе не подтверждает перенос на другие задачи; выигрыш должен оправдывать эти ограничения.
+For narrow tasks, a `SkillDevelopmentProgram` may call a specialized training subprogram, such as CFR / self-play implemented with NumPy or CUDA through Python. This is an additional path—an exception that requires strong justification—outside the standard `LearningCoordinator` pipeline. The subprogram manages internal iterations of a custom training pipeline, working state, and checkpoints without a separate `LearningCredit` for every step.
 
-Checkpoints для продолжения обучения и экспортированная стратегия сохраняются как версионируемые [[Core data structures#^def-Artifact|Git Artifacts]], при необходимости через Git LFS, с provenance данных, кода и настроек. Кандидат проходит отдельную [[Process Plane/Program Evaluation and Testing#EvaluationTestManager|Evaluation]] перед применением. Изменение кода или используемого программой версионируемого артефакта проходит через [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]]; trainer не перезаписывает активное состояние estimator-а или параметры Program в обход стандартного механизма обновлений.
+EverTree's primary approach is to develop and reuse programs and knowledge and train them through `LearningCoordinator`. Specialized training on a custom backend, such as a neural network, may be expensive and its results difficult to interpret. It may help solve a local task that needs a specialized training method, but is unlikely to improve the agent and will not help it generalize to other processes. Success on a narrow task alone does not establish transfer to other tasks; the gain must justify these limitations.
+
+Checkpoints for resuming training and the exported strategy are saved as versioned [[Core data structures#^def-Artifact|Git Artifacts]], using Git LFS when needed, with provenance for the data, code, and settings. The candidate undergoes a separate [[Process Plane/Program Evaluation and Testing#EvaluationTestManager|Evaluation]] before use. Code changes or changes to a versioned artifact used by the program follow the [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]]; a trainer does not overwrite an active estimator state or Program parameters outside the standard update mechanism.
 
 ---
+## Observable and Latent Claims
 
-## Observable and latent claims
+Compute direct [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] for an observable model prediction when observations not derived from that prediction are available and there is an adequate basis for calibration. Observations may depend on one another; account for these dependencies in evaluation.
 
-Прямой [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] вычисляется для observable prediction модели при наличии наблюдений, не выведенных из самого прогноза, и достаточной основы для калибровки. Наблюдения могут зависеть друг от друга; эти зависимости учитываются в проверке.
-
-```
+```text
 predicted observable state
 + observed state
 → direct prediction_unexpectedness.
 ```
 
-Latent state не получает direct `prediction_unexpectedness`. Его [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|evidence assessment]] опирается на наблюдаемые последствия и не требует этого сигнала:
+Do not assign direct `prediction_unexpectedness` to a latent state. Its [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|evidence assessment]] relies on observable consequences and does not require that signal:
 
-```
+```text
 latent state
 → observable prediction
 → observation
@@ -220,63 +222,60 @@ latent state
 → indirect upstream evidence.
 ```
 
-Если обязательный публичный observable prediction отсутствует,  
-вызывается structural revision.
+If a required public observable prediction is missing, trigger structural revision.
 
-Внутренний anchored [[Core data structures#^def-Claim|claim]] может быть проверен напрямую, если для него
-появилось independent observation. 
+An internal anchored [[Core data structures#^def-Claim|`Claim`]] may be checked directly if an independent observation becomes available for it.
 
-Expected signals являются обычным специальным случаем observable claims; их проверка описана в [[#Expected signal updates]].
+Expected signals are a standard special case of observable claims; their evaluation is described in [[#Expected Signal Updates]].
 
 ---
-## Fast learning
+## Fast Learning
 
-Fast learning обрабатывает выбранный для обучения опыт после evaluable event, накопления batch или завершения sub-episode. Parameter updates выполняются по [[#Выбор обучаемых компонентов и режима обучения|выбранному режиму]]; приостановка обучения параметров не запрещает обновление beliefs по новому evidence.
+Fast learning processes experience selected for training after an evaluable event, a batch has accumulated, or a sub-episode has completed. Parameter updates follow the [[#Selecting Learnable Components and Learning Mode|selected mode]]; pausing parameter training does not prevent beliefs from being updated with new evidence.
 
-Он затрагивает:
+It affects:
 
+```text
+observable claims with direct evidence;
+latent states and operators on which those claims depended;
+competing alternatives in the same CompetitionScope;
+Program or policy components involved in the outcome.
 ```
-observable claims, получившие direct evidence;
-latent states и operators, от которых зависели эти claims;
-competing alternatives того же CompetitionScope;
-Program или policy components, участвовавшие в результате.
-```
 
-Высокий [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] — повод исследовать неожиданное расхождение, а не логическое опровержение модели или доказательство смены режима. Вероятный outcome также является evidence и может использоваться для обучения; выбор обучающих наблюдений не ограничивается неожиданными случаями.
+A high [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] is a reason to investigate a surprising discrepancy, not a logical refutation of a model or proof of a regime change. An expected outcome is also evidence and may be used for learning; training data are not restricted to surprising cases.
 
-Beliefs получают [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|EvidenceAssignment]] через [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|EvidenceAssessmentProgram]]. По `LearningCredit` для [[#^def-LearningTarget|LearningTarget]] подготавливаются разрешённые обновления конкретных реализаций. `UnresolvedCredit` сохраняется без parameter update.
+Beliefs receive [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`s]] through [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]]. Based on `LearningCredit` for a [[#^def-LearningTarget|`LearningTarget`]], the pipeline prepares permitted updates to specific implementations. Save `UnresolvedCredit` without a parameter update.
 
 ---
-
 ## Credit Assignment
 #topic_core
 
-Стандартный learning pipeline последовательно отвечает на четыре разных вопроса:
+The standard learning pipeline answers four distinct questions in sequence:
 
 ```text
-что произошло и как это оценено?
+what happened and how was it evaluated?
 → LearningSignal;
 
-какому LearningTarget и его применению относится обучающий вклад опыта?
+which LearningTarget and its use does the experience's training contribution concern?
 → LearningCredit;
 
-какой estimator или параметры Program обновить и как подготовить данные?
+which estimator or Program parameters should be updated, and how should the data be prepared?
 → PreparedUpdate;
 
-как безопасно выполнить команду?
+how should the command be executed safely?
 → UpdateTransactionManager;
-→ UpdateDispatcher выбирает updater.
+→ UpdateDispatcher selects the updater.
 ```
 
-Если PredictionTarget выбран для прогнозирования в данном контексте, но прогноз отсутствует, создаётся `UnresolvedCredit` с известным target и контекстом случая. Эта ветка не требует `LearningSignal`. Когда credit уже назначен target-у, но подготовить конкретное обновление нельзя, возвращается `UpdateBlocked`.
+If a `PredictionTarget` was selected for forecasting in the current context but no forecast exists, create `UnresolvedCredit` with the known target and case context. This branch does not require a `LearningSignal`. If credit has been assigned to a target but a specific update cannot be prepared, return `UpdateBlocked`.
 
-### LearningSignal
+### `LearningSignal`
 
-Поля и аргументы learning pipeline содержат объекты по [[Core data structures#Объекты и ссылки|общему правилу объектов и ссылок]].
+Fields and arguments in the learning pipeline contain objects under the [[Core data structures#Objects and References|general object and reference rule]].
 
 (def_id:: entity.LearningSignal)
-> [!definition]  
-> **LearningSignal** — пакет оценённого опыта для одного решения об обучении: observed outcome, выбранные metrics и цель улучшения. Это пакет данных, а не отдельный оценочный канал [[Evaluative-Control System]].
+> [!definition]
+> **`LearningSignal`** — a package of evaluated experience for one learning decision: observed outcomes, selected metrics, and an improvement objective. It is a data package, not a separate evaluation channel in [[Evaluative-Control System]].
 > ^def-LearningSignal
 
 ```python
@@ -288,25 +287,25 @@ LearningSignal {
 }
 ```
 
-Поля отвечают на простые вопросы:
+The fields answer:
 
 ```text
 evaluation
-→ полная проверка и её provenance;
+→ the complete evaluation and its provenance;
 
 outcomes
-→ что фактически произошло;
+→ what actually happened;
 
 metric_samples
-→ как был измерен результат;
+→ how the result was measured;
 
 objective
-→ что именно нужно улучшать.
+→ what should be improved.
 ```
 
-[[#^def-LearningSignal|`LearningSignal`]] создаётся только из `EvaluatedResult`. Все его outcomes и metrics должны относиться к той же evaluation. `NotApplicableResult` и `UnresolvedEvaluationResult` learning signal не создают.
+Create [[#^def-LearningSignal|`LearningSignal`]] only from an `EvaluatedResult`. All of its outcomes and metrics must belong to the same evaluation. `NotApplicableResult` and `UnresolvedEvaluationResult` do not create a learning signal.
 
-`LearningObjective` связывает смысл цели с metrics и направлением улучшения:
+`LearningObjective` links the meaning of the objective to its metrics and direction:
 
 ```python
 LearningObjective {
@@ -316,20 +315,21 @@ LearningObjective {
 }
 ```
 
-Например, objective может требовать уменьшать среднюю квадратичную ошибку вероятности бинарного исхода `(p - y)²`, где `y ∈ {0, 1}`, или максимизировать долю успешных решений по критериям выбранной Evaluation. [[Attribution Plane#^def-Criterion|`Criterion`]] или `Utility` могут объяснять происхождение цели, но сами по себе не заменяют learning objective.
+For example, an objective may require reducing mean squared error for a binary outcome probability `(p - y)²`, where `y ∈ {0, 1}`, or maximizing the share of successful decisions under the selected Evaluation criteria. [[Attribution Plane#^def-Criterion|`Criterion`]] or `Utility` may explain where the objective came from, but do not replace the learning objective themselves.
 
-[[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] — диагностическая оценка, а не цель минимизации или gradient. Updater использует исходные входы и outcomes по контракту estimator-а; его внутренняя цель согласуется со [[#Представление прогноза и цель обучения|смыслом прогноза]]. Улучшение проверяется по [[Process Plane/Program Evaluation and Testing#^prediction-quality-protocol|протоколу качества]]: уменьшение необычности само по себе улучшением не считается.
+[[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] is a diagnostic assessment, not a minimization objective or gradient. The updater uses original inputs and outcomes under the estimator contract; its internal objective is aligned with the [[#Forecast Representation and Learning Objective|meaning of the forecast]]. Improvement is checked under the [[Process Plane/Program Evaluation and Testing#^prediction-quality-protocol|quality protocol]]; reducing unexpectedness alone does not count as improvement.
 
-### LearningCredit and UnresolvedCredit
+---
+### `LearningCredit` and `UnresolvedCredit`
 
 (def_id:: role.LearningTarget)
 > [!definition]
-> **LearningTarget** — получатель learning credit: оцениваемая величина или результат, выбранное действие или решение, участвовавший механизм либо использованный вывод. При обучении прогноза эту роль выполняет [[Process Plane/Program Layer#^def-PredictionTarget|PredictionTarget]].
-^def-LearningTarget
+> **`LearningTarget`** — the recipient of learning credit: an evaluated quantity or result, selected action or decision, participating mechanism, or inference used. For forecast training, this role is filled by [[Process Plane/Program Layer#^def-PredictionTarget|`PredictionTarget`]].
+> ^def-LearningTarget
 
-Эту роль выполняет существующий Concept, Program или Claim; отдельный узел или runtime-класс не требуется.
+An existing Concept, Program, or Claim fills this role; a separate node or runtime class is not required.
 
-`CreditAssignmentProgram` назначает credit выбранному `LearningTarget` в конкретном контексте опыта. Для оценённого случая она получает `LearningSignal` и использует связанные traces для поиска получателей credit; для отсутствующего прогноза — известный `PredictionTarget`, контекст поиска и имеющиеся наблюдения без `LearningSignal`. Возвращает `ProgramResult[CreditAssignmentResult[]]`.
+`CreditAssignmentProgram` assigns credit to a selected `LearningTarget` in a specific experience context. For an evaluated case it receives a `LearningSignal` and uses related traces to find credit recipients. When a forecast is missing, it receives the known `PredictionTarget`, search context, and available observations without a `LearningSignal`. It returns `ProgramResult[CreditAssignmentResult[]]`.
 
 ```python
 CreditAssignmentResult =
@@ -349,38 +349,39 @@ CreditAssignmentResult =
 }
 ```
 
-**В обеих ветвях результата target известен.** `reason="missing_prediction"` применим только к `PredictionTarget`, выбранному для прогнозирования в данном контексте, если прогноз не назначен. Он фиксирует пробел в прогнозировании; численная оценка ошибки, `LearningSignal` и parameter update для отсутствующего прогноза не создаются. Наличие прогноза ещё не гарантирует `LearningCredit`: сначала нужны применимая Evaluation и достаточные данные для `LearningSignal`. Для обучения по независимо оценённому результату действия собственный прогноз не требуется.
+**The target is known in both result branches.** `reason="missing_prediction"` applies only to a `PredictionTarget` selected for forecasting in the current context when no forecast was assigned. It records a forecasting gap; it does not create a numeric error assessment, `LearningSignal`, or parameter update for the missing forecast. Having a forecast does not guarantee `LearningCredit`: applicable Evaluation and enough data for a `LearningSignal` are required first. A learning update from an independently evaluated action outcome does not require a forecast of that action.
 
-`context` хранит ссылки на исходный случай и условия поиска, чтобы установить, где именно прогноз отсутствует. В готовом `LearningCredit` контекст восстанавливается из `signal` и provenance работы `CreditAssignmentProgram`: какой target, какое его применение или решение получило credit и по какому оценённому результату. Исходная evaluation сохраняет собственный предмет оценки; назначение credit не переписывает его. Совпадение Concept не объединяет разные случаи и модели.
+`context` stores references to the original case and search conditions, so the system can determine exactly where the forecast is missing. For completed `LearningCredit`, context is reconstructed from the `signal` and provenance of the `CreditAssignmentProgram` work: which target, use, or decision received credit and from which evaluated result. The original evaluation retains its own subject; credit assignment does not rewrite it. Matching Concepts does not merge distinct cases or models.
 
-`LearningSignal`, `LearningCredit` и `UnresolvedCredit` являются immutable [[Memory#^def-OperatorOutput|OperatorOutput]]. Их identity и provenance предоставляет общий runtime; отдельные поля `id` и `created_at` не дублируются.
+`LearningSignal`, `LearningCredit`, and `UnresolvedCredit` are immutable [[Memory#^def-OperatorOutput|`OperatorOutput`s]]. Their identity and provenance are provided by shared runtime; separate `id` and `created_at` fields are redundant.
 
-`attribution_weight` — беззнаковая доля learning signal, назначенная target-у в этом контексте: `1.0` означает полный вклад, `0.3` — 30%. Это не знак ошибки, gradient, parameter delta, вероятность выбора updater-а или мера доказанности причинного влияния. Направление задаёт `LearningObjective`; новое значение параметров вычисляет updater. Способ применения weight задаётся контрактом updater-а.
+`attribution_weight` is a nonnegative share of the learning signal assigned to a target in this context: `1.0` means the full contribution, `0.3` means 30%. It is not an error sign, gradient, parameter delta, probability of selecting an updater, or measure of proven causal influence. The `LearningObjective` defines direction; the updater computes new parameter values. The updater contract defines how to apply the weight.
 
-Если назначение вкладов нескольким targets принято как soft assignment, создаются отдельные `LearningCredit` с явными weights. Если вклад выбранного target пока неоднозначен, создаётся `UnresolvedCredit(reason="ambiguous_attribution")` с исходным signal; параметрическое обновление этого случая откладывается. Неуверенность в причине не заменяется произвольными weights.
+If soft assignment among several targets is accepted, create separate `LearningCredit`s with explicit weights. If the contribution to a selected target remains ambiguous, create `UnresolvedCredit(reason="ambiguous_attribution")` with the original signal; defer the parameter update for this case. Do not replace uncertainty about the cause with arbitrary weights.
 
-`UnresolvedCredit` сохраняет историю. После разрешения случая новый `LearningCredit` может ссылаться на него через `resolves`. Найденный исходный прогноз оценивается обычным способом. Если вместо него создана новая модель, проверяется её собственный запуск: поздний прогноз не выдаётся за существовавший до наблюдения, а подгонка на этом исходе — за независимую проверку.
+`UnresolvedCredit` retains the history. Once resolved, a new `LearningCredit` may reference it through `resolves`. Evaluate the original forecast, if found, in the ordinary way. If a new model was created instead, check its own run: a later forecast must not be presented as one that existed before the observation, and fitting on that outcome must not be presented as an independent evaluation.
 
-Адрес изменяемых параметров выбирает [[#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|UpdatePlanner]] по готовому credit. Неоднозначность этого технического выбора даёт `UpdateBlocked`, а не `UnresolvedCredit`.
+[[#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|`UpdatePlanner`]] selects the address of mutable parameters from completed credit. Ambiguity in this technical selection returns `UpdateBlocked`, not `UnresolvedCredit`.
 
-`CreditAssignmentProgram` не создаёт [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|EvidenceAssignment]], не выбирает формулу update и не изменяет параметры. Provenance связывает credit с опытом, но сам по себе не доказывает ответственность участвовавших механизмов.
+`CreditAssignmentProgram` does not create [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]], select an update formula, or change parameters. Provenance links credit to experience but by itself does not prove that participating mechanisms were responsible.
 
-#### Credit по результату Task или процесса
+---
+#### Credit for a Task or Process Outcome
 ^outcome-credit
 
-Основанием может быть оценённый промежуточный или окончательный результат Task либо процесса: успешность, соблюдение условий, затраты или другое выбранное качество. Результат представлен обычным `Outcome`; критерии, metrics и связь с исполнением сохраняются в `EvaluatedResult`.
+The basis may be an evaluated intermediate or final outcome of a Task or process: success, constraint satisfaction, cost, or another selected quality. The result is represented by an ordinary `Outcome`; criteria, metrics, and the link to execution are retained in `EvaluatedResult`.
 
-Сознание, [[Memory#^def-MemoryConsolidationProgram|консолидация памяти]] и [[Self#От опыта к подтверждённой проблеме|Reflection]] могут выбрать опыт и цель обучения, организовать необходимые проверки и передать результаты `LearningCoordinator`. Credit назначает `CreditAssignmentProgram`.
+Consciousness, [[Memory#^def-MemoryConsolidationProgram|memory consolidation]], and [[Self#From Experience to a Confirmed Problem|Reflection]] may select experience and a learning objective, organize required checks, and pass their results to `LearningCoordinator`. `CreditAssignmentProgram` assigns credit.
 
-По traces программа ищет решения, действия, использованные выводы и механизмы, которым может относиться вклад. Например, выбор X вместо обычного Y или вывод о причине затруднения могли изменить ход работы. Объяснение влияния оформляется как [[Core data structures#^def-Claim|Claim]] с основаниями и границами применимости; его достоверность и истинность использованного вывода оцениваются через Belief System отдельно от полезности применения. Успех Task сам по себе не подтверждает ни причинную гипотезу, ни истинность всех использованных выводов.
+Using traces, the program searches for decisions, actions, inferences, and mechanisms that may have contributed. For example, choosing X instead of the usual Y or inferring a cause of difficulty may have changed how work proceeded. An explanation of influence is represented as a [[Core data structures#^def-Claim|`Claim`]] with its grounds and applicability limits; its reliability and the truth of an inference are assessed separately through the Belief System from the usefulness of applying it. A successful Task does not by itself confirm a causal hypothesis or prove that every inference used was true.
 
-Наблюдённый результат X не является результатом невыбранного Y. Утверждение о преимуществе X требует сопоставимого опыта, проверки альтернативы или явно обозначенного модельного контрфакта по [[Self#От проблемы к change hypothesis|правилам Self]]. При этом обычное обучение политики по траектории допустимо по контракту optimizer-а без доказательства точного причинного вклада каждого шага.
+An observed outcome for X is not an outcome for an unchosen Y. A claim that X is better requires comparable experience, a check of the alternative, or an explicitly labeled model counterfactual under the [[Self#From a Problem to a Change Hypothesis|Self rules]]. Ordinary policy learning from a trajectory is still allowed under the optimizer contract without proving the exact causal contribution of every step.
 
-Если получатель credit ещё не найден, сохраняется вопрос или гипотеза для дальнейшего разбора. Выводы могут сохраняться как знание, а изменение кода или способа решения проходит [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]]. Повторный разбор опыта консолидацией и Reflection соблюдает [[#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|общие правила учёта обучающего вклада]].
+If the credit recipient has not yet been found, retain a question or hypothesis for later analysis. Inferences may be saved as knowledge; a change to code or the solution method goes through [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]]. Reanalysis of experience by consolidation and Reflection follows the [[#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|shared experience-accounting rules]].
 
-### PreparedUpdate, UpdateTransactionManager and UpdateDispatcher
+### PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher
 
-`UpdatePlanner` выбирает конкретный estimator или параметры Program по `LearningTarget`, атрибутированному применению, исходному контексту и `LearningObjective`. Он использует объявленные в программе привязки обучения и provenance credit и evaluation; совпадение target само по себе не разрешает обновлять все реализации этого Concept. Затем проверяет контракт выбранного состояния и готовит update:
+`UpdatePlanner` selects a specific estimator or Program parameters based on the `LearningTarget`, attributed application, source context, and `LearningObjective`. It uses the learning bindings declared by the program and the provenance of the credit and evaluation; a matching target alone does not authorize updating every implementation of that Concept. It then checks the contract of the selected state and prepares an update:
 
 ```python
 UpdatePlanner.prepare(
@@ -404,26 +405,26 @@ UpdatePlanningResult =
   }
 ```
 
-Назначение полей:
+Field meanings:
 
 ```text
 source_credit
-→ почему этот update разрешён;
+→ why this update is authorized;
 
 state
-→ ссылка на состояние estimator-а или параметры Program, которые обновляются;
+→ reference to the estimator state or Program parameters being updated;
 
 updater_input
-→ опыт и настройки обновления в формате конкретного estimator-а или optimizer-а.
+→ experience and update settings in the format expected by a specific estimator or optimizer.
 ```
 
-Например, credit для `NetChipChange` при цели оценивать выигрыш может использоваться для обучения estimator-а, а при цели улучшать выбор действий — для обучения параметров политики. Привязка должна явно задавать соответствующий update. Политике не обязателен собственный прогноз: достаточно применимой оценки результатов её действий. Отсутствие требуемого прогноза остаётся отдельным `UnresolvedCredit` и не отменяет такую оценку.
+For example, credit for `NetChipChange` may train an estimator when the objective is to estimate winnings, or train policy parameters when the objective is to improve action selection. The binding must explicitly specify the corresponding update. A policy does not need its own forecast: an applicable evaluation of its actions is enough. The absence of a required forecast remains a separate `UnresolvedCredit` and does not invalidate that evaluation.
 
-`PreparedUpdate.state` — устойчивая ссылка на конкретный экземпляр состояния estimator-а или параметры Program у их владельца. Она может адресовать согласованный блок параметров для атомарного обновления; это не `PredictionTarget` и не входное состояние процесса. Подготовленный запрос фиксирует адрес: retry не выбирает заново модель по target. Несколько anchors могут использовать общее состояние, а один target — разные estimator-ы; эти отношения задаются программой и связываются с её семантикой через anchors.
+`PreparedUpdate.state` is a stable reference to a specific estimator state instance or to the Program parameters held by their owner. It may address a consistent parameter block for atomic updating; it is not a `PredictionTarget` or process input state. The prepared request fixes the address: a retry does not select a model again from the target. Several anchors may use shared state, and one target may use different estimators; the program defines these relationships and connects them to its semantics through anchors.
 
-Новое состояние вычисляется updater-ом по актуальным параметрам в защищённой операции runtime. Версия состояния, использованная для исходного прогноза, сохраняется в trace и не меняется после обучения.
+The updater computes the new state from the current parameters within a protected runtime operation. The version of the state used for the original prediction is retained in the trace and does not change after learning.
 
-`PreparedUpdate` означает одно разрешённое применение `LearningCredit`; оно может включать batch и несколько внутренних optimizer steps, если это предусмотрено контрактом updater-а. Запрос на отмену или ослабление уже учтённого вклада:
+`PreparedUpdate` represents one authorized application of `LearningCredit`; it may include a batch and several internal optimizer steps when the updater contract permits them. A request to cancel or reduce an already accounted contribution is:
 
 ```python
 CreditRetraction {
@@ -432,24 +433,24 @@ CreditRetraction {
 }
 ```
 
-`PreparedUpdate` и `CreditRetraction` являются immutable [[Memory#^def-OperatorOutput|`OperatorOutput`]]. Устойчивая identity каждого request обозначает один конкретный намеренный вызов соответствующего метода и предоставляется runtime.
+`PreparedUpdate` and `CreditRetraction` are immutable [[Memory#^def-OperatorOutput|`OperatorOutput`]]. The runtime provides a stable identity for each request, representing one specific intentional call to the corresponding method.
 
-Для `retract` адрес состояния и учтённые вклады восстанавливаются по фактически применённым updates, receipts и ledger. Изменившаяся привязка target к новой модели не перенаправляет исправление старого состояния.
+For `retract`, the state address and accounted contributions are recovered from the updates actually applied, their receipts, and the ledger. A changed binding from the target to a new model does not redirect a correction intended for the old state to the new model.
 
 ```text
-новый намеренный вызов
-→ новый request object
-→ новая identity;
+new intentional call
+→ new request object
+→ new identity;
 
-retry того же вызова после сбоя
-→ та же identity, в том числе после загрузки request из памяти.
+retry of the same call after a failure
+→ same identity, including after loading the request from memory.
 ```
 
-Один `LearningCredit` обычно применяется к выбранному состоянию один раз; несколько updates по нему допустимы только по явно заданному контракту обучения. До подготовки update `UpdatePlanner` проверяет по контракту алгоритма, provenance входов и outcome, не был ли тот же логический вклад уже учтён. Один outcome может обновлять разные адресованные состояния или давать несколько предусмотренных алгоритмом примеров при разных входах одного estimator-а или Program, например из точек решения одной раздачи. Зависимости между такими примерами учитываются; они не становятся независимыми наблюдениями. Повторная evaluation или replay того же примера не создаёт новый независимый опыт, даже если у evaluation и credit новые identity.
+A `LearningCredit` is usually applied to a selected state once; multiple updates from it are allowed only under an explicit learning contract. Before preparing an update, `UpdatePlanner` checks the algorithm contract and the provenance of the inputs and outcome to determine whether the same logical contribution has already been accounted for. One outcome may update different addressed states or provide multiple examples required by the algorithm for different inputs to one estimator or Program, for example from decision points in a single hand. Dependencies between such examples are tracked; they do not become independent observations. Re-evaluating or replaying the same example does not create independent experience, even if the evaluation and credit have new identities.
 
-Несколько внутренних optimizer steps могут составлять один `PreparedUpdate`. Отдельные requests создаются, если алгоритм явно требует самостоятельного применения и сохранения каждого шага. Повторное использование credit должно быть предусмотрено контрактом; оно не увеличивает число независимых наблюдений или обеспеченность модели данными. Исправленный outcome обрабатывается по [[#Исправление уже использованного опыта|правилам исправления опыта]]. Защита от повторного учёта опыта дополняет транзакционную защиту от retry одного request.
+Several internal optimizer steps may form one `PreparedUpdate`. Separate requests are created when the algorithm explicitly requires each step to be applied and saved independently. Reusing credit must be permitted by the contract; it does not increase the number of independent observations or the amount of data supporting the model. A corrected outcome is handled under the [[#Correcting Experience Already Used|experience correction rules]]. Protection against accounting for experience twice complements the transactional protection against retrying one request.
 
-Примеры `updater_input`:
+Examples of `updater_input`:
 
 ```text
 Beta / Bernoulli estimator
@@ -466,8 +467,8 @@ policy updater
 ```
 
 (def_id:: entity.UpdateTransactionManager)
-> [!definition]  
-> **[[#^def-UpdateTransactionManager|UpdateTransactionManager]]** — единая инфраструктурная граница исполнения parameter updates в стандартном learning pipeline:
+> [!definition]
+> **[[#^def-UpdateTransactionManager|UpdateTransactionManager]]** is the shared infrastructure boundary for executing parameter updates in the standard learning pipeline:
 > ^def-UpdateTransactionManager
 
 ```python
@@ -486,40 +487,40 @@ UpdateReceipt {
 }
 ```
 
-`retracted` означает точную отмену вклада в рамках контракта updater-а; `adjusted` — приблизительную коррекцию; `skipped` — отсутствие изменения с указанной причиной, например неподдерживаемый `retract`. `rejected` означает недопустимый запрос. Пустая реализация `retract` допустима, но её результат фиксируется как `skipped`.
+`retracted` means the contribution was exactly undone within the updater contract; `adjusted` means it was approximately corrected; `skipped` means no change was made, with a reason such as unsupported `retract`. `rejected` means the request was invalid. An empty `retract` implementation is allowed, but its result is recorded as `skipped`.
 
-Оба метода используют одну транзакционную схему. Устойчивая identity request отличает новый намеренный вызов от retry; равенство полей или Python `id()` для этого не используются:
+Both methods use the same transaction pattern. A stable request identity distinguishes a new intentional call from a retry; field equality and Python `id()` are not used for this:
 
 ```text
 begin transaction
-→ проверить, нет ли UpdateReceipt для identity request
-→ проверить допустимость логического вклада outcome:
-  исключить повторный учёт; разрешить предусмотренные optimizer steps
-→ прочитать текущие значения по ссылке state
-→ UpdateDispatcher выбирает updater
-→ вызвать updater.apply или поддерживаемый updater.retract
-→ атомарно сохранить состояние (если изменилось), учёт вкладов и UpdateReceipt[identity request]
+→ check whether an UpdateReceipt exists for the request identity
+→ check whether the logical outcome contribution is admissible:
+  prevent duplicate accounting; allow optimizer steps specified by the contract
+→ read current values through the state reference
+→ UpdateDispatcher selects an updater
+→ call updater.apply or a supported updater.retract
+→ atomically save state (if changed), contribution accounting, and UpdateReceipt[request identity]
 → commit
 ```
 
-Если до `commit` возникает exception, transaction автоматически откатывается: не сохраняются новое состояние, изменения учёта или receipt. Если вызов уже был committed, retry с той же identity request находит и возвращает сохранённый receipt, не меняя parameters второй раз.
+If an exception occurs before `commit`, the transaction rolls back automatically: the new state, accounting changes, and receipt are not saved. If the call has already committed, a retry with the same request identity finds and returns the saved receipt without changing the parameters again.
 
-Runtime выполняет операции одного состояния последовательно: защищён весь участок чтения актуальных параметров, расчёта и применения результата, включая подготовку, зависящую от текущих параметров. Одной очереди записи недостаточно. Если расчёт выполняется вне этого участка, runtime проверяет актуальность использованного состояния перед применением и при необходимости повторяет расчёт. Это внутренняя гарантия runtime; отдельное поле revision в общем learning-интерфейсе не требуется. Замена состояния обученным кандидатом проходит через ту же границу.
+The runtime serializes operations on one state: the protected region covers reading current parameters, calculating, and applying the result, including preparation that depends on current parameters. A write queue alone is not enough. If calculation happens outside this region, the runtime checks that the state used is still current before applying the result and recalculates when needed. This is an internal runtime guarantee; the shared learning interface does not need a separate revision field. Replacing state with a trained candidate uses the same boundary.
 
-Проверка логического вклада внутри транзакции окончательна: два разных requests, подготовленных до первого commit, не должны дважды учесть один и тот же обучающий вклад в одном состоянии, в том числе при обращении из разных anchor-ов. Учёт сохраняется атомарно с состоянием и отражает фактический результат коррекции. Предусмотренные алгоритмом повторные optimizer steps по одному credit разрешены; новый credit на тот же опыт сам по себе такого разрешения не даёт.
+The transaction's check of logical contributions is authoritative: two different requests prepared before the first commit must not account for the same learning contribution twice in one state, including when reached through different anchors. Accounting is saved atomically with the state and reflects the actual correction result. Optimizer steps repeated for one credit are allowed when the algorithm specifies them; a new credit for the same experience does not by itself authorize this.
 
-В MVP это атомарность изменения в core, а не требование немедленной записи на диск. Обновляемые состояния, учёт логических вкладов и receipts входят в [[Cognition and Attention#^agent-backup|общий backup агента]]: при восстановлении они откатываются вместе. Утраченное при аварии обучение может быть выполнено заново от восстановленного состояния.
+In the MVP this means atomic changes in core, not immediate persistence to disk. Updatable states, logical contribution accounting, and receipts are included in the [[Cognition and Attention#^agent-backup|shared agent backup]] and roll back together on recovery. Learning lost in a failure can be repeated from the recovered state.
 
-Updater не сохраняет состояние самостоятельно, не реализует транзакционный rollback и не обрабатывает повторы. Его методы вычисляют новое состояние из текущего состояния и соответствующего request и сообщают результат операции. `UpdateDispatcher` также не назначает credit и не изменяет state: он только выбирает updater по контракту адресованного состояния. `apply` обязателен; поддержка `retract` определяется [[#Исправление уже использованного опыта|правилами ниже]].
+An updater does not persist its own state, implement transaction rollback, or handle retries. Its methods compute a new state from the current state and corresponding request, and report the operation result. `UpdateDispatcher` likewise does not assign credit or change state; it only selects an updater according to the addressed state's contract. `apply` is required; support for `retract` follows the [[#Correcting Experience Already Used|rules below]].
 
-Обычные parameter updaters не должны иметь внешних нетранзакционных side effects. Если состояние нельзя хранить и менять через общую transaction-capable storage, для него нужен специальный lifecycle с compensation, а не обычный automatic parameter update.
+Ordinary parameter updaters must not have external, non-transactional side effects. If state cannot be stored and changed through shared transaction-capable storage, it needs a special lifecycle with compensation instead of an ordinary automatic parameter update.
 
-Если привязка обучения отсутствует или неоднозначна, контракт несовместим, updater не может принять signal или вклад уже учтён без разрешения на повторный optimizer step, `UpdatePlanner` возвращает `UpdateBlocked` с соответствующей причиной. Parameters не изменяются; семантический credit при этом остаётся назначенным. Если недопустимый повтор выявлен только внутри транзакции, возвращается `UpdateReceipt` со статусом `rejected` и причиной `already_accounted`. Retry того же request по-прежнему возвращает его ранее сохранённый receipt.
+If a learning binding is absent or ambiguous, the contract is incompatible, the updater cannot accept the signal, or the contribution was already accounted for without permission to repeat an optimizer step, `UpdatePlanner` returns `UpdateBlocked` with the corresponding reason. Parameters do not change; semantic credit remains assigned. If an inadmissible repeat is detected only inside the transaction, it returns an `UpdateReceipt` with status `rejected` and reason `already_accounted`. A retry of that same request still returns its previously saved receipt.
 
 ```text
 UnresolvedCredit
-→ сохранить / анализировать / повторно разрешить позднее;
-→ никогда не передавать в UpdatePlanner или UpdateTransactionManager;
+→ retain / analyze / resolve again later;
+→ never pass to UpdatePlanner or UpdateTransactionManager;
 
 LearningCredit
 → UpdatePlanner;
@@ -530,71 +531,76 @@ LearningCredit
 → atomic parameter update + UpdateReceipt.
 ```
 
-#### Исправление уже использованного опыта
+#### Correcting Experience Already Used
 
-`retract` необязателен. Его контракт задаёт точность, область действия и необходимые данные:
+`retract` is optional. Its contract specifies precision, scope, and required data:
 
-- **Точная отмена**, если её достаточно просто реализовать: например, убрать вклад из суммы и счётчика накопителя.
-- **Приблизительная коррекция**, если точная отмена сложна, но есть оправданный способ ослабить ошибочное влияние. Полное удаление вклада не гарантируется; эффект проверяется соразмерно значимости исправления.
-- **Отсутствие поддержки**, если стоимость реализации, хранения данных или выполнения превышает ожидаемую пользу. Метод может отсутствовать либо возвращать результат без изменения состояния.
+- **Exact reversal**, when it is straightforward to implement; for example, removing a contribution from an accumulator's sum and count.
+- **Approximate correction**, when exact reversal is difficult but there is a justified way to reduce the erroneous influence. Full removal is not guaranteed; the effect is checked in proportion to the importance of the correction.
+- **Unsupported**, when implementation, storage, or execution costs exceed the expected benefit. The method may be absent or may return without changing state.
 
-Даже точная отмена относится только к указанному состоянию и объявленному алгоритму. Она не отменяет уже совершённые действия, полученные после них наблюдения и обучение других программ. Вычитание старого градиента после последующих updates обычно не восстанавливает состояние, которое получилось бы без ошибочного примера: следующие градиенты могли зависеть от него.
+Even an exact reversal applies only to the specified state and declared algorithm. It does not undo actions already taken, observations received afterward, or learning by other programs. Subtracting an old gradient after subsequent updates usually does not restore the state that would have resulted without the erroneous example: later gradients may have depended on it.
 
-Учёт различает признание исхода ошибочным и устранение его влияния на параметры. Исходный credit, его применения и результаты исправления сохраняются; приблизительная коррекция или пропуск не помечают вклад как полностью удалённый. Исправленный outcome не становится новым независимым примером. Дополнительное обучение на нём допустимо как явно выбранная коррекция с учётом прежнего вклада; исходный ошибочный пример больше не используется как корректный.
+Accounting distinguishes recognizing an outcome as wrong from removing its effect on parameters. The original credit, its applications, and correction results are retained; approximate correction or skipping does not mark the contribution as fully removed. A corrected outcome does not become a new independent example. Additional learning from it is allowed as an explicit correction that accounts for the previous contribution; the original erroneous example is no longer used as correct.
 
-Способ исправления выбирает программа, управляющая обучением, с учётом влияния ошибки, будущего использования модели и затрат. Редкий или дорогой опыт повышает ценность исправления, поскольку один пример может существенно влиять на модель. Малозначимое остаточное влияние допустимо оставить с зафиксированным ограничением; отсутствие `retract` не требует обязательного structural revision.
+The program managing learning chooses the correction method based on the error's influence, future use of the model, and cost. Rare or expensive experience makes correction more valuable because one example may strongly affect the model. It is acceptable to leave a small residual influence with a recorded limitation; lack of `retract` does not require structural revision.
 
-Если польза оправдывает затраты, обучающая подпрограмма может пересчитать статистику или повторно обучить кандидата на исправленном [[#TrainingDataset|опыте]] через стандартный learning pipeline и проверить результат перед заменой состояния. Отдельный универсальный тип или метод пересборки не нужен. Точный пересчёт возможен только при сохранении необходимых данных, начального состояния, порядка и настроек обучения.
+When the benefit justifies the cost, a learning subprogram may recompute statistics or retrain a candidate on corrected [[#TrainingDataset|experience]] through the standard learning pipeline, then verify the result before replacing the state. No separate universal type or rebuild method is needed. Exact recomputation is possible only if the necessary data, initial state, ordering, and training settings have been retained.
 
-### Parameter update examples
+---
+---
+
+### Parameter Update Examples
+
 #topic_details
 
 ```text
 unfair coin outcome
 → LearningSignal: observed side + (p - y)² metric + probability-estimation objective
 → LearningCredit: target = CoinSide, weight = 1.0
-→ UpdatePlanner: выбрать исходный estimator по привязке программы
-→ PreparedUpdate: state = состояние estimator-а, updater_input = Bernoulli sample
+→ UpdatePlanner: select the source estimator through the program binding
+→ PreparedUpdate: state = estimator state, updater_input = Bernoulli sample
 → UpdateTransactionManager.apply
 → UpdateDispatcher
 → FrequencyEstimator with Beta / Bernoulli state
-→ updated α, β and process probability p;
+→ updated α, β, and process probability p;
 
 ProgramRun with branch x > threshold + evaluated outcome
 → LearningSignal: actual outcome + metric + objective
-→ LearningCredit: target = оцениваемый результат процесса, weight = 1.0
-→ UpdatePlanner: выбрать threshold по объявленной привязке обучения
-→ PreparedUpdate: state = threshold конкретной Program, updater_input = features + actual outcome
+→ LearningCredit: target = evaluated process result, weight = 1.0
+→ UpdatePlanner: select threshold through its declared learning binding
+→ PreparedUpdate: state = threshold for a specific Program, updater_input = features + actual outcome
 → UpdateTransactionManager.apply
 → UpdateDispatcher
 → ThresholdOptimizer
 → updated threshold;
 
-известен выбранный PredictionTarget, но прогноз для него не назначен
+known PredictionTarget, but no prediction was assigned to it
 → UnresolvedCredit(target, context, reason="missing_prediction")
-→ сохранить и передать в Attention; LearningSignal отсутствует;
+→ retain and pass to Attention; no LearningSignal;
 
-LearningCredit назначен target, но нет однозначной привязки обновления:
-threshold или upstream estimator
+LearningCredit assigned to a target, but no unambiguous update binding:
+threshold or upstream estimator
 → UpdateBlocked(reason="ambiguous_learning_binding")
-→ parameters не изменять.
+→ leave parameters unchanged.
 ```
 
-В первом случае `p` — параметр model value, а не epistemic `Strength`. Во втором threshold — оптимизируемый параметр, а не неизвестная истина мира. Если ни одно значение threshold не устраняет устойчивый mismatch, `LearningCoordinator` передаёт случай в slow structural learning.
-Тот же evaluated outcome может независимо дать [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]] о корректности модели через [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]]; это не заменяет `LearningCredit` для её параметров.
+In the first case, `p` is a model value parameter, not epistemic `Strength`. In the second, the threshold is an optimized parameter, not an unknown truth about the world. If no threshold removes a persistent mismatch, `LearningCoordinator` passes the case to slow structural learning.
+
+The same evaluated outcome may independently provide an [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssignment|`EvidenceAssignment`]] about model correctness through [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]]; this does not replace `LearningCredit` for its parameters.
 
 ---
 
-## Sub-episodes
+## Sub-Episodes
 
-Длинный [[Memory#^def-ProgramRun|`ProgramRun`]] разбивается на локальные sub-episodes, если внутри него существуют самостоятельные прогнозируемые outcomes:
+A long [[Memory#^def-ProgramRun|`ProgramRun`]] is divided into local sub-episodes when it contains independently predictable outcomes:
 
 ```text
-значимое промежуточное состояние;
-изменение signal channel;
-срабатывание или несрабатывание process transition;
-локальное решение;
- и т.д.
+significant intermediate state;
+change in a signal channel;
+process transition that occurs or does not occur;
+local decision;
+and so on.
 ```
 
 ```text
@@ -605,114 +611,109 @@ local prediction
 → local updates.
 ```
 
-Это уменьшает длину dependency path и помогает связать credit с нужным target и конкретным решением длительного процесса.
+This shortens the dependency path and helps connect credit to the right target and a specific decision within a long process.
 
----
+## Slow Structural Learning
 
-## Slow structural learning
+If local updates do not explain a persistent mismatch, slow structural analysis is started and may lead to structural revision. Conscious review may also happen during Reflection or after significant new experience, without a prior series of parameter updates; [[#Selecting Learnable Components and Learning Mode|component selection and learning mode]] are reconsidered together with the program. When investigating a cause, check local mechanisms first; the same error in several independent applications provides grounds to check a shared upstream mechanism if local explanations are insufficient.
 
-Если локальные updates не объясняют устойчивый mismatch, запускается slow structural analysis, который может вызывать structural revision. Сознательный пересмотр также возможен при рефлексии или существенном новом опыте, без предварительной серии parameter updates; [[#Выбор обучаемых компонентов и режима обучения|выбор компонентов и режима обучения]] пересматривается вместе с программой. При поиске причины сначала проверяют локальные механизмы; одинаковые ошибки в нескольких независимых применениях дают основание проверить общий upstream-механизм, если локальных объяснений недостаточно.
+Main triggers:
 
-Основные triggers:
-
-Одним из triggers является [[Evaluative-Control System#^def-ExplanatoryTension|`ExplanatoryTension`]], которое после parametric updates остаётся повышенным относительно сопоставимой истории на новых наблюдениях.
+One trigger is [[Evaluative-Control System#^def-ExplanatoryTension|`ExplanatoryTension`]] remaining elevated on new observations after parameter updates, compared with a comparable history.
 
 ```text
-высокие prediction_unexpectedness чаще, чем допускает правило последовательных проверок;
-новый режим процесса;
-надёжное evidence против модели с высоким Support;
-ExplanatoryTension остаётся повышенным на новых сопоставимых наблюдениях;
-regression в Evaluation.
+high prediction_unexpectedness occurs more often than the sequential-check rule allows;
+a new process regime;
+reliable evidence against a model with high Support;
+ExplanatoryTension remains elevated on new comparable observations;
+regression in Evaluation.
 ```
 
-Slow analysis может выявить:
+Slow analysis may identify:
 
 ```text
-missing factor или CONDITION;
-неверный context scope;
-новый режим процесса;
-неполный output contract;
-неподходящую структуру predictor-а;
-ошибочную Program.
+missing factor or CONDITION;
+incorrect context scope;
+a new process regime;
+incomplete output contract;
+unsuitable predictor structure;
+an incorrect Program.
 ```
 
-Результат передаётся в `Program Lifecycle and Evolution`; исходной формой структурной гипотезы могут быть [[Core data structures#^def-Note|Note]] или [[Core data structures#^def-Claim|Claim]]:
+The result is passed to `Program Lifecycle and Evolution`; the initial form of a structural hypothesis may be a [[Core data structures#^def-Note|Note]] or [[Core data structures#^def-Claim|Claim]]:
 
 ```text
 Note / Claim
 → reasoning / elaboration
-→ semantic change / parametric update / Prompt revision / ProgramBranch / new Program / EvaluationCase
+→ semantic change / parameter update / Prompt revision / ProgramBranch / new Program / EvaluationCase
 → Evaluation
 → EvaluationChoice.
 ```
 
-Reasoning может задать initial prior, но не `Support`; активация нового Claim
-или structural change требует последующего evidence.
+Reasoning may set an initial prior, but not `Support`; activating a new Claim or making a structural change requires subsequent evidence.
 
 ---
 
-##  Expected signal updates
+## Expected Signal Updates
 
-Прогнозы оценочных сигналов проверяются на уровне конкретного [[Memory#^def-ProgramRun|`ProgramRun`]] для каналов, которые программа фактически предсказывала. Их состав и способ получения определяются [[#Выбор обучаемых компонентов и режима обучения|при выборе компонентов]], а не добавляются для всех сигналов при каждом запуске. Исходный прогноз и итоговая оценка сопоставляются по [[#PredictionEvaluator|общим правилам PredictionEvaluator]]; совпадения канала недостаточно:
+Forecasts of evaluative signals are checked at the level of a specific [[Memory#^def-ProgramRun|`ProgramRun`]], only for channels the program actually predicted. Their composition and how they are obtained are determined during [[#Selecting Learnable Components and Learning Mode|component selection]], not added for every signal on every run. The original forecast and final assessment are compared under the shared [[#PredictionEvaluator|`PredictionEvaluator`]] rules; matching the channel alone is not sufficient:
 
 ```text
-сохранённый прогноз значения или распределения канала
-+ полученная оценка по тому же каналу
-→ EvaluationResult с применимыми метриками,
-  включая prediction_unexpectedness при наличии основы для калибровки.
+saved forecast of a channel value or distribution
++ received assessment for the same channel
+→ EvaluationResult with applicable metrics,
+  including prediction_unexpectedness when there are grounds for calibration.
 ```
 
-[[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] создаёт evidence для belief о корректности signal model. `CreditAssignmentProgram` назначает credit соответствующим PredictionTarget; `UpdatePlanner` затем выбирает estimator или параметры политики по контексту и цели обучения.
+[[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] creates evidence about belief in the correctness of a signal model. `CreditAssignmentProgram` assigns credit to the corresponding PredictionTarget; `UpdatePlanner` then selects an estimator or policy parameters based on context and learning objective.
 
-Способ вычисления expected signals является внутренней частью программы. Это может быть:
+The way expected signals are computed is internal to the program. Examples include:
 
 ```text
-domain model или simulation;
-фиксированное значение или обучаемый скаляр V;
+domain model or simulation;
+a fixed value or learnable scalar V;
 linear Ax+b;
 categorical OutcomeProfile;
-другой model-specific estimator.
+another model-specific estimator.
 ```
 
-Отдельный универсальный `PredictorState` для каждого сигнала не создаётся. Parameter update получает только обучаемый компонент, для которого предусмотрено обучение в данном случае; расхождение с фиксированным прогнозом может стать основанием для пересмотра программы.
+A universal `PredictorState` is not created for every signal. Only a learnable component designated for training in this case receives a parameter update; divergence from a fixed forecast may instead be grounds for revising the program.
 
-Для [[Evaluative-Control System#^def-SupervisorFeedbackSignal|`supervisor_feedback_signal`]] числовой прогноз и его проверка относятся к `value`. Необязательный `comment` сохраняет объяснение feedback и может помогать анализу и назначению credit; его текст не подставляется вместо числового исхода.
+For [[Evaluative-Control System#^def-SupervisorFeedbackSignal|`supervisor_feedback_signal`]], the numeric forecast and its check concern `value`. An optional `comment` retains the explanation for the feedback and may help with analysis and credit assignment; its text is not substituted for the numeric outcome.
 
-Точечные модели `V` и `Ax+b` можно оценивать и обучать по подходящим метрикам [[Process Plane/Program Evaluation and Testing#^def-PredictionError|`prediction_error`]] без `prediction_unexpectedness`; для этого сигнала дополнительно нужно распределение ожидаемых отклонений по [[Evaluative-Control System#^def-PredictionUnexpectedness|общему контракту]].
+Point models `V` and `Ax+b` can be evaluated and trained using suitable [[Process Plane/Program Evaluation and Testing#^def-PredictionError|`prediction_error`]] metrics without `prediction_unexpectedness`; that signal also requires a distribution of expected deviations under the [[Evaluative-Control System#^def-PredictionUnexpectedness|shared contract]].
 
-Target, цель обучения и привязка update различаются:
+The target, learning objective, and update binding are distinct:
 
 ```text
-ошибочный прогноз доменного результата
-→ credit для target этого результата
-→ обучение estimator-а world/process model;
+incorrect forecast of a domain outcome
+→ credit for that outcome's target
+→ train the world/process-model estimator;
 
-верный прогноз domain outcome,
-но ошибочный expected signal
-→ credit для target этого сигнала
-→ обучение estimator-а сигнала;
+correct forecast of the domain outcome,
+but incorrect expected signal
+→ credit for the signal's target
+→ train the signal estimator;
 
-верные predictions,
-но плохой выбор
-→ credit для target оцениваемого результата действий
-→ обучение политики или её оценщика полезности по соответствующей цели.
+correct predictions,
+but a poor choice
+→ credit for the evaluated action outcome
+→ train the policy or its utility estimator under the relevant objective.
 ```
-
 
 ---
 
-
-## Предсказание и наблюдение
+## Prediction and Observation
 
 #topic_details
 
-Предсказание и наблюдение являются разными видами опыта и сохраняются раздельно.
+Predictions and observations are different kinds of experience and are retained separately.
 
-Model `Program` возвращает прогноз в `result` общего [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]]: числовую оценку, предсказанное состояние, `Profile` или `OutcomeProfile`. Runtime сохраняет `ProgramResult` в `TraceEvent.output`; ссылка на прогноз адресует `result` или его нужную semantic part. Для anchored-оператора, не являющегося `Program`, сохраняется его собственный типизированный [[Memory#^def-OperatorOutput|`OperatorOutput`]]. [[Memory#^def-SemanticTrace|`SemanticTrace`]] содержит ссылку на исходное событие и является частью памяти. Python-переменная может ссылаться на тот же прогноз; отдельный объект рабочего состояния для его хранения не нужен.
+A model `Program` returns a prediction in `result` of the shared [[Process Plane/Program Layer#^def-ProgramResult|`ProgramResult[T]`]]: a numeric estimate, predicted state, `Profile`, or `OutcomeProfile`. Runtime saves `ProgramResult` in `TraceEvent.output`; a prediction reference addresses `result` or the relevant semantic part. An anchored operator that is not a `Program` saves its own typed [[Memory#^def-OperatorOutput|`OperatorOutput`]]. [[Memory#^def-SemanticTrace|`SemanticTrace`]] references the source event and is part of memory. A Python variable may reference the same prediction; no separate working-state object is needed to store it.
 
-Предсказанное состояние может быть представлено локальным [[Core data structures#^def-Facet|`Facet`]] внутри [[Memory#^def-SemanticTrace|`SemanticTrace`]], но не становится обычным состоянием объекта в persistent graph.
+A predicted state may be represented by a local [[Core data structures#^def-Facet|`Facet`]] inside [[Memory#^def-SemanticTrace|`SemanticTrace`]], but does not become an ordinary object state in the persistent graph.
 
-Для поиска прогноза при последующей проверке в графе материализуется факт о прогнозе:
+To find a prediction during a later check, materialize a fact about the prediction in the graph:
 
 ```text
 PREDICTS(
@@ -725,48 +726,48 @@ PREDICTS(
 )
 ```
 
-`prediction_target` ссылается на [[Process Plane/Program Layer#^def-PredictionTarget|предсказываемый Concept]]: свойство, состояние, событие или сигнал. `subject` задаёт объект, к которому относится прогноз.
+`prediction_target` references the [[Process Plane/Program Layer#^def-PredictionTarget|Concept being predicted]]: a property, state, event, or signal. `subject` specifies the object the prediction concerns.
 
-`PREDICTS` остаётся неизменной записью того, что модель ожидала в момент прогнозирования. Его [[Memory#^def-ResultProvenance|provenance]] ведёт к исходному результату в trace. После обучения модели этот результат не пересчитывается. Пока прогноз нужен для проверки или обучения, память сохраняет его и необходимый контекст.
+`PREDICTS` remains an immutable record of what the model expected at prediction time. Its [[Memory#^def-ResultProvenance|provenance]] leads to the source result in the trace. It is not recomputed after the model is trained. Memory retains the prediction and required context while they are needed for checking or learning.
 
-Общий поиск прогнозов и сборку связанных наблюдений выполняет [[#^def-PredictionEvaluator|`PredictionEvaluator`]] через память и граф; журнал DBOS используется для восстановления исполнения.
+[[#^def-PredictionEvaluator|`PredictionEvaluator`]] performs shared prediction search and assembly of related observations through memory and the graph; the DBOS journal is used to restore execution.
 
-[[Memory#^def-Observation|Наблюдение]] сохраняется как типизированный результат восприятия. При необходимости включить наблюдаемое состояние в persistent модель мира используется обычный путь материализации:
+[[Memory#^def-Observation|An observation]] is saved as a typed perception result. To include an observed state in the persistent world model, use the ordinary materialization path when needed:
 
 ```text
-Источник → PerceptionOperator → observation в trace
-→ при необходимости: GraphDelta
+Source → PerceptionOperator → observation in trace
+→ when needed: GraphDelta
 → persistent Facet
 ```
 
-Наблюдаемое состояние не считается абсолютно истинным. Его надёжность выражается через `Strength` и `Support`.
+An observed state is not treated as absolutely true. Its reliability is expressed through `Strength` and `Support`.
 
 ### PredictionEvaluator
 
 (def_id:: entity.PredictionEvaluator)
 > [!definition]
-> **PredictionEvaluator** — общая [[Process Plane/Program Layer#Program|Program]], которая находит сохранённые прогнозы, собирает связанные наблюдения и проверяет каждый прогноз по выбранным метрикам. Возвращает `ProgramResult[EvaluationResult[]]`: отдельный [[Process Plane/Program Evaluation and Testing#EvaluationResult|EvaluationResult]] для каждого проверяемого прогноза находится в `result`. Для выбранного PredictionTarget без назначенного прогноза вызывает `CreditAssignmentProgram`, чтобы сохранить `UnresolvedCredit`. Несопоставленный опыт обрабатывает с учётом ранее принятых решений о необходимости прогноза; случаи, требующие разбора, передаёт сознанию.
+> **PredictionEvaluator** is a shared [[Process Plane/Program Layer#Program|Program]] that finds saved predictions, gathers related observations, and checks each prediction using selected metrics. It returns `ProgramResult[EvaluationResult[]]`, with one [[Process Plane/Program Evaluation and Testing#EvaluationResult|EvaluationResult]] per checked prediction in `result`. For a selected PredictionTarget with no assigned prediction, it calls `CreditAssignmentProgram` to retain `UnresolvedCredit`. It processes unmatched experience according to prior decisions about whether a prediction is needed and passes cases requiring analysis to consciousness.
 > ^def-PredictionEvaluator
 
-Программа задачи или процесса передаёт ему новые наблюдения, контекст проверки — выбранный процесс, объект и эпизод — и метрики. Внутри `PredictionEvaluator` работают три функции:
+The task or process program passes it new observations, the evaluation context (selected process, object, and episode), and metrics. Three functions run inside `PredictionEvaluator`:
 
-1. **`match_predictions(observations, context)`** находит в памяти исходные прогнозы по `PREDICTS` и provenance. Для каждого собирает относящиеся к нему новые и ранее сохранённые наблюдения по объекту, PredictionTarget, эпизоду, времени и условиям. Возвращает наборы «прогноз + наблюдения» и наблюдения без найденного соответствия. Один прогноз может требовать нескольких наблюдений; одно наблюдение может относиться к нескольким прогнозам. Если составное наблюдение сопоставлено лишь частично, сохраняется указание на неучтённую часть и ссылка на исходное наблюдение целиком.
-2. **`evaluate_prediction(prediction, observations, metrics)`** проверяет применимость прогноза и достаточность наблюдений, вычисляет метрики и возвращает `EvaluationResult`.
-3. **`handle_unmatched_observations(observations, context)`** подготавливает из памяти и trace исходные наблюдения, выбранную программу процесса, текущий эпизод и результат поиска прогнозов. Если target выбран для прогнозирования в этом контексте, но прогноз не назначен или не найден, вызывает `CreditAssignmentProgram` с известным target и контекстом: сохраняется `UnresolvedCredit(reason="missing_prediction")` без `LearningSignal`. Если target ещё не выбран или прогнозирование в этом контексте признано ненужным, учитывает соответствующее сохранённое решение. Unresolved credits, новые случаи и основания пересмотреть прежнее решение передаёт через [[Cognition and Attention|Attention]] на рассмотрение в рамках `Task`.
+1. **`match_predictions(observations, context)`** finds source predictions in memory through `PREDICTS` and provenance. For each prediction, it gathers new and previously saved observations related by object, PredictionTarget, episode, time, and conditions. It returns prediction-observation sets and observations with no match. One prediction may require multiple observations; one observation may relate to several predictions. If a compound observation is only partially matched, the unmatched portion is identified and a reference to the complete source observation is retained.
+2. **`evaluate_prediction(prediction, observations, metrics)`** checks whether the prediction applies and the observations are sufficient, computes metrics, and returns `EvaluationResult`.
+3. **`handle_unmatched_observations(observations, context)`** prepares source observations, the selected process program, current episode, and prediction-search results from memory and trace. If a target was selected for prediction in this context but no prediction was assigned or found, it calls `CreditAssignmentProgram` with the known target and context, retaining `UnresolvedCredit(reason="missing_prediction")` without a `LearningSignal`. If no target has been selected or prediction was deemed unnecessary in this context, it accounts for the corresponding saved decision. Unresolved credits, new cases, and grounds for reconsidering prior decisions are passed through [[Cognition and Attention|Attention]] for review within a `Task`.
 
-`PredictionEvaluator` вызывает `evaluate_prediction` для найденных соответствий, а `handle_unmatched_observations` — для оставшихся наблюдений или их неучтённых частей. Отсутствие прогноза не создаёт численного `prediction_unexpectedness`, фиктивной Evaluation или `LearningSignal`; `UnresolvedCredit` фиксирует незавершённый случай для выбранного target. Не каждый наблюдаемый Concept обязан иметь прогноз. Если вызывающая программа уже располагает прогнозом и связанными наблюдениями, она может сразу использовать `evaluate_prediction` без поиска.
+`PredictionEvaluator` calls `evaluate_prediction` for matched predictions and `handle_unmatched_observations` for remaining observations or unmatched parts. A missing prediction does not create a numeric `prediction_unexpectedness`, a fictitious Evaluation, or a `LearningSignal`; `UnresolvedCredit` records an unfinished case for a selected target. Not every observed Concept needs a prediction. If the calling program already has the prediction and related observations, it can call `evaluate_prediction` directly without searching.
 
-Решение не моделировать определённый сигнал в данном контексте сохраняется вместе с причиной и областью применения. При повторении того же случая без новых оснований оно используется снова, без нового сознательного разбора. Выход за эту область или существенное изменение частоты использования процесса, его значимости либо характера feedback требует пересмотра решения. Отказ от прогнозирования не освобождает от реакции на само наблюдение. Отсутствие обязательного по контракту прогноза нельзя объяснить этим решением.
+The decision not to model a particular signal in a context is retained with its reason and scope. If the same case recurs without new grounds, reuse that decision without another conscious review. A case outside that scope or a material change in process usage frequency, importance, or feedback requires reconsideration. Declining to predict does not remove the need to respond to the observation itself. A decision cannot excuse the absence of a prediction required by contract.
 
-Сознательный разбор обязателен для каждого переданного в Attention случая. Он может быть отложен; связанные случаи можно рассматривать вместе. В интерактивном режиме сознание может разобрать подготовленный контекст сразу.
+Every case passed to Attention requires conscious review. Review may be deferred; related cases may be considered together. In interactive mode, consciousness may review the prepared context immediately.
 
-Отсутствие найденного прогноза само по себе не доказывает неполноту модели. [[Cognition and Attention#^def-Consciousness|Сознание]] выясняет причину: программа не учитывает существенное поведение; предусмотренный прогноз не был сформирован или найден; наблюдение отнесено не к тому процессу; либо прогноз для него не требовался. При подтверждённом пробеле сознание запускает структурную ревизию через [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]].
+Failure to find a prediction does not by itself prove that the model is incomplete. [[Cognition and Attention#^def-Consciousness|Consciousness]] investigates the cause: the program does not account for important behavior; an intended prediction was not produced or found; the observation was assigned to the wrong process; or no prediction was required. When a gap is confirmed, consciousness starts structural revision through [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]].
 
-Например, полученный supervisor feedback может выявить полезный, но отсутствующий прогноз. Сознание определяет, к какому решению относится feedback и где прогноз помог бы: к выбору задачи, действия или конкретной ветви. Затем оно может подключить существующую модель либо добавить локальный предиктор с выбранным режимом обучения. Сам факт feedback не требует нового регрессора: недовольство тем, что агент играет в покер вместо выполнения задачи, может относиться к выбору занятия, а не к модели покерного хода.
+For example, supervisor feedback may reveal a useful missing prediction. Consciousness determines which decision the feedback concerns and where a prediction would help: task selection, action selection, or a specific branch. It may then connect an existing model or add a local predictor with a selected learning mode. Feedback by itself does not require a new regressor: dissatisfaction that the agent is playing poker instead of completing a task may concern activity selection, not the poker-action model.
 
-Если необходимость нового компонента обнаружена при credit assignment, она также передаётся на пересмотр программы. Evaluator и credit assignment не добавляют предикторы сами. Изменение проходит через Program Lifecycle; после активации компонента дальнейшее обучение выполняется по текущему выбранному режиму. Сохранённые наблюдения можно использовать для начального обучения кандидата, но полученный после этого прогноз не считается прогнозом, существовавшим до этих наблюдений.
+If the need for a new component is discovered during credit assignment, it is also passed for program review. The evaluator and credit assignment do not add predictors themselves. The change goes through Program Lifecycle; after activation, further learning follows the currently selected mode. Saved observations may be used for initial candidate training, but a prediction made afterward is not treated as one that existed before those observations.
 
-`match_predictions`, `evaluate_prediction` и `handle_unmatched_observations` — функции одной программы, а не отдельные `Program`. Подбор данных и передача несопоставленного опыта на разбор находятся в `PredictionEvaluator`, поэтому программы процессов не реализуют эти шаги каждая для себя.
+`match_predictions`, `evaluate_prediction`, and `handle_unmatched_observations` are functions of one program, not separate `Program` instances. Matching data and passing unmatched experience for review belong to `PredictionEvaluator`, so process programs do not each implement these steps.
 
 ```python
 PredictionEvaluator.evaluate_prediction(
@@ -776,36 +777,37 @@ PredictionEvaluator.evaluate_prediction(
 ) -> EvaluationResult
 ```
 
-`prediction` — доменный payload исходного сохранённого прогноза; `T` задаётся контрактом модели. Для результата `Program` это значение из `ProgramResult.result` с provenance к соответствующей части исходного output; для обычного anchored-оператора — его типизированный результат. Типизированные наблюдения и их semantic projection сопоставляются с прогнозом по объекту, времени и условиям с учётом независимости и надёжности источников. Конкретная проверка принимает подходящие доменные схемы. `evaluate_prediction` не запускает и не изменяет модель; обучение, назначение credit и объяснение ошибки выполняются отдельно.
+`prediction` is the domain payload of the saved source prediction; `T` is specified by the model contract. For a `Program` result, it is the value from `ProgramResult.result` with provenance to the corresponding part of the original output; for an ordinary anchored operator, it is that operator's typed result. Typed observations and their semantic projections are matched to the prediction by object, time, and conditions, accounting for source independence and reliability. The specific check accepts suitable domain schemas. `evaluate_prediction` does not run or change the model; training, credit assignment, and error explanation are separate.
 
-Для [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] evaluator использует сохранённый прогноз и правило проверки по общему контракту сигнала. Если нет поддерживаемого способа задать распределение ожидаемых отклонений или расчёт не оправдан по стоимости, сигнал не вычисляется. Это не аннулирует другие доступные метрики: причины пропусков и статус определяются [[Process Plane/Program Evaluation and Testing#EvaluationResult|общим контрактом `EvaluationResult`]].
+For [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]], the evaluator uses the saved prediction and a checking rule under the shared signal contract. If there is no supported way to specify a distribution of expected deviations, or the calculation is not worth its cost, the signal is not computed. This does not invalidate other available metrics: skip reasons and status follow the [[Process Plane/Program Evaluation and Testing#EvaluationResult|shared `EvaluationResult` contract]].
 
-`PredictionEvaluator` возвращает результаты проверки вызывающей программе в `ProgramResult.result` и сохраняет их в trace со ссылками на использованные прогнозы и наблюдения. `UnresolvedCredit` сохраняются отдельно, как типизированные результаты дочернего `CreditAssignmentProgram`, и не включаются в `EvaluationResult[]`. Вызывающая программа решает, какие результаты проверки передать [[#LearningCoordinator|`LearningCoordinator`]] для обучения в рамках задачи.
+`PredictionEvaluator` returns check results to the caller in `ProgramResult.result` and saves them in the trace with references to predictions and observations used. `UnresolvedCredit` is saved separately as a typed result from a child `CreditAssignmentProgram` and is not included in `EvaluationResult[]`. The calling program decides which check results to pass to [[#LearningCoordinator|`LearningCoordinator`]] for learning within the task.
 
 (def_id:: entity.PredictionEvaluationRun)
-> [!definition]  
-> **PredictionEvaluationRun** — запуск [[#^def-PredictionEvaluator|PredictionEvaluator]] для проверки сохранённых прогнозов по наблюдениям и обработки несопоставленного опыта. Его `ProgramResult.result` содержит отдельный [[Process Plane/Program Evaluation and Testing#EvaluationResult|EvaluationResult]] для каждого проверяемого прогноза.
+> [!definition]
+> **PredictionEvaluationRun** is a run of [[#^def-PredictionEvaluator|PredictionEvaluator]] that checks saved predictions against observations and handles unmatched experience. Its `ProgramResult.result` contains a separate [[Process Plane/Program Evaluation and Testing#EvaluationResult|EvaluationResult]] for every prediction checked.
 > ^def-PredictionEvaluationRun
 
-Статусы и причины пропуска метрик следуют [[Process Plane/Program Evaluation and Testing#EvaluationResult|общему контракту `EvaluationResult`]]. При `evaluated` рассчитана хотя бы одна выбранная метрика; `prediction_unexpectedness` входит в результат, только если он рассчитан:
+Statuses and metric skip reasons follow the [[Process Plane/Program Evaluation and Testing#EvaluationResult|shared `EvaluationResult` contract]]. With `evaluated`, at least one selected metric has been calculated; `prediction_unexpectedness` is included only if it was calculated:
 
 ```text
 PredictionEvaluationRun
-→ EvaluationResult для каждого прогноза
+→ EvaluationResult for each prediction
   → NonEmpty[MetricSample]
-→ если результат выбран для обучения: LearningCoordinator
+→ if selected for learning: LearningCoordinator
   → LearningSignal
 ```
 
-`NotApplicableResult` и `UnresolvedEvaluationResult` сохраняются как история evaluation, но [[#^def-LearningSignal|`LearningSignal`]] не создают.
+`NotApplicableResult` and `UnresolvedEvaluationResult` are retained as evaluation history but do not create [[#^def-LearningSignal|`LearningSignal`]].
 
-Вероятностный прогноз не получает бинарный ярлык «подтверждён» или «опровергнут». Наблюдение является новым evidence, а метрика показывает, насколько этот исход соответствовал epistemic [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]] competing alternatives либо [[Uncertainty and Belief Tracking in the World Model#Probabilistic process outcomes|`OutcomeProfile`]] стохастического процесса. Эти представления не взаимозаменяемы.
+A probabilistic prediction does not receive a binary “confirmed” or “refuted” label. An observation is new evidence, while a metric indicates how well the outcome matched an epistemic [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]] over competing alternatives or an [[Uncertainty and Belief Tracking in the World Model#Probabilistic Process Outcomes|`OutcomeProfile`]] for a stochastic process. These representations are not interchangeable.
 
-Если позднее появляется более полное или исправленное наблюдение, создаётся новый [[#^def-PredictionEvaluationRun|`PredictionEvaluationRun`]]. Исходный прогноз и предыдущие оценки сохраняются как история.
+If a more complete or corrected observation appears later, create a new [[#^def-PredictionEvaluationRun|`PredictionEvaluationRun`]]. Retain the original prediction and earlier evaluations as history.
 
-### Гипотезы
+### Hypotheses
 
-Фиксируются через связь:
+Record hypotheses through the relation:
+
 ```python
 HYPOTHESIZES(
   reasoning_run,
@@ -815,25 +817,24 @@ HYPOTHESIZES(
 )
 ```
 
-Таким образом, память раздельно хранит:
+Memory therefore stores these separately:
 
 ```text
-что ожидала модель;
-при каких условиях был сделан прогноз;
-что было наблюдено;
-можно ли было проверить прогноз;
-насколько наблюдение соответствовало прогнозу;
-как результат повлиял на модель.
+what the model expected;
+the conditions under which the prediction was made;
+what was observed;
+whether the prediction could be checked;
+how well the observation matched the prediction;
+how the result affected the model.
 ```
-
 
 ---
 
-## Runtime Integration, simplified 
+## Runtime Integration, Simplified
 
-Запуск проверок и выбор опыта для обучения принадлежат вызывающей программе в контексте `Task`. Наблюдения могут поступать в evidence-ветвь coordinator-а и без Evaluation.
+The calling program owns the launch of checks and the selection of experience for learning within a `Task`. Observations may enter the coordinator's evidence path without Evaluation.
 
-Ниже показана прогнозная ветвь; [[#^outcome-credit|Evaluation результатов Task или процесса]] также поступает в общий `LearningCoordinator`.
+The diagram below shows the prediction path; [[#^outcome-credit|Evaluation of Task or process outcomes]] also reaches the shared `LearningCoordinator`.
 
 ```text
 ProgramRun
@@ -844,35 +845,35 @@ Observation
         ↓
 PredictionEvaluator
         └─ match_predictions
-             ├─ найденные соответствия → evaluate_prediction → EvaluationResult
-             └─ наблюдения без прогноза → handle_unmatched_observations
-                  ├─ выбранный PredictionTarget → CreditAssignmentProgram
+             ├─ matches found → evaluate_prediction → EvaluationResult
+             └─ observations without prediction → handle_unmatched_observations
+                  ├─ selected PredictionTarget → CreditAssignmentProgram
                   │   → UnresolvedCredit(target, missing_prediction)
-                  │   → сохранить → Attention; без LearningSignal и parameter update
-                  └─ прочие случаи → учесть ранее принятое решение;
-                      случаи для разбора → Attention → сознание
+                  │   → retain → Attention; no LearningSignal or parameter update
+                  └─ other cases → apply prior decision;
+                      cases needing review → Attention → consciousness
 
-EvaluationResult, выбранные для обучения
+EvaluationResult selected for learning
         ↓
 LearningCoordinator
         ├─→ EvidenceAssessmentProgram
         │   → EvidenceAssignment[]
         │   → Evidence lifecycle
         │
-        └─→ LearningSignal, только для EvaluatedResult
-            → CreditAssignmentProgram: назначить credit LearningTarget
+        └─→ LearningSignal, only for EvaluatedResult
+            → CreditAssignmentProgram: assign credit to LearningTarget
             → CreditAssignmentResult[]
               ├─→ UnresolvedCredit(target, ambiguous_attribution)
-              │   → store / analysis
+              │   → store / analyze
               │   → no parameter update
               │
               └─→ LearningCredit(target, signal)
-                  → UpdatePlanner: выбрать estimator или параметры Program
+                  → UpdatePlanner: select estimator or Program parameters
                   → PreparedUpdate
                   → UpdateTransactionManager.apply
                   → UpdateDispatcher
-                  → updater по контракту состояния
-                  → atomic commit: updated parametric state + UpdateReceipt
+                  → updater under the state's contract
+                  → atomic commit: updated parameter state + UpdateReceipt
 
 if mismatch remains unexplained:
         ↓

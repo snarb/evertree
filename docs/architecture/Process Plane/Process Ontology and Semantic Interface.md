@@ -1,98 +1,89 @@
+Process ontology organizes Concepts, processes, and their Programs through semantic relationships.
 
+### Program Canonicalization and Deduplication
 
-Process ontology организует Concepts, процессы и связанные с ними Programs через семантические отношения.
+Programs are organized through semantic links according to [[Core data structures#^04821b|Concept Canonicalization and Semantic Linking]].
 
-### Program canonicalization and deduplication
+### Program-Scoped Semantic Links
 
-Программы упорядочены через семантические связи согласно [[Core data structures#^04821b |Concept Canonicalization and Semantic Linking]]
+The agent may [[Semantics Plane#^e24496|cache]] results of analyzing process relationships and factors through semantic links. It creates them only when justified. A link may concern the process itself or be scoped by program when it depends on a particular `Program` implementation.
 
-### Program-scoped semantic links
+Examples:
 
-Агент может [[Semantics Plane#^e24496|кешировать]] результаты анализа связей и факторов процесса через семантические связи. Он создаёт их только когда это оправдано. Связь может относиться к самому процессу или быть scoped by program, если зависит от конкретной реализации `Program`.
-
-Примеры:
-
-```
+```text
 PROGRAM_CORRELATES(program, factor, target)
 PROGRAM_FACTOR_ROLE(program, factor, target, role)
 PROGRAM_NO_EFFECT(program, factor, target)
 PROGRAM_EXCLUDES(program, concept_or_relation)
 ```
 
-Такие связи не являются глобальной истиной мира. Они фиксируют знание, полезное для конкретной программы.
+These links are not global truths about the world. They record knowledge useful to a particular program.
 
-`PROGRAM_EXCLUDES(program, x)` означает, что программа сознательно исключает `x` из учитываемого ею представления процесса как нерелевантное, избыточное или неиспользуемое в данном подходе.
+`PROGRAM_EXCLUDES(program, x)` means that the program intentionally excludes `x` from its representation of the process as irrelevant, redundant, or unused by its approach.
 
- [[#^0c1eb8|CONTROL_CONFLICT RelationType]]
- 
-### TransitionType (отношение)
+[[#^0c1eb8|CONTROL_CONFLICT RelationType]]
 
-Чтобы описать “какой переход произошёл”, существует TransitionType(отношение).
+### TransitionType (Relation)
 
-**TransitionType** — это концепт процессного отношения: тип n-арного изменения во времени.
+To describe “which transition occurred,” EverTree uses a `TransitionType` (relation).
 
-Лингвистически `TransitionType` соответствует событийному предикату: обычно глаголу или глагольной конструкции, описывающей изменение во времени:  
-`BURNS(fuel)`, `MARRIES(person_a, person_b)`, `CONVINCES(person_a, person_b)`.
+**`TransitionType`** is a process-relation concept: a type of n-ary change over time.
 
+Linguistically, `TransitionType` corresponds to an event predicate, usually a verb or verb phrase that describes change over time: `BURNS(fuel)`, `MARRIES(person_a, person_b)`, `CONVINCES(person_a, person_b)`.
 
-Он задаёт:
+It defines:
 
-- смысл изменения;
-- сигнатуру аргументов;
-- роли участников перехода.
+- the meaning of the change;
+- the argument signature;
+- the roles of transition participants.
 
-Отличие:
+The distinction:
 
-[[Semantics Plane#^def-RelationType |RelationType]]   — статическое отношение: PART_WHOLE(wheel, car)
-TransitionType — динамическое отношение: BREAKS(agent, object)
+- [[Semantics Plane#^def-RelationType|`RelationType`]] — a static relation: `PART_WHOLE(wheel, car)`;
+- `TransitionType` — a dynamic relation: `BREAKS(agent, object)`.
 
+A process noun, such as **“Burning,”** is a `ProcessConcept`. The verbal transition **“burns / sets on fire”** is a `TransitionType`.
 
-Процесс-существительное, например **“Горение”**, — это `ProcessConcept`.  
-Глагольный переход **“горит / сжигает”** — это `TransitionType`.
-
-`TransitionType` живёт в общей лестнице абстракции и учавсвует в [[Core data structures#^04821b |Concept Canonicalization and Semantic Linking]]
-
+`TransitionType` belongs to the shared abstraction hierarchy and participates in [[Core data structures#^04821b|Concept Canonicalization and Semantic Linking]].
 
 ### ProcessConcept
 
-**ProcessConcept — это обычно **существительное / nominalized process concept**, например :  "Горение", "Запуск двигателя". 
+**`ProcessConcept` is usually a noun or nominalized process concept**, for example “Burning” or “Engine Start.”
 
-Лингвистически он обычно выражается существительным или номинализацией процесса.
+Linguistically, it is usually expressed as a noun or nominalization of a process.
 
-Он отвечает на вопрос: что это за процесс?
-
+It answers the question: what process is this?
 
 ```python
 ProcessConcept: Concept {
   name: <string>
-    "Имя процесса как nominalized process concept: Burning, EngineStart, PokerHandProcess."
+    "Process name as a nominalized process concept: Burning, EngineStart, PokerHandProcess."
 
   description?: <string>
-    "Краткое описание смысла процесса и его границ."
+    "Brief description of the process's meaning and boundaries."
 
   primary_transition_type?: <TransitionType>
-    "Главный глагольный TransitionType, через который процесс обычно проявляется."
+    "The main verbal TransitionType through which the process is usually expressed."
 
   active_model?: <Program>
-    "Текущая выбранная Program с model ∈ Program.roles."
+    "The currently selected Program with model ∈ Program.roles."
 
   active_exec?: <Program>
-    "Текущая выбранная Program с exec ∈ Program.roles."
+    "The currently selected Program with exec ∈ Program.roles."
 
   belief_data?: <BeliefData>
-    "Уверенность в текущем операционном понимании процесса."
+    "Confidence in the current operational understanding of the process."
 }
 ```
 
-**`Process`** — общий корневой концепт таксономии процессов. Все остальные типы процессов связаны с ним напрямую или через предков отношением [[Semantics Plane#^spec-SUBTYPE_OF|`SUBTYPE_OF`]]. Это конкретный концепт графа; `ProcessConcept` обозначает тип передаваемых объектов. Таксономия связывает виды процессов; составные шаги процесса описываются отдельно.
+**`Process`** is the general root concept of the process taxonomy. All other process types are linked to it directly or through ancestors by [[Semantics Plane#^spec-SUBTYPE_OF|`SUBTYPE_OF`]]. It is a concrete graph concept; `ProcessConcept` denotes the type of objects being passed. The taxonomy links kinds of processes; composite process steps are described separately.
 ^def-ProcessRoot
 
-Собственные процессы агента образуют поддерево `SelfProcess` (представление **Self/Process**). Оно связано с общим `Process` через `SUBTYPE_OF`, с Self — через `PART_WHOLE`. Общий `Process` не переносится под Self: он также организует процессы внешнего мира. Начальные подтипы собственной ветви — `TaskManagement`, `CognitiveControl`, `MemoryProcessing` и `Learning`; каталог `src/evertree/processes/` отражает именно эту ветвь.
+The agent's own processes form the `SelfProcess` subtree (the **Self/Process** representation). It is linked to the general `Process` through `SUBTYPE_OF` and to Self through `PART_WHOLE`. The general `Process` is not moved under Self: it also organizes processes in the external world. The initial subtypes in the agent's branch are `TaskManagement`, `CognitiveControl`, `MemoryProcessing`, and `Learning`; `src/evertree/processes/` represents exactly this branch.
 
+### Semantic Organization: Concept → ProcessConcept → Program
 
-### Semantic organization: Concept → ProcessConcept → Program
-
-Основной semantic anchor — `Concept`. С ним связываются процессы, относящиеся к этому предмету, а с процессами — Programs, которые их моделируют или исполняют.
+The primary semantic anchor is `Concept`. Processes concerning that subject are linked to it, and Programs that model or execute those processes are linked to the processes.
 ^semantic-program-organization
 
 #### PROCESS_SUBJECT
@@ -101,7 +92,7 @@ ProcessConcept: Concept {
 PROCESS_SUBJECT(process: ProcessConcept, subject: Concept)
 ```
 
-`subject` — основной semantic Concept, относительно которого организован данный `ProcessConcept`. Связь нужна для устойчивой организации и retrieval:
+`subject` is the primary semantic Concept around which this `ProcessConcept` is organized. The link supports stable organization and retrieval:
 
 ```text
 PROCESS_SUBJECT(PromptPreparation, Prompt)
@@ -109,7 +100,7 @@ PROCESS_SUBJECT(PromptEvaluation, Prompt)
 PROCESS_SUBJECT(PromptOptimization, Prompt)
 ```
 
-Она не заменяет более точные semantic relations:
+It does not replace more precise semantic relations:
 
 ```text
 PromptPreparation → PRODUCES / TRANSFORMS → Prompt
@@ -117,7 +108,7 @@ PromptEvaluation → EVALUATES → Prompt
 PromptOptimization → IMPROVES → Prompt
 ```
 
-`PROCESS_SUBJECT` не назначается искусственно, если у процесса нет естественного основного subject.
+Do not assign `PROCESS_SUBJECT` artificially when a process has no natural primary subject.
 
 #### PROGRAM_FOR_PROCESS
 
@@ -125,35 +116,35 @@ PromptOptimization → IMPROVES → Prompt
 PROGRAM_FOR_PROCESS(program: Program, process: ProcessConcept)
 ```
 
-Связь означает, что `Program` моделирует или реализует процесс, описанный данным `ProcessConcept`; конкретная функция определяется [[Program Layer#Program roles|`Program.roles`]]. Она охватывает все Programs процесса: active, candidate, alternative, rejected и archived.
+The link means that a `Program` models or implements the process described by this `ProcessConcept`; its specific function is defined by [[Program Layer#Program Roles|`Program.roles`]]. It covers all Programs for the process: active, candidate, alternative, rejected, and archived.
 
-`ProcessConcept.active_model` и `ProcessConcept.active_exec` — ссылки на текущие выбранные Programs с соответствующими основными ролями среди всех `PROGRAM_FOR_PROCESS` данного процесса.
+`ProcessConcept.active_model` and `ProcessConcept.active_exec` refer to the currently selected Programs with the corresponding primary roles among all `PROGRAM_FOR_PROCESS` links for that process.
 
-Одна `Program` обычно имеет один основной process. Если механизм действительно представляет несколько процессов как единое целое, предпочтительно создать соответствующий composite `ProcessConcept`.
+A `Program` usually has one primary process. If a mechanism truly represents several processes as a unit, it is preferable to create the corresponding composite `ProcessConcept`.
 
-#### Semantic scope and implementation contracts
+#### Semantic Scope and Implementation Contracts
 
-Уровни не взаимозаменяемы:
+These levels are not interchangeable:
 
 ```text
 ProcessConcept
-→ semantic scope процесса;
+→ semantic scope of the process;
 
 PROGRAM_FOR_PROCESS
-→ какие Programs относятся к процессу;
+→ which Programs belong to the process;
 
 Program.read_contract / Program.output_contract
-→ что конкретная реализация фактически
-  читает, предсказывает или изменяет.
+→ what a specific implementation actually
+  reads, predicts, or changes.
 ```
 
-Контракт конкретной `Program` может покрывать только часть semantic scope процесса. Область модели задаётся её входами, выходами и условиями применения; полное описание остальных аспектов процесса не является условием запуска и проверки. Таксономия и связи с программами сохраняют организацию и поиск, а подробности добавляются по практической необходимости, чтобы не расширять модель без пользы для её задач.
+A particular `Program` contract may cover only part of the process's semantic scope. The model's scope is defined by its inputs, outputs, and conditions of applicability; a complete description of every other process aspect is not required to run or evaluate it. The taxonomy and links to programs provide organization and retrieval, while detail is added as needed in practice so that the model is not expanded without benefit to its tasks.
 
-Выход контракта за границы процесса или противоречие его смыслу может потребовать [[Program Lifecycle and Evolution#Structural revision|structural revision]]. Непокрытая часть требует пересмотра конкретной программы только при нарушении её контракта или подтверждённом пробеле, мешающем её заявленному назначению. Новая связь [[#PART_WHOLE in process responsibility|`PART_WHOLE`]] или [[#PROCESS_VARIABLE|`PROCESS_VARIABLE`]] сама по себе такого требования не создаёт.
+A contract that exceeds the process boundaries or contradicts its meaning may require [[Program Lifecycle and Evolution#Structural Revision|structural revision]]. An uncovered part requires revision of a particular program only when its contract is violated or a confirmed gap prevents its stated purpose. A new [[#PART_WHOLE in Process Responsibility|`PART_WHOLE`]] or [[#PROCESS_VARIABLE|`PROCESS_VARIABLE`]] link alone does not require such a revision.
 
 #### Examples
 
-Оптимизация [[Core data structures#^def-Prompt|`Prompt`]]:
+Optimizing a [[Core data structures#^def-Prompt|`Prompt`]]:
 
 ```text
 Prompt                                      # Concept
@@ -175,7 +166,7 @@ PromptOptimizationOutcomeModel
    └── roles = {model}
 ```
 
-`Prompt` — предмет этих процессов, а подготовка, проверка и улучшение выполняются связанными `Program`. Разные варианты могут обслуживать один семантический интерфейс для разных моделей; [[Core data structures#^note-claim-prompt-evaluation|результат оценки]] относится к проверенным версиям и условиям, а не ко всем вариантам сразу.
+`Prompt` is the subject of these processes, while preparation, evaluation, and improvement are performed by linked `Program`s. Different variants may serve the same semantic interface for different models; the [[Core data structures#^note-claim-prompt-evaluation|evaluation result]] applies to the tested versions and conditions, not to every variant at once.
 
 Self-improvement:
 
@@ -199,170 +190,155 @@ ImprovementOutcomeModel
    └── roles = {model}
 ```
 
-### Маршрутизация наблюдений
+### Routing Observations
 
 (def_id:: entity.ProcessRouter)
-> **ProcessRouter** — программа, которая по смыслу наблюдения и контексту задачи определяет подходящий процесс и его конкретное исполнение для вызывающего: сознания или выполняющей задачу `exec`-программы.
+> **`ProcessRouter`** — a program that uses the meaning of an observation and task context to identify a suitable process and its specific execution for the caller: consciousness or the `exec` program running the task.
 > ^def-ProcessRouter
 
-Router вызывается внутри уже установленного контекста `Task`; [[Cognition and Attention#^input-reception|приём входа и первоначальная привязка к задаче]] предшествуют этому вызову. Если результат инструмента уже связан с ожидающим вызовом, runtime доставляет его напрямую. Router нужен, когда смыслового адресата требуется определить или пересмотреть; он не является обязательным шагом для каждого входа.
+The Router is called within an already established `Task` context; [[Cognition and Attention#^input-reception|input reception and initial task binding]] happen before this call. If a tool result is already associated with a waiting call, the runtime delivers it directly. The Router is needed when the semantic recipient must be identified or reconsidered; it is not a mandatory step for every input.
 
-Router использует семантический поиск по графу: участников, временные связи, [[#^semantic-program-organization|область процесса и связанные Programs]], а также контекст недавно активных исполнений. Он сопоставляет наблюдение с конкретным объектом и эпизодом: две попытки запуска одного двигателя могут принадлежать разным исполнениям одного процесса.
+The Router uses semantic graph search: participants, temporal relationships, [[#^semantic-program-organization|process scope and associated Programs]], and the context of recently active executions. It matches an observation to a specific object and episode: two attempts to start the same engine may belong to separate executions of the same process.
 
-Для одного контекста стандартный путь использует одну выбранную рабочую программу или композицию. При делегировании это `exec`-программа и вызываемые ею модели и подпрограммы; сознание также может непосредственно организовать отдельный вызов. Вызывающий использует результат router, чтобы продолжить подходящее существующее исполнение; новое создаётся, когда начинается отдельный эпизод или требуется новая работа по задаче. Каждое наблюдение само по себе не создаёт новый запуск. Живое или выгруженное состояние исполнения обрабатывает [[Cognition and Attention#^durable-program-execution|runtime]].
+For one context, the standard path uses one selected working program or composition. When delegating, this is an `exec` program and the models and subprograms it calls; consciousness may also directly organize a separate call. The caller uses the Router result to continue an appropriate existing execution; a new one is created when a separate episode begins or new task work is needed. Each observation does not create a new run by itself. The [[Cognition and Attention#^durable-program-execution|runtime]] manages live or unloaded execution state.
 
-Несколько аспектов наблюдения могут требовать разных подпрограмм этой композиции. Это не означает выбор всех альтернативных моделей или независимый запуск каждого найденного процесса. Альтернативы остаются доступны для явной проверки и улучшения в отдельных задачах.
+Several aspects of an observation may require different subprograms within this composition. This does not mean selecting all alternative models or independently running every process found. Alternatives remain available for explicit evaluation and improvement in separate tasks.
 
-Если подходящего процесса, программы или однозначной привязки к исполнению нет, router возвращает неразрешённый случай вызывающему. Сознание разбирает его в текущей задаче, а `exec`-программа при необходимости запрашивает для своей задачи [[Cognition and Attention#Внимание (`Attention`)|сознательную обработку]]. Создание или изменение программы проходит через [[Program Lifecycle and Evolution|Program Lifecycle]]; результат поиска сам по себе не создаёт готовую модель.
+If there is no suitable process, program, or unambiguous execution binding, the Router returns an unresolved case to the caller. Consciousness investigates it within the current task; when needed, an `exec` program requests [[Cognition and Attention#Attention (`Attention`)|conscious processing]] for its task. Program creation or change goes through the [[Program Lifecycle and Evolution|Program Lifecycle]]; a search result alone does not create a ready-made model.
 
-После выбора исполнения вызывающий поручает runtime доставку наблюдения в его [[Program Layer#^process-observation-input|общий типизированный вход]]. Router определяет подходящего адресата, а исполняющая программа определяет смысл наблюдения внутри процесса, текущее состояние и нужные ветви обработки. Это разделение сохраняет единую ответственность за действия и не расходует ресурсы на автоматическое исполнение всех кандидатов.
+After an execution is selected, the caller asks the runtime to deliver the observation to its [[Program Layer#^process-observation-input|shared typed input]]. The Router identifies a suitable recipient; the executing program interprets the observation within the process, determines its current state, and chooses the appropriate processing branches. This keeps responsibility for actions in one place and avoids automatically running every candidate.
 
-Выбрав целевую программу, сознание или вызывающая `exec`-программа при необходимости организует [[Program Layer#^def-ArgumentPreparation|`ArgumentPreparation`]] по её интерфейсу и [[Program Layer#^program-input-requirements|`requirements`]], выполняет вызов и учитывает [[Program Layer#^program-feedback|feedback]]. [[Cognition and Attention#^def-Perception|`Perception`]] готовит порученные наблюдения, но не выбирает и не вызывает программу процесса. Это вложенная работа внутри [[Cognition and Attention#^agent-processing-cycle|общего цикла агента]]; взаимодействие показано в [[Program Layer#^perception-requirements-feedback|примере восприятия]].
+After selecting a target program, consciousness or the calling `exec` program may prepare [[Program Layer#^def-ArgumentPreparation|`ArgumentPreparation`]] according to its interface and [[Program Layer#^program-input-requirements|`requirements`]], call it, and use its [[Program Layer#^program-feedback|feedback]]. [[Cognition and Attention#^def-Perception|`Perception`]] prepares assigned observations but does not select or invoke the process program. This is nested work within the [[Cognition and Attention#^agent-processing-cycle|general agent cycle]]; the interaction is shown in the [[Program Layer#^perception-requirements-feedback|perception example]].
 
-### Process responsibility structure
+### Process Responsibility Structure
 
 #topic_core
 
-`ProcessConcept` задаёт смысл процесса: что это за процесс и каковы его границы на концептуальном уровне.
+`ProcessConcept` defines the meaning of a process: what kind of process it is and what its conceptual boundaries are.
 
-**Process Responsibility Scope** — это рабочая структура ответственности процесса, производная от:
+**Process Responsibility Scope** is a working responsibility structure derived from:
 
-* `ProcessConcept.description`;
-* `PART_WHOLE(part, process)`;
-* `REALIZES_PROCESS(transition_type, process_concept)`;
-* subtype/special-case links;
-* semantic links, созданных после анализа;
+- `ProcessConcept.description`;
+- `PART_WHOLE(part, process)`;
+- `REALIZES_PROCESS(transition_type, process_concept)`;
+- subtype/special-case links;
+- semantic links created after analysis.
 
-Отвечает на вопрос:
-
-```text
-какие концепты, изменения, участники и outcomes относятся к этому процессу
-на уровне смысла?
-```
-
-####  PART_WHOLE in process responsibility
-
-
-В Process Plane связь `PART_WHOLE(part, process)` используется для задания смысловой структуры процесса: из каких значимых частей состоит процесс как целое.
-
-Общий смысл `PART_WHOLE` остаётся мериологическим:
+It answers:
 
 ```text
-part является частью whole (состав)
+Which concepts, changes, participants, and outcomes belong to this process
+at the level of meaning?
 ```
 
-В контексте процесса это читается так:
+#### `PART_WHOLE` in Process Responsibility
+
+In the Process Plane, `PART_WHOLE(part, process)` defines the semantic structure of a process: which significant parts make up the process as a whole.
+
+The general meaning of `PART_WHOLE` remains mereological:
 
 ```text
-part является частью процесса и может участвовать в его объяснении, prediction, memory retrieval или evaluation.
+part is a component of whole (composition)
 ```
 
-`PART_WHOLE` сам по себе не означает, что программа обязана читать или предсказывать эту часть.
-
-Он только говорит:
+In a process context, this means:
 
 ```text
-эта часть принадлежит смысловой структуре процесса.
+part belongs to the semantic structure of the process and may contribute
+to its explanation, prediction, memory retrieval, or evaluation.
 ```
 
-Дальше возможны разные случаи:
+`PART_WHOLE` alone does not mean that a program must read or predict that part. It only says that the part belongs to the process's semantic structure.
+
+Different cases are possible:
 
 ```text
 part stable in episode
-→ может быть input/context для программы
+→ may be input/context for a program
 
 part changes in episode
-→ может стать PROCESS_VARIABLE процесса
+→ may become a PROCESS_VARIABLE of the process
 
-part changes, не покрыт программой и выявлен пробел по её контракту или назначению
-→ Structural revision 
+part changes, is not covered by the program, and a gap is found in its
+contract or purpose
+→ structural revision
 
-part оказался нерелевантен
-→ сознание агента может удалить связь, ослабить её или оставить как weak semantic association
+part turns out to be irrelevant
+→ consciousness may remove the link, weaken it, or retain it as a weak semantic association
 ```
 
-Например:
+For example:
 
 ```text
 PART_WHOLE(CardDeal, PokerHandProcess)
 ```
 
-Если часть процесса осознана как значимая для оценки моделей процесса, агент может дополнительно создать:
+If a process part is recognized as significant for evaluating process models, the agent may additionally create:
 
 ```text
 PROCESS_VARIABLE(process, part_or_axis)
 ```
 
-
-
 #### PROCESS_VARIABLE
 
-`PROCESS_VARIABLE(process, variable)` — семантическая связь,  
-указывающая, что `variable` является значимой изменяемой величиной,  
-через которую описывается динамика данного процесса.
+`PROCESS_VARIABLE(process, variable)` is a semantic link indicating that `variable` is a significant changing quantity used to describe the dynamics of this process.
 
 ```text
 PART_WHOLE
-→ из каких частей состоит процесс;
+→ which parts make up the process;
 
 PROCESS_VARIABLE
-→ значимые изменяемые величины процесса;
+→ significant changing quantities of the process;
 
 TRAJECTOR
-→ через какую основную перспективу процесс рассматривается.
+→ the primary perspective from which the process is considered.
 ```
 
-`PROCESS_VARIABLE` принадлежит semantic model процесса и не зависит  
-от конкретной реализации `Program`.
+`PROCESS_VARIABLE` belongs to the process semantic model and does not depend on a specific `Program` implementation.
 
-Variable может быть:
+A variable may be:
 
 ```text
 observable
-→ имеет независимый observation path;
+→ has an independent observation path;
 
 latent
-→ выводится моделью и проверяется
-  через observable consequences;
+→ inferred by a model and checked
+  through observable consequences;
 
-deterministic или random;
-native property или relation/transition-backed reading.
+deterministic or random;
+native property or relation/transition-backed reading.
 ```
 
-Наблюдаемость определяется относительно конкретного process,  
-context и evaluator-а, а не хранится как постоянный тип variable.
+Observability is determined relative to a specific process, context, and evaluator; it is not stored as a permanent variable type.
 
-Связь не означает, что каждая модель процесса обязана возвращать  
-prediction этой variable.
+The link does not mean that every process model must return a prediction for the variable.
 
-Выбранная для прогнозирования величина выступает как [[Program Layer#^def-PredictionTarget|PredictionTarget]] в контракте модели. Эта роль не создаёт отдельный Concept или estimator автоматически.
+A quantity selected for prediction serves as a [[Program Layer#^def-PredictionTarget|`PredictionTarget`]] in the model contract. This role does not automatically create a separate Concept or estimator.
 
-Граница между semantic scope процесса и coverage конкретной реализации задана в [[#^semantic-program-organization|Semantic organization]]. Anchored claims отдельно описывают внутреннюю семантическую структуру реализации.
+The boundary between process semantic scope and coverage by a specific implementation is defined in [[#^semantic-program-organization|Semantic Organization]]. Anchored claims separately describe the implementation's internal semantic structure.
 
-Сопоставление этих уровней даёт:
+Comparing these levels gives:
 
 ```text
-required output отсутствует во время ProgramRun
+required output is missing during ProgramRun
 → structural revision;
 
-process variable не покрыта Program, но необходима по её контракту или назначению
+process variable is not covered by a Program but is required by its
+contract or purpose
 → structural revision;
 
-prediction и observations доступны для проверки
-→ применимые метрики; prediction_unexpectedness при наличии основы для калибровки.
+prediction and observations are available for checking
+→ applicable metrics; prediction_unexpectedness if there is a basis for calibration.
 ```
 
-Прямой [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] вычисляется для observable variable при наличии сохранённого прогноза, основы для калибровки и достаточных наблюдений, не выведенных из самого прогноза. Случайность процесса и зависимости между наблюдениями учитываются в проверке; наблюдения вне её условий и недостаток данных не создают нулевой сигнал.
+Direct [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] is calculated for an observable variable when a saved prediction, a calibration basis, and sufficient observations not inferred from that prediction are available. Process randomness and dependencies among observations are accounted for; observations outside the evaluation conditions and insufficient data do not produce a zero signal.
 
-Latent variable получает evidence косвенно через observable claims  
-и downstream outcomes, зависящие от неё.
+A latent variable receives indirect evidence through observable claims and downstream outcomes that depend on it.
 
-В `PROCESS_VARIABLE` следует ссылаться на типизированную величину  
-с определённым value space и способом чтения. Сырые `RelationType`  
-и `TransitionType` не используются напрямую; вместо них задаются  
-relation-backed или transition-backed variables.
+`PROCESS_VARIABLE` should reference a typed quantity with a defined value space and reading method. Raw `RelationType` and `TransitionType` are not used directly; instead, define relation-backed or transition-backed variables.
 
-Примеры:
+Examples:
 
 ```text
 PROCESS_VARIABLE(PokerHandProcess, CardDeal)
@@ -374,50 +350,47 @@ PROCESS_VARIABLE(EngineStartProcess, EngineStartOutcome)
 PROCESS_VARIABLE(VehicleMovement, SurfaceUnder)
 ```
 
-Связь создаётся только если variable ожидаемо полезна для моделирования процесса и семантически опрадана.  
-Она не используется для технических runtime variables и малозначимых  
-изменений, которые не требуют самостоятельного моделирования.).
+Create the link only when the variable is expected to help model the process and is semantically justified. Do not use it for technical runtime variables or minor changes that do not warrant independent modeling.
 
-Если наблюдается изменение `x`, а активная программа процесса его не предсказывает, выясняется, был ли прогноз обязательным и относится ли наблюдение к scope программы. Нарушение контракта или подтверждённый пробел модели передаётся в structural revision.
+If a change in `x` is observed but the active process program does not predict it, determine whether the prediction was required and whether the observation falls within the program's scope. A contract violation or confirmed model gap is passed to structural revision.
 
-Если величина действительно изменяется в рамках процесса, семантически относится к его динамике и её моделирование приносит ожидаемую пользу, она представляется как `PROCESS_VARIABLE`.
+If a quantity actually changes during the process, is semantically part of its dynamics, and modeling it is expected to be useful, represent it as a `PROCESS_VARIABLE`.
 
-Если эти условия не выполняются, величина либо не относится к процессу в строгом смысле, либо считается недостаточно значимой для самостоятельного моделирования.
+If these conditions do not hold, the quantity either does not strictly belong to the process or is not significant enough to model independently.
 
-Граница между значимыми и незначимыми переменными часто неоднозначна и может меняться по мере накопления опыта и является частью обучения модели процесса. Её определяет обучаемая метапрограмма:
+The boundary between significant and insignificant variables is often ambiguous; it may change as experience accumulates and is part of learning the process model. It is determined by the learnable metaprogram:
 
-```
+```text
 ProcessVariableCurationProgram
 ```
 
-#### Random variables as process state variables
-
+#### Random Variables as Process State Variables
 #topic_core
 
-Мы считаем random variable тем же способом, которым конкретная программа моделирует `PROCESS_VARIABLE`.
+A random variable is treated in the same way as a `PROCESS_VARIABLE` modeled by a particular program.
 
-Пример: poker hand.
+Example: a poker hand.
 
 ```text
 PART_WHOLE(CardDeal, PokerHandProcess)
 PROCESS_VARIABLE(PokerHandProcess, CardDeal)
 ```
 
-В начале hand:
+At the start of a hand:
 
 ```text
 CardDeal.value = None
 ```
 
-После раздачи:
+After the deal:
 
 ```text
 CardDeal.value = [Ah, Ks]
 ```
 
-Неизвестное до раздачи значение `CardDeal.value` не заменяет прогноз. Если программа должна моделировать `CardDeal`, но не возвращает прогноз, требуется structural revision; числовой `prediction_unexpectedness` для отсутствующего прогноза не вычисляется.
+The fact that `CardDeal.value` is unknown before the deal does not replace a prediction. If a program is required to model `CardDeal` but returns no prediction, structural revision is required; numerical `prediction_unexpectedness` is not calculated for a missing prediction.
 
-Правильная программа не обязана угадать конкретные карты заранее. Она должна вернуть probability profile:
+A correct program does not have to guess the specific cards in advance. It should return a probability profile:
 
 ```text
 P(card_deal | deck_state, known_cards, rules)
@@ -426,83 +399,75 @@ P(card_deal | deck_state, known_cards, rules)
 Learning dynamics:
 
 ```text
-1. Наблюдается, что программа не моделирует CardDeal → разбор coverage программы.
-2. Агент подтверждает, что отсутствие модели CardDeal нарушает контракт или мешает назначению данной программы → structural revision.
-3. Создаётся/усиливается PROCESS_VARIABLE(PokerHandProcess, CardDeal).
-4. ProgramBranch добавляет вероятностную модель CardDeal.
-5. Выбранные наблюдения проверяются через prediction_unexpectedness с учётом случайности раздачи.
+1. Observe that the program does not model CardDeal → analyze program coverage.
+2. The agent confirms that omitting a CardDeal model violates the contract
+   or obstructs the program's purpose → structural revision.
+3. Create/strengthen PROCESS_VARIABLE(PokerHandProcess, CardDeal).
+4. A ProgramBranch adds a probabilistic CardDeal model.
+5. Selected observations are checked through prediction_unexpectedness,
+   accounting for the randomness of the deal.
 ```
 
-
-
-Случайность учитывается в форме и проверке прогноза. Распределение или отдельная характеристика, например среднее, выбираются по [[Learning system#Представление прогноза и цель обучения|общим правилам моделирования]].
-
+Randomness is accounted for in the prediction representation and evaluation. Select a distribution or a particular statistic, such as the mean, under the [[Learning system#Forecast Representation and Learning Objective|shared modeling rules]].
 
 #### TRAJECTOR
 
-`TRAJECTOR(process, entity_or_axis)` — семантическая связь, указывающая первично выделенного участника или точку зрения, через которую обычно описывается процесс.
+`TRAJECTOR(process, entity_or_axis)` is a semantic link identifying the primary participant or point of view through which a process is usually described.
 
-Смысл:
+Meaning:
 
 ```text
-entity_or_axis — главный участник/носитель перспективы процесса.
+entity_or_axis — the main participant/bearer of the process perspective.
 ```
 
-Примеры:
+Examples:
 
 ```text
 TRAJECTOR(DiseaseProcess, Patient)
 TRAJECTOR(PokerProcess, Player)
 ```
 
-`TRAJECTOR` не задаёт `prediction_unexpectedness` и ни к чему не обязывает программу. Это подсказка для:
+`TRAJECTOR` does not define `prediction_unexpectedness` or impose a requirement on a program. It is a hint for:
 
-* retrieval процессов по участнику;
-* выбора perspective при объяснении;
-* memory search;
-* structural alignment.
+- retrieving processes by participant;
+- selecting a perspective for explanation;
+- searching memory;
+- structural alignment.
 
-`TRAJECTOR` может быть изменён или удалён сознанием агента, если текущая перспектива процесса стала неудачной.
+Consciousness may change or remove `TRAJECTOR` if the current process perspective becomes unhelpful.
 
-### Связь с концептами-существительными
+### Link to Noun Concepts
 
-
-Связь между ProcessConcept и  TransitionType  задаётся семантическим отношением:
+The link between `ProcessConcept` and `TransitionType` is defined by the semantic relation:
 
 ```text
 REALIZES_PROCESS(transition_type, process_concept)
 ```
 
-Смысл:
+Meaning:
 
 ```text
-TransitionType является глагольным способом реализации или проявления ProcessConcept.
+TransitionType is a verbal way of realizing or expressing a ProcessConcept.
 ```
 
-Пример:
+Example:
 
 ```text
 REALIZES_PROCESS(BURNS, Burning)
 ```
 
-Через эту связь EverTree соединяет лингвистические формы одного процесса.
-
-
-
-
+This link connects linguistic forms of the same process in EverTree.
 
 ---
 
-### Action Conflicts Control via RelationType
+### Action Conflict Control via RelationType
 ^0c1eb8
 
-Иногда действие физически возможно, но агент понимает, что оно конфликтует с ценностью, supervisor expectation, safety constraint или устойчивым правилом поведения и его важно зафиксировать в семантической памяти для того чтобы избежать существенных рисков или лучше генерализации.
-
+Sometimes an action is physically possible, but the agent understands that it conflicts with a value, supervisor expectation, safety constraint, or stable rule of behavior. Recording this in semantic memory matters when it helps avoid material risks or supports generalization.
 
 #### Motivation
 
-Семантическая связь `CONTROL_CONFLICT` нужна не для runtime-блокировки, а для памяти, , reflection, генерализации и будущего улучшения программы, но только тогда когда это обоснованно, агент не должен засорять память без необходимости малозначительными связями.
-
+The semantic `CONTROL_CONFLICT` relation is not for runtime blocking. It is for memory, reflection, generalization, and future program improvement, and should be used only when justified; the agent should not clutter memory with immaterial links.
 
 #### RelationType
 
@@ -512,22 +477,22 @@ RelationType CONTROL_CONFLICT {
   name: "CONTROL_CONFLICT"
 
   description:
-    "Семантическая связь, фиксирующая, что действие, оператор или программа конфликтует с управляющим ограничением, ценностью, supervisor expectation или safety constraint в заданном scope. Не является runtime-фильтром выбора действий и не исполняет запрет сама по себе."
+    "A semantic relation recording that an action, operator, or program conflicts with a control constraint, value, supervisor expectation, or safety constraint in a specified scope. It is not a runtime action-selection filter and does not enforce a prohibition by itself."
 
   signature: [
-    subject = ActionConcept 
-      "Что конфликтует"
+    subject = ActionConcept
+      "What conflicts"
 
     constraint = Concept | SignalPattern
-      "С чем конфликтует: ценность, supervisor expectation, safety constraint, goal constraint или ожидаемый негативный сигнал."
+      "What it conflicts with: a value, supervisor expectation, safety constraint, goal constraint, or expected negative signal."
 
-    scope =  Process | Program | ContextPattern | Global
-      "Где конфликт применим."
+    scope = Process | Program | ContextPattern | Global
+      "Where the conflict applies."
 
     expected_signals? = dict[SignalChannel, ExpectedOutcomeSignal]
-      "Опциональные прогнозы оценок, например отрицательного value канала supervisor_feedback_signal."
+      "Optional prediction of evaluations, such as a negative value on the supervisor_feedback_signal channel."
   ]
 }
 ```
 
-Форма `ExpectedOutcomeSignal` задана [[Program Layer#Expected signals|контрактом прогноза сигнала]].
+The form of `ExpectedOutcomeSignal` is defined by the [[Program Layer#Expected Signals|signal prediction contract]].

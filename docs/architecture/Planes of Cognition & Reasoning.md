@@ -3,33 +3,28 @@ status: stable
 target_version: next
 ---
 
-## Intro
-#concept #topic_core 
+## Introduction
 
-Мы группируем все типы познания в  функциональные **Плоскости (Planes)**
+#concept #topic_core
 
+We group all types of cognition into functional **Planes**.
 
 (def_id:: plane.PlaneOfCognition)
 > [!definition]
-> **Плоскость Познания(Plane of Cognition)** — это отдельный слой модели мира, который выделяет один полезный аспект её организации и задаёт для него собственные структуры, связи и операции.**
+> **Plane of Cognition** — a distinct layer of the world model that highlights one useful aspect of its organization and defines its own structures, relationships, and operations for that aspect.
 ^def-PlaneOfCognition
 
-В EverTree один и тот же граф знаний обслуживает разные режимы мышления и познания:
+In EverTree, the same knowledge graph supports different modes of thinking and cognition:
 
-| **Плоскость**            | **Ключевой вопрос**                                                 | **Режим мышления**                                                                                                     |
-| ------------------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Плоскость Атрибуции**  | «Каков объект?»                                                     | Свойства и характеристики. Описывает сущность через её свойства.                                                       |
-| **Плоскость Семантики**  | «Что это по сути?» <br>«Из чего состоит?» / «Частью чего является?» | Описывает мир через смысловые связи между сущностями, уровни абстракции и<br>мериологию (разложение на части и сборка) |
-| **Плоскость Процесса**   | «Что произойдёт?»                                                   | Динамика, симуляция причин и последствий                                                                               |
-| **Плоскость Ассоциаций** | «С чем связано?»                                                    | Контекст (что обычно вместе вспыхивает или подавляется)                                                                |
+| **Plane** | **Key question** | **Mode of thinking** |
+| --- | --- | --- |
+| **Attribution Plane** | “What is the object like?” | Properties and characteristics. Describes an entity through its properties. |
+| **Semantics Plane** | “What is it, essentially?”<br>“What is it made of?” / “What is it part of?” | Describes the world through semantic relationships among entities, levels of abstraction, and mereology (decomposing into parts and assembling them). |
+| **Process Plane** | “What will happen?” | Dynamics; simulation of causes and effects. |
+| **Associative Plane** | “What is it connected to?” | Context (what tends to activate or suppress together). |
 
-Каждая Плоскость задаёт собственное измерение организации знания: какие факты для неё являются native, какие структуры и операции она использует, и какой runtime-результат возвращает.
+Each Plane defines its own dimension of knowledge organization: which facts are native to it, which structures and operations it uses, and which runtime result it returns.
 
-Один факт может храниться в одной плоскости и проекцироваться в другую. Например, structural relation fact может быть native-фактом Семантической / Структурной плоскости, но иметь атрибутивную проекцию, если используется как ответ на вопрос «каково свойство объекта?».
+A fact can be stored in one Plane and projected into another. For example, a structural relation fact may be native to the Semantics / Structural Plane, yet have an attribution projection when used to answer the question “what is a property of the object?”
 
-В runtime плоскость возвращает результат в своём контракте: значение, сигнал или relation-reading вместе с `Belief_data` / support, с [[Uncertainty and Belief Tracking in the World Model]].
-
----
-
-
-
+At runtime, a Plane returns a result under its own contract: a value, signal, or relation reading together with `Belief_data` / support, from [[Uncertainty and Belief Tracking in the World Model]].

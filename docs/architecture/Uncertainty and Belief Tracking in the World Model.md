@@ -4,81 +4,79 @@ target_version: next
 ToDo:
 ---
 
-
 ## Introduction
+
 #topic_core
 
-EverTree использует belief-модель там, где знание агента может быть неполным или ошибочным: для наблюдений, гипотез, состояний, семантических связей, моделей процессов и других утверждений о мире или самом агенте.
+EverTree uses a belief model where the agent's knowledge may be incomplete or wrong: for observations, hypotheses, states, semantic relationships, process models, and other claims about the world or the agent itself.
 
-В EverTree [[#^def-BeliefData|`BeliefData`]] не обновляется напрямую: релевантный опыт преобразуется в [[#^def-EvidenceAssignment|`EvidenceAssignment`]], а текущие `Strength`, `Support` и, при наличии конкурирующих альтернатив, [[#^def-Profile|`Profile`]] вычисляются из активного evidence. Сходное evidence может консолидироваться в более компактное представление, если сохраняются его совокупное влияние и гранулярность, необходимая для дальнейшего обучения, `revise/retract`, учёта зависимостей и временной динамики.
-
+In EverTree, [[#^def-BeliefData|`BeliefData`]] is not updated directly. Relevant experience is transformed into [[#^def-EvidenceAssignment|`EvidenceAssignment`]], and the current `Strength`, `Support`, and, when there are competing alternatives, [[#^def-Profile|`Profile`]] are computed from active evidence. Similar evidence may be consolidated into a more compact representation if its combined influence and the granularity needed for future learning, `revise/retract`, dependency accounting, and temporal dynamics are preserved.
 
 ---
 
-## Belief model
+## Belief Model
 #topic_core
 
-### Core concepts and semantic boundaries
+### Core Concepts and Semantic Boundaries
 #topic_core
 
 #### Belief and BeliefTarget
 #topic_core
 
 (def_id:: entity.Belief)
-> [!definition] **Belief** — текущее эпистемическое отношение агента к канонически определённому semantic target: насколько имеющееся evidence позволяет считать утверждение, значение или один из допустимых ответов верным либо обоснованным. ^def-Belief
+> [!definition] **Belief** — the agent's current epistemic relation to a canonically defined semantic target: how far available evidence supports treating a claim, value, or one of the allowed answers as true or justified. ^def-Belief
 
 (def_id:: entity.BeliefTarget)
-> [!definition] **BeliefTarget** — канонически определённая semantic единица, которая обновляется как одно epistemic целое: binary-утверждение, оцениваемое значение / модель либо [[#^def-CompetitionScope|`CompetitionScope`]]. Alternative scope-а не является независимым target с собственным `Support`. ^def-BeliefTarget
+> [!definition] **BeliefTarget** — a canonically defined semantic unit updated as one epistemic whole: a binary claim, an evaluated value/model, or a [[#^def-CompetitionScope|`CompetitionScope`]]. An alternative within a scope is not an independent target with its own `Support`. ^def-BeliefTarget
 
 #topic_details
 
-Примеры с [[Core data structures#^def-Facet|Facet]] и [[Core data structures#^def-Claim|Claim]] как формами target-а:
+Examples using [[Core data structures#^def-Facet|`Facet`]] and [[Core data structures#^def-Claim|`Claim`]] as target forms:
 
 ```text
 HealthStatus(IgorHealth@T1)
-→ какое состояние здоровья в данном(T1) Facet инстанса Igor;
+→ which health state applies to the Igor instance's Facet at T1;
 
 PART_WHOLE(Wheel#7, Car#1)
-→ является ли Wheel#7 частью Car#1;
+→ whether Wheel#7 is part of Car#1;
 
-"Земля может закончить существование в любой момент" → Claim, если более подходящая semantic structure ещё не определена.
+"The Earth may cease to exist at any moment"
+→ a Claim, if a more suitable semantic structure has not yet been defined.
 ```
 
 #topic_core
 
-[[#^def-BeliefTarget|`BeliefTarget`]] всегда относится к канонически определённому объекту, свойству или утверждению semantic graph EverTree:
+[[#^def-BeliefTarget|`BeliefTarget`]] always refers to a canonically defined object, property, or claim in EverTree's semantic graph:
 
 ```text
 property target
-→ (semantic_object, PropertyConcept) с условиями, определяющими смысл оцениваемой величины / модели;
+→ (semantic_object, PropertyConcept) with conditions defining the meaning of the evaluated quantity/model;
 
 independent classification target
 → CLASSIFIED_AS(semantic_object, ClassConcept);
 
 scope-backed property target
-→ CompetitionScope вопроса об (semantic_object, PropertyConcept) при заданных смысловых условиях;
+→ CompetitionScope for a question about (semantic_object, PropertyConcept) under specified semantic conditions;
 
 relation target
-→ RelationType + полностью заданные аргументы;
+→ RelationType + fully specified arguments;
 
 transition target
-→ TransitionType + полностью заданные аргументы;
+→ TransitionType + fully specified arguments;
 
 CompetitionScope
-→ semantic question + полный набор его alternatives;
+→ a semantic question + its complete set of alternatives;
 
-Program target →
-(Program, program_revision);
+Program target
+→ (Program, program_revision);
 
-Claim → 
-явно сформулированное проверяемое утверждение, для которого пока нет подходящего структурированного представления.
-
+Claim
+→ an explicitly stated, checkable claim for which no suitable structured representation exists yet.
 ```
 
+[[Core data structures#^def-Note|`Note`]] and [[Core data structures#^def-Prompt|`Prompt`]] may also be complete semantic targets under the [[Core data structures#^note-claim-prompt-evaluation|shared evaluation contract]], with specified `Criterion` and scope. An arbitrary Python object or technical structure cannot be a `BeliefTarget`.
 
-[[Core data structures#^def-Note|`Note`]] и [[Core data structures#^def-Prompt|`Prompt`]] также могут быть целыми semantic targets по [[Core data structures#^note-claim-prompt-evaluation|общему контракту оценки]] с заданными `Criterion` и scope. Произвольный Python-объект или техническая структура не может быть `BeliefTarget`.
-
-Существующая semantic структура также определяет, **какие значения допустимы**:
+Existing semantic structure also defines **which values are allowed**:
 
 ```text
 HealthStatus + AttributionAxis
@@ -88,23 +86,23 @@ PART_WHOLE(...)
 → true | false
 
 CompetitionScope
-→ его alternatives.
+→ its alternatives.
 
 Claim
 → true | false
 ```
 
-Условия, определяющие смысл вопроса, должны быть однозначно заданы в semantic представлении target. Например, надёжность одного источника в программировании и медицине относится к разным targets. Дополнительные наблюдения или смена estimator-а для того же вопроса сами по себе не меняют target; текущее значение belief также не является частью его identity.
+Conditions defining the meaning of a question must be unambiguous in the target's semantic representation. For example, the reliability of one source in programming and in medicine concerns different targets. Additional observations or switching estimators for the same question do not by themselves change the target; the current belief value is not part of its identity either.
 
 ---
 
-#### Generic Belief(U) interface
+#### Generic `Belief(U)` Interface
 #topic_core
 
 (def_id:: entity.BeliefU)
-> [!definition] **`Belief(U)`** — общий интерфейс belief относительно значения из пространства `U`:
-> `value_U` — само утверждаемое или оцениваемое значение.  Оно может быть классом, состоянием, числом, интервалом, параметрами модели, профилем outcomes или другой типизированной структурой, необходимой соответствующей Program.
-> [[#^def-BeliefData|`BeliefData`]] — насколько агент эпистемически уверен в этом значении. ^def-BeliefU
+> [!definition] **`Belief(U)`** — a general belief interface for a value in space `U`:
+> `value_U` is the asserted or evaluated value. It may be a class, state, number, interval, model parameters, outcome profile, or another typed structure required by the corresponding Program.
+> [[#^def-BeliefData|`BeliefData`]] represents the agent's epistemic confidence in that value. ^def-BeliefU
 
 (formal_id:: entity.BeliefU.schema)
 ```text
@@ -112,11 +110,11 @@ Belief(U) := <value_U, BeliefData>
 ```
 ^spec-BeliefU
 
-`U` может представлять класс, состояние, гипотезу, relation, число, параметр, распределение или другую типизированную величину.
+`U` may represent a class, state, hypothesis, relation, number, parameter, distribution, or another typed quantity.
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 value_U = transition_probability = 0.7
@@ -124,7 +122,7 @@ value_U = transition_probability = 0.7
 
 #topic_core
 
-Любая величина, описывающая сам мир или процесс, относится к `value_U` или параметрам модели, а не к `BeliefData`.
+Any quantity describing the world or process itself belongs in `value_U` or model parameters, not in `BeliefData`.
 
 ---
 
@@ -132,11 +130,11 @@ value_U = transition_probability = 0.7
 #topic_core
 
 (def_id:: entity.BeliefData)
-> [!definition] **BeliefData** — стандартное вычисляемое read-представление эпистемического состояния belief:
-> `BeliefData` не изменяется напрямую.
-> - `Strength ∈ [0,1]` — насколько агент сейчас верит в соответствующее `value_U`;
-> - `Support ≥ 0` — суммарная effective discriminative mass собственного active evidence данного target;
-> - `PriorSupport ≥ 0` — effective discriminative mass трассируемого upstream evidence, которое обосновывает текущий prior данного target. `PriorSupport` может быть ненулевым до появления собственного опыта агента, если prior подкреплён трассируемым внешним или upstream evidence. Неподкреплённое parametric knowledge LLM `PriorSupport` не создаёт. ^def-BeliefData
+> [!definition] **BeliefData** — the standard computed read representation of a belief's epistemic state:
+> `BeliefData` is not changed directly.
+> - `Strength ∈ [0,1]` — how strongly the agent currently believes the corresponding `value_U`;
+> - `Support ≥ 0` — the total effective discriminative mass of the target's own active evidence;
+> - `PriorSupport ≥ 0` — the effective discriminative mass of traceable upstream evidence supporting the target's current prior. `PriorSupport` may be nonzero before the agent has its own experience if the prior is supported by traceable external or upstream evidence. Unsupported parametric knowledge from an LLM does not create `PriorSupport`. ^def-BeliefData
 
 (formal_id:: entity.BeliefData.schema)
 ```text
@@ -146,102 +144,97 @@ BeliefData = <Strength, Support, PriorSupport>
 
 #topic_details
 
-`Support` учитывает только собственное evidence target. Prior в него не входит.
+`Support` counts only the target's own evidence; it does not include the prior.
 
-`PriorSupport` нужен, чтобы различать beliefs с одинаковыми `Strength` и `Support`, но разным основанием prior:
+`PriorSupport` distinguishes beliefs with the same `Strength` and `Support` but different prior foundations:
 
 ```text
 Strength = 0.9
 Support = 0
 PriorSupport = 0
-→ сильный prior без трассируемого evidence;
+→ a strong prior without traceable evidence;
 
 Strength = 0.9
 Support = 0
 PriorSupport = high
-→ собственного evidence target ещё нет,
-  но prior подкреплён переносимым upstream evidence.
+→ the target has no evidence of its own yet,
+  but the prior is supported by transferable upstream evidence.
 ```
 
-Это особенно важно при переносе знания между уровнями [[Core data structures#^def-Prototype|Prototype]], [[Core data structures#^def-Instance|Instance]] и [[Core data structures#^def-Facet|Facet]]:
+This matters especially when transferring knowledge between [[Core data structures#^def-Prototype|Prototype]], [[Core data structures#^def-Instance|Instance]], and [[Core data structures#^def-Facet|Facet]] levels:
 
 ```text
 Prototype
-→ prior для Instance
-→ prior для Facet
+→ prior for Instance
+→ prior for Facet
 ```
 
-`PriorSupport` не является копией `Support` source belief. При переносе учитываются применимость к текущему target, зависимости между evidence и запрет повторного учёта одного underlying evidence через `Support` и `PriorSupport`.
+`PriorSupport` is not a copy of the source belief's `Support`. Transfer accounts for applicability to the current target, dependencies between evidence, and the prohibition against counting the same underlying evidence again through both `Support` and `PriorSupport`.
 
-Поэтому `Support` и `PriorSupport` нельзя автоматически складывать в общую меру уверенности.
+Therefore, `Support` and `PriorSupport` must not automatically be added into a single confidence measure.
 
-`Support` также не равен количеству observations. Релевантная проверка может не различать альтернативы и иметь `evidence_mass = 0`; количество и структура проведённых проверок учитываются отдельно через [[#^def-EvidenceStats|`EvidenceStats`]].
+`Support` is also not the number of observations. A relevant check may fail to distinguish alternatives and have `evidence_mass = 0`; the number and structure of checks performed are tracked separately through [[#^def-EvidenceStats|`EvidenceStats`]].
 
-Точные правила вычисления `Strength`, `Support`, `PriorSupport` и [[#^def-Profile|`Profile`]], включая prior resolution и перенос upstream evidence, задаются в [[#Belief updating]].
-
+Exact rules for computing `Strength`, `Support`, `PriorSupport`, and [[#^def-Profile|`Profile`]], including prior resolution and upstream evidence transfer, are defined in [[#Belief Updating]].
 
 ---
 #### EvidenceStats
 #topic_core
 
 (def_id:: entity.EvidenceStats)
-> [!definition] **EvidenceStats** — вычисляемый view, описывающий объём и структуру **собственного active evidence** target-а. Он не входит в `BeliefData` и не является semantic object. ^def-EvidenceStats
+> [!definition] **EvidenceStats** — a computed view describing the amount and structure of a target's **own active evidence**. It is not part of `BeliefData` and is not a semantic object. ^def-EvidenceStats
 
 ```python
 EvidenceStats {
   evidence_count: int
-    "Число logical evidence units после устранения повторов
-     и учёта зависимостей, включая неразличающие проверки."
+    "Number of logical evidence units after deduplication
+     and dependency accounting, including non-discriminating checks."
 
   max_component_mass: float
-    "Максимальная effective evidence mass одного logical unit."
+    "Maximum effective evidence mass of one logical unit."
 
   max_component_effect: float
-    "Максимальный effective эффект одного logical unit
-     на состояние updater-а."
+    "Maximum effective effect of one logical unit
+     on the updater state."
 }
 ```
 
 #topic_details
 
-различаются состояния:
+The following states are distinct:
 
 ```text
 Support = 0
 evidence_count = 0
-→ target ещё не исследовался;
+→ the target has not been investigated;
 
 Support = 0
 evidence_count > 0
-→ проводились релевантные проверки,
-  но они не дали discriminative evidence.
+→ relevant checks were performed,
+  but they yielded no discriminative evidence.
 ```
 
-Consolidation не изменяет `EvidenceStats`: статистика относится
-к представленным logical evidence units, а не к количеству физических
-[[#^def-EvidenceAssignment|`EvidenceAssignment`]].
+Consolidation does not change `EvidenceStats`: the statistics describe the represented logical evidence units, not the number of physical [[#^def-EvidenceAssignment|`EvidenceAssignment`s]].
 
-[[#^def-EvidenceStats|`EvidenceStats`]] не описывает evidence, лежащее за `PriorSupport`.
-При необходимости его структура восстанавливается через provenance prior;
-отдельный `PriorEvidenceStats` в MVP не вводится.
+[[#^def-EvidenceStats|`EvidenceStats`]] does not describe evidence behind `PriorSupport`. When needed, its structure is reconstructed through the prior's provenance; a separate `PriorEvidenceStats` is not introduced in the MVP.
+
 ---
-#### Epistemic uncertainty vs model variability
-
+#### Epistemic Uncertainty vs. Model Variability
 #topic_core
 
-EverTree различает:
+EverTree distinguishes:
 
 ```text
 model uncertainty / variability
-→ что сама модель утверждает о возможных состояниях мира;
+→ what the model itself says about possible states of the world;
 
 epistemic uncertainty
-→ насколько агент уверен, что эта модель или оценка корректна.
+→ how confident the agent is that the model or estimate is correct.
 ```
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 value_U:
@@ -255,32 +248,30 @@ Strength = 0.95
 Support = high
 ```
 
-означает, что агент достаточно уверен: процесс действительно имеет примерно равновероятные outcomes.
+This means the agent is fairly confident that the process really has approximately equally likely outcomes.
 
 #topic_core
 
-Поэтому высокая вариативность процесса не означает низкую epistemic уверенность, а почти детерминированный прогноз не означает, что агент хорошо в нём уверен. Эпистемическая уверенность читается через [[#^def-BeliefData|`BeliefData`]].
+Therefore, high process variability does not imply low epistemic confidence, and a nearly deterministic forecast does not imply that the agent has high confidence in it. Epistemic confidence is read through [[#^def-BeliefData|`BeliefData`]].
 
-Аналогично, неопределённость между `Low | Medium | High` у categorical / ordinal Property является epistemic uncertainty и представляется [[#^def-Profile|`Profile`]]. Она не превращает эти значения в `OutcomeProfile`: `OutcomeProfile` описывает вариативность самого моделируемого процесса, а не незнание агента о том, какая alternative истинна.
+Similarly, uncertainty among `Low | Medium | High` for a categorical or ordinal Property is epistemic uncertainty represented by [[#^def-Profile|`Profile`]]. It does not turn those values into an `OutcomeProfile`: `OutcomeProfile` describes variability in the modeled process itself, not the agent's uncertainty about which alternative is true.
 
-Это различие применяется ко всем последующим формам beliefs и updater-ов.
+This distinction applies to all belief forms and updaters described below.
 
-
-### Belief representations
+### Belief Representations
 #topic_core
 
-Для отдельного утверждения или оцениваемого `value_U` используется общий интерфейс [[#^def-BeliefU|`Belief(U)`]]: `value_U` + [[#^def-BeliefData|`BeliefData`]]. Для одного вопроса с mutually exclusive + exhaustive alternatives общим epistemic read-представлением является [[#^def-Profile|`Profile`]]: он заменяет набор независимых `Belief(U)`, а не становится новым видом `value_U`.
+For an individual assertion or evaluated `value_U`, use the general [[#^def-BeliefU|`Belief(U)`]] interface: `value_U` plus [[#^def-BeliefData|`BeliefData`]]. For one question with mutually exclusive and exhaustive alternatives, the shared epistemic read representation is [[#^def-Profile|`Profile`]]: it replaces a set of independent `Belief(U)` values; it is not a new kind of `value_U`.
 
 ---
-
-#### Binary belief
+#### Binary Belief
 #topic_core
 
-Используется для утверждения, которое может быть истинным или ложным и не требует явного представления альтернативы `¬H`.
+Use this for an assertion that can be true or false and does not require explicitly representing the alternative `¬H`.
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 value_U = "Sensor#7 calibrated"
@@ -292,25 +283,24 @@ BeliefData:
 
 #topic_core
 
-`Strength` выражает текущую эпистемическую уверенность агента в этом утверждении.
+`Strength` expresses the agent's current epistemic confidence in the assertion.
 
-Внутреннее состояние updater-а может использовать подходящие sufficient statistics; наружу belief читается через [[#^def-BeliefData|`BeliefData`]].
+The updater's internal state may use suitable sufficient statistics; externally, the belief is read through [[#^def-BeliefData|`BeliefData`]].
 
 ---
-
-#### CompetitionScope and mutually exclusive alternatives
+#### CompetitionScope and Mutually Exclusive Alternatives
 
 #topic_core
 
 (def_id:: entity.CompetitionScope)
-> [!definition] **CompetitionScope** — semantic scope одного вопроса с mutually exclusive и exhaustive alternatives: в каждом допустимом состоянии истинна ровно одна alternative. ^def-CompetitionScope
+> [!definition] **CompetitionScope** — the semantic scope of one question with mutually exclusive and exhaustive alternatives: exactly one alternative is true in every admissible state. ^def-CompetitionScope
 
-`CompetitionScope` определяется вопросом и alternatives, а не их semantic типом. Он одинаково применяется к конкурирующим hypotheses и к categorical / ordinal значениям Property, если scale и [[Attribution Plane#^def-Criterion|`Criterion`]] задают такой набор.
+`CompetitionScope` is defined by the question and its alternatives, not by their semantic type. It applies equally to competing hypotheses and to categorical or ordinal Property values when the scale and [[Attribution Plane#^def-Criterion|`Criterion`]] define such a set.
 
 #topic_details
 
 ```text
-Где находится единственная награда?
+Where is the only reward?
 
 CompetitionScope:
   BehindDoorA
@@ -318,10 +308,10 @@ CompetitionScope:
   BehindDoorC
 ```
 
-Тот же scope используется для дискретного Property:
+The same scope applies to a discrete Property:
 
 ```text
-Каков SQLProblemSolvingLevel(AgentA)?
+What is SQLProblemSolvingLevel(AgentA)?
 
 CompetitionScope:
   Low
@@ -329,9 +319,9 @@ CompetitionScope:
   High
 ```
 
-`Low`, `Medium` и `High` являются alternatives одного target, а не тремя независимыми beliefs.
+`Low`, `Medium`, and `High` are alternatives for one target, not three independent beliefs.
 
-Если несколько утверждений или classifications могут быть истинны одновременно, они не образуют `CompetitionScope` и представлены отдельными binary beliefs.
+If multiple assertions or classifications may be true at the same time, they do not form a `CompetitionScope`; represent them as separate binary beliefs.
 
 ```text
 Rain contributed to WetRoad
@@ -342,12 +332,12 @@ GoodAtPython(AgentA)
 GoodAtDebugging(AgentA)
 ```
 
-Такие statements могут одновременно иметь высокий `Strength`.
+Such statements may all have high `Strength` at the same time.
 
-Набор alternatives должен покрывать все допустимые ответы. Если именованные варианты этого не делают, добавляется обычная semantic alternative для оставшегося случая.
+The alternatives must cover all admissible answers. If the named alternatives do not do so, add an ordinary semantic alternative for the remaining case.
 
 ```text
-Какой источник вызвал событие?
+Which source caused the event?
 
 CompetitionScope:
   SourceA
@@ -356,7 +346,7 @@ CompetitionScope:
 ```
 
 ```text
-Что вызвало alarm?
+What triggered the alarm?
 
 CompetitionScope:
   Fire
@@ -364,30 +354,27 @@ CompetitionScope:
   NoTrigger
 ```
 
-`OtherSource` покрывает иной источник, а `NoTrigger` — отсутствие trigger. Это обычные alternatives конкретного scope.
+`OtherSource` covers a different source, and `NoTrigger` covers the absence of a trigger. These are ordinary alternatives within a specific scope.
 
-`CompetitionScope` содержит только возможные состояния мира; отсутствие знания о том, какая alternative истинна, выражается epistemic state, а не отдельной alternative.
+`CompetitionScope` contains only possible states of the world; not knowing which alternative is true is represented by the epistemic state, not by a separate alternative.
 
-Если observation показывает, что две alternatives могут быть истинны одновременно или существует допустимое состояние, не покрытое scope, значит неверна сама структура `CompetitionScope`:
+If an observation shows that two alternatives may be true at once, or that an admissible state is not covered by the scope, the `CompetitionScope` structure itself is wrong:
 
 ```text
 scope invariant violation
 → structural revision
 ```
 
-Набор alternatives является частью semantic identity `CompetitionScope`. Его изменение создаёт новую версию scope; старое evidence при необходимости переоценивается, а простая перенормировка запрещена.
+The set of alternatives is part of the `CompetitionScope`'s semantic identity. Changing it creates a new version of the scope; existing evidence is reassessed when needed, and simple renormalization is not allowed.
 
-Если совместимые утверждения требуют совместного распределения или взаимодействий, используется model-specific joint model. Универсальная joint model для MVP не требуется.
-
-
+If compatible assertions require a joint distribution or interactions, use a model-specific joint model. A universal joint model is not required for the MVP.
 
 ---
-
 ##### CompetitionScope Profile
 #topic_core
 
 (def_id:: entity.Profile)
-> [!definition] **Profile** — общее вычисляемое представление epistemic belief между alternatives одного `CompetitionScope`, независимо от того, являются alternatives hypotheses или значениями Property. ^def-Profile
+> [!definition] **Profile** — a shared computed representation of epistemic belief across the alternatives of one `CompetitionScope`, whether the alternatives are hypotheses or Property values. ^def-Profile
 
 ```python
 Profile {
@@ -397,55 +384,52 @@ Profile {
 }
 ```
 
-Для каждой alternative `a`:
+For each alternative `a`:
 
 ```text
 Strength(a)
-→ текущая epistemic probability alternative.
+→ the current epistemic probability of that alternative.
 ```
 
-$$  
+$$
 \sum_k Strength(a_k)=1
 $$
 
-`Support` относится ко всему `CompetitionScope`:
+`Support` applies to the entire `CompetitionScope`:
 
 ```text
 Support
-→ суммарная effective discriminative evidence mass;
+→ total effective discriminative evidence mass;
 
 PriorSupport
-→ backing prior distribution, если он получен из других beliefs.
+→ backing for the prior distribution, when derived from other beliefs.
 ```
 
-Отдельные `Support(a)` и `PriorSupport(a)` не используются: evidence и prior оценивают вопрос / scope целиком.
+Separate `Support(a)` and `PriorSupport(a)` values are not used: evidence and prior evaluate the question/scope as a whole.
 
-При отсутствии собственного evidence:
+When the target has no evidence of its own:
 
-$$  
+$$
 Strength(a_k)=p_{0,k}, \qquad Support=0
 $$
 
-`Profile` вычисляется при чтении и отдельно не хранится.
-Неизменяемый [[Memory#^def-OperatorOutput|`OperatorOutput`]] может зафиксировать исторический read-snapshot `Profile` для provenance; он не обновляется и не является источником текущего `Profile`.
+`Profile` is computed at read time and is not stored separately. An immutable [[Memory#^def-OperatorOutput|`OperatorOutput`]] may record a historical `Profile` read snapshot for provenance; it is not updated and is not the source of the current `Profile`.
 
-Scope-backed Property использует тот же `Profile` и `CompetitionScopeUpdater`, что и competing hypotheses.
-
+A scope-backed Property uses the same `Profile` and `CompetitionScopeUpdater` as competing hypotheses.
 
 ---
-
-#### Probabilistic process outcomes
+#### Probabilistic Process Outcomes
 #topic_core
 
-Некоторые процессы могут иметь несколько возможных outcomes даже при корректной и полной модели процесса.
+Some processes may have multiple possible outcomes even when the process model is correct and complete.
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 CardDeal
-→ множество возможных карт;
+→ a set of possible cards;
 
 unfair coin
 → Heads 0.7
@@ -454,9 +438,9 @@ unfair coin
 
 #topic_core
 
-В этом случае вероятности относятся к самому моделируемому процессу и являются частью `value_U`, а не `Strength`.
+In this case, the probabilities belong to the modeled process itself and are part of `value_U`, not `Strength`.
 
-Для дискретных outcomes используется:
+Represent discrete outcomes with:
 
 ```python
 OutcomeProfile {
@@ -465,7 +449,7 @@ OutcomeProfile {
 }
 ```
 
-Эпистемическая уверенность агента в корректности этого распределения выражается отдельно через [[#^def-BeliefData|`BeliefData`]]:
+The agent's epistemic confidence that this distribution is correct is expressed separately through [[#^def-BeliefData|`BeliefData`]]:
 
 ```text
 Belief(
@@ -474,44 +458,43 @@ Belief(
 )
 ```
 
-Для непрерывных случайных outcomes используется соответствующее `OutcomeDistribution`.
+Continuous random outcomes use the corresponding `OutcomeDistribution`.
 
 #topic_details
 
-Сам `OutcomeProfile` может обучаться собственным estimator-ом, например через counts / Beta / Dirichlet statistics. Это обновляет `value_U`, а не epistemic `Strength`.
+An `OutcomeProfile` itself may be trained by its own estimator, for example through counts or Beta / Dirichlet statistics. This updates `value_U`, not epistemic `Strength`.
 
 ---
-
-#### Numeric and distributional values
+#### Numeric and Distributional Values
 #topic_core
 
-Числовое `value_U` может быть представлено в форме, необходимой конкретной модели:
+Numeric `value_U` may use whatever representation a specific model requires:
 
 ```text
 single value;
 interval;
-параметры модели;
-empirical или parametric distribution;
-другая типизированная numeric structure.
+model parameters;
+empirical or parametric distribution;
+another typed numeric structure.
 ```
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 value_U = 12.4 kg
 ```
 
-или:
+or:
 
 ```text
 value_U = Interval(12.1, 12.7) kg
 ```
 
-Model-specific uncertainty самого `value_U` хранится в representation или sufficient state соответствующего estimator-а.
+Model-specific uncertainty about `value_U` itself is stored in the representation or sufficient state of the relevant estimator.
 
-Например:
+For example:
 
 ```text
 Beta / Dirichlet concentration;
@@ -520,26 +503,27 @@ posterior interval;
 sample count
 ```
 
-не являются generic `BeliefData.Support`.
+These are not generic `BeliefData.Support`.
 
 #topic_core
 
-[[#^def-BeliefData|`BeliefData`]] для numeric или distributional `value_U` относится к явно определённому [[#^def-BeliefTarget|semantic target]]: утверждению о корректности конкретной оценки или модели в заданных условиях. Утверждение о конкретном измерении и утверждение о качестве модели — разные targets. Если смысл уже представлен свойством или моделью, используется существующий target; отдельный [[Core data structures#^def-Claim|`Claim`]] нужен только при отсутствии подходящего представления.
+[[#^def-BeliefData|`BeliefData`]] for numeric or distributional `value_U` applies to an explicitly defined [[#^def-BeliefTarget|semantic target]]: a claim about the correctness of a specific estimate or model under stated conditions. A claim about an individual measurement and a claim about model quality are different targets. If the meaning is already represented by a property or model, use its existing target; create a separate [[Core data structures#^def-Claim|`Claim`]] only when no suitable representation exists.
 
-[[Attribution Plane#^def-Criterion|`Criterion`]] задаёт правило и условия проверки в контракте target или проверяющей Program. Metric / loss используется, если её требует смысл проверки; отдельная численная метрика не обязательна для binary-предиката. Утверждение о пригодности модели требует определённого условия приемлемости в заявленной области применения.
+[[Attribution Plane#^def-Criterion|`Criterion`]] defines the checking rule and conditions in the target contract or checking Program. Use a metric or loss when required by the meaning of the check; a binary predicate does not require a separate numeric metric. A claim that a model is suitable requires a defined acceptance condition within the stated applicability domain.
 
 #topic_details
 
-Empirical distributions основываются на сохранённых observations; summaries вроде mean, variance и quantiles вычисляются по запросу. При слишком большом объёме [[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] или специализированная model Program может создать компактное representation с явно допустимой потерей детализации.
+Empirical distributions are based on saved observations; summaries such as mean, variance, and quantiles are computed on demand. For very large volumes, [[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] or a specialized model Program may create a compact representation with an explicitly permitted loss of detail.
 
-Для параметрической модели её параметры являются частью `value_U`, а их model-specific uncertainty — состоянием estimator-а.
+For a parametric model, its parameters are part of `value_U`; model-specific uncertainty about those parameters is estimator state.
 
-Выбор representation определяется потребностями reasoning, prediction и control. Более сложное представление используется только если более простое теряет практически важную информацию.
+Choose the representation according to reasoning, prediction, and control needs. Use a more complex representation only when a simpler one loses information that matters in practice.
 
-### Belief updating
+---
+### Belief Updating
 #topic_core
 
-```
+```text
 prior
 + active EvidenceAssignment[]
         ↓
@@ -550,65 +534,59 @@ internal sufficient state
 BeliefData / Profile
 ```
 
-
-> Если обновляется само сложное `value_U`, например параметры числовой модели или `OutcomeDistribution`, model-specific estimator из [[Learning system#^def-LearningSystem|Learning System]] обновляет `value_U`, а belief updater отдельно оценивает уверенность в полученной модели.
-
-
+> If the complex `value_U` itself is updated—for example, numeric model parameters or an `OutcomeDistribution`—a model-specific estimator from the [[Learning system#^def-LearningSystem|Learning System]] updates `value_U`, while the belief updater separately estimates confidence in the resulting model.
 
 ---
-
-
-#### Prior resolution and PriorSupport
+#### Prior Resolution and `PriorSupport`
 
 #topic_core
 
-Prior может быть задан непосредственно либо получен переносом более общего или связанного belief между [[Core data structures#^def-Prototype|Prototype]], [[Core data structures#^def-Instance|Instance]] и [[Core data structures#^def-Facet|Facet]]:
+A prior may be specified directly or obtained by transferring a more general or related belief between [[Core data structures#^def-Prototype|Prototype]], [[Core data structures#^def-Instance|Instance]], and [[Core data structures#^def-Facet|Facet]]:
 
 ```text
 Prototype
-→ prior для Instance;
+→ prior for Instance;
 
 Instance
-→ prior для Facet.
+→ prior for Facet.
 ```
 
-`resolve_prior(target)` определяет состояние target до его собственного active evidence; для competing alternatives исходное распределение задаётся [[#^def-Profile|`Profile`]]:
+`resolve_prior(target)` determines the target's state before its own active evidence; for competing alternatives, the initial distribution is a [[#^def-Profile|`Profile`]]:
 
 ```text
 prior
-→ исходный Strength / Profile;
+→ initial Strength / Profile;
 
 PriorSupport
-→ effective discriminative mass трассируемого upstream evidence,
-  обосновывающего этот prior.
+→ effective discriminative mass of traceable upstream evidence
+  supporting the prior.
 ```
 
 #topic_details
 
-При создании нового target `resolve_prior` переиспользует применимую prior model или сохранённый результат для того же target и состояния входов. LLM и retrieval / web search могут использоваться при подготовке или пересмотре модели через [[Process Plane/Program Lifecycle and Evolution#Общий lifecycle Program|Program Lifecycle]]; новый target сам по себе не требует нового LLM-вызова. Найденные основания оцениваются по надёжности, применимости и зависимостям и разделяются по их отношению к target:
+When a new target is created, `resolve_prior` reuses an applicable prior model or a saved result for the same target and input state. LLMs and retrieval/web search may be used to prepare or revise a model through the [[Process Plane/Program Lifecycle and Evolution#General Program Lifecycle|Program Lifecycle]]; a new target does not itself require a new LLM call. Assess the grounds that were found for reliability, applicability, and dependencies, then separate them by relation to the target:
 
 ```text
-direct evidence текущего target
+direct evidence for the current target
 → EvidenceAssignment(target)
 → Support;
 
-evidence другого, более общего или связанного belief
-→ перенос в prior
+evidence for another, more general, or related belief
+→ transfer to prior
 → PriorSupport.
 ```
 
 #topic_core
 
-Одно underlying evidence не может одновременно учитываться через `Support` и `PriorSupport`.
-
+The same underlying evidence cannot be counted through both `Support` and `PriorSupport`.
 
 #topic_details
 
-Общий pipeline:
+General pipeline:
 
 ```text
 upstream beliefs / models
-+ при необходимости LLM / web research
++ LLM / web research when needed
         ↓
 assessment + dependency filtering
         ↓
@@ -627,51 +605,50 @@ initial Strength / Profile + Support
 
 #topic_core
 
-Если достаточного трассируемого основания нет, используется подготовленный bounded base prior от LLM или явно заданный программой fallback. Точная калибровка не является условием начала работы:
+If there is no sufficient traceable basis, use a prepared bounded base prior from an LLM or an explicit program fallback. Exact calibration is not required to begin work:
 
 ```text
 base prior
 → PriorSupport = 0.
 ```
 
-При переносе `PriorSupport` не копируется из `Support` source belief. Учитывается только та effective evidence mass, которая остаётся применимой к target после учёта зависимостей и overlap с его собственным evidence.
+When transferring, do not copy `PriorSupport` from the source belief's `Support`. Count only effective evidence mass that remains applicable to the target after accounting for dependencies and overlap with its own evidence.
 
-Основные инварианты:
+Key invariants:
 
 ```text
-prior не увеличивает собственный Support target;
+prior does not increase the target's own Support;
 
 Prototype → Instance → Facet
-сам по себе не создаёт нового evidence, только через проверку resolve_prior ;
+does not itself create new evidence; resolve_prior must check applicability;
 
-PriorSupport создаётся только трассируемым upstream evidence;
+PriorSupport comes only from traceable upstream evidence;
 
-одно underlying evidence не учитывается повторно
-через Support и PriorSupport;
+the same underlying evidence is not counted again
+through both Support and PriorSupport;
 
-PriorSupport выражается в той же Support-scale,
-что и Support updater-а текущего target.
+PriorSupport uses the same Support scale
+as the current target's updater.
 ```
 
-`resolve_prior` не назначает итоговый `Strength`: он определяет prior и его backing. `Strength / Profile` вычисляется target-specific updater-ом после учёта собственного active evidence.  
-:::
+`resolve_prior` does not assign final `Strength`; it determines the prior and its backing. The target-specific updater computes `Strength / Profile` after accounting for the target's own active evidence.
 
-
-##### LLM prior proposal
+---
+##### LLM Prior Proposal
 
 #topic_details
 
-LLM prior proposal используется для подготовки или пересмотра prior model, когда готовой применимой оценки недостаточно. Один вызов может оценить несколько targets; повторные чтения prior и новые evidence не требуют повторной elicitation — запроса оценки у LLM. Retrieval / web search выполняются в пределах бюджета подготовки; сам факт поиска `PriorSupport` не создаёт.
+Use an LLM prior proposal to prepare or revise a prior model when no suitable applicable estimate is available. One call may estimate several targets; rereading a prior and receiving new evidence do not require eliciting an estimate from the LLM again. Retrieval / web search are performed within the preparation budget; search itself does not create `PriorSupport`.
 
-Для binary target LLM возвращает числовую `P(target is true)`, для `CompetitionScope` — один нормированный [[#^def-Profile|`Profile`]] по всем alternatives. Это вероятность истинности target; качество метода оценки отражается отдельно через backing и [[#Calibration|calibration]].
+For a binary target, the LLM returns a numeric `P(target is true)`; for a `CompetitionScope`, it returns one normalized [[#^def-Profile|`Profile`]] over all alternatives. This is the probability that the target is true; the quality of the estimation method is represented separately through backing and [[#Calibration|calibration]].
 
-Числовой выход выбран для непосредственного использования updater-ом. Словесные категории вероятности допустимы как альтернативный протокол с заранее заданными значениями и преобразованием в числа. Категории `low / medium / high` для applicability и reliability в ответе описывают основания и не заменяют `P(target)`. Ни формат ответа, ни инструкция «будь откалиброван» сами по себе не обеспечивают calibration.
+A numeric output is selected for direct use by the updater. Probability words are acceptable as an alternative protocol only with predefined values and conversion to numbers. Categories such as `low / medium / high` for applicability and reliability in the response describe the grounds and do not replace `P(target)`. Neither the response format nor an instruction to “be calibrated” ensures calibration by itself.
 
-Вероятностные оценки LLM чувствительны к формулировке, framing и порядку elicitation. Поэтому используются стабильные versioned prompt, модель, настройки генерации и преобразование выхода. Их изменение учитывается как изменение prediction mechanism при дальнейшем calibration.
+LLM probability estimates are sensitive to wording, framing, and elicitation order. Therefore, use a stable, versioned prompt, model, generation settings, and output transformation. Changes to these are treated as changes to the prediction mechanism for subsequent calibration.
 
-`target`, [[Attribution Plane#^def-Criterion|`Criterion`]], context, horizon, `known_at`, допустимый background и ссылки на исключённое direct evidence передаются структурированно. Основания разделяются до оценки prior: собственное evidence target обрабатывается updater-ом отдельно.
+Pass `target`, [[Attribution Plane#^def-Criterion|`Criterion`]], context, horizon, `known_at`, permitted background, and references to excluded direct evidence in structured form. Separate the grounds before estimating the prior: the updater handles the target's own evidence separately.
 
-Базовый prompt(черновик который нужно будет адаптировать):
+Draft base prompt, to be adapted:
 
 > Estimate `P(target is true)` given the Criterion, context, horizon, `known_at`, and allowed prior background. For a CompetitionScope, return one normalized probability vector over all supplied alternatives.
 >
@@ -679,16 +656,16 @@ LLM prior proposal используется для подготовки или �
 >
 > Return your raw probability estimate before programmatic limits, the source references that materially informed it, and a short summary of assumptions and missing information. Use only information available by `known_at`. Do not invent sources or base rates. If traceable backing is unavailable, return a rough estimate and explicitly state that limitation.
 
-Если proposal уже учитывает direct evidence, его нельзя использовать как prior вместе с тем же evidence в updater-е: prior пересчитывается по допустимому background. Инструкция с `known_at` не гарантирует отсутствия знания будущего outcome в весах LLM; для исторической evaluation требуется отдельная проверка утечки.
+If a proposal already incorporates direct evidence, it cannot be used as a prior alongside the same evidence in the updater; recalculate the prior using permitted background. An instruction containing `known_at` does not guarantee that the LLM's weights lack knowledge of a future outcome; historical evaluation requires a separate leakage check.
 
-Если доступны релевантные [[#^def-CalibrationStats|`CalibrationStats`]], они могут использоваться как feedback о прошлой over/underconfidence prediction mechanism. Они не увеличивают `PriorSupport`.
+When relevant [[#^def-CalibrationStats|`CalibrationStats`]] are available, they may provide feedback on past overconfidence or underconfidence of the prediction mechanism. They do not increase `PriorSupport`.
 
-LLM возвращает:
+The LLM returns:
 
 ```python
 LLMPriorProposal {
   raw_prior: probability | Profile;
-  basis_summary; // base rate / reference class, если доступны; допущения и пробелы
+  basis_summary; // base rate / reference class, if available; assumptions and gaps
 
   material_evidence: [
     {
@@ -703,32 +680,33 @@ LLMPriorProposal {
 }
 ```
 
-`LLMPriorProposal` не попадает автоматически в `PriorSupport`. `resolve_prior` сначала проверяет его `material_evidence` на применимость, надёжность, зависимости и трассируемость; только прошедшая эту проверку effective evidence mass учитывается в `PriorSupport`.
+`LLMPriorProposal` does not automatically contribute to `PriorSupport`. `resolve_prior` first checks its `material_evidence` for applicability, reliability, dependencies, and traceability; only effective evidence mass that passes these checks is counted in `PriorSupport`.
 
-`material_evidence` содержит только основания, существенно повлиявшие на `raw_prior`. Несколько сообщений, основанных на одном observation, dataset или исследовании, считаются зависимым evidence.
+`material_evidence` includes only grounds that materially affected `raw_prior`. Several messages based on one observation, dataset, or study count as dependent evidence.
 
-Retrieval увеличивает доступный evidence, но сам по себе не делает prior надёжнее: шумные, нерелевантные или зависимые источники могут, наоборот, создавать ложную уверенность. Поэтому учитывается содержание и provenance material evidence; репутация источника является лишь одним признаком его reliability.
+Retrieval increases the available evidence but does not by itself make a prior more reliable; noisy, irrelevant, or dependent sources may instead create false confidence. Therefore, assess the content and provenance of material evidence; source reputation is only one reliability indicator.
 
-Числовой и категориальный протоколы сравниваются на независимо разрешившихся случаях своего семейства targets по [[Process Plane/Program Evaluation and Testing|правилам evaluation]]: proper scores, calibration и полезность различий между прогнозами. Повторное семплирование и отдельный LLM-судья не входят в обязательный путь оценки.
+Evaluate numeric and categorical protocols on independently resolved cases from their respective target families under the [[Process Plane/Program Evaluation and Testing|evaluation rules]]: proper scores, calibration, and the usefulness of differences among forecasts. Repeated sampling and a separate LLM judge are not part of the required evaluation path.
 
-Основания для выбора протокола:
+Grounds for selecting the protocol include:
 
-- [Tao et al. (2025)](https://arxiv.org/html/2505.23854v1): словесная неопределённость лучше в среднем по исследованным моделям, но не для каждой; её оценивал отдельный LLM-судья. Это не доказательство преимущества трёх фиксированных категорий.
-- [Subramani et al., ACUTE (2026)](https://arxiv.org/abs/2606.07822): обучаемые оценки по внутренним активациям повышают полезность оценок уверенности при низкой ошибке calibration на исследованных задачах. Метод требует данных и доступа к активациям; одного изменения prompt недостаточно для воспроизведения результата.
+- [Tao et al. (2025)](https://arxiv.org/html/2505.23854v1): verbal uncertainty performed better on average across the studied models, but not for every model; it was evaluated by a separate LLM judge. This does not prove the advantage of three fixed categories.
+- [Subramani et al., ACUTE (2026)](https://arxiv.org/abs/2606.07822): evaluations learned from internal activations increased the usefulness of confidence estimates with low calibration error on the studied tasks. The method requires data and access to activations; changing the prompt alone cannot reproduce the result.
 
-Эти работы изучают преимущественно правильность ответов моделей. Перенос результатов на priors произвольных процессов проверяется отдельно.
+These studies primarily examine correctness of model answers. Transfer of their results to priors for arbitrary processes must be checked separately.
 
-##### Unsupported LLM prior
+---
+##### Unsupported LLM Prior
 
 #topic_details
 
-Часть prior без трассируемого backing evidence имеет:
+A prior component without traceable evidence backing has:
 
 ```text
 PriorSupport = 0
 ```
 
-и в MVP ограничивается:
+and is bounded in the MVP by:
 
 ```text
 binary:
@@ -738,27 +716,28 @@ CompetitionScope:
 max_k prior_k ≤ 0.75.
 ```
 
-Код сначала ограничивает собственную силу неподкреплённого proposal, затем его совокупное влияние с приблизительными contributions по [[#Ограничение неподтверждённого влияния|общему правилу]]. Для допустимого binary proposal без backing и других вкладов результат равен `clamp(raw_prior, 0.25, 0.75)`. Для scope сохраняются нормировка и положительность компонент [[#^def-Profile|Profile]]. Ограничение не является эмпирической калибровкой.
+Code first bounds the unsupported proposal's own strength, then limits its aggregate influence together with approximate contributions under the [[#Limiting Unsupported Influence|shared rule]]. For an admissible binary proposal with no backing and no other contributions, the result is `clamp(raw_prior, 0.25, 0.75)`. For a scope, preserve normalization and positive [[#^def-Profile|`Profile`]] components. This limit is not empirical calibration.
 
-При наличии material evidence final prior может выйти за этот предел только настолько, насколько более сильная оценка действительно им обоснована. Само наличие источника cap не снимает.
+When material evidence exists, the final prior may go beyond this limit only to the extent that the stronger estimate is actually justified by that evidence. The mere presence of a source does not remove the cap.
 
-При добавлении приблизительных assessments неподкреплённый prior и их contributions используют [[#Ограничение неподтверждённого влияния|один общий предел влияния на target]]. Ослабление каждого вклада по отдельности не заменяет это ограничение суммы.
+When approximate assessments are added, the unsupported prior and their contributions use [[#Limiting Unsupported Influence|one shared limit on influence over the target]]. Weakening each contribution separately does not replace limiting their sum.
 
-##### Evidence-backed prior
+---
+##### Evidence-Backed Prior
 
-#topic_details 
+#topic_details
 
-Backing evidence может происходить из:
+Backing evidence may come from:
 
 ```text
-собственного опыта и upstream beliefs / models;
-переноса Prototype → Instance → Facet;
-внешних observations, datasets и retrieved sources.
+the agent's own experience and upstream beliefs / models;
+transfer from Prototype → Instance → Facet;
+external observations, datasets, and retrieved sources.
 ```
 
-Поэтому новая Program может иметь `PriorSupport > 0` ещё до собственного опыта агента.
+Therefore, a new Program may have `PriorSupport > 0` before the agent has its own experience.
 
-`resolve_prior` определяет effective backing с учётом:
+`resolve_prior` determines effective backing while accounting for:
 
 ```text
 applicability;
@@ -767,45 +746,43 @@ dependencies;
 temporal applicability.
 ```
 
-`PriorSupport` не является числом источников, confidence LLM или оценкой репутации источника. Он выражается в support-scale updater-а текущего target.
+`PriorSupport` is not a count of sources, LLM confidence, or a source-reputation score. It is expressed on the support scale of the current target's updater.
 
-При переносе upstream belief его `Support / PriorSupport` не копируются: учитывается только применимая часть underlying evidence.
-
+When transferring an upstream belief, do not copy its `Support / PriorSupport`; count only the applicable part of its underlying evidence.
 
 ---
-
-#### Evidence contribution and Support
+#### Evidence Contribution and Support
 
 #topic_core
 
-Для epistemic updater-а `contribution` и `evidence_mass` образуют единый математический контракт:
+For an epistemic updater, `contribution` and `evidence_mass` form one mathematical contract:
 
 ```text
 contribution
-→ направление и величина воздействия evidence на belief;
+→ direction and magnitude of evidence's effect on the belief;
 
 evidence_mass ≥ 0
-→ discriminative mass этого воздействия.
+→ discriminative mass of that effect.
 ```
 
 #topic_details
 
-`evidence_mass` не является количеством observations или общей мерой того, насколько вопрос исследован. Поэтому релевантное [[#^def-Evidence|evidence]] может иметь:
+`evidence_mass` is not the number of observations or a general measure of how thoroughly the question has been investigated. Therefore, relevant [[#^def-Evidence|evidence]] may have:
 
 ```text
 contribution = 0
 evidence_mass = 0
 ```
 
-и всё равно учитываться в [[#^def-EvidenceStats|`EvidenceStats`]].
+and still be included in [[#^def-EvidenceStats|`EvidenceStats`]].
 
-Для atomic evidence `evidence_mass` не задаётся независимо, а детерминированно выводится из `contribution` по правилам конкретного updater-а.
+For atomic evidence, `evidence_mass` is not specified independently; it is deterministically derived from `contribution` under the specific updater's rules.
 
-Для `BinaryBeliefUpdater` и `CompetitionScopeUpdater` используются натуральные логарифмы; `evidence_mass` и `Support` для них измеряются в `nats`.
+`BinaryBeliefUpdater` and `CompetitionScopeUpdater` use natural logarithms; `evidence_mass` and `Support` are measured in `nats` for these updaters.
 
-После consolidation `evidence_mass` может превышать net effect assignment, поскольку contributions представленных компонентов могут частично компенсировать друг друга.
+After consolidation, `evidence_mass` may exceed an assignment's net effect because contributions from represented components may partially cancel one another.
 
-При чтении temporal, dependency policies и ограничение неподтверждённого влияния преобразуют:
+When reading, temporal, dependency, and unsupported-influence policies transform:
 
 ```text
 (contribution, evidence_mass)
@@ -815,139 +792,137 @@ current adjustment
 (effective contribution, effective evidence_mass)
 ```
 
-Adjustment должен сохранять updater-specific invariant между effect и mass: ослабление discriminative evidence не может оставить эффект на `Strength` или [[#^def-Profile|`Profile`]], превышающий соответствующую effective mass.
+The adjustment must preserve the updater-specific invariant between effect and mass: weakening discriminative evidence cannot leave an effect on `Strength` or [[#^def-Profile|`Profile`]] that exceeds the corresponding effective mass.
 
-Для простого scalar attenuation `a ∈ [0,1]`:
+For simple scalar attenuation `a ∈ [0,1]`:
 
 ```text
 Δ̃ = aΔ
 m̃ = am
 ```
 
-Dependency adjustment может учитывать несколько связанных evidence совместно и не обязан сводиться к независимому множителю каждого assignment.
+Dependency adjustment may handle several related evidence items jointly and does not have to reduce to an independent multiplier for every assignment.
 
 #topic_core
 
-Текущий собственный Support target-а:
+The target's current own `Support` is:
 
 ```text
 Support = Σ effective evidence_mass
 ```
 
-после необходимой dependency-свёртки.
+after any required dependency consolidation.
 
-Prior в `Support` не входит.
+Prior is not included in `Support`.
 
 #topic_details
 
-Для consolidated evidence adjustment должен использовать retained representation, достаточную для сохранения consolidation invariant. Один общий adjustment к net contribution допустим только тогда, когда он эквивалентен adjustment представленных компонентов.
+For consolidated evidence, adjustment must use a retained representation sufficient to preserve the consolidation invariant. One shared adjustment to net contribution is acceptable only if it is equivalent to adjusting the represented components.
 
-##### Ограничение неподтверждённого влияния
+---
+##### Limiting Unsupported Influence
 #topic_core
 
-В MVP все приблизительные оценки, влияющие на один target в данном контексте чтения, используют общий предел. В него входят неподкреплённый prior, contributions непроверенных моделей наблюдений и влияние предположений о неизвестных источниках. Новый обработчик, версия программы или повторный assessment не создают дополнительного предела.
+In the MVP, all approximate estimates that affect one target in a given read context share one common limit. It includes an unsupported prior, contributions from unverified observation models, and influence from assumptions about unknown sources. A new handler, program version, or repeated assessment does not create an additional limit.
 
-Оценка считается обоснованной в данной области, если используемая модель и существенные предположения поддержаны применимыми внешними основаниями или независимой проверкой. Уверенность LLM, наличие ссылки и число запусков сами по себе этого не доказывают. При частичном обосновании отделяется неподтверждённая часть; если разделение не поддерживается моделью, весь соответствующий вклад считается приблизительным.
+An estimate is considered grounded in a domain when the model and its material assumptions are supported by applicable external grounds or independent evaluation. LLM confidence, the presence of a citation, and the number of runs do not prove this by themselves. With partial support, separate the unsupported part; if the model cannot separate it, treat the entire relevant contribution as approximate.
 
-Предел применяется после учёта времени и зависимостей, к совокупному влиянию приблизительных оценок. Обоснованное evidence сохраняет свой вклад и может вывести итоговую вероятность за границы неподкреплённого prior. Итоговый posterior целиком не обрезается.
+Apply the limit to the combined influence of approximate estimates after accounting for time and dependencies. Grounded evidence retains its contribution and may move the final probability outside the bounds for an unsupported prior. Do not clip the entire final posterior.
 
 #topic_details
 
-Во внутренних данных расчёта различаются:
+Internal calculations distinguish:
 
-- `z_base` — обоснованная часть prior: log-odds для binary target или центрированные log-weights для scope. Если её нет, используется ноль, соответствующий `0.5` или равномерному профилю. Это точка отсчёта ограничения, а не утверждение о реальных базовых частотах.
-- `v₀` — неподтверждённое остаточное смещение prior в тех же координатах, ещё не представленное отдельными contributions.
-- `W` — приблизительные собственные и переносимые upstream contributions после temporal / dependency adjustment; `W_prior` — переносимая часть этого набора.
+- `z_base` — the grounded part of the prior: log-odds for a binary target or centered log-weights for a scope. If absent, use zero, corresponding to `0.5` or a uniform Profile. This is a reference point for the limit, not a claim about real base rates.
+- `v₀` — the unsupported residual prior bias in the same coordinates, not yet represented as separate contributions.
+- `W` — approximate own and transferable upstream contributions after temporal/dependency adjustment; `W_prior` is the transferable subset.
 
-Если proposal не позволяет отделить обоснованную часть, всё его смещение считается неподтверждённым; использованные в нём основания не добавляются повторно отдельными contributions. Перед логарифмированием prior должен удовлетворять [[#Target-specific belief updaters|контракту updater-а]]: конечные вероятности строго между `0` и `1`, для scope также нормировка. Недопустимый proposal заменяется объявленным fallback.
+If a proposal does not allow its grounded part to be separated, treat all its bias as unsupported; do not add grounds already used in the proposal again as separate contributions. Before taking logarithms, the prior must meet the [[#Target-Specific Belief Updaters|updater contract]]: probabilities must be finite and strictly between `0` and `1`, with scope probabilities also normalized. Replace an inadmissible proposal with the declared fallback.
 
-Величина смещения определяется как `d(x) = |x|` для binary target и `d(x) = max(x) − min(x)` для центрированного вектора scope. Сначала ограничивается сила самого proposal:
+Define the bias magnitude as `d(x) = |x|` for a binary target and `d(x) = max(x) − min(x)` for a centered scope vector. First bound the strength of the proposal itself:
 
 ```text
-u₀ = v₀                       при d(v₀) ≤ B
-u₀ = [B / d(v₀)] × v₀         при d(v₀) > B
+u₀ = v₀                       when d(v₀) ≤ B
+u₀ = [B / d(v₀)] × v₀         when d(v₀) > B
 ```
 
-Это не позволяет крайней самооценке LLM занять почти весь общий предел за счёт большого raw logit. Затем ограничивается сумма предположений:
+This prevents an extreme LLM self-estimate from using almost the entire shared limit through a large raw logit. Then limit the total assumed influence:
 
 ```text
 M = d(u₀) + Σ_{i ∈ W} m_i
-a = 1                         при M = 0
-a = min(1, B / M)             при M > 0
+a = 1                         when M = 0
+a = min(1, B / M)             when M > 0
 
 u₀_eff = a × u₀
-Δ_i_eff = a × Δ_i             для i ∈ W
-m_i_eff = a × m_i             для i ∈ W
+Δ_i_eff = a × Δ_i             for i ∈ W
+m_i_eff = a × m_i             for i ∈ W
 ```
 
-Суммарная mass ограничиваемого влияния не превышает `B`. Она считается до взаимной компенсации противоположных contributions, чтобы их сумма не скрывала величину неподтверждённых влияний.
+The total mass of limited influence cannot exceed `B`. Count it before opposite contributions cancel each other, so their net does not hide the magnitude of unsupported influences.
 
-`B` — версионируемая настройка политики расчёта, измеряемая в `nats`. Для MVP значения согласованы с [[#Unsupported LLM prior|пределами начального prior]]:
+`B` is a versioned calculation-policy setting, measured in `nats`. In the MVP, values are aligned with [[#Unsupported LLM Prior|initial-prior limits]]:
 
 ```text
 binary: B = ln(3)
-scope с K ≥ 2 alternatives: B = ln(3 × (K − 1))
+scope with K ≥ 2 alternatives: B = ln(3 × (K − 1))
 ```
 
-Без обоснованного evidence это даёт binary probability в `[0.25, 0.75]` и `max_k p_k ≤ 0.75`. Для scope также ограничивается отношение вероятностей любых двух alternatives: `p_i / p_j ≤ 3 × (K − 1)`. При большом числе alternatives это не гарантирует большой абсолютной вероятности каждой из них.
+Without grounded evidence, this gives binary probability in `[0.25, 0.75]` and `max_k p_k ≤ 0.75`. For a scope, the probability ratio between any two alternatives is also limited: `p_i / p_j ≤ 3 × (K − 1)`. For a large number of alternatives, this does not guarantee a large absolute probability for each one.
 
-Неподкреплённый prior расходует предел влияния, но не создаёт `Support` или `PriorSupport`. Effective mass собственного evidence входит в `Support`, переносимого upstream evidence — в `PriorSupport`; одно основание учитывается один раз. Исходные contributions сохраняются, а коэффициент `a` вычисляется при чтении. В формулах updaters `p₀` означает prior после этого adjustment; исходное предложение prior от числа собственных observations не меняется.
+An unsupported prior uses the influence limit but creates neither `Support` nor `PriorSupport`. Effective mass from own evidence contributes to `Support`; transferable upstream evidence contributes to `PriorSupport`; count each ground once. Preserve original contributions and compute coefficient `a` at read time. In updater formulas, `p₀` means the prior after this adjustment; the original prior proposal is not changed by the count of own observations.
 
-Prior собирается в тех же координатах:
+Assemble the prior in the same coordinates:
 
 ```text
 z_prior = z_base + a × u₀ + Σ_{i ∈ W_prior} a × Δ_i
 ```
 
-Для binary target `p₀ = sigmoid(z_prior)`, для scope — `p₀ = softmax(z_prior)`. Обоснованные upstream contributions уже входят в `z_base`. Собственное evidence добавляется updater-ом отдельно; ни один из этих вкладов не дублируется внутри `v₀`.
+For a binary target, `p₀ = sigmoid(z_prior)`; for a scope, `p₀ = softmax(z_prior)`. Grounded upstream contributions are already included in `z_base`. The updater adds own evidence separately; none of these contributions are duplicated within `v₀`.
 
-Это консервативная эвристика MVP, а не гарантия точного Bayesian posterior или эмпирической calibration. Изменение предела или снятие ограничения для конкретного семейства требует применимых независимых оснований и обычной проверки изменения программы. Переименование модели, увеличение числа непроверенных примеров или перенос через другой belief не снимают ограничение.
+This is a conservative MVP heuristic, not a guarantee of an exact Bayesian posterior or empirical calibration. Changing the limit or removing it for a specific family requires applicable independent grounds and ordinary evaluation of the program change. Renaming a model, increasing the number of unverified examples, or transferring through another belief does not remove the limit.
 
-Применимость модели, её версия, использованные основания и признаки неподтверждённого влияния сохраняются во внутренних данных assessment и [[Memory#^def-ResultProvenance|provenance]]. Consolidation сохраняет разделение таких вкладов, исходные masses и зависимости, необходимые для пересчёта. Их нельзя слить в один net contribution, если после этого невозможно воспроизвести ограничение или обоснованный пересмотр.
-
----
+Model applicability, version, grounds used, and indicators of unsupported influence are retained in the assessment's internal data and [[Memory#^def-ResultProvenance|provenance]]. Consolidation preserves the distinction among these contributions, their original masses, and dependencies needed for recomputation. They must not be merged into a single net contribution if that would make the limit or a grounded revision impossible to reproduce.
 
 #### Calibration
 
 #topic_core
 
 (def_id:: entity.Calibration)
-> [!definition] **Calibration** — соответствие вероятностных predictions агента наблюдаемой частоте исходов. Если для множества сопоставимых случаев агент возвращает вероятность около `p`, соответствующий outcome должен наблюдаться примерно с частотой `p`. ^def-Calibration
+> [!definition] **Calibration** — the correspondence between the agent's probabilistic predictions and the observed frequency of outcomes. If the agent returns a probability near `p` for a set of comparable cases, the corresponding outcome should occur at approximately frequency `p`. ^def-Calibration
 
-Калибровка не требует отдельной подсистемы. Systematic miscalibration является evidence для обучения механизма, который создаёт prediction, через обычную [[Learning system#^def-LearningSystem|Learning System]]: parameter update или structural revision. При необходимости этот механизм может включать обучаемое преобразование выхода — калибратор. Его проверка, включая покрытие интервалов и значимые контексты, следует [[Process Plane/Program Evaluation and Testing#^prediction-calibration-sharpness|общим правилам калибровки прогнозов]]; отдельный калибратор не обязателен.
+Calibration does not require a separate subsystem. Systematic miscalibration is evidence for training the mechanism that produces the prediction through the ordinary [[Learning system#^def-LearningSystem|Learning System]]: a parameter update or structural revision. When needed, that mechanism may include a learnable output transformation, or calibrator. Its evaluation, including interval coverage and relevant contexts, follows the [[Process Plane/Program Evaluation and Testing#^prediction-calibration-sharpness|general rules for forecast calibration]]; a separate calibrator is not required.
 
 ##### CalibrationStats
 
 #topic_core
 
 (def_id:: entity.CalibrationStats)
-> [!definition] **CalibrationStats** — опциональная компактная статистика calibration для **повторяемого semantic типа** [[#^def-BeliefTarget|**BeliefTarget**]], накопленная по собственным predictions агента и их независимо наблюдаемым outcomes. ^def-CalibrationStats
+> [!definition] **CalibrationStats** — optional compact calibration statistics for a **repeatable semantic type** of [[#^def-BeliefTarget|**BeliefTarget**]], accumulated from the agent's own predictions and their independently observed outcomes. ^def-CalibrationStats
 
 #topic_details
 
-Конкретные targets:
+Specific targets:
 
-```
+```text
 DIES_WITHIN_30D(Patient#1)
 DIES_WITHIN_30D(Patient#2)
 DIES_WITHIN_30D(Patient#3)
 ```
 
-могут использовать общую статистику:
+may share statistics:
 
-```
+```text
 DIES_WITHIN_30D
 → CalibrationStats
 ```
 
-если представляют один и тот же тип prediction и относятся к сопоставимым условиям.
-Для target types, по которым такая статистика не накоплена или неприменима:
+if they represent the same prediction type and concern comparable conditions. For target types with no accumulated or applicable statistics:
 
-```
+```text
 CalibrationStats = None
 ```
 
-Для scalar probability в MVP:
+For scalar probabilities in the MVP:
 
 ```python
 CalibrationStats {
@@ -956,35 +931,35 @@ CalibrationStats {
 
 CalibrationBin {
   probability_range: <Interval[float]>
-    "Диапазон predicted probabilities."
+    "Range of predicted probabilities."
 
   count: <int>
-    "Число представленных logical resolved predictions."
+    "Number of represented logical resolved predictions."
 
   probability_sum: <float>
-    "Сумма predicted probabilities."
+    "Sum of predicted probabilities."
 
   positive_count: <int>
-    "Число случаев, в которых predicted outcome произошёл."
+    "Number of cases in which the predicted outcome occurred."
 }
 ```
 
-Для каждого bin:
+For each bin:
 
 ```text
 mean predicted probability = probability_sum / count
 observed frequency         = positive_count / count
 ```
 
-Их расхождение показывает miscalibration.
+Their difference indicates miscalibration.
 
-Для других форм probabilistic prediction используется соответствующее model-specific mergeable sufficient state.
+Other forms of probabilistic prediction use the corresponding model-specific mergeable sufficient state.
 
-##### Calibration lifecycle
+##### Calibration Lifecycle
 
-#topic_details 
+#topic_details
 
-Одна calibration unit соответствует одному логическому prediction, сделанному **до** независимо наблюдаемого outcome. Повторное чтение или технический пересчёт того же prediction новой unit не создаёт.
+One calibration unit corresponds to one logical prediction made **before** an independently observed outcome. Rereading or technically recomputing the same prediction does not create a new unit.
 
 ```text
 own probabilistic prediction
@@ -993,16 +968,16 @@ independently observed outcome
         ↓
 update CalibrationStats
         ↓
-обычный Learning ответственного механизма
+ordinary Learning by the responsible mechanism
 ```
 
-Не разрешённый или неоднозначный outcome не учитывается как отрицательный.
+An unresolved or ambiguous outcome is not counted as a negative one.
 
-[[#^def-CalibrationStats|`CalibrationStats`]] пополняются результатами проверки собственных predictions агента. Проверочный случай может происходить как из live-опыта, так и из внешнего источника, если агент может сформировать prediction из информации, доступной до outcome, а затем независимо сравнить её с надёжным observed outcome. Чужие predictions или опубликованные calibration-оценки напрямую в `CalibrationStats` не объединяются.
+[[#^def-CalibrationStats|`CalibrationStats`]] is updated from checks of the agent's own predictions. A check case may come from live experience or an external source if the agent can form a prediction using information available before the outcome and then compare it independently with a reliable observed outcome. Other parties' predictions or published calibration estimates are not merged directly into `CalibrationStats`.
 
-При существенной смене режима новый опыт накапливается в отдельных `CalibrationStats` нового regime; произвольное окно `recent` не используется.
+After a significant regime change, new experience is accumulated in separate `CalibrationStats` for the new regime; an arbitrary `recent` window is not used.
 
-После стандартной memory consolidation должно сохраняться достаточно статистики, чтобы оценка calibration существенно не менялась:
+After standard memory consolidation, enough statistics should remain that the calibration estimate does not change materially:
 
 ```text
 calibration(raw compatible predictions)
@@ -1010,63 +985,63 @@ calibration(raw compatible predictions)
 calibration(retained CalibrationStats)
 ```
 
-:::
+#### Target-Specific Belief Updaters
 
----
-#### Target-specific belief updaters
 #topic_details
 
-##### Binary belief updater
-#topic_details 
+##### Binary Belief Updater
 
-Для binary [[#^def-BeliefTarget|`BeliefTarget`]] contribution из [[#^def-Evidence|`Evidence`]] задаётся signed log-evidence:
+#topic_details
+
+For a binary [[#^def-BeliefTarget|`BeliefTarget`]], the contribution from [[#^def-Evidence|`Evidence`]] is a signed log-evidence value:
 
 ```text
 Δ > 0
-→ evidence поддерживает target;
+→ evidence supports the target;
 
 Δ < 0
-→ evidence поддерживает его отрицание;
+→ evidence supports its negation;
 
 Δ = 0
-→ evidence релевантно, но не различает две возможности.
+→ evidence is relevant but does not distinguish the two possibilities.
 ```
 
-Для atomic evidence `m_i = |Δ_i|`. При consolidation сохраняются `Δ_merge = Σ_i Δ_i` и `m_merge = Σ_i m_i`, поэтому `|Δ_merge| ≤ m_merge` даже при взаимной компенсации вкладов.
+For atomic evidence, `m_i = |Δ_i|`. During consolidation, `Δ_merge = Σ_i Δ_i` and `m_merge = Σ_i m_i` are retained, so `|Δ_merge| ≤ m_merge` even when contributions cancel each other.
 
-При prior $p_0$:
+Given prior $p_0$:
 
-$$  
-z =  
-\operatorname{logit}(p_0)  
-+  
-\sum_i \tilde{\Delta}_i  
+$$
+z =
+\operatorname{logit}(p_0)
++
+\sum_i \tilde{\Delta}_i
 $$
 
-$$  
-Strength = \sigma(z)  
+$$
+Strength = \sigma(z)
 $$
 
-[[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] вычисляет contribution как log-likelihood ratio по известной, обученной или явно приблизительной [[#Расчёт Evidence → contribution|модели наблюдений]]. Приблизительные contributions допустимы до калибровки и подчиняются общему пределу влияния.
+[[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] computes the contribution as a log-likelihood ratio using a known, learned, or explicitly approximate [[#Evidence → Contribution Calculation|observation model]]. Approximate contributions are allowed before calibration and remain subject to the general influence limit.
 
-`Support` вычисляется по общему контракту `Evidence contribution` из effective evidence mass и здесь повторно не определяется.
+`Support` is calculated under the shared `Evidence contribution` contract from effective evidence mass and is not redefined here.
 
-Для пересматриваемого belief:
+For a revisable belief:
 
-$$  
-0 < p_0 < 1  
+$$
+0 < p_0 < 1
 $$
 
-Жёстко невозможные состояния задаются semantic constraints, а не значениями prior $0$ или $1$.
+Hard-impossible states are specified by semantic constraints, not prior values of $0$ or $1$.
 
 ---
 
-##### CompetitionScope updater
-#topic_details 
+##### CompetitionScope Updater
 
-`CompetitionScopeUpdater` является общим для любого `CompetitionScope`: он не различает hypotheses и значения categorical / ordinal Property и работает в пространстве ненормированных log-weights.
+#topic_details
 
-Один [[#^def-EvidenceAssignment|`EvidenceAssignment`]] оценивает scope целиком. Его contribution — вектор relative log-evidence:
+`CompetitionScopeUpdater` is shared by every `CompetitionScope`: it does not distinguish hypotheses from categorical or ordinal Property values and operates in unnormalized log-weight space.
+
+One [[#^def-EvidenceAssignment|`EvidenceAssignment`]] assesses the scope as a whole. Its contribution is a vector of relative log-evidence:
 
 ```text
 Δ_i = {
@@ -1076,15 +1051,15 @@ $$
 }
 ```
 
-Общий additive offset не имеет значения: добавление одной константы ко всем компонентам не меняет результат. Поэтому contribution хранится в канонической форме, например с нулевым средним.
+A shared additive offset is irrelevant: adding the same constant to every component does not change the result. Therefore, contributions are stored in a canonical form, such as one with zero mean.
 
-Для atomic assignment:
+For an atomic assignment:
 
 $$
 m_i = \max_k \Delta_{i,k} - \min_k \Delta_{i,k}
 $$
 
-Для consolidated assignment:
+For a consolidated assignment:
 
 $$
 \Delta_{\text{merge},k} = \sum_i \Delta_{i,k}
@@ -1094,7 +1069,7 @@ $$
 m_{\text{merge}} = \sum_i m_i
 $$
 
-Следовательно:
+Therefore:
 
 $$
 \max_k \Delta_{\text{merge},k}
@@ -1102,16 +1077,16 @@ $$
 \le m_{\text{merge}}
 $$
 
-Для каждой alternative $a_k$:
+For each alternative $a_k$:
 
-$$  
-z_k =  
-\ln p_{0,k}  
-+  
-\sum_i \widetilde{\Delta}_{i,k}  
+$$
+z_k =
+\ln p_{0,k}
++
+\sum_i \widetilde{\Delta}_{i,k}
 $$
 
-[[#^def-Profile|`Profile`]] вычисляется через softmax:
+[[#^def-Profile|`Profile`]] is calculated using softmax:
 
 $$
 Profile(a_k) =
@@ -1119,36 +1094,36 @@ Profile(a_k) =
 {\sum_j \exp(z_j)}
 $$
 
-Следовательно:
+Therefore:
 
-$$  
+$$
 \sum_k Profile(a_k)=1
 $$
 
-и:
+and:
 
-$$  
+$$
 Strength(a_k)=Profile(a_k)
 $$
 
-Общий `Support` scope:
+The total `Support` for the scope is:
 
-$$  
-Support =  
-\sum_i \widetilde m_i  
+$$
+Support =
+\sum_i \widetilde m_i
 $$
 
-Для всех alternatives:
+For all alternatives:
 
-$$  
-p_{0,k}>0,  
-\qquad  
-\sum_k p_{0,k}=1  
+$$
+p_{0,k}>0,
+\qquad
+\sum_k p_{0,k}=1
 $$
 
-Все contributions конечны. Жёсткая невозможность alternative задаётся структурным ограничением `CompetitionScope`, а не через $p_{0,k}=0$ или $\Delta=-\infty$.
+All contributions are finite. A hard-impossible alternative is specified by a structural constraint on `CompetitionScope`, not by $p_{0,k}=0$ or $\Delta=-\infty$.
 
-Одно source [[#^def-Evidence|evidence]] увеличивает `Support` scope ровно один раз, даже если различает несколько alternatives.
+One source [[#^def-Evidence|evidence]] increases the scope's `Support` exactly once, even if it distinguishes several alternatives.
 
 Evidence:
 
@@ -1158,20 +1133,21 @@ B: +5
 C: +5
 ```
 
-эквивалентно нулевому relative contribution и поэтому имеет:
+is equivalent to a zero relative contribution and therefore has:
 
 ```text
 evidence_mass = 0
 ```
 
-Оно не изменяет `Profile` или `Support`, но остаётся релевантной проверкой и учитывается в [[#^def-EvidenceStats|EvidenceStats.evidence_count]].
+It does not change `Profile` or `Support`, but remains a relevant check and is counted in [[#^def-EvidenceStats|EvidenceStats.evidence_count]].
 
-#### Consolidation invariant
+#### Consolidation Invariant
+
 #topic_core
 
-Несколько совместимых [[#^def-EvidenceAssignment|`EvidenceAssignment`]] могут быть заменены одним консолидированным `EvidenceAssignment`.
+Several compatible [[#^def-EvidenceAssignment|`EvidenceAssignment`]] instances may be replaced by one consolidated `EvidenceAssignment`.
 
-Для каждого поддерживаемого read context, текущих temporal/dependency policies и общего предела неподтверждённого влияния должно выполняться:
+For each supported read context, current temporal and dependency policies, and the overall limit on unsupported influence, the following should hold:
 
 ```text
 belief(E1, ..., En)
@@ -1179,9 +1155,9 @@ belief(E1, ..., En)
 belief(merge(E1, ..., En))
 ```
 
-с точностью, допускаемой конкретным updater-ом.
+within the precision permitted by the specific updater.
 
-То есть консолидация не должна существенно изменять:
+That is, consolidation must not materially change:
 
 ```text
 Strength / Profile;
@@ -1191,135 +1167,138 @@ EvidenceStats.
 
 #topic_details
 
-При merge сохраняются совокупная evidence mass и logical multiplicity:
+On merge, preserve aggregate evidence mass and logical multiplicity:
 
 ```text
 m_merge     = Σ m_i
 count_merge = Σ count_i
 ```
 
-где `count` — число представленных logical evidence units, а не физических `EvidenceAssignment`.
+where `count` is the number of represented logical evidence units, not the number of physical `EvidenceAssignment` instances.
 
-Консолидированное representation также сохраняет минимальную структуру, необходимую для поддерживаемых temporal/dependency adjustments и ожидаемо нужного `revise/retract`.
+The consolidated representation also preserves the minimum structure needed for supported temporal or dependency adjustments and for expected `revise/retract` operations.
 
-[[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] дополнительно сохраняет:
+[[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] additionally retains:
 
 ```text
-минимум один характерный исходный observation / experience;
-значимые exceptions и counterexamples.
+at least one characteristic source observation / experience;
+significant exceptions and counterexamples.
 ```
 
-Существенно разные источники, dependency branches, regimes, независимые проверки или значимые подтверждения и опровержения не объединяются, если их различие остаётся эпистемически полезным.
+Materially different sources, dependency branches, regimes, independent checks, or significant confirmations and refutations are not merged when their differences remain epistemically useful.
 
-После успешной консолидации остальные взаимозаменяемые routine observations и исходные `EvidenceAssignment` могут быть удалены согласно общему lifecycle [[Memory#^def-Memory|Memory]].
+After successful consolidation, other interchangeable routine observations and source `EvidenceAssignment` instances may be deleted under the shared [[Memory#^def-Memory|Memory lifecycle]].
 
-Таким образом:
+Thus:
 
 ```text
 consolidated EvidenceAssignment
-→ сохраняет совокупное эпистемическое влияние группы
-  и необходимую статистику её структуры;
+→ retains the group's aggregate epistemic influence
+  and necessary statistics about its structure;
 
 representative observation
-→ сохраняет конкретный пример опыта,
-  который эта группа представляет.
+→ retains a specific example of experience
+  represented by that group.
 ```
 
+## Evidence Model
 
-## Evidence model
 #topic_core
 
 ### Evidence
+
 #topic_core
 
 (def_id:: entity.Evidence)
-> [!definition] **Evidence** — опыт или результат проверки, релевантный конкретному belief, независимо от того, изменяет ли он belief. ^def-Evidence
+> [!definition] **Evidence** is experience or a check result relevant to a specific belief, whether or not it changes that belief. ^def-Evidence
 
-Релевантная проверка, не различившая alternatives, тоже является evidence: 
-Δ = 0 
-evidence_mass = 0 
+A relevant check that does not distinguish alternatives is also evidence:
 
-Она не изменяет Strength и не увеличивает Support, но создаёт [[#^def-EvidenceAssignment|EvidenceAssignment]] и фиксирует, что вопрос действительно исследовался.
+```text
+Δ = 0
+evidence_mass = 0
+```
 
+It does not change `Strength` or increase `Support`, but it creates an [[#^def-EvidenceAssignment|EvidenceAssignment]] and records that the question was actually investigated.
 
-Нужно различать:
+Distinguish:
 
-Observation / EvaluationResult / другой опыт
-→ что произошло или было получено;
+```text
+Observation / EvaluationResult / other experience
+→ what happened or was obtained;
 
 EvidenceAssignment
-→ какой вклад этот опыт получает в конкретном belief.
+→ what contribution that experience makes to a specific belief.
+```
 
-Один источник опыта может дать evidence нескольким beliefs.
-
+One source of experience may provide evidence for several beliefs.
 
 ---
 
-### Evidence sources
+### Evidence Sources
+
 #topic_core
 
-Основные источники evidence:
+Main evidence sources:
 
 ```text
 Observation
-→ независимо полученный факт о мире или состоянии;
+→ independently obtained fact about the world or a state;
 
 EvaluationResult
-→ результат явной проверки prediction,
-  Note, Claim, Prompt, Program или другого проверяемого объекта;
+→ result of an explicit check of a prediction,
+  Note, Claim, Prompt, Program, or another testable object;
 
 realized outcome
-→ фактический результат действия или процесса;
+→ actual result of an action or process;
 
 derived result
-→ результат reasoning, simulation или другой Program,
-  если его использование как evidence явно обосновано.
+→ result of reasoning, simulation, or another Program,
+  when its use as evidence is explicitly justified.
 ```
 
-Derived result, включая [[Core data structures#^def-Note|Note]] и [[Core data structures#^def-Claim|Claim]], не становится evidence автоматически. Его основания и зависимости должны быть восстановимы через [[Memory#^def-ResultProvenance|provenance]], чтобы один и тот же исходный опыт не усиливал belief многократно через несколько производных выводов.
+A derived result, including [[Core data structures#^def-Note|Note]] and [[Core data structures#^def-Claim|Claim]], does not automatically become evidence. Its grounds and dependencies must be recoverable through [[Memory#^def-ResultProvenance|provenance]] so the same source experience does not strengthen a belief repeatedly through multiple derived conclusions.
 
-Prior не является новым evidence. Он задаёт исходное состояние belief до накопления собственного evidence данного target.
+A prior is not new evidence. It specifies the initial belief state before the target accumulates its own evidence.
 
 ---
-
 
 ### EvidenceAssignment
 
 #topic_core
 
 (def_id:: entity.EvidenceAssignment)
-> [!definition] **EvidenceAssignment** — неизменяемый вклад одного logical evidence unit или допустимо консолидированной группы evidence в конкретный target. ^def-EvidenceAssignment
+> [!definition] **EvidenceAssignment** is the immutable contribution of one logical evidence unit, or an admissibly consolidated group of evidence, to a specific target. ^def-EvidenceAssignment
 
 ```python
 EvidenceAssignment {
   target: <BeliefTarget>
-    "Канонический semantic target, которому назначено evidence."
+    "Canonical semantic target to which the evidence is assigned."
 
   contribution: <UpdaterContribution>
-  "Updater-specific sufficient representation воздействия данного evidence на target."
+    "Updater-specific sufficient representation of this evidence's effect on the target."
 
   evidence_mass?: <float>
-    "Discriminative evidence mass для epistemic updater-а,
-     поддерживающего generic Support.
-     Для atomic evidence детерминированно вычисляется из contribution;
-     после consolidation сохраняет суммарную mass компонентов."
+    "Discriminative evidence mass for an epistemic updater that
+     supports generic Support.
+     For atomic evidence it is deterministically derived from contribution;
+     after consolidation it retains the total mass of the components."
 
   observed_scope?: <time | TimeInterval>
-    "Время мира, к которому относится evidence;
-     после consolidation может охватывать интервал."
+    "World time to which the evidence applies;
+     after consolidation it may cover an interval."
 }
 ```
 
-[[#^def-EvidenceAssignment|`EvidenceAssignment`]] является обычным immutable [[Memory#^def-OperatorOutput|`OperatorOutput`]]; отдельное evidence-хранилище не создаётся. Источники, использованные при assessment данные и версии программ восстанавливаются через общий [[Memory#^def-ResultProvenance|provenance]].
+[[#^def-EvidenceAssignment|`EvidenceAssignment`]] is an ordinary immutable [[Memory#^def-OperatorOutput|`OperatorOutput`]]; there is no separate evidence store. Sources, data used for assessment, and program versions are recovered through shared [[Memory#^def-ResultProvenance|provenance]].
 
-`contribution` не является `Strength`, `Support` или `value_U`: его форма и смысл определяются epistemic updater-ом target-а.
+`contribution` is not `Strength`, `Support`, or `value_U`; its form and meaning are defined by the target's epistemic updater.
 
-`evidence_mass` связана с `contribution` математическим контрактом epistemic updater-а и не назначается независимо.
-
+`evidence_mass` is mathematically linked to `contribution` by the epistemic updater's contract and is not assigned independently.
 
 #topic_details
 
-После consolidation representation должна сохранять минимальные sufficient statistics, необходимые для восстановления [[#^def-EvidenceStats|`EvidenceStats`]] после удаления исходных assignments:
+After consolidation, the representation must preserve the minimum sufficient statistics needed to recover [[#^def-EvidenceStats|`EvidenceStats`]] after the original assignments are deleted:
 
 ```text
 evidence_count;
@@ -1327,39 +1306,37 @@ max_component_mass;
 max_component_effect.
 ```
 
-Эта component-summary является технической частью consolidated representation, а не отдельным semantic object или публичным полем `EvidenceAssignment`.
-
+This component summary is a technical part of the consolidated representation, not a separate semantic object or public `EvidenceAssignment` field.
 
 ---
 
-#### UpdaterContribution contract
+#### UpdaterContribution Contract
+
 #topic_core
 
-Форма `UpdaterContribution` определяется механизмом обновления target-а.
+The form of `UpdaterContribution` is defined by the mechanism that updates the target:
 
 ```text
-BinaryBeliefUpdater →
-signed log-evidence; 
+BinaryBeliefUpdater
+→ signed log-evidence;
 
-CompetitionScopeUpdater → 
-relative log-evidence vector; 
+CompetitionScopeUpdater
+→ relative log-evidence vector;
 
-other epistemic belief updater →
-updater-specific sufficient evidence representation.
+other epistemic belief updater
+→ updater-specific sufficient evidence representation.
 ```
 
-UpdaterContribution должен быть достаточен для детерминированного
-reduce, merge, revise/retract и пересчёта belief.
-
----
+`UpdaterContribution` must be sufficient for deterministic reduction, merge, revision/retraction, and belief recomputation.
 
 ### EvidenceAssessmentProgram
+
 #topic_core
 
 (def_id:: entity.EvidenceAssessmentProgram)
-> [!definition] **EvidenceAssessmentProgram** — Program модели evidence, которая определяет, каким [[#^def-BeliefTarget|`BeliefTarget`]] релевантен полученный опыт, оценивает его epistemic contribution и создаёт [[#^def-EvidenceAssignment|`EvidenceAssignment[]`]]. ^def-EvidenceAssessmentProgram
+> [!definition] **EvidenceAssessmentProgram** is an evidence-model Program that determines which [[#^def-BeliefTarget|`BeliefTarget`]] instances the received experience is relevant to, assesses its epistemic contribution, and creates [[#^def-EvidenceAssignment|`EvidenceAssignment[]`]]. ^def-EvidenceAssessmentProgram
 
-Это обучаемая программа. Её основной численный вопрос: насколько полученное наблюдение ожидаемо при каждом возможном состоянии target. Из этих оценок код вычисляет вклад в belief. Приблизительная начальная модель допустима; её [[#Ограничение неподтверждённого влияния|совокупное влияние ограничивается]], пока нет достаточных оснований доверять расчёту.
+This is a learnable program. Its main numerical question is how expected the received observation is under each possible target state. The code uses these assessments to compute a contribution to belief. An approximate initial model is allowed; its [[#Limiting Unsupported Influence|aggregate influence is limited]] until there are sufficient grounds to trust the calculation.
 
 ```text
 Observation / EvaluationResult / derived result
@@ -1370,11 +1347,11 @@ EvidenceAssessmentProgram
 EvidenceAssignment[BeliefTarget][]
 ```
 
-Belief System владеет [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]], создаваемыми ею `EvidenceAssignment` и их lifecycle. `LearningCoordinator` только вызывает этот контракт.
+The Belief System owns [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]], the `EvidenceAssignment` instances it creates, and their lifecycle. `LearningCoordinator` only calls this contract.
 
 #topic_details
 
-При assessment результата prediction используется следующий поток, сохраняемый как [[Memory#^def-ProgramRun|`ProgramRun`]]:
+When assessing a prediction result, use the following flow, retained as a [[Memory#^def-ProgramRun|`ProgramRun`]]:
 
 ```text
 ProgramRun → observable claim
@@ -1385,149 +1362,152 @@ ProgramRun → observable claim
 → EvidenceAssignment[]
 ```
 
-Assessment различает:
+Assessment distinguishes:
 
 ```text
 observable claim
-→ direct evidence из его проверки;
+→ direct evidence from checking it;
 
 latent claim
-→ indirect evidence через зависимые observable predictions;
+→ indirect evidence through dependent observable predictions;
 
 OperatorConcept / Program
-→ evidence о корректности или применимости механизма;
+→ evidence about the mechanism's correctness or applicability;
 
 policy / action-selection mechanism
-→ evidence о качестве сделанного выбора.
+→ evidence about the quality of the choice made.
 ```
 
-Evidence сначала назначается наиболее непосредственно проверенному уровню. Более общий belief получает отдельный `EvidenceAssignment` только когда локальные объяснения недостаточны и повторяющиеся независимые результаты действительно информативны относительно общего механизма.
+Evidence is first assigned to the most directly checked level. A more general belief gets a separate `EvidenceAssignment` only when local explanations are insufficient and repeated independent results are genuinely informative about the general mechanism.
 
-Provenance ограничивает множество возможных `BeliefTarget`, но сам по себе не доказывает, какому из них относится evidence.
+Provenance limits the set of possible `BeliefTarget` instances, but by itself does not prove which target the evidence applies to.
 
 ```text
 provenance
-→ какие BeliefTarget могли быть затронуты;
+→ which BeliefTarget instances could have been affected;
 
 EvidenceAssessmentProgram
-→ каким BeliefTarget назначается evidence;
+→ which BeliefTarget receives the evidence;
 
 belief updater
-→ как contributions агрегируются в epistemic state.
+→ how contributions are aggregated into epistemic state.
 ```
 
 #topic_core
 
-Program не назначает learning credit и не обновляет belief или parametric state. `CreditAssignmentProgram` определяет [[Learning system#LearningCredit and UnresolvedCredit|credit по выбранному LearningTarget]], `UpdatePlanner` выбирает состояние для обновления. Belief updater пересчитывает [[#^def-BeliefData|`BeliefData`]], estimator или optimizer вычисляет новое parametric state, которое сохраняет общий механизм обновлений.
+The Program does not assign learning credit or update belief or parameter state. `CreditAssignmentProgram` determines [[Learning system#LearningCredit and UnresolvedCredit|credit for the selected LearningTarget]], and `UpdatePlanner` selects the state to update. A belief updater recomputes [[#^def-BeliefData|`BeliefData`]]; an estimator or optimizer computes new parameter state, which the shared update mechanism saves.
 
-Обычно `LearningCoordinator` вызывает `EvidenceAssessmentProgram`; `resolve_prior` также может вызвать её для retrieved sources. Для assessment evidence не требуется evaluable `ProgramRun` или обучаемый компонент.
+Usually `LearningCoordinator` calls `EvidenceAssessmentProgram`; `resolve_prior` may also call it for retrieved sources. Evidence assessment does not require an evaluable `ProgramRun` or a learnable component.
 
 #topic_details
 
-`EvidenceAssessmentProgram` может учитывать:
+`EvidenceAssessmentProgram` may take into account:
 
 ```text
-надёжность источника;
-качество измерения или observation;
-применимость к target;
-прямой или косвенный характер evidence;
-известные зависимости от другого evidence.
+source reliability;
+measurement or observation quality;
+applicability to the target;
+whether evidence is direct or indirect;
+known dependencies on other evidence.
 ```
 
-Релевантная неразличающая проверка всё равно создаёт `EvidenceAssignment` с `contribution = 0` и `evidence_mass = 0`.
+A relevant check that does not distinguish alternatives still creates an `EvidenceAssignment` with `contribution = 0` and `evidence_mass = 0`.
 
-Для `CompetitionScope` один source создаёт один `EvidenceAssignment` на весь scope с contribution по всем alternatives. Если тот же source относится к нескольким совместимым beliefs, каждый из них может получить отдельный assignment.
+For `CompetitionScope`, one source creates one `EvidenceAssignment` for the entire scope, with a contribution covering all alternatives. If the same source applies to several compatible beliefs, each may receive a separate assignment.
 
-Если отношение evidence к target остаётся неоднозначным, assessment либо создаёт assignments по применимой модели, учитывающей эту неоднозначность, либо не создаёт assignment и оставляет случай `unresolved`. Приблизительные оценки подчиняются общему ограничению неподтверждённого влияния. Незаанкоренные детали реализации не получают самостоятельного evidence.
+If the relation between evidence and target remains ambiguous, assessment either creates assignments under an applicable model that accounts for the ambiguity or creates no assignment and leaves the case `unresolved`. Approximate assessments remain subject to the general limit on unsupported influence. Unanchored implementation details do not receive independent evidence.
 
-Внутренняя численная оценка возвращает `UpdaterContribution`; публичный результат программы — `EvidenceAssignment[]`.
+The internal numeric assessment returns `UpdaterContribution`; the program's public result is `EvidenceAssignment[]`.
 
-Для epistemic updaters `evidence_mass` затем детерминированно вычисляется из contribution и не назначается независимо.
+For epistemic updaters, `evidence_mass` is then deterministically derived from the contribution and is not assigned independently.
 
-Не используется универсальное правило вида:
+There is no universal rule such as:
 
 ```text
 contribution = reliability × applicability
 ```
 
-поскольку вклад зависит от условной модели наблюдений. Если наблюдение одинаково ожидаемо при истинном и ложном target, оно даёт `Δ = 0`; условно независимые повторения таких неразличающих наблюдений не усиливают belief.
+because the contribution depends on the conditional observation model. If an observation is equally expected when the target is true and false, it yields `Δ = 0`; conditionally independent repetitions of such non-distinguishing observations do not strengthen belief.
 
-Использованные входы и версия `EvidenceAssessmentProgram` сохраняются через обычный `ProgramRun` и provenance.
+Inputs used and the version of `EvidenceAssessmentProgram` are retained through the ordinary `ProgramRun` and provenance.
 
-Важно:
+Important:
 
-> `Contribution` фиксирует assessment evidence, принятый в момент создания assignment. Последующее изменение знания об источнике не изменяет старый assignment автоматически.
+> `Contribution` records the evidence assessment accepted when the assignment was created. A later change in knowledge about the source does not automatically change an existing assignment.
 
-#### Расчёт Evidence → contribution
+#### Evidence → Contribution Calculation
+
 #topic_core
 
-Модель наблюдений описывает, какие результаты проверки или сообщения источника возможны при каждом состоянии target:
+The observation model describes which check results or source messages are possible under each target state:
 
 ```text
-H — состояние target: 0/1 для binary target либо alternative scope-а;
-h — конкретное состояние;
-R — возможный результат наблюдения, r — полученный результат;
-C — контекст, источник, способ получения наблюдения и режим;
+H — target state: 0/1 for a binary target or an alternative in a scope;
+h — a particular state;
+R — a possible observation result; r — the result received;
+C — context, source, method of obtaining the observation, and regime;
 
-q_h(r | C) — модельная вероятность результата r для дискретного R
-             или плотность для непрерывного R при H = h и контексте C.
+q_h(r | C) — modeled probability of result r for discrete R,
+             or density for continuous R when H = h in context C.
 ```
 
-Для binary target нужны две оценки: при истинном утверждении (`H = 1`) и при ложном (`H = 0`). Одного числа «доверие к evidence» недостаточно: наблюдение информативно, если оно по-разному ожидаемо при этих двух состояниях.
+For a binary target, two estimates are required: one when the claim is true (`H = 1`) and one when it is false (`H = 0`). A single number for “confidence in the evidence” is not enough: an observation is informative when it is expected differently under these two states.
 
 ```text
-полученный опыт и уже извлечённый смысл
-→ подходящий target и модель наблюдений
-→ likelihood полученного r при каждом состоянии target
+received experience and extracted meaning
+→ suitable target and observation model
+→ likelihood of received r under each target state
 → log-evidence contribution
 → EvidenceAssignment
-→ учёт зависимостей, времени и ограничений влияния
+→ account for dependencies, time, and influence limits
 → BeliefData / Profile
 ```
 
-Программа задаёт пространство результатов `R` и нормированное распределение по ним для каждого `h`; для дискретных результатов `Σ_r q_h(r | C) = 1`. Полученное `r` выбирает элемент распределения; сам факт `R = r` не включается в условия `C`. Если отрицание binary target объединяет разные состояния, модель задаёт их состав и используемую смесь.
+The program defines the result space `R` and a normalized distribution over it for each `h`; for discrete results, `Σ_r q_h(r | C) = 1`. The received `r` selects an outcome from the distribution; the fact `R = r` itself is not included among the conditions `C`. If a binary target's negation combines several states, the model specifies their composition and the mixture used.
 
 #topic_details
 
-Для binary target:
+For a binary target:
 
 $$
-\Delta = \ln \frac{q_1(r\mid C)}{q_0(r\mid C)}.
+Δ = \ln \frac{q_1(r\mid C)}{q_0(r\mid C)}.
 $$
 
-Например, проверка выдаёт положительный результат в `80%` случаев при истинном `H` и в `20%` при ложном. Положительный результат даёт `Δ = ln(4)`. При prior `0.5` обоснованная модель даёт posterior `0.8`; если эти частоты пока только предположены LLM, применяется ограничение неподтверждённого влияния.
+For example, a check is positive in `80%` of cases when `H` is true and in `20%` when it is false. A positive result yields `Δ = ln(4)`. With prior `0.5`, a justified model gives posterior `0.8`; if these frequencies are only an LLM's current proposal, the limit on unsupported influence applies.
 
-Для `CompetitionScope` вычисляются `ℓ_k = ln q_k(r | C)` и `Δ_k = ℓ_k − mean_j ℓ_j`. Один assignment содержит весь вектор. Mass и агрегация определяются [[#Target-specific belief updaters|контрактами updaters]].
+For a `CompetitionScope`, calculate `ℓ_k = ln q_k(r | C)` and `Δ_k = ℓ_k − mean_j ℓ_j`. One assignment contains the whole vector. Mass and aggregation follow the [[#Target-Specific Belief Updaters|updater contracts]].
 
-Likelihoods и prior используют согласованный контекст. Сумма отдельных log-likelihood ratios задаёт точный Bayesian update в выбранной модели при условной независимости наблюдений при каждом состоянии target. Разные источники и отсутствие известных зависимостей сами по себе этого не гарантируют. Для зависимых наблюдений нужна совместная модель или [[#Evidence dependencies|условный прирост с учётом уже использованного evidence]]; эвристическая коррекция даёт приблизительный расчёт и подчиняется ограничению неподтверждённого влияния.
+Likelihoods and priors use consistent context. Summing separate log-likelihood ratios gives an exact Bayesian update in the selected model when observations are conditionally independent under each target state. Different sources and the absence of known dependencies do not guarantee this by themselves. Dependent observations require a joint model or [[#Evidence Dependencies|conditional information gain that accounts for evidence already used]]; a heuristic correction gives an approximate calculation and remains subject to the limit on unsupported influence.
 
-Для непрерывного наблюдения сравниваются плотности относительно одной меры либо вероятности заранее заданных интервалов. Модель объявляет сглаживание, обеспечивающее конечные используемые log-likelihoods; оно сохраняет нормировку. Нулевые частоты малой выборки не доказывают невозможность исхода. Жёсткая невозможность задаётся semantic constraints.
+For a continuous observation, compare densities with respect to the same measure or probabilities over predefined intervals. The model specifies smoothing that keeps the log-likelihoods used finite while preserving normalization. Zero frequencies in a small sample do not prove that an outcome is impossible. Hard impossibility is specified by semantic constraints.
 
-#### Способы получить модель наблюдений
+#### Ways to Obtain an Observation Model
+
 #topic_core
 
-Одна версия программы может выбирать способ оценки по типу evidence и контексту. Для одного logical evidence выбирается одна итоговая оценка; результаты разных способов не складываются как независимые подтверждения.
+One version of a program may select its assessment method by evidence type and context. For one logical evidence item, select one final assessment; results from different methods are not added as independent confirmations.
 
-| Способ | Когда применяется | При недостаточных основаниях |
+| Method | When Used | If Grounds Are Insufficient |
 |---|---|---|
-| Известная модель наблюдений | Есть применимый протокол теста, модель измерения или опубликованные характеристики ошибок | Проверить перенос на данный источник и контекст; неподтверждённую часть считать приблизительной |
-| Обученная модель | Есть сопоставимые наблюдения и независимо разрешённые состояния `H` | Переиспользовать более общую модель или сглаженную начальную оценку; ограничивать влияние до независимой проверки |
-| Явная эвристика | Есть осмысленный способ оценить условные распределения, но пока мало данных; правило или начальную таблицу может подготовить LLM | Сохранять допущения и пробелы, применять общий предел влияния; если осмысленная оценка невозможна, оставить случай `unresolved` |
+| Known observation model | An applicable test protocol, measurement model, or published error characteristics exist. | Check transfer to this source and context; treat the unsupported portion as approximate. |
+| Trained model | Comparable observations and independently resolved states of `H` are available. | Reuse a more general model or a smoothed initial estimate; limit influence until independent checking. |
+| Explicit heuristic | There is a meaningful way to estimate conditional distributions, but data are limited; an LLM may prepare a rule or initial table. | Retain assumptions and gaps, apply the shared influence limit, and leave the case `unresolved` if no meaningful estimate is possible. |
 
-LLM может подготовить таблицу, правило или код модели сразу для семейства процессов. Ей задаются состояния `H`, протокол наблюдения, возможные результаты `R` и допустимый контекст `C`. Она возвращает нормированные условные распределения, источники и краткие ограничения применимости. Числовой формат и требования к основаниям следуют [[#LLM prior proposal|общему протоколу вероятностных предложений]], но выход здесь — `P(R | H, C)`, а не `P(H)`.
+An LLM may prepare a table, rule, or model code for a family of processes. It is given states `H`, the observation protocol, possible results `R`, and permitted context `C`. It returns normalized conditional distributions, sources, and brief applicability limits. Numeric format and grounding requirements follow the [[#LLM Prior Proposal|shared protocol for probabilistic proposals]], but the output here is `P(R | H, C)`, not `P(H)`.
 
-Отсутствие точной калибровки не блокирует работу. Отсутствие осмысленного отношения evidence к target не подменяется нулевым contribution: `Δ = 0` означает, что модель оценила проверку как неразличающую.
+Lack of exact calibration does not block work. Lack of a meaningful relationship between evidence and target is not replaced with a zero contribution: `Δ = 0` means the model assessed the check as non-distinguishing.
 
-Для MVP достаточно условных таблиц, счётчиков и вычисления логарифмов. Универсальная библиотека вероятностного программирования или дифференцируемого inference не обязательна; специализированная модель может использовать её внутри своей реализации, если это оправдано задачей.
+Conditional tables, counts, and logarithms are enough for the MVP. A universal probabilistic programming or differentiable inference library is not required; a specialized model may use one internally if the task justifies it.
 
-#### Обучение модели evidence
+#### Training the Evidence Model
+
 #topic_core
 
-Начальный обучаемый вариант — таблица частот результатов `R` отдельно для истинного и ложного `H`, либо для каждой alternative scope-а, в сопоставимых контекстах. Контексты группируются по объявленным признакам модели; identity нового target сама по себе не создаёт новую строку. Общая таблица используется для семейства процессов; отдельное состояние создаётся, когда данные показывают существенное различие источников, условий или режимов.
+An initial learnable implementation is a table of result `R` frequencies separately for true and false `H`, or for each scope alternative, under comparable contexts. Contexts are grouped by declared model features; the identity of a new target does not by itself create a new row. One shared table serves a process family; separate state is created when data show significant differences between sources, conditions, or regimes.
 
 #topic_details
 
-Простой estimator со сглаживанием:
+A simple smoothed estimator is:
 
 $$
 q_h(r\mid C)=
@@ -1535,68 +1515,71 @@ q_h(r\mid C)=
 {\sum_{r'}n_{h,r',C}+\kappa}.
 $$
 
-Здесь `n` — counts разрешённых случаев, `π` — начальное нормированное распределение с `π_{h,r,C} > 0` для всех допустимых результатов, `κ > 0` — сила сглаживания. Начальное распределение берётся из применимой общей модели, внешних данных или ограниченного LLM proposal. Его pseudocounts не являются реальными observations и не создают `Support / PriorSupport`.
+Here, `n` is the count of resolved cases, `π` is an initial normalized distribution with `π_{h,r,C} > 0` for every permitted result, and `κ > 0` is the smoothing strength. The initial distribution comes from an applicable shared model, external data, or a limited LLM proposal. Its pseudocounts are not real observations and do not create `Support / PriorSupport`.
 
-Обучающий случай содержит контекст, наблюдение `r` и независимо установленное состояние `h`. После разрешения случая обновляется соответствующая строка таблицы через [[Learning system#LearningCoordinator|обычный learning pipeline]]. Сначала оценивается сохранённый прогноз, затем этот случай может использоваться для обучения. Для проверки `q_h` прогноз распределения должен быть сформирован без доступа к оцениваемому `r`: заранее либо в независимом проверочном прогоне.
+A training case contains context, observation `r`, and an independently established state `h`. After resolving a case, update the corresponding table row through the [[Learning system#LearningCoordinator|ordinary learning pipeline]]. First evaluate the saved prediction; only then may the case be used for training. To check `q_h`, the distribution forecast must be produced without access to the evaluated `r`: in advance or in an independent evaluation run.
 
-Текущий belief агента, согласие другой LLM и повтор сообщения того же источника не становятся независимыми метками истины. Неразрешённый исход не считается ложным. Исправление метки корректирует прежний обучающий вклад по [[Learning system#Исправление уже использованного опыта|общим правилам]]; повторное разрешение того же случая не увеличивает число независимых примеров.
+The agent's current belief, another LLM's agreement, and a repeated message from the same source do not become independent labels of truth. An unresolved outcome is not counted as false. Correcting a label adjusts the prior training contribution under the [[Learning system#Correcting Experience Already Used|shared rules]]; resolving the same case again does not increase the number of independent examples.
 
-Применимость выборки, смещение отбора и разделение обучения и проверки следуют [[Process Plane/Program Evaluation and Testing#Протокол проверки прогнозов|общему протоколу]]. Проверяются условные распределения и получаемые из них beliefs в значимых контекстах. Counts модели ошибок и [[#^def-CalibrationStats|CalibrationStats]] имеют разный смысл: первые обучают модель, вторые описывают качество её прогнозов.
+Sample applicability, selection bias, and separation of training and evaluation follow the [[Process Plane/Program Evaluation and Testing#Prediction Evaluation Protocol|shared protocol]]. Check conditional distributions and beliefs derived from them in significant contexts. Error-model counts and [[#^def-CalibrationStats|CalibrationStats]] have different meanings: the former train the model; the latter describe forecast quality.
 
-При появлении данных таблицу можно заменить регрессией, калибратором или специализированной моделью по [[Process Plane/Program Lifecycle and Evolution#Подготовка начальных моделей|общим правилам выбора и проверки]].
+As data become available, the table may be replaced with regression, a calibrator, or a specialized model under the [[Process Plane/Program Lifecycle and Evolution#Preparing Initial Models|shared model selection and evaluation rules]].
 
-#### Жизненный цикл assessment
+#### Assessment Lifecycle
+
 #topic_core
 
-Подготовка и изменение программы проходят [[Process Plane/Program Lifecycle and Evolution#Подготовка начальных моделей|общий Program Lifecycle]]. Для первой версии достаточно следующего пути:
+Preparing and changing the program follows the [[Process Plane/Program Lifecycle and Evolution#Preparing Initial Models|shared Program Lifecycle]]. The following path is sufficient for an initial version:
 
-1. **Подготовить семейство.** Переиспользовать подходящие модели и правила; определить наблюдения, targets, контексты и начальные условные распределения. При необходимости одна ограниченная сессия LLM / research заполняет пробелы. Результат сохраняется как код, настройки или модельный артефакт программы.
-2. **Обрабатывать обычные события кодом.** По типу наблюдения и контексту выбрать обработчик, получить параметры модели и вычислить contributions. Новый экземпляр процесса, target или semantic anchor в известном контракте не требует LLM-вызова.
-3. **Разбирать новый случай общим пакетом.** Сначала использовать применимый общий обработчик. Если его недостаточно, один владелец assessment собирает связанные targets и уже извлечённые данные в общий пакет для программы и события. На пакет формируется один LLM-запрос. Он возвращает оценки для нескольких targets, из которых код создаёт assignments, или предлагает переиспользуемое правило.
-4. **Накапливать независимые проверки.** Разрешённые случаи обучают модель наблюдений и модель ошибок источника. До подтверждения качества действует общий предел неподтверждённого влияния; само число обработанных сообщений его не снимает.
-5. **Пересматривать существенные изменения.** При устойчивой ошибке, новых условиях или неподходящем формате evidence уточнить модель либо выделить режим. Один необычный исход сам по себе не требует новой программы. Затронутое старое evidence переоценивается через `revise`.
+1. **Prepare the family.** Reuse applicable models and rules; define observations, targets, contexts, and initial conditional distributions. If needed, one limited LLM/research session fills gaps. Save the result as program code, settings, or a model artifact.
+2. **Handle ordinary events in code.** Select a handler by observation type and context, obtain model parameters, and calculate contributions. A new process instance, target, or semantic anchor under a known contract does not require an LLM call.
+3. **Assess a new case as a shared batch.** First use an applicable shared handler. If that is insufficient, one assessment owner gathers related targets and already extracted data into a shared program/event batch. Make one LLM request for the batch. It returns assessments for several targets, from which code creates assignments, or proposes a reusable rule.
+4. **Accumulate independent checks.** Resolved cases train the observation model and source error model. Until quality is confirmed, the shared limit on unsupported influence applies; the number of processed messages alone does not remove it.
+5. **Review material changes.** In response to persistent error, new conditions, or an unsuitable evidence format, refine the model or separate a regime. One unusual outcome does not by itself require a new program. Reassess affected old evidence through `revise`.
 
 #topic_details
 
-Пакет — набор входных данных существующей программы. Если смысл сообщения уже извлечён perception или другой программой, assessment использует этот результат. Когда извлечение и оценку выполняет LLM в данном пути, они объединяются в одном вызове.
+A batch is a set of inputs to an existing program. If perception or another program has already extracted the message's meaning, assessment uses that result. When this path has an LLM perform both extraction and assessment, combine them in one call.
 
-Чтения prior и [[#^def-SourceReliability|SourceReliability]], обработчики отдельных anchors и дочерние программы используют готовые модели. Их потребность в LLM передаётся владельцу пакета; отдельных запросов оценки для каждого anchor нет. Повтор технически неуспешного запроса использует тот же пакет и бюджет; дополнительные ответы ради согласования оценок не запрашиваются. Все расходы входят в бюджет [[Cognition and Attention|Task и её дочерних запусков]]. При недоступности LLM, таймауте или исчерпании выделенного бюджета LLM применяется объявленный приблизительный путь либо сохраняется `unresolved`; обработка известных случаев продолжается в пределах бюджета Task. Исчерпание общего бюджета подчиняется обычным правилам остановки и пересмотра Task.
+Reads of prior and [[#^def-SourceReliability|SourceReliability]], handlers for individual anchors, and child programs use ready models. Their need for an LLM is passed to the batch owner; do not make separate assessment requests for each anchor. A retry of a technically failed request uses the same batch and budget; do not request additional responses just to reconcile assessments. All costs count against the [[Cognition and Attention|Task and its child runs]]. If the LLM is unavailable, times out, or exhausts its allocated budget, use the declared approximate path or retain `unresolved`; continue handling known cases within the Task budget. Exhausting the overall budget follows the ordinary Task stop and review rules.
 
-Повторная обработка пакета использует сохранённый результат, пока его входы, модели и условия применимости сохраняют силу. При reassessment сохраняется [[#Logical evidence identity and duplicate prevention|identity исходного evidence]] и выполняется `revise`.
+Reprocessing a batch uses its saved result while its inputs, models, and applicability conditions remain valid. During reassessment, retain the [[#Logical Evidence Identity and Duplicate Prevention|identity of source evidence]] and perform `revise`.
 
-Внешнее исследование следует [[Process Plane/Program Lifecycle and Evolution#Stage 1: gather_relevant_info|общим правилам подготовки программы]]. Обычные чтения и новые evidence не запускают web search.
+External research follows the [[Process Plane/Program Lifecycle and Evolution#Stage 1: gather_relevant_info|shared program preparation rules]]. Ordinary reads and new evidence do not start web search.
 
-При смене режима прежние проверки не переносятся автоматически на новые условия. Сначала пересматривается применимость модели; для неподтверждённого режима используется общий fallback с ограниченным влиянием. Стабильные случаи продолжают обслуживаться прежним обработчиком. Новый код или модель проверяются на независимых случаях с учётом затрат до замены действующей версии.
+When a regime changes, previous checks are not automatically transferred to the new conditions. First reassess model applicability; use the shared limited-influence fallback for an unconfirmed regime. The previous handler continues to serve stable cases. Check new code or models on independent cases, accounting for cost, before replacing the active version.
 
-#### Частые случаи и границы применимости
+#### Common Cases and Applicability Limits
+
 #topic_details
 
-| Случай | Правило |
+| Case | Rule |
 |---|---|
-| Проверка pass / fail или измерение | Использовать модель ошибок теста, плотность либо заранее заданные интервалы; величина ошибки сама по себе не является contribution |
-| Сообщение источника | Использовать [[#Source reliability estimation|условную модель его сообщений]]; высокая общая accuracy не равна большому likelihood ratio |
-| Несколько alternatives | Оценить scope целиком одним вектором; добавление или удаление alternatives требует проверки применимости модели |
-| Повторы, пересказы, общая предпосылка | Учесть [[#Evidence dependencies|зависимости]] до суммирования; несколько текстов не гарантируют несколько подтверждений |
-| Нет ожидаемого сообщения | Это evidence только при заданном протоколе наблюдения и основаниях считать, что сообщение было бы обнаружено |
-| Противоречивые наблюдения | Сохранить обе стороны с их provenance, проверить источник, зависимости и режим; противоречие не превращает редкий исход в недостоверный автоматически |
-| Меняются параметры оцениваемой модели | Evidence о фиксированной версии не подтверждает новую версию автоматически; evidence о механизме обучения применимо лишь при соответствующем Criterion и контексте |
+| Pass/fail check or measurement | Use a test error model, density, or predefined intervals; error magnitude alone is not a contribution. |
+| Source message | Use a [[#Source Reliability Estimation|conditional model of its messages]]; high overall accuracy is not the same as a large likelihood ratio. |
+| Several alternatives | Assess the entire scope with one vector; adding or removing alternatives requires checking model applicability. |
+| Repeats, paraphrases, shared premise | Account for [[#Evidence Dependencies|dependencies]] before summing; several texts do not guarantee several confirmations. |
+| Expected message not received | This is evidence only under a defined observation protocol and grounds to believe the message would have been detected. |
+| Contradictory observations | Retain both sides with provenance, check source, dependencies, and regime; contradiction does not automatically make a rare outcome unreliable. |
+| Parameters of the assessed model change | Evidence about a fixed version does not automatically support the new version; evidence about the learning mechanism applies only under the relevant Criterion and context. |
 
 #### Evidence for TRIGGER and CONDITION
+
 #topic_details
 
-[[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] создаёт для beliefs о `TRIGGER` и `CONDITION` evidence разных типов:
+[[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] creates different kinds of evidence for beliefs about `TRIGGER` and `CONDITION`:
 
 ```text
 TRIGGER:
-обновляется как активная причинная связь
-"что реально привело к переходу"
+updated as an active causal relation
+"what actually led to the transition"
 
 CONDITION:
-обновляется как граница применимости
-"при каких условиях переход возможен / невозможен"
+updated as an applicability boundary
+"under what conditions the transition is possible / impossible"
 ```
 
-Если переход сработал, создаются:
+If a transition occurs, create:
 
 ```text
 active TRIGGER
@@ -1604,32 +1587,31 @@ active TRIGGER
 
 valid CONDITION
 → supporting EvidenceAssignment
-
-Если переход не сработал:
-
-failed TRIGGER
-→ opposing EvidenceAssignment
-  или evidence за более узкий context;
-
-missing/false CONDITION
-→ blocking evidence
-  для соответствующей границы применимости.
 ```
 
-Если опыт оценён и выбран для обучения, `CreditAssignmentProgram` может отдельно выдать [[Learning system#LearningCredit and UnresolvedCredit|LearningCredit]] для соответствующего [[Learning system#^def-LearningTarget|LearningTarget]]; состояния связанных обучаемых компонентов выбирает `UpdatePlanner`. [[#^def-EvidenceAssignment|`EvidenceAssignment`]] и `LearningCredit` не являются одним и тем же output.
+If the transition does not occur:
 
+```text
+failed TRIGGER
+→ opposing EvidenceAssignment
+  or evidence for a narrower context;
 
+missing / false CONDITION
+→ blocking evidence
+  for the corresponding applicability boundary.
+```
+
+If experience is evaluated and selected for learning, `CreditAssignmentProgram` may separately issue [[Learning system#LearningCredit and UnresolvedCredit|LearningCredit]] for the corresponding [[Learning system#^def-LearningTarget|LearningTarget]]; `UpdatePlanner` selects the states of related learnable components. [[#^def-EvidenceAssignment|`EvidenceAssignment`]] and `LearningCredit` are not the same output.
 
 ---
 
-### Evidence dependencies
+### Evidence Dependencies
+
 #topic_core
 
-Несколько [[#^def-Evidence|evidence]] могут иметь общий источник, observation, предпосылку или
-вычислительный результат и поэтому не должны автоматически считаться
-независимыми.
+Several [[#^def-Evidence|evidence]] items may share a source, observation, premise, or computational result, so they must not automatically be treated as independent.
 
-Зависимости определяются из:
+Dependencies are derived from:
 
 ```text
 provenance
@@ -1640,13 +1622,11 @@ dependency view
 updater
 ```
 
-`provenance` показывает вычислительные зависимости.
-`EVIDENCE_DEPENDS_ON` фиксирует дополнительные информационные зависимости,
-выявленные reasoning или learning.
+`provenance` shows computational dependencies. `EVIDENCE_DEPENDS_ON` records additional information dependencies identified through reasoning or learning.
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 EVIDENCE_DEPENDS_ON(SiteAReport, ReutersReport)
@@ -1654,59 +1634,53 @@ EVIDENCE_DEPENDS_ON(SiteBReport, ReutersReport)
 EVIDENCE_DEPENDS_ON(SiteCReport, ReutersReport)
 ```
 
-означает, что три публикации не являются тремя независимыми подтверждениями.
+means that the three publications are not three independent confirmations.
 
-`dependency view` является вычисляемым представлением; отдельная сущность
-`DependencyGroup` и поле `dependency_group_id` в [[#^def-EvidenceAssignment|`EvidenceAssignment`]]
-не нужны.
+`dependency view` is a computed representation; a separate `DependencyGroup` entity and `dependency_group_id` field in [[#^def-EvidenceAssignment|`EvidenceAssignment`]] are not needed.
 
-В MVP пересказы одного первоисточника используют один вклад исходного наблюдения. Если зависимые сообщения содержат дополнительную информацию, применяется совместная модель либо модель условного прироста с учётом уже использованного evidence. При отсутствии такой модели используется одно заранее выбранное наиболее прямое представление источника; выбор не зависит от того, какой вклад сильнее поддерживает target. Остальные сообщения сохраняются для provenance и пересмотра, но не увеличивают `Support` как независимые подтверждения.
+In the MVP, paraphrases of one primary source use one contribution from the source observation. If dependent reports add information, use a joint model or a model of conditional information gain that accounts for evidence already used. Without such a model, use one preselected, most direct representation of the source; the selection must not depend on which contribution supports the target more strongly. Retain the other reports for provenance and review, but they do not increase `Support` as independent confirmations.
 
-Evidence, использованное как условие такого прироста, сохраняется в dependencies. Его изменение или отзыв требует переоценки зависимого contribution.
+Evidence used as a condition for such information gain is retained in the dependencies. Changing or retracting it requires reassessment of the dependent contribution.
 
-#### Dependency-aware consolidation
+#### Dependency-Aware Consolidation
+
 #topic_details
 
-Dependency structure консолидируется вместе с evidence.
+Dependency structure is consolidated together with evidence.
 
-Если множество evidence имеет один общий первоисточник, оно может быть
-свёрнуто в один [[#^def-EvidenceAssignment|`EvidenceAssignment`]], сохраняющий зависимость от этого
-источника.
+If several evidence items have one common primary source, they may be collapsed into one [[#^def-EvidenceAssignment|`EvidenceAssignment`]] that retains the dependency on that source.
 
-Например:
+For example:
+
 ```text
 700 reposts ← Reuters
 250 reposts ← AP
 50 independent checks
 ```
-может быть представлено как:
+
+may be represented as:
 
 ```text
 Reuters-derived evidence → consolidated EvidenceAssignment
 AP-derived evidence      → consolidated EvidenceAssignment
-independent checks       → отдельные или независимо consolidated EvidenceAssignment
+independent checks       → separate or independently consolidated EvidenceAssignment instances
 ```
 
-[[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] не объединяет evidence через существенно разные
-dependency branches, если это изменит belief или уничтожит ожидаемо нужную
-возможность `revise/retract`, переоценки источника или анализа независимых
-подтверждений.
+[[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] does not merge evidence across materially different dependency branches if doing so would change belief or eliminate an expected ability to `revise/retract`, reassess a source, or analyze independent confirmations.
 
-Понимание зависимостей само пересматриваемо: если позднее обнаружен другой
-общий источник или независимая проверка, semantic relations и зависимые
-belief contributions могут быть пересмотрены.
+Understanding of dependencies is itself revisable: if another shared source or an independent check is discovered later, semantic relations and dependent belief contributions may be reconsidered.
 
 ---
 
-### Logical evidence identity and duplicate prevention
+### Logical Evidence Identity and Duplicate Prevention
+
 #topic_core
 
-
-Один и тот же logical evidence не должен несколько раз влиять на один target.
+The same logical evidence must not influence one target more than once.
 
 #topic_details
 
-Logical identity назначения evidence задаётся ключом:
+The logical identity of an evidence assignment is defined by this key:
 
 ```text
 evidence_key =
@@ -1716,55 +1690,57 @@ evidence_key =
 )
 ```
 
-`target_ref` — устойчивая identity [[#^def-BeliefTarget|`BeliefTarget`]] согласно [[Core data structures#Объекты и ссылки|общему правилу объектов и ссылок]]. `source_evidence_ref` адресует один logical evidence unit, обычно через:
+`target_ref` is the stable identity of [[#^def-BeliefTarget|`BeliefTarget`]] under the [[Core data structures#Objects and References|shared object and reference rule]]. `source_evidence_ref` addresses one logical evidence unit, usually through:
 
 ```text
 TraceOutputRef(event_ref, output_path)
 ```
 
-где `output_path` указывает на соответствующий semantic result.
+where `output_path` points to the corresponding semantic result.
 
-Для одного `evidence_key` существует не более одного текущего logical assignment.
+There is at most one current logical assignment for each `evidence_key`.
 
-Если один source влияет на target несколькими способами, [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] объединяет их в один `contribution`, а не создаёт несколько независимых assignments.
+If one source affects a target in several ways, [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] combines them into one `contribution` instead of creating multiple independent assignments.
 
-Если один [[Memory#^def-OperatorOutput|`OperatorOutput`]] содержит несколько независимых evidence units, они должны иметь разные semantic `output_path`.
+If one [[Memory#^def-OperatorOutput|`OperatorOutput`]] contains multiple independent evidence units, each must have a different semantic `output_path`.
 
-Повторная обработка:
+Repeat processing:
 
 ```text
-тот же evidence_key + эквивалентная оценка
+same evidence_key + equivalent assessment
 → no-op;
 
-тот же evidence_key + изменившаяся оценка
-→ revise существующего assignment.
+same evidence_key + changed assessment
+→ revise the existing assignment.
 ```
 
-Роль assignment и версия `EvidenceAssessmentProgram` не входят в `evidence_key`: изменение способа оценки того же source evidence не создаёт новое независимое evidence.
+The assignment role and version of `EvidenceAssessmentProgram` are not part of `evidence_key`: changing how the same source evidence is assessed does not create new independent evidence.
 
-`evidence_key` предотвращает повторный учёт одного и того же logical source result. Зависимость разных evidence, восходящих к одному основанию, обрабатывается отдельно через `dependency view`.
+`evidence_key` prevents double counting the same logical source result. Dependencies between different evidence items that share a basis are handled separately through the `dependency view`.
 
-Повторная доставка или retry используют identity исходного события. Два действительно разных наблюдения с одинаковыми значениями имеют разные identities; совпадение текста не является правилом дедупликации. Исправленное наблюдение сохраняет связь с прежним logical evidence и пересматривает его вклад.
+Redelivery or retry uses the identity of the source event. Two genuinely different observations with the same values have different identities; identical text is not a deduplication rule. A corrected observation remains linked to the previous logical evidence and revises its contribution.
 
-При consolidation logical evidence identities сохраняются; правила их компактного представления определены в `Consolidation invariant`.
+Logical evidence identities are retained during consolidation; compact representation of them follows the `Consolidation invariant` rules.
 
-После lossy consolidation lifecycle работает на фактически сохранённой гранулярности representation.
+After lossy consolidation, the lifecycle operates at the granularity that the representation actually retains.
 
 ---
 
-### Evidence lifecycle
+### Evidence Lifecycle
+
 #topic_core
 
-#### Active evidence
+#### Active Evidence
+
 #topic_core
 
-[[#^def-EvidenceAssignment|`EvidenceAssignment`]] immutable, но его оценка может быть пересмотрена, отозвана или заменена consolidated representation. Поэтому отдельно определяется, какое representation каждого logical evidence используется сейчас.
+[[#^def-EvidenceAssignment|`EvidenceAssignment`]] is immutable, but its assessment may be revised, retracted, or replaced by a consolidated representation. Therefore, the system separately specifies which representation of each logical evidence item is used now.
 
 #topic_details
 
-Lifecycle относится к logical evidence (`evidence_key`), а не к конкретной immutable записи `EvidenceAssignment`: после revise или consolidation один logical evidence может представляться другой записью, а один consolidated assignment — сразу несколькими `evidence_key`. Поэтому текущее состояние хранится отдельно от самого assignment.
+The lifecycle applies to logical evidence (`evidence_key`), not to a specific immutable `EvidenceAssignment` record: after revision or consolidation, one logical evidence item may be represented by another record, while one consolidated assignment may represent several `evidence_key` values. Therefore, current state is stored separately from the assignment itself.
 
-Текущее состояние logical evidence задаётся mapping:
+The current state of logical evidence is given by a mapping:
 
 ```text
 current_evidence[evidence_key]
@@ -1772,47 +1748,48 @@ current_evidence[evidence_key]
 ```
 
 (def_id:: entity.ActiveEvidence)
-> [!definition] **Active evidence** target-а — уникальные `EvidenceAssignment`, на которые сейчас указывают его `evidence_key`. ^def-ActiveEvidence
+> [!definition] The target's **active evidence** is the set of unique `EvidenceAssignment` instances currently referenced by its `evidence_key` values. ^def-ActiveEvidence
 
 ```text
 active_assignments(target)
 → unique active EvidenceAssignment[]
 ```
 
-Так `revise`, `retract` и consolidation меняют current mapping, не переписывая прошлые `EvidenceAssignment`.
+Thus `revise`, `retract`, and consolidation change the current mapping without rewriting past `EvidenceAssignment` records.
 
 #topic_core
 
-Нужно различать:
+Distinguish:
 
 ```text
 active
-→ assignment сейчас выбран как представление logical evidence;
-  применимость к чтению проверяется отдельно;
+→ assignment currently selected to represent logical evidence;
+  applicability to a read is checked separately;
 
 effective
-→ величина его текущего вклада после temporal
-  и dependency adjustment и общего ограничения влияния.
+→ size of its current contribution after temporal
+  and dependency adjustment and the shared influence limit.
 ```
 
-Поэтому active evidence может иметь нулевой effective вклад — например релевантная неразличающая проверка с `Δ = 0`.
+Therefore, active evidence may have zero effective contribution, for example a relevant non-distinguishing check with `Δ = 0`.
 
 ---
-#### Evidence revision and retraction
+
+#### Evidence Revision and Retraction
+
 #topic_core
 
+Ordinary new evidence creates a new [[#^def-EvidenceAssignment|`EvidenceAssignment`]] and does not change past records.
 
-Обычное новое evidence создаёт новый [[#^def-EvidenceAssignment|`EvidenceAssignment`]] и не изменяет прошлые записи.
-
-`revise` и `retract` используются только когда меняется оценка **ранее назначенного evidence**.
-
+Use `revise` and `retract` only when the assessment of **previously assigned evidence** changes.
 
 ---
-##### Revising evidence
+
+##### Revising Evidence
 
 #topic_details
 
-`revise` заменяет текущий assignment данного `evidence_key` новым:
+`revise` replaces the current assignment for this `evidence_key` with a new one:
 
 ```text
 K: E_old
@@ -1820,13 +1797,13 @@ K: E_old
 K: E_new
 ```
 
-`E_old` остаётся immutable исторической записью. Для atomic evidence оно больше не входит в active evidence; при consolidated representation применяются правила согласованной замены ниже.
+`E_old` remains an immutable historical record. For atomic evidence it no longer belongs to active evidence; for a consolidated representation, the coordinated replacement rules below apply.
 
-##### Retracting evidence
+##### Retracting Evidence
 
 #topic_details
 
-`retract` исключает ранее назначенное evidence из текущего belief:
+`retract` excludes previously assigned evidence from the current belief:
 
 ```text
 K: E_old
@@ -1834,155 +1811,156 @@ K: E_old
 K: RETRACTED
 ```
 
-`retract` не создаёт evidence за противоположное утверждение.
+`retract` does not create evidence for the opposite claim.
 
-Если собственного active evidence target больше нет, его состояние отражает [[#^def-EvidenceStats|`EvidenceStats`]]:
+If a target has no active evidence of its own, its state reflects [[#^def-EvidenceStats|`EvidenceStats`]]:
 
 ```text
 active evidence = ∅
-→ Strength определяется prior
+→ Strength is determined by the prior
 → Support = 0
-→ PriorSupport определяется backing prior
-→ EvidenceStats отражает отсутствие active evidence
+→ PriorSupport is determined by prior backing
+→ EvidenceStats reflects the absence of active evidence
 ```
 
-##### Lifecycle state
-#topic_details 
+##### Lifecycle State
 
-Изменение применяется атомарно только при совпадении ожидаемого состояния:
+#topic_details
+
+A change is applied atomically only if the expected state still matches:
 
 ```text
 current_evidence[K] == expected_old_state
 ```
 
-Если состояние уже изменено другим process, операция пересчитывается относительно нового состояния.
+If another process has already changed the state, recalculate the operation relative to the new state.
 
-При публикации нового или пересмотренного assignment runtime также проверяет [[#Актуальность чтения|актуальность использованных оснований]] в той же защищённой операции. Устаревший результат не публикуется как текущий; повторный assessment следует общему lifecycle.
+When publishing a new or revised assignment, the runtime also checks [[#Read-Time Freshness|whether its grounds are current]] within the same protected operation. A stale result is not published as current; a repeated assessment follows the shared lifecycle.
 
-Успешный `revise` или `retract` атомарно обновляет `current_evidence` и фиксируется [[Memory#^def-TraceEvent|`TraceEvent`]], сохраняющим [[Memory#^def-ResultProvenance|provenance]] и историю операции.
+A successful `revise` or `retract` atomically updates `current_evidence` and is recorded by a [[Memory#^def-TraceEvent|`TraceEvent`]] retaining [[Memory#^def-ResultProvenance|provenance]] and operation history.
 
-Если один consolidated assignment представляет несколько `evidence_key`, пересмотр компонента согласованно заменяет представление всех затронутых ключей: новый вклад компонента и остаток агрегата не должны содержать одно и то же evidence. Старый агрегат исключается из active evidence целиком. Если данных для выделения компонента уже нет, пересмотр выполняется на сохранённой гранулярности группы с явным указанием потери точности; частичное исключение одного ключа не выдаётся за удаление его вклада из оставшегося агрегата.
+If one consolidated assignment represents several `evidence_key` values, revising a component replaces the representation for every affected key consistently: the component's new contribution and the remaining aggregate must not contain the same evidence. The old aggregate is excluded from active evidence in full. If the component can no longer be isolated from retained data, revise at the group's retained granularity and explicitly state the loss of precision; partially excluding one key must not be presented as removing its contribution from the remaining aggregate.
 
-`GraphDelta` для evidence lifecycle не используется: он относится к изменениям semantic graph.
-##### Semantic target revision
+`GraphDelta` is not used for evidence lifecycle: it applies to changes in the semantic graph.
+
+##### Semantic Target Revision
 
 #topic_core
 
-Изменение epistemic оценки нужно отличать от изменения состояния мира и от изменения семантики самого target.
+A change in epistemic assessment must be distinguished from a change in the world state and from a change in the meaning of the target itself.
 
 ```text
-изменилась оценка ранее назначенного evidence
+assessment of previously assigned evidence changed
 → revise / retract EvidenceAssignment;
 
-новое evidence изменило belief о том же target
-→ target не меняется;
-→ пересчитываются value_U / BeliefData / Profile;
+new evidence changed belief about the same target
+→ target stays the same;
+→ recompute value_U / BeliefData / Profile;
 
-изменилось состояние самого мира
-→ обычное temporal / semantic изменение модели мира
-  через GraphDelta;
+world state changed
+→ ordinary temporal / semantic change to the world model
+  through GraphDelta;
 
-изменился смысл property, relation, Criterion
-или CompetitionScope
+meaning of a property, relation, Criterion,
+or CompetitionScope changed
 → semantic structural revision;
-→ если изменилась identity оцениваемого вопроса,
-  создаётся новый target.
+→ if the identity of the question being assessed changed,
+  create a new target.
 ```
 
-Само изменение текущего `value_U` не создаёт новый target. Каноническое определение критерия проверки см. в [[Attribution Plane#^def-Criterion|Criterion]]; read-представлениями остаются [[#^def-BeliefData|`BeliefData`]] и [[#^def-Profile|`Profile`]].
+A change to current `value_U` by itself does not create a new target. See [[Attribution Plane#^def-Criterion|Criterion]] for its canonical definition; its read representations remain [[#^def-BeliefData|`BeliefData`]] and [[#^def-Profile|`Profile`]].
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 Mass(Object#7):
 12.4 → 12.5
 ```
 
-может означать новую оценку той же величины `Mass(Object#7)`.
+may be a new estimate of the same quantity, `Mass(Object#7)`.
 
-Изменение реального состояния мира также не является `retract` evidence:
+A change in the real world state is also not an evidence `retract`:
 
 ```text
 close_facet_state
-→ состояние действительно существовало,
-  но перестало быть актуальным;
+→ the state really existed,
+  but is no longer current;
 
 retract EvidenceAssignment
-→ конкретное evidence больше
-  не используется как основание belief.
+→ specific evidence is no longer
+  used as grounds for belief.
 ```
 
 #topic_core
 
-Semantic изменения persistent graph выполняются через `GraphDelta`.  
-`revise/retract` относятся к lifecycle [[#^def-EvidenceAssignment|`EvidenceAssignment`]] и не требуют отдельной сущности `BeliefUpdate`; их история сохраняется через immutable assignments, lifecycle records и `TraceEvent` с provenance.
-
-
+Semantic changes to the persistent graph are made through `GraphDelta`. `revise/retract` apply to the lifecycle of [[#^def-EvidenceAssignment|`EvidenceAssignment`]] and do not require a separate `BeliefUpdate` entity; their history is retained through immutable assignments, lifecycle records, and `TraceEvent` with provenance.
 
 ---
 
-#### Temporal consolidation
+#### Temporal Consolidation
+
 #topic_details
 
-Время мира, к которому относится [[#^def-EvidenceAssignment|`EvidenceAssignment`]], задаётся через `observed_scope`:
+World time to which [[#^def-EvidenceAssignment|`EvidenceAssignment`]] applies is specified through `observed_scope`:
 
 ```text
 atomic evidence
-→ конкретный момент времени;
+→ a specific point in time;
 
 consolidated evidence
-→ интервал [t_from, t_until).
+→ interval [t_from, t_until).
 ```
 
-`known_at` — момент знания агента, используемый при историческом read; он не входит в `observed_scope` и не является частью semantic identity evidence.
+`known_at` is the as-of time for the agent's knowledge, used for historical reads; it is not part of `observed_scope` or the semantic identity of evidence.
 
-[[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] может объединять evidence разных моментов времени только если потеря временной детализации не меняет существенно его дальнейшее использование.
+[[Memory#^def-MemoryConsolidationProgram|`MemoryConsolidationProgram`]] may combine evidence from different times only if the loss of temporal detail does not materially change its future use.
 
 ```text
-близкое и однородное evidence
-→ может быть объединено;
+nearby, homogeneous evidence
+→ may be combined;
 ```
 
-Размер интервала выбирается адаптивно: плотное и старое routine-evidence обычно может быть представлено крупнее, а недавнее, редкое, изменчивое или находящееся около предполагаемой смены режима — подробнее.
+Interval size is selected adaptively: dense, older routine evidence can usually be represented over a larger interval, while recent, rare, variable, or possibly near a regime change should be represented in greater detail.
 
-Temporal и dependency adjustments, если необходимы, применяются при вычислении belief, а не путём изменения сохранённого evidence. Консолидация допустима только если retained representation сохраняет достаточную информацию для поддерживаемых adjustments.
+Temporal and dependency adjustments, when needed, are applied while computing belief, not by changing saved evidence. Consolidation is allowed only if the retained representation contains enough information for the supported adjustments.
 
-Если последующее изменение adjustment policy требует утраченной детализации:
+If a later change to adjustment policy requires detail that has been lost:
 
 ```text
-retained aggregate достаточен
+retained aggregate is sufficient
 → recompute;
 
-сохранён source experience
-→ reassessment;
+source experience is retained
+→ reassess;
 
-source details удалены
-→ aggregate используется с известной потерей точности.
+source details were deleted
+→ use the aggregate with known loss of precision.
 ```
 
-Консолидация через подтверждённую границу существенно разных regimes не выполняется. При неопределённости границы `MemoryConsolidationProgram` предпочитает меньшую степень сжатия.
+Do not consolidate across a confirmed boundary between materially different regimes. If the boundary is uncertain, `MemoryConsolidationProgram` prefers less compression.
 
-Как и при другой консолидации evidence, сохраняются характерные representatives, exceptions, counterexamples и случаи, необходимые для анализа изменений режима.
+As with other evidence consolidation, retain characteristic representatives, exceptions, counterexamples, and cases needed to analyze regime changes.
 
 ---
 
-## Provenance, reassessment, and recomputation
-#topic_core
-
-### Read-time computation and provenance
+## Provenance, Reassessment, and Recalculation
 
 #topic_core
 
-Текущий epistemic state вычисляется при чтении:
+### Read-Time Computation and Provenance
+
+#topic_core
+
+Current epistemic state is computed when read:
 
 ```text
 prior + PriorSupport
 + active EvidenceAssignment[]
         ↓
 temporal / dependency adjustment
-+ общий предел неподтверждённого влияния
++ shared limit on unsupported influence
         ↓
 target-specific updater
         ↓
@@ -1990,69 +1968,73 @@ BeliefData / Profile
 + EvidenceStats
 ```
 
-Если само `value_U` обучается estimator-ом, оно вычисляется отдельно из его observations / sufficient state.
+If `value_U` itself is trained by an estimator, it is computed separately from that estimator's observations / sufficient state.
 
-Read ничего не записывает. Новый [[#^def-EvidenceAssignment|`EvidenceAssignment`]] создаётся только при новом evidence или явной переоценке старого; provenance каждого assignment сохраняется обычным механизмом provenance.
-Успешное чтение возвращает вычисляемые [[#^def-BeliefData|`BeliefData`]], [[#^def-Profile|`Profile`]] и [[#^def-EvidenceStats|`EvidenceStats`]]; при недоступной актуальной оценке — `unknown` по правилам ниже.
+A read does not write anything. A new [[#^def-EvidenceAssignment|`EvidenceAssignment`]] is created only for new evidence or an explicit reassessment of old evidence; provenance for each assignment is retained by the ordinary provenance mechanism. A successful read returns computed [[#^def-BeliefData|`BeliefData`]], [[#^def-Profile|`Profile`]], and [[#^def-EvidenceStats|`EvidenceStats`]]; if a current assessment is unavailable, it returns `unknown` under the rules below.
 
-#### Актуальность чтения
+#### Read-Time Freshness
+
 #topic_core
 
-Чтение использует согласованное состояние prior, active evidence, применимых моделей и политик. Сохранённые оценки и кеши пригодны, пока использованные входы, состояния моделей и условия применимости сохраняют силу для запроса. Это включает производные входы, используемые как текущее знание; изменение вне их области применимости не требует переоценки.
+A read uses a consistent state of the prior, active evidence, applicable models, and policies. Saved assessments and caches remain usable while their input, model states, and applicability conditions remain valid for the query. This includes derived inputs used as current knowledge; a change outside their scope does not require reassessment.
 
-Если нужный пересчёт выполняется обычным read-time computation, возвращается пересчитанный результат. Если нужен новый assessment и он ещё не выполнен, чтение возвращает `unknown` с причиной и указанием затронутых оснований. Устаревший вклад нельзя молча исключить или обнулить: это может убрать опровергающее evidence. Ожидание переоценки само по себе не является `retract`.
+If the required recalculation can be performed as ordinary read-time computation, return the recalculated result. If a new assessment is needed but has not been performed, return `unknown` with the reason and affected grounds. A stale contribution must not be silently excluded or zeroed: this could remove refuting evidence. Waiting for reassessment is not itself `retract`.
 
-Вызывающая программа или сознание при необходимости организует [[#Жизненный цикл assessment|пакетную переоценку]] через существующий Learning pipeline в текущей [[Cognition and Attention#Goal, Task и спецификация задачи|Task]] и повторяет чтение. Пока применимая оценка не получена, результат остаётся `unknown`; старое число не используется как текущее.
+The caller or consciousness organizes [[#Assessment Lifecycle|batch reassessment]] through the existing Learning pipeline in the current [[Cognition and Attention#Goal, Task, and Task Specification|Task]], when needed, and retries the read. Until an applicable assessment is obtained, the result remains `unknown`; the old number is not used as current.
 
-Эти правила действуют также для чтений через плоскости и материализованные результаты. При [[Attribution Plane#Историческая реконструкция свойства|историческом чтении]] применимость проверяется на `known_at`; последующие изменения не переписывают прежние snapshots и их основания.
+These rules also apply to reads through planes and materialized results. During [[Attribution Plane#Historical Reconstruction of a Property|historical reading]], applicability is checked at `known_at`; later changes do not rewrite earlier snapshots or their grounds.
 
 ---
 
-### Finding affected EvidenceAssignments
+### Finding Affected EvidenceAssignments
+
 #topic_details
 
-Старое evidence переоценивается, если изменилось релевантное знание, использованное при его создании: например, модель ошибок источника, его dependencies или логика [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]]. Provenance фиксирует версии и использованное состояние этих моделей, чтобы найти затронутые assignments.
+Reassess old evidence if relevant knowledge used to create it changes, such as the source error model, its dependencies, or the logic of [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]]. Provenance records model versions and the model state used, allowing affected assignments to be found.
 
-Затронутые assignments находятся через существующие зависимости:
+Find affected assignments through existing dependencies:
 
-```
+```text
 provenance
 + EVIDENCE_DEPENDS_ON
 → affected EvidenceAssignment[]
 ```
 
-### Evidence reassessment and belief recomputation
+### Evidence Reassessment and Belief Recalculation
+
 #topic_details
 
-Если изменилось знание, использованное при оценке старого evidence, затронутые [[#^def-EvidenceAssignment|`EvidenceAssignment`]] переоцениваются через [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]]:
+If knowledge used to assess old evidence changes, reassess affected [[#^def-EvidenceAssignment|`EvidenceAssignment`]] instances through [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]]:
 
-```
-изменилось релевантное знание
+```text
+relevant knowledge changed
 → affected EvidenceAssignment[]
-→ повторный `EvidenceAssessmentProgram`
-→ old assignment заменяется новой оценкой с актуальными основаниями,
-  даже если численный contribution не изменился
-→ belief пересчитывается
+→ rerun EvidenceAssessmentProgram
+→ replace old assignment with a new assessment under current grounds,
+  even if the numeric contribution is unchanged
+→ recalculate belief
 ```
 
 #topic_core
 
-Updater пересчитывает только свой target. Влияние результата на другие beliefs проходит через обычный Learning pipeline с созданием нового evidence, а не через скрытый каскад обновлений.
+An updater recalculates only its own target. Effects on other beliefs pass through the ordinary Learning pipeline by creating new evidence, not through a hidden cascade of updates.
 
-Изменение likelihoods требует нового assessment и `revise`: сохранённый raw contribution immutable. Изменение только применимой политики ослабления или общего предела требует пересчёта effective view. Переоценка сохраняет identity исходного evidence и его зависимостей; история прежних оценок и прогнозов остаётся доступной для evaluation.
+A change in likelihoods requires a new assessment and `revise`: the saved raw contribution is immutable. A change only to an applicable discount policy or shared influence limit requires recalculating the effective view. Reassessment retains the identity of the source evidence and its dependencies; the history of earlier assessments and predictions remains available for Evaluation.
 
-### Recomputation after consolidation
+### Recalculation After Consolidation
+
 #topic_core
 
-После удаления исходных [[#^def-EvidenceAssignment|`EvidenceAssignment`]] точность будущего `revise/retract` ограничена гранулярностью сохранённого консолидированного evidence. consolidation не обязана быть обратимой. Она может сознательно обменивать возможность индивидуального пересмотра routine evidence на более компактное representation, если [[Memory#^def-CompactionValidationProgram|`CompactionValidationProgram`]] считает такую потерю допустимой.
+After source [[#^def-EvidenceAssignment|`EvidenceAssignment`]] instances are deleted, the precision of future `revise/retract` is limited to the granularity of the retained consolidated evidence. Consolidation does not have to be reversible. It may intentionally trade the ability to revise routine evidence individually for a more compact representation if [[Memory#^def-CompactionValidationProgram|`CompactionValidationProgram`]] considers that loss acceptable.
 
 ---
 
-### Source reliability estimation
+### Source Reliability Estimation
+
 #topic_core
 
 (def_id:: entity.SourceReliability)
-> [!definition] **SourceReliability** — обычный `PropertyConcept`, описывающий ожидаемую корректность информации источника в данном scope. С ним связывается обучаемая Program оценки этого свойства. ^def-SourceReliability
+> [!definition] **SourceReliability** is an ordinary `PropertyConcept` describing the expected correctness of information from a source in a given scope. A learnable Program that assesses this property is associated with it. ^def-SourceReliability
 
 ```text
 read_property(source, SourceReliability, domain=Programming)
@@ -2064,29 +2046,31 @@ value_U + BeliefData
 
 #topic_details
 
-В этом примере контракт свойства объявляет `domain` как область оцениваемой надёжности. Program может использовать prior, прошлый опыт, [[Memory#^def-ResultProvenance|provenance]] и semantic relations источника и улучшается через обычную [[Learning system#^def-LearningSystem|Learning System]]. Надёжность в одной области не переносится автоматически в другую.
+In this example, the property contract defines `domain` as the scope in which reliability is assessed. The Program may use a prior, past experience, [[Memory#^def-ResultProvenance|provenance]], and semantic relations of the source, and improves through the ordinary [[Learning system#^def-LearningSystem|Learning System]]. Reliability in one domain is not automatically transferred to another.
 
-Для расчёта contribution нужна условная модель сообщений: например, `P(report positive | H, C)` и `P(report positive | ¬H, C)`. Её предоставляет та же программа или связанный модуль, переиспользуемый разными assessments. Общая accuracy источника сама по себе не определяет эти вероятности. Источник, всегда отвечающий «да», не различает `H` и `¬H`, даже если часто прав из-за высокой базовой частоты `H`.
+Calculating a contribution requires a conditional message model, such as `P(report positive | H, C)` and `P(report positive | ¬H, C)`. The same program or an associated module reused by different assessments provides it. The source's overall accuracy alone does not determine these probabilities. A source that always answers “yes” does not distinguish `H` from `¬H`, even if it is often correct because `H` has a high base rate.
 
-Когда target извлечён из утверждения самого источника, результат «источник утверждает H» задан способом отбора. Частота истинности таких утверждений не позволяет восстановить две условные вероятности без модели отбора. Для обучения нужна явно заданная процедура получения сообщений и пространство ответов; при их отсутствии применяется приблизительная модель полного сообщения с ограниченным влиянием либо сохраняется `unresolved`.
+When a target is extracted from a source's own statement, “the source says H” is determined by the selection method. The truth frequency of such statements cannot recover the two conditional probabilities without a selection model. Training requires an explicitly specified message-generation procedure and response space; without them, use an approximate whole-message model with limited influence or leave the case `unresolved`.
 
-Если модель наблюдений уже учитывает ошибки источника, его reliability не применяется второй раз множителем к тому же contribution. Проверка источника меняет модель assessment и затронутые оценки, а не создаёт ещё одно независимое подтверждение каждого сообщения.
+If the observation model already accounts for source errors, do not apply source reliability a second time as a multiplier to the same contribution. Assessing the source changes the assessment model and affected assessments; it does not create another independent confirmation for every message.
 
-Для нового пользовательского источника начальная презумпция кооперации задаёт оценку корректности `0.75` в объявленном scope. Это эвристика без backing; она не подменяет условную модель ошибок. Принадлежность к системным логам или API также не делает любое содержание безошибочным: подтверждённый факт получения сообщения и истинность его содержания — разные targets.
+For a new user source, an initial presumption of cooperation assigns correctness `0.75` within the declared scope. This is a heuristic without backing; it does not replace the conditional error model. Belonging to system logs or an API does not make every content claim infallible: confirmed receipt of a message and truth of its content are different targets.
 
-Знания об источнике хранятся в обычном semantic graph: область компетенции, способ получения сведений, известные ограничения и зависимости. Численные counts и параметры принадлежат состоянию estimator-а. Крупные данные, таблицы моделей и checkpoints могут храниться в [[Core data structures#^def-Artifact|версионируемых артефактах]] со ссылками из графа и provenance.
+Knowledge about the source is stored in the ordinary semantic graph: area of expertise, how information was obtained, known limitations, and dependencies. Numeric counts and parameters belong to estimator state. Large datasets, model tables, and checkpoints may be stored as [[Core data structures#^def-Artifact|versioned artifacts]] referenced from the graph with provenance.
 
-У каждого набора параметров один владелец записи. Штатное обучение идёт через [[Learning system#PreparedUpdate, UpdateTransactionManager and UpdateDispatcher|общий механизм обновлений]]; кеш в графе и артефакт не накапливают те же counts независимо. Кешированная оценка фиксирует использованную версию состояния.
+Each parameter set has one write owner. Standard training goes through the [[Learning system#PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher|shared update mechanism]]; a graph cache and artifact do not independently accumulate the same counts. A cached assessment records the state version it used.
 
-Оценка выполняется лениво: для редко используемого источника используется общая модель без отдельного состояния. При частом или значимом взаимодействии могут появиться собственные статистики и кеш. Чтение использует готовую модель и не запускает скрытые LLM / research; неизвестный источник обрабатывается по [[#Жизненный цикл assessment|общему fallback]]. Обучение опирается на независимо разрешённые случаи по [[#Обучение модели evidence|тому же протоколу]], что и модель evidence.
+Assessment is lazy: a rarely used source uses a shared model without separate state. Frequent or significant interaction may lead to its own statistics and cache. A read uses a ready model and does not launch hidden LLM/research; an unknown source uses the [[#Assessment Lifecycle|shared fallback]]. Training uses independently resolved cases under the [[#Training the Evidence Model|same protocol]] as the evidence model.
 
-`Truthfulness` при необходимости моделируется аналогично отдельным `PropertyConcept`: источник может быть честным, но ненадёжным из-за недостатка знаний.
+When needed, model `Truthfulness` similarly as a separate `PropertyConcept`: a source may be honest but unreliable due to limited knowledge.
 
 ---
-### Updater or Program changes
+
+### Updater or Program Changes
+
 #topic_details
 
-Если новый updater может использовать сохранённые contributions напрямую:
+If a new updater can use saved contributions directly:
 
 ```text
 active EvidenceAssignment[]
@@ -2094,32 +2078,33 @@ active EvidenceAssignment[]
 → recomputed belief
 ```
 
-Если новое правило требует информации, которой в contributions уже нет:
+If the new rule requires information no longer present in the contributions:
 
 ```text
 retained source experience
-→ повторный assessment
-→ новые EvidenceAssignment.
+→ reassessment
+→ new EvidenceAssignment instances.
 ```
 
-Если необходимые исходные данные уже были необратимо удалены, точный пересчёт по новой модели невозможен. Система использует оставшееся консолидированное evidence с известной гранулярностью либо получает новое evidence.
+If the necessary source data have already been irreversibly deleted, exact recalculation with the new model is impossible. The system uses remaining consolidated evidence at its known granularity or obtains new evidence.
 
 #topic_details
 
-Таким образом, provenance обеспечивает возможность найти и переоценить основания belief, а степень возможного пересчёта определяется фактически сохранённой детализацией памяти.
+Thus, provenance makes it possible to find and reassess the grounds for belief, while the extent of possible recalculation is determined by the level of detail memory actually retains.
 
 ---
 
-## World-model integration
-#topic_core
-
-### Runtime use of beliefs
+## World-Model Integration
 
 #topic_core
 
-Runtime использует текущий [[#^def-Belief|belief]] как один из входов reasoning, planning и control.
+### Runtime Use of Beliefs
 
-Базовый интерфейс отдельного утверждения или значения:
+#topic_core
+
+At runtime, current [[#^def-Belief|belief]] is one input to reasoning, planning, and control.
+
+The basic interface for an individual claim or value is:
 
 ```text
 value_U
@@ -2130,11 +2115,11 @@ value_U
   }
 ```
 
-При необходимости вместе с ним используется вычисляемый [[#^def-EvidenceStats|`EvidenceStats`]].
+When needed, use computed [[#^def-EvidenceStats|`EvidenceStats`]] with it.
 
-Для `CompetitionScope` вместо независимых belief-записей alternatives используется один вычисляемый [[#^def-Profile|`Profile`]], а не только наиболее вероятная alternative.
+For a `CompetitionScope`, use one computed [[#^def-Profile|`Profile`]] instead of independent belief records for alternatives; do not reduce it to only the most likely alternative.
 
-Высокий `Support` не устраняет неопределённость между альтернативами:
+High `Support` does not eliminate uncertainty between alternatives:
 
 ```text
 Profile:
@@ -2144,11 +2129,11 @@ B = 0.5
 Support = high
 ```
 
-означает, что накоплено много discriminative evidence, но оно не даёт достаточного преимущества одной alternative над другой. Высокий `Support` сам по себе не является основанием выбрать одну из них.
+means that much discriminative evidence has accumulated, but it does not give one alternative sufficient advantage over the other. High `Support` alone is not grounds to choose one.
 
 #topic_details
 
-Если `value_U` является числовой или распределительной структурой, runtime использует необходимые для задачи представления, например:
+If `value_U` is a numeric or distributional structure, runtime uses representations needed for the task, for example:
 
 ```text
 point estimate;
@@ -2158,112 +2143,114 @@ quantile;
 P(value_U ∈ range).
 ```
 
-Они вычисляются из `value_U` соответствующей Program и не являются дополнительными полями `BeliefData`.
+These are computed from the corresponding Program's `value_U` and are not additional `BeliefData` fields.
 
-`Strength` / `Profile` выражают текущую степень belief и могут непосредственно использоваться для prediction и expected-value reasoning. Они не являются самостоятельной мерой того, насколько belief подкреплён evidence.
+`Strength` / `Profile` express current belief and may be used directly for prediction and expected-value reasoning. They are not independent measures of how strongly evidence supports the belief.
 
-[[#^def-BeliefData|`BeliefData`]], `Profile`, `EvidenceStats`, характеристики `value_U`, [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]] и другие релевантные сигналы могут использоваться управляющими механизмами при вычислении `attention_priority`, [[Self#Исследование|локальном выборе исследования]] и определении commitment.
+[[#^def-BeliefData|`BeliefData`]], `Profile`, `EvidenceStats`, characteristics of `value_U`, [[Evaluative-Control System#^def-PredictionUnexpectedness|`prediction_unexpectedness`]], and other relevant signals may be used by control mechanisms to calculate `attention_priority`, make [[Self#Exploration|local research choices]], and determine commitment.
 
-Для решений, где существенно качество основания belief, управляющая Program должна учитывать не только `Strength` / `Profile`, но при необходимости также `Support`, `PriorSupport`, `EvidenceStats`, entropy и стоимость ошибки.
-
+For decisions where the quality of grounds matters, the controlling Program must consider not only `Strength` / `Profile` but, when needed, also `Support`, `PriorSupport`, `EvidenceStats`, entropy, and the cost of error.
 
 ---
 
-### Beliefs across abstraction levels
+### Beliefs Across Abstraction Levels
+
 #topic_core
 
-Beliefs могут относиться к разным уровням представления объекта: [[Core data structures#^def-Facet|Facet]], [[Memory#^def-Episode|Episode]], [[Core data structures#^def-Instance|Instance]] и [[Core data structures#^def-Prototype|Prototype]].
+Beliefs may concern different representation levels of an object: [[Core data structures#^def-Facet|Facet]], [[Memory#^def-Episode|Episode]], [[Core data structures#^def-Instance|Instance]], and [[Core data structures#^def-Prototype|Prototype]].
 
 ```text
 Facet / Episode
-→ belief о конкретном состоянии или конкретном случае;
+→ belief about a specific state or case;
 
 Instance
-→ belief о конкретном объекте;
+→ belief about a specific object;
 
 Prototype
-→ belief о типе / классе объектов.
+→ belief about a type / class of objects.
 ```
 
 #topic_details
 
-Например:
+For example:
 
 ```text
 Facet:
-"Игорь сейчас болен"
+"Igor is ill now"
 
 Instance:
-"У Игоря есть хроническое заболевание X"
+"Igor has chronic condition X"
 
 Prototype:
-"Для людей с заболеванием X характерен симптом Y"
+"People with condition X tend to have symptom Y"
 ```
 
 #topic_core
 
-Для всех уровней `Strength` и `Support` имеют один и тот же смысл:
+At every level, `Strength` and `Support` have the same meaning:
 
 ```text
 Strength
-→ насколько агент верит утверждению;
+→ how strongly the agent believes the claim;
 
 Support
-→ сколько effective evidence его обосновывает.
+→ how much effective evidence supports it.
 ```
 
-[[#^def-Evidence|Evidence]] первоначально относится к тому уровню, который оно непосредственно подтверждает.
+[[#^def-Evidence|Evidence]] initially applies to the level it directly supports.
 
 #topic_details
 
 ```text
-наблюдение конкретного состояния
+observation of a specific state
 → Facet / Episode belief;
 
-повторяющийся опыт конкретного объекта
-→ может стать evidence для Instance belief;
+recurring experience about one specific object
+→ may become evidence for an Instance belief;
 
-опыт разных объектов одного типа
-→ может стать evidence для Prototype belief.
+experience across objects of one type
+→ may become evidence for a Prototype belief.
 ```
 
-Перенос evidence на более общий уровень выполняется через [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]], только если такое обобщение обосновано.
+Transfer of evidence to a more general level is performed through [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] only when the generalization is justified.
 
-В обратном направлении более общий уровень может использоваться как prior:
+Conversely, a more general level may be used as a prior:
 
 ```text
 Prototype
-→ prior для Instance;
+→ prior for Instance;
 
 Instance
-→ prior для конкретного Facet / Episode.
+→ prior for a specific Facet / Episode.
 ```
 
-Prior не считается собственным evidence дочернего target и не увеличивает его Support. Если prior получен из другого belief, его effective backing возвращается отдельно как PriorSupport. 
+A prior is not the child target's own evidence and does not increase its `Support`. If a prior comes from another belief, its effective backing is returned separately as `PriorSupport`.
 
-Одно исходное evidence также не должно учитываться повторно через несколько уровней. Например, опыт конкретного `Instance`, уже использованный для построения `Prototype`, не должен вернуться к этому же `Instance` через Prototype как независимое подтверждение.
+One source of evidence must also not be counted again across several levels. For example, experience about a specific `Instance` that was already used to build a `Prototype` must not return to the same `Instance` through the Prototype as independent confirmation.
 
 ---
 
-### Beliefs across planes
+### Beliefs Across Planes
+
 #topic_core
 
-Все плоскости используют одни и те же epistemic representations:
+All planes use the same epistemic representations:
 
 ```text
-отдельное утверждение / значение
+individual claim / value
 → value_U + BeliefData;
 
 mutually exclusive + exhaustive alternatives
 → CompetitionScope + Profile.
 ```
 
-Различается только semantic target. Форма отдельного `value_U` определяется природой моделируемой величины и потребностями соответствующей Program.
+Only the semantic target differs. The form of an individual `value_U` is determined by the nature of the modeled quantity and the needs of the corresponding Program.
 
 #### Attribution Plane
+
 #topic_core
 
-[[#^def-Belief|Belief]] относится к значению свойства объекта или к scope его дискретной шкалы.
+[[#^def-Belief|Belief]] concerns the value of an object's property or the scope of its discrete scale.
 
 ```text
 Igor.HealthStatus
@@ -2273,66 +2260,69 @@ MyCar.Speed = 112 km/h
 → BeliefData.
 ```
 
-Взаимоисключающие и исчерпывающие values используют общий [[#^def-Profile|`Profile`]]; отдельное `value_U` использует [[#^def-BeliefData|`BeliefData`]].
+Mutually exclusive and exhaustive values use a shared [[#^def-Profile|`Profile`]]; an individual `value_U` uses [[#^def-BeliefData|`BeliefData`]].
 
 #### Semantics Plane
+
 #topic_core
 
-[[#^def-Belief|Belief]] относится к semantic relation fact.
+[[#^def-Belief|Belief]] concerns a semantic relation fact.
 
 ```text
 PART_WHOLE(Wheel, Car)
 CAUSES_UNDER(Infection, Death, NoTreatment)
 ```
 
-`Strength` означает уверенность агента в самой связи.
+`Strength` means the agent's confidence in the relation itself.
 
-Если relation содержит величину, например коэффициент наследования или силу эффекта, эта величина является частью `value_U` или параметров relation, а не `Strength`.
+If a relation contains a quantity, such as a heritability coefficient or effect size, that quantity is part of `value_U` or the relation's parameters, not `Strength`.
 
 #### Process Plane
+
 #topic_core
 
-[[#^def-Belief|Belief]] относится к утверждению о состоянии, переходе, условии, причине или модели процесса.
+[[#^def-Belief|Belief]] concerns a claim about a process state, transition, condition, cause, or model.
 
-Например:
+For example:
 
 ```text
-"FuelPresent является CONDITION запуска двигателя"
+"FuelPresent is a CONDITION for starting the engine"
 
-"Rain является причиной WetRoad в данном случае"
+"Rain caused WetRoad in this case"
 ```
 
-Нужно отличать belief от параметров самой модели:
+Distinguish belief from the parameters of the model itself:
 
 ```text
 transition probability;
 OutcomeProfile;
 effect magnitude;
 expected signal
-→ значения модели;
+→ model values;
 
 BeliefData
-→ насколько агент уверен,
-  что соответствующая модель или оценка корректна.
+→ how strongly the agent believes
+  the corresponding model or estimate is correct.
 ```
 
-`Program` с `model ∈ Program.roles` сама является проверяемой моделью процесса. Аналогичный принцип применяется к семантически значимым `OperatorConcept`, `TRIGGER` и `CONDITION`.
+A `Program` with `model ∈ Program.roles` is itself a testable process model. The same principle applies to semantically significant `OperatorConcept`, `TRIGGER`, and `CONDITION`.
 
 #### Association Plane
+
 #topic_core
 
-Activation, co-activation и associative weights описывают динамику распространения активности и сами по себе не являются beliefs.
+Activation, co-activation, and associative weights describe the dynamics of activity propagation and are not beliefs by themselves.
 
-[[#^def-BeliefData|`BeliefData`]] появляется только если агент превращает обнаруженный ассоциативный паттерн в явное утверждение о мире или своей модели.
+[[#^def-BeliefData|`BeliefData`]] appears only if the agent turns a discovered associative pattern into an explicit claim about the world or its own model.
 
 ---
 
-Один факт может использоваться в нескольких плоскостях без создания нового evidence.
+One fact may be used in several planes without creating new evidence.
 
 ```text
 native fact
-→ projection / view в другой Plane
-→ то же основание belief
+→ projection / view in another Plane
+→ same grounds for belief
 ```
 
-Новый [[#^def-EvidenceAssignment|`EvidenceAssignment`]] создаётся только когда появляется новое основание или отдельный вывод, который [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] обоснованно назначает соответствующему belief.
+Create a new [[#^def-EvidenceAssignment|`EvidenceAssignment`]] only when new grounds appear or a separate conclusion is justifiably assigned to the relevant belief by [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]].
