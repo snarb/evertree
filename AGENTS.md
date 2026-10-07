@@ -2,11 +2,18 @@
 
 - [Architecture overview](docs/architecture/Overview.md)
 - [Architecture documents](docs/architecture/)
-- [Repository layout](docs/repository-layout.md)
 
 # Engineering Principles
 
 - Keep interfaces and data models minimal and elegant: every field, parameter, and option must have a current purpose.
+- Keep trusted execution, isolation, and mandatory acceptance checks in `core`;
+  evolving behavior belongs in `processes`, reusable Program helpers in `common`.
+- Call other Programs through the runtime, including other roles of the same
+  process; do not import their implementations directly.
+- Keep `processes/` aligned with the Self/Process `SUBTYPE_OF` taxonomy;
+  `PART_WHOLE` does not define directory nesting. Preserve stable IDs when
+  updating graph names, paths, and references. Validate structural changes with
+  `uv run python -m evertree.core.programs.layout`.
 
 # Testing
 

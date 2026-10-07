@@ -46,5 +46,4 @@ The default suite runs unit and component tests with up to four workers. Integra
 ## Documentation
 
 - [Architecture](docs/architecture/Overview.md)
-- [Repository layout and Program lifecycle](docs/repository-layout.md)
-- [Implementation status and limitations](docs/implementation-v1.md)
+- [Program lifecycle](docs/architecture/Process%20Plane/Program%20Lifecycle%20and%20Evolution.md)
