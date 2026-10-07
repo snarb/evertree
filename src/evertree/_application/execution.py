@@ -8,7 +8,6 @@ import time
 from contextlib import contextmanager
 from uuid import uuid4
 
-from ..core.programs.lifecycle import git
 from ..core.provider import AgentRequest
 
 
@@ -62,9 +61,7 @@ class TaskExecutionMixin:
             self._active_requests[request_id] = task_id
         own_run = run_ref is None
         run = (
-            self.memory.start_run(
-                "Consciousness", git(self.repository, "rev-parse", "main"), {"task_id": task_id}
-            )
+            self.memory.start_run("Consciousness", self._program_revision(), {"task_id": task_id})
             if own_run
             else self.memory.get_run(run_ref)
         )

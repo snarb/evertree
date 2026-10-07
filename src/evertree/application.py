@@ -30,7 +30,7 @@ from .core.codex import CodexProvider
 from .core.environment import capture_runtime, require_committed_runtime
 from .core.evaluation import SupervisorFeedback, exact_json_equal
 from .core.memory import TraceOutputRef
-from .core.programs.lifecycle import git, initialize_seed_repository, resolve_program_remote
+from .core.programs.lifecycle import initialize_seed_repository, resolve_program_remote
 from .core.provider import AgentProvider
 from .core.runtime import Runtime
 from .core.values import json_value
@@ -217,9 +217,7 @@ class EverTree(ConsciousnessMixin, TaskExecutionMixin, PersistenceMixin, Program
                 ):
                     raise ValueError("Observation identity reused with different contents")
                 return self.memory.output_ref(event)
-        run = self.memory.start_run(
-            "Observation", git(self.repository, "rev-parse", "main"), {"task_id": task_id}
-        )
+        run = self.memory.start_run("Observation", self._program_revision(), {"task_id": task_id})
         event = self.memory.record(
             run, "observation", arguments={"source_id": source_id, **projection}, output=value
         )

@@ -64,6 +64,14 @@ class ProgramsMixin:
         values["guardrails"] = tuple(MetricGuardrail(**item) for item in values["guardrails"])
         return AcceptanceCriteria(**values)
 
+    def _program_revision(self):
+        return git(self.repository, "rev-parse", "main")
+
+    def _program_source(self, spec):
+        return _git(self.repository, "show", f"{spec['revision']}:{spec['git_path']}").decode(
+            "utf-8"
+        )
+
     def _program(self, identity: int | str, *, allow_inactive=False) -> ProgramSpec:
         node = self.graph.get(identity) if isinstance(identity, int) else self.graph.find(identity)
         if node is None and isinstance(identity, str):
@@ -89,7 +97,7 @@ class ProgramsMixin:
         return ProgramSpec(
             node.id,
             node.properties["git_path"],
-            git(self.repository, "rev-parse", "main"),
+            self._program_revision(),
             node.properties.get("entrypoint", "run"),
             node.properties["role"],
         )
@@ -151,9 +159,7 @@ class ProgramsMixin:
             )
         if self.graph.find(name + "." + role):
             raise ValueError("Program name is already registered")
-        run = self.memory.start_run(
-            "ProgramProposal", git(self.repository, "rev-parse", "main"), {"name": name}
-        )
+        run = self.memory.start_run("ProgramProposal", self._program_revision(), {"name": name})
         event = self.memory.record(
             run, "propose_program", output={"claim": claim, "description": description}
         )
@@ -247,9 +253,7 @@ class ProgramsMixin:
                 self._run_map[identity] = run.id
                 state = self.tasks.get(event["task_id"])
                 state.program_run_ids.append(identity)
-                source = _git(
-                    self.repository, "show", f"{spec['revision']}:{spec['git_path']}"
-                ).decode("utf-8")
+                source = self._program_source(spec)
                 anchors = parse_anchors(
                     source,
                     code_node_id=spec["program_id"],

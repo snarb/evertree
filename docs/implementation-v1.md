@@ -81,6 +81,8 @@ Application guards проверяют, что отмена дожидается 
 ```powershell
 uv sync --frozen
 uv run pytest -q
+uv run pytest tests/integration -q
+uv run pytest tests/native -q -n 0
 uv run ruff check src tests
 uv run evertree --home C:\agents\check doctor
 uv run python -m evertree.demo --home C:\agents\demo
@@ -92,11 +94,11 @@ Offline-тесты используют `ScriptedProvider`; unit-тесты DBOS
 
 ```powershell
 # Транспорт и native exec-server без вызовов модели:
-uv run pytest tests/test_codex_executor.py tests/test_native_executor_security.py -q
+uv run pytest tests/integration/test_codex_executor.py tests/native/test_native_executor_security.py -q -n 0
 
 # Реальные Luna/high: структурированный ответ, dynamic tool, сессия и coding:
 $env:EVERTREE_CODEX_INTEGRATION = "1"
-uv run pytest tests/test_codex_integration.py -q
+uv run pytest tests/live/test_codex_integration.py -q -n 0
 Remove-Item Env:\EVERTREE_CODEX_INTEGRATION
 
 # Полная демонстрация с моделью; нужен новый каталог состояния:

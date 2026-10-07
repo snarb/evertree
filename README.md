@@ -1,37 +1,43 @@
 # EverTree
 
-Локальный агент с семантическим графом, исполняемыми Programs, памятью и проверяемыми обновлениями. Первая поддерживаемая среда — **Windows**. Интерфейсы: CLI и асинхронный Python API.
+A local agent with a semantic graph, executable Programs, memory, and verified updates. Interfaces: a CLI and an asynchronous Python API.
 
-**EverTree рассчитан на единственную установку. Архитектуру не усложняем поддержкой независимых установок.**
+**EverTree targets a single installation. Its architecture does not add support for independent installations.**
 
-Нужны Python **3.13.16**, Git, [uv](https://docs.astral.sh/uv/) с поддержкой этой версии Python и действующая локальная авторизация Codex. Все LLM-вызовы идут через официальный Python SDK `openai-codex`, модель **gpt-6-luna**, effort **high**. Смена модели при ошибке доступности не выполняется. Node.js не требуется.
+Development and portable tests target **macOS and Windows**. Production execution of Programs and native coding tools currently requires **Windows AppContainer**. A production macOS sandbox is a separate implementation milestone; passing portable tests does not establish native isolation on macOS.
+
+## Setup and use
+
+Requirements: Python **3.13.16**, Git, [uv](https://docs.astral.sh/uv/) with that Python version available, and local Codex authorization for model calls. All LLM requests use the official `openai-codex` Python SDK with **gpt-6-luna**, effort **high**. There is no model fallback on availability errors. Node.js is not required.
 
 ```sh
 uv python install 3.13.16
 uv sync --frozen
+```
+
+On Windows:
+
+```powershell
 uv run evertree --home C:\agents\my-tree init
 uv run evertree --home C:\agents\my-tree doctor
 uv run evertree --home C:\agents\my-tree chat
-```
-
-`doctor` проверяет текущую авторизацию, Luna/high и фактический запуск AppContainer. Если sandbox недоступен, исполнение Programs завершается ошибкой; обычный Python-процесс не используется как замена.
-
-```powershell
-uv run evertree --home C:\agents\my-tree run "Создай и протестируй функцию для обработки CSV"
+uv run evertree --home C:\agents\my-tree run "Create and test a CSV processing function"
 uv run evertree --home C:\agents\my-tree tasks list
 uv run evertree --home C:\agents\my-tree tasks show TASK_ID
-uv run evertree --home C:\agents\my-tree tasks resume TASK_ID "Ответ на уточнение"
+uv run evertree --home C:\agents\my-tree tasks resume TASK_ID "Answer to the clarification"
 uv run evertree --home C:\agents\my-tree tasks cancel TASK_ID
 uv run evertree --home C:\agents\my-tree programs
 uv run evertree --home C:\agents\my-tree graph Self
-uv run evertree --home C:\agents\my-tree memory "обработка CSV"
+uv run evertree --home C:\agents\my-tree memory "CSV processing"
 uv run evertree --home C:\agents\my-tree traces
 uv run evertree --home C:\agents\my-tree backup
 uv run evertree --home C:\agents\my-tree backup --list
 uv run evertree --home C:\agents\my-tree restore BACKUP_NAME
 ```
 
-CLI и Python API используют одно ядро. Одновременно исполняется одна Task; входы в очередь сохраняются немедленно. Уточнение продолжает ту же Task. Сообщение, принятое во время работы контроллера или проверки, поступает в следующий вызов контроллера до выдачи ответа. Ответ сначала формируется и проверяется, затем доставляется; только подтверждённая доставка допускает успешное завершение.
+`doctor` checks authorization, Luna/high, and actual AppContainer enforcement. If the sandbox is unavailable, Program execution fails; an ordinary Python process is never a production fallback.
+
+The CLI and Python API share the same core. One Task executes at a time; queued inputs are persisted immediately. A clarification continues the same Task. Input accepted during controller execution or verification reaches the next controller call before delivery. An answer is generated, verified, and delivered; only acknowledged delivery permits successful completion.
 
 ```python
 import asyncio
@@ -39,80 +45,93 @@ from evertree import EverTree
 
 async def main():
     async with EverTree(r"C:\agents\my-tree") as tree:
-        result = await tree.run("Создай и протестируй небольшой Python-модуль")
+        result = await tree.run("Create and test a small Python module")
         print(result["answer"])
 
 asyncio.run(main())
 ```
 
-Для собственного транспорта используйте `submit()`, `events()` и `acknowledge_delivery()`. `run()` — удобный транспорт, автоматически подтверждающий получение ответа вызывающей стороной. `resume()` продолжает сохранённую задачу, `cancel()` останавливает её исполнение. Внешние действия требуют `approval_handler`; CLI запрашивает буквальное `yes`, а без терминала отказывает.
+For custom transports use `submit()`, `events()`, and `acknowledge_delivery()`. `run()` automatically acknowledges receipt by its caller. `resume()` continues a saved task; `cancel()` stops execution. External actions require an `approval_handler`; the CLI requires literal `yes` and denies approval without a terminal.
 
-`events()` создаёт независимую подписку на новые события. Создавайте её до `submit()` и закрывайте через `async with tree.events() as events:`. Без подписчиков потоковые события не накапливаются в очереди; их журнал остаётся в Memory. Поздний подписчик получает ещё не подтверждённый ответ. Контроллер использует полный подготовленный контекст каждого хода; внутреннюю историю SDK к нему повторно не добавляет.
+`events()` creates an independent subscription to new events. Open it before `submit()` using `async with tree.events() as events:`. Without subscribers, streaming events do not accumulate in queues; their journal remains in Memory. A late subscriber receives a pending, unacknowledged answer. Each controller turn uses a complete prepared context without appending SDK session history again.
 
-Python API принимает внешнюю числовую оценку через `supervisor_feedback(SupervisorFeedback(value=-2, comment="Причина"), source_id="feedback-1", task_id=...)`; `SupervisorFeedback` экспортируется из `evertree`. Диапазон — от −5 до +5; комментарий сохраняется с исходным наблюдением. Оценка сама по себе не запускает обучение. `save_prediction()` связывает исходный `TraceOutputRef` с семантическим target и контекстом, а Program `PredictionEvaluator` сопоставляет его с сохранёнными наблюдениями. Для составных наблюдений `observe(..., projections=..., context=...)` задаёт пути к отдельным значениям без копирования исходного payload.
+The Python API accepts external numeric feedback through `supervisor_feedback(SupervisorFeedback(value=-2, comment="Reason"), source_id="feedback-1", task_id=...)`; `SupervisorFeedback` is exported by `evertree`. Values range from −5 to +5. Comments remain with the original observation; feedback alone does not start learning. `save_prediction()` links the original `TraceOutputRef` to a semantic target and context. `PredictionEvaluator` matches it against recorded observations. For composite observations, `observe(..., projections=..., context=...)` specifies paths to individual values without copying the payload.
 
-Сознание само выбирает конечный бюджет задачи и долю дополнительного улучшения, сохраняя весь накопленный расход при пересмотре. Развитие навыка, необходимое для текущего запроса, использует основной бюджет; дополнительная работа ради будущей пользы требует выделенной доли. Ожидание подтверждения пользователя исключается из `active_time_minutes`. Технические таймауты вызовов действуют отдельно. `run --max-minutes N` задаёт пользовательский предел. Первоначальный разбор ограничен одним вызовом модели и техническим таймаутом пять минут.
+Consciousness chooses a finite task budget and an optional self-improvement share, preserving accumulated usage when revising them. Skill development required by the current task uses its main budget; optional work for future benefit requires an allocated share. Approval waiting time is excluded from `active_time_minutes`. Technical call timeouts are separate. `run --max-minutes N` sets a user limit. Initial framing is limited to one model call and a five-minute technical timeout.
 
-Programs работают из неизменяемого commit в AppContainer без сетевых capabilities; Job Object владеет деревом процессов. Доступ к графу, памяти, модели и действиям проходит через проверяемый JSON IPC. Новый код разрабатывается в отдельном candidate checkout. Принятие требует независимого dataset, обязательных проверок, улучшения относительно baseline и явного `EvaluationChoice`. Недостаток evidence оставляет candidate неактивным. Разработчик связывает независимые проверки через `datasets.create()` и `bind_evaluation()`; агент не может подменить скрытые исходы собственными ожидаемыми ответами.
+## Program execution and safety
 
-Candidate должен содержать исполняемые тесты `unittest` в `tests/test_*.py`. Core запускает их из точного проверяемого commit в отдельном AppContainer и сохраняет код завершения, результаты и вывод. Отсутствие тестов, только пропущенные тесты, ошибка или timeout блокируют активацию. Этот запуск отделён от проверки синтаксиса и оценки на независимом dataset.
+A new Task initially gets an empty workspace. Each top-level Program run extracts the selected commit of the managed Program repository, copies the small worker entrypoint, and launches a separate Python worker with DBOS in an AppContainer. Nested Program calls share that worker. A Job Object owns the process tree. Programs have no network capabilities; graph, memory, model, and action access goes through validated JSON IPC.
 
-Для написания кода SDK использует официальный Codex `exec-server`, запущенный в собственном AppContainer EverTree. Его команды и файловые инструменты получают доступ к выбранной рабочей области; авторизация модели остаётся в доверенном процессе SDK. Python-мост на `websockets` связывает SDK и stdio сервера через loopback WebSocket с отдельным секретным токеном на каждый запуск. Изоляция исполнения не требует установки elevated Windows sandbox Codex или изменения его глобальных ACL. Расширение прав native-инструментов отклоняется; внешние действия проходят отдельный approval ядра.
+New code is developed in a separate candidate checkout. Acceptance requires an independent dataset, mandatory checks, improvement over the baseline, and an explicit `EvaluationChoice`. Insufficient evidence leaves the candidate inactive. Developers bind independent checks using `datasets.create()` and `bind_evaluation()`; the agent cannot substitute its own expected answers for hidden outcomes.
 
-Backup сохраняет граф, память и трейсы событий, задачи, параметры, ledger, решения lifecycle и журналы DBOS. Код, репозитории, рабочие файлы, входные файлы и результаты в него не копируются. Сохраняются два последних завершённых снимка. Перед публикацией снимка commits программ отправляются в единственную постоянную Git-ветку `evertree/programs`; ошибка отправки оставляет предыдущий бекап и публикуется как `maintenance_error`. По умолчанию используется `origin` проекта; другой remote задаётся через `EVERTREE_PROGRAM_REMOTE` или `EverTree(..., program_remote=...)`. Восстановление получает нужный commit из истории этой ветки. История сохраняет также закоммиченные варианты программ и версии до отката; она не перезаписывается через force push.
+A candidate must contain executable `unittest` tests in `tests/test_*.py`. Core runs them from the exact candidate commit in a separate AppContainer and records exit status, results, and output. Missing tests, an entirely skipped suite, errors, or timeout block activation. This check is separate from syntax validation and independent dataset evaluation. These candidate tests are distinct from this repository's pytest categories.
 
-Python и необходимые worker-библиотеки, Codex и Git хранятся раздельно в общем `%LOCALAPPDATA%/EverTree/cache`, вне состояния агентов и backup. Изменение исходников создаёт только небольшое окружение с кодом EverTree, используя прежние библиотеки. Кэш сохраняет последнюю использованную версию каждого компонента и версии, занятые работающими процессами; остальные удаляются автоматически. Файловые блокировки защищают параллельные запуски. Временные профили удаляются при закрытии, а остатки аварийных запусков — при следующем запуске или обслуживании. Недоступные для удаления файлы повторно обрабатываются позже с предупреждением в журнале.
+For coding, the SDK uses the official Codex `exec-server` inside an EverTree-owned AppContainer. Commands and filesystem tools access the selected workspace; model credentials stay in the trusted SDK process. A Python `websockets` bridge connects the SDK to server stdio through a loopback WebSocket with a unique token per invocation. This does not require installing Codex's elevated Windows sandbox or changing its global ACLs. Requests to broaden tool permissions are rejected; external actions use core's separate approval boundary.
 
-Тесты используют общий кэш инструментов. Их временные данные удаляются после успешной проверки; для диагностики сохраняются неудачные тесты из двух последних сессий pytest. Отдельные каталоги прогонов внутри `.state` не нужны.
+Python and worker dependencies, Codex, and Git are cached separately under `%LOCALAPPDATA%/EverTree/cache`, outside agent state and backups. Source changes create only a small EverTree source environment that reuses the existing libraries. **Python and all dependencies are not recopied for each task or Program run.** The cache retains the latest used version and versions leased by active processes. File locks protect concurrent use. Temporary profiles are removed on close; crash leftovers are cleaned during later maintenance. Files that cannot yet be removed are retried with a warning.
 
-```powershell
+## Persistence
+
+Backup includes graph, memory, event traces, tasks, parameters, ledger, lifecycle decisions, and DBOS journals. It excludes code repositories, workspaces, input files, and generated files. The two latest completed snapshots are retained.
+
+Before publishing a snapshot, Program commits are pushed to the permanent `evertree/programs` branch. A failed push preserves the previous backup and emits `maintenance_error`. The default remote is the project's `origin`; override it with `EVERTREE_PROGRAM_REMOTE` or `EverTree(..., program_remote=...)`. Restore retrieves the required commit from that history. Committed alternatives and pre-rollback versions remain available; history is never force-pushed.
+
+Before ordinary application startup, trusted core sources must be committed and pushed to `origin`. The application refreshes remote references and verifies publication; dirty sources or an inaccessible remote stop startup. It never commits core automatically. Snapshots record the core commit, source hashes, and environment versions; restore validates them without replacing installed sources. Install the matching project version from Git before transferring state.
+
+Task workspaces are removed on completion, failure, or cancellation. Temporary execution sources and evaluation directories are removed after processes stop. After restart, unfinished work starts again with retained history and budgets; SDK sessions and intermediate files are discarded. Request required input files again and commit durable artifacts to Git.
+
+## Development and testing
+
+> Prefer the smallest real set of components that proves the behavior. Use Git, subprocesses, DBOS, application startup, or native sandboxes only when their behavior is part of the test.
+
+This applies to complex behavioral scenarios as well as unit tests. Create task/store objects directly when input admission is not the behavior under test. The default suite contains only `unit` and `component` tests; it rejects subprocess creation from tested code. `pytest-xdist` runs up to four workers by default. Each worker has a private tool cache, and tests own their mutable state.
+
+```sh
+# Default: fast unit and component tests, no LLM or worker subprocesses
 uv run pytest -q
+# Real Git, persistence, IPC, DBOS, and application lifecycle
+uv run pytest tests/integration -q
+# Windows sandbox and process ownership
+uv run pytest tests/native -q -n 0
+# Static checks and taxonomy consistency
 uv run ruff check src tests
-uv run python -m evertree.demo --home C:\agents\demo
-```
-
-Основной набор тестов работает без LLM и включает native Windows isolation. Демонстрация с fake provider проходит создание, проверку и активацию Program, исправление по новому dataset и использование после перезапуска. Для отдельной живой проверки SDK см. [карту реализации](docs/implementation-v1.md).
-
-## Организация кода
-
-**`core` — доверенные механизмы исполнения, хранения и обязательной проверки. `processes` — зарегистрированные в графе программы поведения агента, изменяемые через проверяемый lifecycle.** Составление плана, подготовка аргументов и выбор действий относятся к `processes`; изоляция исполнения, проверка доступа, применение транзакций и обязательные условия активации — к `core`. Общие помощники Programs находятся в `common`, координация приложения — в `application`.
-
-`core` группируется по технической ответственности: `graph/`, `memory/`, `cognition/`, `learning/`, `evaluation/`, `runtime/`, `sandbox/`, `codex/`, `programs/`. Каталоги ядра не обязаны отражаться в графе.
-
-`src/evertree/processes/` соответствует собственным процессам в **Self/Process** (`SelfProcess`). Его начальные подтипы — управление задачами (`task_management/`), управление cognition (`cognitive_control/`), обработка памяти (`memory_processing/`) и обучение (`learning/`). `SelfProcess` принадлежит Self и является подтипом общего `Process`, который сохраняется также для процессов внешнего мира. Вложенность отражает виды процессов (`SUBTYPE_OF`); составные шаги описываются отдельно через `PART_WHOLE`.
-
-В каталоге конкретного процесса `_exec.py` выполняет процесс, а `_model.py` описывает, объясняет или прогнозирует его. Например, составление плана — `task_management/planning/_exec.py`. Создаются только реально реализованные роли; использование LLM или отсутствие effects не делает программу моделью. Помощники многомодульной реализации находятся в пакете её роли: `_exec/implementation.py`, `_exec/helpers.py`. Пустые уровни и варианты `default` не создаются. Файлы `__init__.py` таксономии не регистрируют Programs и не исполняют код.
-
-В каждом commit хранится **одна версия каждой Program**, а альтернативные изменения находятся в Git-ветках по тому же пути:
-
-| Git ref | Назначение |
-| --- | --- |
-| `main` | Активная ветка и ветка по умолчанию managed-репозитория Programs |
-| `codex/program/<process-graph-path>/<role>/<candidate-name>` | Альтернативное изменение существующей Program |
-| удалённая `evertree/programs` | Публикация активного дерева Programs в общем remote проекта |
-
-`process-graph-path` — полный путь процесса в графе, например `Self/Process/TaskManagement/Planning`; `role` — `exec` или `model`. `candidate-name` — осмысленное название изменения из 1–3 слов, в нижнем регистре с дефисами: например `refine-budget` или `preserve-duplicates`. При повторении названия в той же программе добавляется числовой суффикс `-2`, `-3` и т. д. Например:
-
-```text
-codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget
-```
-
-Недопустимые в Git ref символы компонентов пути кодируются percent-encoding; разделители `/` сохраняют иерархию. Внутренние ID Programs и кандидатов остаются стабильными и независимыми от названий веток. Существующая ветка сохраняет путь, использованный при её создании; переименование процесса меняет пути новых веток. Для явного названия API принимает `candidate_name`; если оно не передано, берутся первые три слова гипотезы изменения. Модель получает инструкцию выбирать конкретное короткое название.
-
-Разные роли процесса — разные Programs; их версии не дублируются по каталогам. Локальные tags `<candidate-branch>/<commit>` удерживают точные commits альтернатив. История удалённой активной ветки сохраняет эти commits для восстановления, но их наличие не означает принятия. Исполнение, оценка и восстановление используют точный commit.
-
-`propose_program(name, role=..., claim=..., parent=...)` создаёт новый процесс под указанным родителем (имя или ID внутри Self/Process; по умолчанию `SelfProcess`). Если процесс с таким именем уже существует, вызов без `parent` добавляет ему недостающую роль, например `model` рядом с `exec`. Повторное создание той же роли запрещено, включая неактивные предложения; изменения существующей Program оформляются через `create_candidate`. Новая роль становится активной только после оценки и принятия.
-
-Проверка структуры выполняется в CI и для кандидатов перед оценкой и активацией:
-
-```powershell
+uv run ruff format --check src tests
 uv run python -m evertree.core.programs.layout
 ```
 
-CI сравнивает исходники с начальным графом текущего кода; lifecycle — точный commit кандидата с рабочим графом агента. Несоответствие таксономии каталогам, неверная роль, незарегистрированная или отсутствующая Program блокируют проверку. Подробнее: [организация репозитория](docs/repository-layout.md).
+After a local edit, run affected tests. After completing a change, run related regressions and the fast suite. Run infrastructure suites when changing their boundaries; do not repeat the full suite after every edit. For one test or sequential debugging, add `-n 0`. Live SDK tests require explicit `EVERTREE_CODEX_INTEGRATION=1` and selection of `tests/live`; they are excluded from ordinary CI.
 
-[Архитектура](docs/architecture/Overview.md) · [Репозиторий](docs/repository-layout.md) · [Реализация и проверки](docs/implementation-v1.md)
+CI runs fast and portable integration tests sequentially and in parallel on macOS and Windows, with a separate Windows-native job. Successful-test temporary data is removed; failed-test data from the last two pytest sessions is retained for diagnosis. See the [test guide and behavioral coverage](tests/README.md) for categories, purposes, commands, and measurement limits.
 
-Перед обычным запуском исходники ядра должны быть закоммичены и отправлены в `origin`. Приложение обновляет сведения о ветках `origin` и проверяет публикацию текущего commit; при незакоммиченных изменениях или недоступном remote запуск останавливается. Автоматического коммита ядра нет. В снимке записываются Git commit, хеши исходников и версии окружения; restore проверяет их, исходники ядра не заменяет. При переносе сначала установите соответствующую версию проекта из Git.
+On Windows, `uv run python -m evertree.demo --home C:\agents\demo` demonstrates creation, validation, activation, improvement against a new dataset, and reuse after restart with a fake provider. It still uses real native workers.
 
-После завершения, ошибки или отмены задачи её рабочие файлы удаляются. Временные исходники и каталоги проверок удаляются сразу после остановки процессов. После перезапуска незавершённая работа начинается заново: история и бюджеты сохраняются, SDK-сессии и промежуточные файлы отбрасываются. Нужный файл можно запросить повторно; важные артефакты следует коммитить в Git.
+## Code organization
+
+**`core` contains trusted execution, storage, and mandatory validation. `processes` contains graph-registered behavioral Programs that can evolve through the verified lifecycle.** Planning, argument preparation, and action selection belong to `processes`; isolation, access checks, transactions, and mandatory acceptance conditions belong to `core`. Shared Program helpers live in `common`; `application` coordinates the system.
+
+Core packages are grouped by technical responsibility: `graph/`, `memory/`, `cognition/`, `learning/`, `evaluation/`, `runtime/`, `sandbox/`, `codex/`, and `programs/`. Their directory structure need not appear in the semantic graph.
+
+`src/evertree/processes/` corresponds to **Self/Process** (`SelfProcess`). Its initial subtypes are `task_management`, `cognitive_control`, `memory_processing`, and `learning`. `SelfProcess` belongs to Self and is also a subtype of the general Process concept used for external processes. Directory nesting represents `SUBTYPE_OF`; composite steps use separate `PART_WHOLE` relationships.
+
+Within a process, `_exec.py` performs it and `_model.py` describes, explains, or predicts it. For example, planning uses `task_management/planning/_exec.py`. Only implemented roles are created; LLM use or absence of direct effects does not make a Program a model. Multi-file implementations use role packages such as `_exec/implementation.py` and `_exec/helpers.py`. There are no empty levels or `default` variants. Taxonomy `__init__.py` files neither register nor execute Programs.
+
+Each commit contains **one version of each Program**, with alternatives in Git branches at the same paths:
+
+| Git ref | Purpose |
+| --- | --- |
+| `main` | Active/default managed Program branch |
+| `codex/program/<process-graph-path>/<role>/<candidate-name>` | Alternative implementation |
+| Remote `evertree/programs` | Publication of active Program code and retained history |
+
+`process-graph-path` is the full graph path, such as `Self/Process/TaskManagement/Planning`. `role` is `exec` or `model`. Candidate names use one to three lowercase hyphenated words, such as `refine-budget`, with `-2`, `-3`, etc. for collisions. Example: `codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget`.
+
+Invalid ref-component characters are percent-encoded while `/` preserves hierarchy. Internal Program and candidate IDs remain stable. Existing branches retain their original path after a process rename; new branches use the current path. An explicit `candidate_name` overrides the default first three words of the change claim. The model is instructed to select meaningful names.
+
+Different roles are different Programs without duplicated version directories. Local `<candidate-branch>/<commit>` tags retain exact alternative revisions. Their presence in remote history does not imply acceptance: execution, evaluation, and restore address exact commits.
+
+`propose_program(name, role=..., claim=..., parent=...)` creates a process under a parent name or ID within Self/Process; the default is `SelfProcess`. For an existing process, omitting `parent` adds a missing role without replacing its identity. Re-registering a role, even inactive, is rejected; use `create_candidate` for changes. A new role becomes active only after evaluation and acceptance.
+
+CI compares source layout against the seed graph. Lifecycle checks the exact candidate commit against the working graph before evaluation and activation. Incorrect taxonomy, roles, unregistered code, or missing Programs block acceptance. See [repository layout](docs/repository-layout.md).
+
+[Architecture](docs/architecture/Overview.md) · [Repository](docs/repository-layout.md) · [Implementation and checks](docs/implementation-v1.md)

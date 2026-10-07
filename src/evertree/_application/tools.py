@@ -158,7 +158,7 @@ class ToolsMixin:
 
     def _apply_delta(self, task_id, delta):
         return self._core_operations().apply_delta(
-            delta, task_id=task_id, revision=git(self.repository, "rev-parse", "main")
+            delta, task_id=task_id, revision=self._program_revision()
         )
 
     async def _gateway(self, method, payload):

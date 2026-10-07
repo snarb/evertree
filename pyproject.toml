@@ -22,10 +22,11 @@ dependencies = [
 evertree = "evertree.cli:main"
 
 [dependency-groups]
-dev = ["ruff>=0.15", "pytest>=8", "pytest-asyncio>=1"]
+dev = ["ruff>=0.15", "pytest>=8", "pytest-asyncio>=1", "pytest-xdist>=3.8,<4"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests/unit", "tests/component"]
+addopts = "-n auto --dist=load --import-mode=importlib"
 asyncio_mode = "auto"
 tmp_path_retention_count = 2
 tmp_path_retention_policy = "failed"

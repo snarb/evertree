@@ -48,9 +48,14 @@ class PersistenceMixin:
         self._predictions: dict[str, float] = {}
 
     def _bootstrap(self):
+        revision = git(self.repository, "rev-parse", "main")
+        self._bootstrap_state(revision)
+        self._validate_program_layout(None, revision)
+
+    def _bootstrap_state(self, revision):
+        """Populate stores from the trusted seed using an already resolved revision."""
         from ..core.programs.bootstrap import INITIAL_PRINCIPLES, seed_process_delta
 
-        revision = git(self.repository, "rev-parse", "main")
         run = self.memory.start_run("bootstrap", revision, {})
         event = self.memory.record(run, "bootstrap", output={"revision": revision})
         ref = self.memory.output_ref(event)
@@ -74,7 +79,6 @@ class PersistenceMixin:
         self_id = next(node.id for node in creates if node.name == "Self")
         creates.extend(seed_process_delta(self.graph, self_id=self_id, revision=revision).creates)
         self.graph.apply(GraphDelta(creates=tuple(creates)), provenance=ref)
-        self._validate_program_layout(None, revision)
         self._protected_nodes.add(self.graph.find("SelfProcess").id)
         principles = tuple(
             Node(self.graph.reserve_id(), name, kind="principle", description=description)

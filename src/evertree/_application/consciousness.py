@@ -9,7 +9,6 @@ from ..core.cognition import TaskSpecification, prepare_context
 from ..core.evaluation import VerificationResult
 from ..core.learning import LearningCoordinator, LearningObjective, LearningSignal
 from ..core.memory import MemoryQuery
-from ..core.programs.lifecycle import git
 from ..core.provider import AgentRequest
 from ..core.values import json_value
 from .prompts import (
@@ -285,7 +284,7 @@ class ConsciousnessMixin:
             from ..core.evaluation import evaluate_prediction
 
             run = self.memory.start_run(
-                "TaskOutcome", git(self.repository, "rev-parse", "main"), {"task_id": state.id}
+                "TaskOutcome", self._program_revision(), {"task_id": state.id}
             )
             observed = status == "succeeded"
             event = self.memory.record(
