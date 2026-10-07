@@ -43,7 +43,13 @@ uv run ruff format --check src tests
 
 The default suite runs unit and component tests with up to four workers. Integration, Windows-native, and opt-in live SDK suites are separate; see the [test guide](tests/README.md).
 
-Package `__init__.py` files contain only docstrings. Import components from their defining modules, such as `evertree.application.EverTree`, `evertree.core.graph.store.GraphStore`, and `evertree.core.provider.ScriptedProvider`. Internal Python import paths are not a compatibility contract.
+### Code conventions
+
+- Keep `__init__.py` files limited to package docstrings. Define and import components in named modules; do not add package re-exports or compatibility aliases. Internal Python import paths are not a compatibility contract.
+- Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.
+- Keep trusted execution, isolation, and mandatory acceptance checks in `core`, evolving behavior in `processes`, and reusable Program helpers in `common`.
+- Call other Programs through the runtime, including other roles of the same process; do not import their implementations directly.
+- Align `processes/` with the Self/Process `SUBTYPE_OF` taxonomy; `PART_WHOLE` does not define directory nesting. Preserve stable IDs when changing graph names, paths, and references. Validate structural changes with `uv run python -m evertree.core.programs.layout`.
 
 ## Documentation
 

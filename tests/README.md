@@ -54,6 +54,7 @@ After an edit, run affected tests. After a complete change, run related regressi
 - Fixtures that start the application explicitly request `offline_application`. Only those fixtures bypass committed-core verification and obtain a private bare remote. No global fixture creates Git repositories.
 - Put reusable helpers in `tests/support`; never import from another test module. Keep helpers narrow and fail on unsupported behavior instead of becoming another application implementation.
 - Keep mutable stores, repos, databases, and directories private to each test. Immutable tools may be cached within one pytest worker; each worker owns a separate cache root. Tests of shared-cache locking explicitly create the shared temporary root for their child processes.
+- Use portable paths and APIs: unit, component, and portable integration tests must work on macOS and Windows.
 - Prefer events and controlled clocks to sleeps. Preserve behavioral catalog IDs when moving or splitting tests. Keep a real boundary test when moving business-rule variants into faster tests.
 - Unit, component, and portable integration suites run in parallel by default, including explicitly selected `tests/integration`. `-n auto` uses at most four available CPUs; `-n N` explicitly overrides that. Native/live suites and single-test debugging use `-n 0`. A session fixture runs once per worker, not once for the entire parallel run.
 
