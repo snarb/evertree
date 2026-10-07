@@ -9,6 +9,10 @@
   named modules and import them from their defining modules; do not add package
   re-exports or compatibility aliases.
 - Keep interfaces and data models minimal and elegant: every field, parameter, and option must have a current purpose.
+- Add short, clear comments at the relevant code location only to explain
+  motivation, reasons, or logic that are not obvious from the code. A bug fix alone
+  does not justify a comment; a useful comment explains the non-obvious reason
+  behind the fix to help LLMs avoid repeating the mistake.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`;
   evolving behavior belongs in `processes`, reusable Program helpers in `common`.
 - Call other Programs through the runtime, including other roles of the same
