@@ -61,6 +61,7 @@ class ToolDefinition:
     name: str
     description: str
     input_schema: dict[str, Any]
+    read_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -82,10 +83,22 @@ class AgentRequest:
     tools: tuple[ToolDefinition, ...] = ()
     session: SessionRef | None = None
     timeout_seconds: float | None = None
+    model: str | None = None
+    effort: str | None = None
+    tool_sets: tuple = ()
 
     def __post_init__(self):
         if self.native_coding and self.mode != "exec":
             raise ValueError("Native coding requires an exec invocation")
+        if self.effort is not None and self.effort not in {
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+        }:
+            raise ValueError("Unsupported reasoning effort")
 
 
 @dataclass(frozen=True)
@@ -143,6 +156,12 @@ class ScriptedProvider:
 
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
         self.requests.append(request)
+        available = {s.name: s.for_mode(request.mode) for s in request.tool_sets}
+        active = {t.name: t for t in request.tools}
+        if available:
+            from .toolsets import loader_definition
+
+            active["load_tool_set"] = loader_definition(tuple(available.values()))
         if not self.scripts:
             raise ProviderError("Offline provider has no remaining script")
         yield AgentEvent("session", {"provider": self.name, "id": request_id})
@@ -151,9 +170,11 @@ class ScriptedProvider:
                 yield AgentEvent("cancelled")
                 return
             if event.kind == "tool_call":
-                if request.mode != "exec" or tool_handler is None:
+                if tool_handler is None and event.data["name"] != "load_tool_set":
                     raise ProviderError("Tool execution is not permitted")
-                if event.data["name"] not in {tool.name for tool in request.tools}:
+                if event.data["name"] not in active or (
+                    request.mode == "model" and not active[event.data["name"]].read_only
+                ):
                     raise ProviderError("Tool was not declared")
                 call = {
                     "call_id": event.data.get("call_id") or f"{request_id}:{index}",
@@ -162,7 +183,15 @@ class ScriptedProvider:
                 }
                 yield AgentEvent("tool_call", call)
                 try:
-                    result = await tool_handler(call["name"], call["arguments"])
+                    if call["name"] == "load_tool_set":
+                        selected = available[call["arguments"]["name"]]
+                        active.update({t.name: t for t in selected.tools})
+                        result = {
+                            "loaded": selected.name,
+                            "tools": [t.name for t in selected.tools],
+                        }
+                    else:
+                        result = await tool_handler(call["name"], call["arguments"])
                 except Exception as exc:
                     yield AgentEvent(
                         "tool_result",

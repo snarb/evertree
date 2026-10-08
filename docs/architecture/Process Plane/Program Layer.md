@@ -1227,3 +1227,10 @@ get_relations(...) -> list[Relation] # TODO: detail the arguments
 ```
 
 ---
+
+
+## Semantic Processing Programs
+
+`SemanticProcessing` contains `SemanticSearch.model` (retrieval decisions and filtering) and `KnowledgeRemembering.exec` (sourced knowledge preparation and repair). Both use the ordinary candidate lifecycle and independent evaluation. Core owns identity resolution, indexes, permissions, validation and atomic writes.
+
+LLM steps return structured next actions; Program code executes them. Child Programs use `ctx.call` outside DBOS steps. This keeps the semantic policy learnable without moving authority or credentials out of core. Public contracts are in [[Semantics Plane#Consciousness Interface]].

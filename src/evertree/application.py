@@ -98,8 +98,16 @@ class EverTree(ConsciousnessMixin, TaskExecutionMixin, PersistenceMixin, Program
         approval_handler=None,
         runtime_factory=Runtime,
         program_remote: str | None = None,
+        semantic_config=None,
+        search_index=None,
     ):
         self.directory = Path(directory).resolve()
+        from .core.semantics.config import SemanticConfig
+        from .core.semantics.index import RedisSearchIndex
+
+        self.semantic_config = semantic_config or SemanticConfig.load(self.directory)
+        self.search_index = search_index or RedisSearchIndex(self.semantic_config, self.directory)
+        self._semantic_service = None
         self.state_dir = self.directory / ".state"
         self.repository = self.state_dir / "program-repository"
         self.provider = provider or CodexProvider(state_dir=self.state_dir / "codex-runtime")
@@ -429,7 +437,10 @@ class EverTree(ConsciousnessMixin, TaskExecutionMixin, PersistenceMixin, Program
         finally:
             try:
                 try:
-                    await self.provider.close()
+                    try:
+                        await self.search_index.close()
+                    finally:
+                        await self.provider.close()
                 finally:
                     if self.lifecycle is not None:
                         await self._discard_workspaces()

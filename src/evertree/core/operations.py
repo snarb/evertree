@@ -31,6 +31,16 @@ MODEL_OPERATIONS = frozenset(
         "graph.read",
         "graph.get",
         "graph.query",
+        "graph.describe",
+        "graph.read_property",
+        "semantic.lookup",
+        "semantic.snapshot",
+        "semantic.bm25",
+        "semantic.vector",
+        "semantic.anchor",
+        "semantic.neighbors",
+        "semantic.view",
+        "semantic.results",
         "memory.retrieve",
         "memory.rank",
         "memory.resolve",
@@ -73,7 +83,9 @@ class CoreOperations:
             run_mode=run_mode,
         )
 
-    def apply_delta(self, delta: GraphDelta, *, task_id: str, revision: str, run_mode="live"):
+    def apply_delta(
+        self, delta: GraphDelta, *, task_id: str, revision: str, run_mode="live", source_refs=()
+    ):
         protect_prediction_delta(self.graph, delta)
         binding = self.graph.find("PROGRAM_FOR_PROCESS")
         if binding is not None:
@@ -120,12 +132,16 @@ class CoreOperations:
         run = self.memory.start_run(
             "GraphMutation", revision, {"task_id": task_id}, run_mode=run_mode
         )
-        event = self.memory.record(run, "graph_delta", output=json_value(delta))
+        event = self.memory.record(
+            run, "graph_delta", output=json_value(delta), dependencies=source_refs
+        )
         ref = self.memory.output_ref(event)
         try:
             result = self.graph.apply(delta, provenance=ref)
             for node in (*delta.creates, *delta.updates):
                 self.memory.retain(ref, "graph:" + str(node.id))
+            for source in source_refs:
+                self.memory.retain(source, "graph_source:" + str(event.id))
             return result
         finally:
             self.memory.finish_run(run)
@@ -186,7 +202,15 @@ class CoreOperations:
                 raise PermissionError(
                     "Runtime verification statistics can only learn from core task outcomes"
                 )
-        if method in {"graph.read", "graph.get"}:
+        if method == "graph.describe":
+            from .semantics.reading import describe
+
+            result = describe(self.graph, self.attribution, **payload)
+        elif method == "graph.read_property":
+            from .semantics.reading import read_property
+
+            result = read_property(self.graph, self.attribution, **payload)
+        elif method in {"graph.read", "graph.get"}:
             result = self.graph.get(payload["id"])
         elif method == "graph.query":
             result = self.graph.query_view(

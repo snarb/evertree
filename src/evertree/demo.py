@@ -119,12 +119,26 @@ class DemoProvider:
             if request.mode != "exec" or tool_handler is None:
                 raise ProviderError("Demo needs an executing consciousness with declared tools")
 
+            active_tools = {tool.name for tool in request.tools}
+            available_sets = {item.name: item.for_mode(request.mode) for item in request.tool_sets}
+
             async def call(name, arguments):
-                if name not in {tool.name for tool in request.tools}:
+                if name not in active_tools:
                     raise ProviderError("Demo attempted an undeclared tool: " + name)
-                output = await tool_handler(name, arguments)
+                if name == "load_tool_set":
+                    selected = available_sets[arguments["name"]]
+                    active_tools.update(tool.name for tool in selected.tools)
+                    output = {"loaded": selected.name}
+                else:
+                    output = await tool_handler(name, arguments)
                 self.calls.append({"name": name, "arguments": arguments, "result": output})
                 return output
+
+            if self.stage != "reuse":
+                arguments = {"name": "program_development_tools"}
+                yield AgentEvent("tool_call", {"name": "load_tool_set", "arguments": arguments})
+                output = await call("load_tool_set", arguments)
+                yield AgentEvent("tool_result", {"name": "load_tool_set", "result": output})
 
             if self.stage == "improvement":
                 arguments = {"program": self.program_id, "arguments": {"values": [3, 1, 3]}}

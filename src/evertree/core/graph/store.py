@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 import threading
 from collections.abc import Callable, Mapping
@@ -19,6 +20,7 @@ from ..values import (
     utcnow,
 )
 from .types import (
+    CANONICAL_KINDS,
     AccessView,
     Clause,
     Facet,
@@ -33,6 +35,7 @@ from .types import (
     ViewMatch,
     _node_data,
     _node_from_data,
+    normalize_name,
 )
 
 
@@ -60,6 +63,12 @@ class GraphStore:
         self.belief_reader = belief_reader
         self.known_at: datetime | None = None
         self.read_only = False
+        self._change_listeners = []
+
+    def on_change(self, listener):
+        """Register a non-I/O invalidation callback for every committed delta."""
+        self._change_listeners.append(listener)
+        return lambda: self._change_listeners.remove(listener)
 
     def reserve_id(self) -> int:
         with self._lock:
@@ -74,7 +83,25 @@ class GraphStore:
         return tuple(node for node in self._nodes.values() if kind is None or node.kind == kind)
 
     def find(self, name: str) -> Node | None:
-        return next((node for node in self._nodes.values() if node.name == name), None)
+        matches = self.lookup(name)
+        if len(matches) > 1:
+            raise ContractError("ambiguous graph name; use an identity or kind")
+        return matches[0] if matches else None
+
+    def lookup(self, query: str | int, *, kind: str | None = None) -> tuple[Node, ...]:
+        if isinstance(query, bool) or not isinstance(query, (str, int)):
+            raise ContractError("graph lookup requires a name or integer identity")
+        if isinstance(query, int):
+            node = self._nodes.get(query)
+            return (node,) if node is not None and (kind is None or node.kind == kind) else ()
+        key = normalize_name(query)
+        matches = tuple(n for n in self.nodes(kind=kind) if normalize_name(n.name) == key)
+        canonical = tuple(n for n in matches if n.kind in CANONICAL_KINDS)
+        return canonical or matches
+
+    @property
+    def revision(self) -> int:
+        return len(self._history)
 
     def facts(self, relation_type: int | str | None = None) -> tuple[RelationInstance, ...]:
         if isinstance(relation_type, str):
@@ -172,6 +199,12 @@ class GraphStore:
             self._nodes = staged
             self._history.append(change)
             self._next_id = max(self._next_id, max(staged, default=0) + 1)
+            for listener in tuple(self._change_listeners):
+                try:
+                    listener(change)
+                except Exception:
+                    # Observers cannot undo an already committed transaction.
+                    logging.getLogger(__name__).exception("Graph change observer failed")
             return change
 
     def _validate_scalar(self, value: Any, slot: Slot, nodes: dict[int, Node]) -> None:
@@ -211,6 +244,42 @@ class GraphStore:
             self._validate_scalar(value, slot, nodes)
 
     def _validate(self, nodes: dict[int, Node]) -> None:
+        names = set()
+        for node in nodes.values():
+            if node.kind in CANONICAL_KINDS:
+                key = normalize_name(node.name)
+                if not 1 <= len(key.split()) <= 3 or key in names:
+                    raise ContractError("canonical names must be unique and contain 1–3 words")
+                names.add(key)
+        from ..attribution import PropertyDefinition
+
+        for node in nodes.values():
+            binding = node.properties.get("attribution") if node.kind == "property" else None
+            if binding is not None:
+                definition = PropertyDefinition(id=node.id, **binding)
+                if any(identity not in nodes for identity in definition.applies_to):
+                    raise ContractError("Property domain references a missing node")
+                if definition.source == "relation":
+                    matches = [
+                        n
+                        for n in nodes.values()
+                        if isinstance(n, RelationType)
+                        and (
+                            n.id == definition.relation_type
+                            or isinstance(definition.relation_type, str)
+                            and normalize_name(n.name) == normalize_name(definition.relation_type)
+                        )
+                    ]
+                    if len(matches) != 1 or not any(
+                        v.name == definition.view for v in matches[0].views
+                    ):
+                        raise ContractError("Property requires an existing declared relation view")
+                    view = next(v for v in matches[0].views if v.name == definition.view)
+                    if set(view.inputs) != {
+                        definition.subject_slot,
+                        *definition.required_parameters,
+                    }:
+                        raise ContractError("Property parameters must match relation view inputs")
         parents: dict[int, int] = {}
         instance_types: dict[int, int] = {}
         facet_instances: dict[int, int] = {}

@@ -266,7 +266,7 @@ def test_bel_11_sem_02_membership_support_is_shared_by_the_scope():
 
 def test_bel_11_sem_02_membership_missing_profile_alternative_is_unknown():
     graph, _beliefs, subject, _low, _high = membership_graph()
-    other = Node(graph.reserve_id(), "Outside the declared scale")
+    other = Node(graph.reserve_id(), "Outside declared scale")
     fact = graph.new_fact(
         "CLASSIFIED_AS", {"entity": subject.id, "class": other.id}, belief_target="level"
     )

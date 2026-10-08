@@ -1148,3 +1148,16 @@ Task / Episode completion
 #topic_core
 
 Reflection may also occur within an unfinished [[#`Goal`, `Task`, and Task Specification|`Task`]]. [[Learning system|Learning from evaluated outcomes]] happens as sufficient data arrives and does not wait for the entire `Task` or [[Memory#^def-Episode|`Episode`]] to finish. A program returning or moving to the next EpisodeStep does not replace Evaluation or create learning credit. Assessing observations as epistemic evidence follows a separate [[Learning system#LearningCoordinator|LearningCoordinator]] path and does not require turning every observation into a forecast check. [[Memory#ProgramRunRecorder|`ProgramRunRecorder`]] records experience and episode-level integration is described in [[Memory]]; Reflection and Program improvement are described in [[Self]], and Program lifecycle in [[Process Plane/Program Lifecycle and Evolution]].
+
+
+## Dynamic Tool Sets
+
+To keep irrelevant schemas out of context, each logical invocation starts with base tools and a short catalog. `load_tool_set(name)` adds callable definitions from a shared `ToolSet` registry:
+
+- `low_level_graph_tools`: exact views, schemas, navigation, history, temporal readings and GraphDelta;
+- `program_development_tools`: development and independent evaluation of Programs;
+- `external_action_tools`: external action inspection and execution.
+
+Loading is idempotent, lasts one logical invocation, and never expands permissions. The next invocation starts with base tools even when reusing an SDK thread. The pinned SDK ignores `dynamicTools` on `thread/resume`. At an SDK-turn boundary the adapter therefore starts a new internal thread with updated tools and the complete public history/tool results. It remains one logical invocation with cumulative resource accounting; listing schemas in text alone is insufficient.
+
+The [[Semantics Plane#Consciousness Interface|semantic interface]] delegates retrieval and knowledge preparation to separate cheap Programs without changing consciousness's model profile.

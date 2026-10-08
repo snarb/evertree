@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 import dataclasses
+import unicodedata
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
 from ..values import ContractError, freeze, json_value, restore_value, timestamp, utcnow
+
+CANONICAL_KINDS = frozenset({"concept", "prototype", "property", "process", "relation_type"})
+
+
+def normalize_name(name: str) -> str:
+    return " ".join(unicodedata.normalize("NFC", name).split()).casefold()
 
 
 @dataclasses.dataclass(frozen=True)

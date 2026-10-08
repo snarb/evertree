@@ -28,10 +28,17 @@ class PropertyDefinition:
     selection: str = "latest"
     period: float | None = None
     required_parameters: tuple[str, ...] = ()
+    applies_to: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "classes", tuple(self.classes))
         object.__setattr__(self, "required_parameters", tuple(self.required_parameters))
+        object.__setattr__(self, "applies_to", tuple(self.applies_to))
+        reserved = {"subject", "property", "valid_at", "known_at", "_compute"}
+        if any(
+            not isinstance(p, str) or not p or p in reserved for p in self.required_parameters
+        ) or len(set(self.required_parameters)) != len(self.required_parameters):
+            raise ContractError("Property parameters must be unique non-reserved names")
         if self.scale not in {"nominal", "ordinal", "numeric", "circular"} or self.source not in {
             "numeric",
             "classification",
@@ -105,7 +112,67 @@ class AttributionRuntime:
 
     def register(self, definition: PropertyDefinition) -> None:
         self.graph.get(definition.id)
+        for identity in definition.applies_to:
+            self.graph.get(identity)
         self._properties[definition.id] = definition
+
+    def definitions(self) -> dict[int, PropertyDefinition]:
+        present = {node.id for node in self.graph.nodes()}
+        definitions = {i: d for i, d in self._properties.items() if i in present}
+        # Numeric facts carry an explicit property slot; ordinary classifications
+        # have no such projection and must never invent a property contract.
+        for fact in self.graph.facts("HAS_NUMERIC_VALUE"):
+            identity = fact.args["property"]
+            definitions.setdefault(identity, PropertyDefinition(identity))
+        for node in self.graph.nodes(kind="property"):
+            if "attribution" in node.properties:
+                definitions[node.id] = PropertyDefinition(
+                    id=node.id, **node.properties["attribution"]
+                )
+        return definitions
+
+    def properties_for(self, subject: int, *, at: datetime) -> tuple[PropertyDefinition, ...]:
+        """Discover declared properties without evaluating Program-backed sources."""
+        import json
+
+        node = self.graph.get(subject)
+        subjects = {subject}
+        if node.kind == "instance":
+            facets = self.graph.get_facets(subject, valid_at=at)
+            if facets is not UNKNOWN:
+                subjects.update(facet.id for facet in facets)
+        domains = set(subjects)
+        for fact in self.graph.facts("STATE_IDENTITY"):
+            if fact.args["facet"] in subjects:
+                domains.add(fact.args["instance"])
+        for identity in tuple(domains):
+            domains.update(n.id for n in self.graph.ancestors(identity))
+        for fact in self.graph.facts("IDENTITY_TYPE"):
+            if fact.args["instance"] in domains:
+                domains.add(fact.args["type"])
+                domains.update(n.id for n in self.graph.ancestors(fact.args["type"]))
+        scoped = {binding[1] for key in self._scopes if (binding := json.loads(key))[0] in subjects}
+        found = []
+        for definition in self.definitions().values():
+            applies = definition.id in scoped or bool(domains.intersection(definition.applies_to))
+            if definition.source == "numeric":
+                applies |= any(
+                    f.args["entity"] in subjects and f.args["property"] == definition.id
+                    for f in self.graph.facts("HAS_NUMERIC_VALUE")
+                )
+            elif definition.source == "classification":
+                applies |= any(
+                    f.args["entity"] in subjects and f.args["class"] in definition.classes
+                    for f in self.graph.facts("CLASSIFIED_AS")
+                )
+            elif definition.source == "relation":
+                applies |= any(
+                    f.args.get(definition.subject_slot) in subjects
+                    for f in self.graph.facts(definition.relation_type)
+                )
+            if applies:
+                found.append(definition)
+        return tuple(found)
 
     @staticmethod
     def _binding_key(subject: int, property_id: int, conditions: Mapping | None) -> str:
@@ -116,7 +183,7 @@ class AttributionRuntime:
     def bind_scope(
         self, subject: int, property_id: int, target: str, *, conditions: Mapping | None = None
     ) -> None:
-        definition = self._properties[property_id]
+        definition = self.definitions()[property_id]
         contract = self.beliefs.target(target)
         if not contract.alternatives or definition.scale not in {"nominal", "ordinal"}:
             raise ContractError(
@@ -150,11 +217,12 @@ class AttributionRuntime:
         *,
         valid_at: datetime | None = None,
         known_at: datetime | None = None,
+        _compute: bool = True,
         **parameters: Any,
     ) -> PropertyReading | Any:
         subject_id = subject.id if isinstance(subject, Node) else subject
         property_id = property.id if isinstance(property, Node) else property
-        definition = self._properties.get(property_id)
+        definition = self.definitions().get(property_id)
         if definition is None:
             return UNKNOWN
         at = timestamp(valid_at or utcnow())
@@ -171,7 +239,12 @@ class AttributionRuntime:
                     historical = self.historical_loader(known)
                     return (
                         historical.read_property(
-                            subject_id, property_id, valid_at=at, known_at=known, **parameters
+                            subject_id,
+                            property_id,
+                            valid_at=at,
+                            known_at=known,
+                            _compute=_compute,
+                            **parameters,
                         )
                         if historical
                         else UNKNOWN
@@ -246,7 +319,7 @@ class AttributionRuntime:
                 for match in matches if isinstance(matches, list) else [matches]:
                     candidates.append((match.source_fact, match.value))
         else:
-            if self.program_reader is None:
+            if not _compute or self.program_reader is None:
                 return UNKNOWN
             # The caller executes the bound Program through runtime and records
             # its provenance; reading never creates or searches for new models.
@@ -303,7 +376,7 @@ class AttributionRuntime:
         )
 
     def compare(self, property_id: int, first: Any, second: Any) -> int:
-        definition = self._properties[property_id]
+        definition = self.definitions()[property_id]
         if definition.scale in {"nominal", "circular"}:
             raise ContractError("this scale has no linear ordering")
         if definition.scale == "ordinal":
@@ -311,7 +384,7 @@ class AttributionRuntime:
         return (first > second) - (first < second)
 
     def distance(self, property_id: int, first: float, second: float) -> float:
-        definition = self._properties[property_id]
+        definition = self.definitions()[property_id]
         if definition.scale in {"nominal", "ordinal"}:
             raise ContractError("this scale has no numeric distance")
         delta = abs(first - second)

@@ -105,3 +105,62 @@ def _native_tool_events(item, *, completed):
             for change in changes
         )
     return tuple(events)
+
+
+_HISTORY_START = "<evertree-history>\n"
+_HISTORY_END = "\n</evertree-history>\nCurrent user request:\n"
+
+
+def _thread_history(client, thread_id):
+    """Read public items, flattening context carried across internal threads."""
+    items, cursor = [], None
+    while True:
+        params = {"threadId": thread_id, "sortDirection": "asc", "limit": 100}
+        if cursor:
+            params["cursor"] = cursor
+        page = _request(client, "thread/items/list", params)
+        for entry in page["data"]:
+            item = entry["item"]
+            if item["type"] == "reasoning":
+                continue
+            content = item.get("content", [])
+            if (
+                item["type"] == "userMessage"
+                and len(content) == 1
+                and content[0].get("type") == "text"
+            ):
+                text = content[0]["text"]
+                if text.startswith(_HISTORY_START) and _HISTORY_END in text:
+                    raw, current = text[len(_HISTORY_START) :].rsplit(_HISTORY_END, 1)
+                    carried = json.loads(raw)
+                    items.extend(carried["items"])
+                    item = {"type": "userMessage", "content": [{"type": "text", "text": current}]}
+            items.append(item)
+        cursor = page.get("nextCursor")
+        if not cursor:
+            return items
+
+
+def _continuation_input(history, request, *, continued=False):
+    note = (
+        "Continue this logical invocation with the newly registered tools; do not repeat completed actions."
+        if continued
+        else "This is a NEW logical invocation. Prior tool sets have expired. Follow the current user request only."
+    )
+    # Keep the active request outside historical JSON and unwrap it on the next
+    # transfer, so old continuation instructions neither nest nor replace it.
+    return (
+        _HISTORY_START
+        + json.dumps({"note": note, "items": history}, ensure_ascii=False)
+        + _HISTORY_END
+        + request
+    )
+
+
+def _add_usage(previous, current):
+    if not previous["available"] or not current["available"]:
+        return _usage({}, None)
+    return {
+        "available": True,
+        **{key: previous[key] + current[key] for key in current if key != "available"},
+    }

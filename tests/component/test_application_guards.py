@@ -166,6 +166,10 @@ async def test_cancel_joins_blocked_sdk_callback_before_publishing_terminal_stat
         [
             framing(),
             [
+                AgentEvent(
+                    "tool_call",
+                    {"name": "load_tool_set", "arguments": {"name": "external_action_tools"}},
+                ),
                 AgentEvent("tool_call", {"name": "list_actions", "arguments": {"session": "test"}}),
                 AgentEvent(
                     "tool_call",

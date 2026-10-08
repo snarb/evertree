@@ -7,7 +7,6 @@ import dataclasses
 import json
 from pathlib import Path
 
-from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.memory.types import TraceOutputRef
 
 from ..core.programs.lifecycle import git
@@ -38,6 +37,17 @@ class ToolsMixin:
                 remaining = state.remaining("active_time_minutes", self_improvement=improvement)
                 async with asyncio.timeout(remaining * 60 if remaining else None):
                     return await self._dispatch_tool(task_id, name, args)
+        except TimeoutError:
+            if name != "graph.search":
+                raise
+            return self._semantics().results(
+                args["query"],
+                args.get("kind"),
+                [],
+                [{"channel": "budget", "error": "Task time budget exhausted"}],
+                args.get("limit", 20),
+                task_id,
+            )
         finally:
             self._tool_tasks[task_id].discard(callback)
             self._improvement.reset(token)
@@ -62,19 +72,31 @@ class ToolsMixin:
                     timeout_seconds=self._remaining_seconds(state),
                 ),
             )
-        if name == "read_graph":
-            node = (
-                self.graph.get(args["id"])
-                if "id" in args
-                else self.graph.find(args.get("name", ""))
-            )
-            return json_value(node) if node else None
+        if name == "graph.search":
+            exact = self._semantics().lookup(**args, task_id=task_id)
+            if exact is not None:
+                return exact
+            from ..core.runtime.repository import ProgramExecutionError
+
+            try:
+                result = await self._run_program(task_id, "semantic_search", args)
+            except ProgramExecutionError as exc:
+                return self._semantics().results(
+                    args["query"],
+                    args.get("kind"),
+                    [],
+                    [{"channel": "runtime", "error": str(exc)}],
+                    args.get("limit", 20),
+                    task_id,
+                )
+            return result["result"]
+        if name == "graph.remember":
+            result = await self._run_program(task_id, "knowledge_remembering", args)
+            return result["result"]
+        if name.startswith("graph."):
+            return await self._graph_tool(task_id, name, args)
         if name == "recall":
             return json_value(self.memory.retrieve(args["query"], limit=10))
-        if name == "remember":
-            node = Node(self.graph.reserve_id(), args["name"], description=args["description"])
-            self._apply_delta(task_id, GraphDelta(creates=(node,)))
-            return json_value(node)
         if name == "create_candidate":
             program = self._program(args["program"], allow_inactive=True)
             candidate = self.lifecycle.create_candidate(
@@ -143,6 +165,60 @@ class ToolsMixin:
             )
         raise ValueError("Unknown EverTree tool: " + name)
 
+    def _semantics(self):
+        from ..core.semantics.service import SemanticService
+
+        if self._semantic_service is None or self._semantic_service.graph is not self.graph:
+            self._semantic_service = SemanticService(
+                self.graph,
+                self.memory,
+                self.attribution,
+                self.semantic_config,
+                self.search_index,
+                self._core_operations(),
+            )
+        return self._semantic_service
+
+    async def _graph_tool(self, task_id, name, args):
+        from ..core.semantics.reading import fact_card, fact_nodes, resolve
+        from ..core.values import timestamp
+
+        if name in {"graph.neighbors", "graph.history"}:
+            node = resolve(self.graph, args["subject"])
+            if isinstance(node, dict):
+                return node
+            if name == "graph.history":
+                return json_value(self.graph.changes_of(node.id))
+            return [
+                fact_card(self.graph, f)
+                for f in self.graph.facts()
+                if node.id in fact_nodes(self.graph, f)
+            ]
+        if name == "graph.read_property_at":
+            subject, prop = (
+                resolve(self.graph, args["subject"]),
+                resolve(self.graph, args["property"]),
+            )
+            if isinstance(subject, dict) or isinstance(prop, dict):
+                return {"subject": json_value(subject), "property": json_value(prop)}
+            return json_value(
+                self.attribution.read_property(
+                    subject.id,
+                    prop.id,
+                    valid_at=timestamp(args["valid_at"]) if args.get("valid_at") else None,
+                    known_at=timestamp(args["known_at"]) if args.get("known_at") else None,
+                    **args.get("parameters", {}),
+                )
+            )
+        return self._core_operations().execute(
+            name,
+            args,
+            metadata={
+                "task_id": task_id,
+                "program": {"role": "exec", "revision": self._program_revision()},
+            },
+        )
+
     def _core_operations(self):
         from ..core.operations import CoreOperations
 
@@ -174,6 +250,8 @@ class ToolsMixin:
         if state.terminal or state.hard_limit_reached:
             raise PermissionError("Task is stopped or its explicit resource limit was reached")
         authorize_operation(method, metadata["program"]["role"])
+        if method.startswith("semantic."):
+            return await self._semantics().execute(method, payload, metadata)
         if method == "resolve_program":
             spec = self._program(payload["program_id"])
             revision = metadata["program"]["revision"]
@@ -195,12 +273,18 @@ class ToolsMixin:
                 if budget_policy
                 else self._remaining_seconds(state)
             )
+            profile_name = payload.get("profile")
+            if profile_name not in {None, "search", "remember"}:
+                raise ValueError("Unknown model profile")
+            profile = getattr(self.semantic_config, profile_name) if profile_name else None
             request = AgentRequest(
                 payload["prompt"],
                 self._workspace(task_id),
                 instructions=payload.get("instructions", ""),
                 mode="model",
                 output_schema=payload.get("output_schema"),
+                model=profile.model if profile else None,
+                effort=profile.effort if profile else None,
                 timeout_seconds=seconds,
             )
             return await self._invoke(

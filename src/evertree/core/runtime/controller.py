@@ -212,7 +212,10 @@ class Runtime:
                     )
                     reader_task = asyncio.create_task(self._read_protocol(process))
                     self._active["reader_task"] = reader_task
-                    result = await asyncio.wait_for(asyncio.shield(reader_task), timeout)
+                    try:
+                        result = await asyncio.wait_for(asyncio.shield(reader_task), timeout)
+                    except ExceptionGroup as exc:
+                        raise ProgramExecutionError(str(exc.exceptions[0])) from exc
                     return RunResult(run_id, result["result"], result.get("feedback"))
                 except TimeoutError as exc:
                     raise ProgramExecutionError(f"Execution exceeded {timeout:g} seconds") from exc
@@ -247,37 +250,11 @@ class Runtime:
                 output.flush()
 
     async def _read_protocol(self, process):
-        while True:
-            line = await asyncio.to_thread(process.stdout.readline, 8 * 1024 * 1024)
-            if not line:
-                raise ProgramExecutionError(
-                    "Worker stopped without a result; inspect its stderr.log"
-                )
-            try:
-                message = json.loads(line)
-            except ValueError as exc:
-                raise ProgramExecutionError("Invalid worker protocol") from exc
-            if not isinstance(message, dict):
-                raise ProgramExecutionError("Invalid worker message")
-            kind = message.get("type")
-            if kind == "ready":
-                continue
-            if kind == "boundary":
-                active = self._active
-                if active is not None:
-                    active["waiting"] = message.get("state") == "waiting"
-                    if active["waiting"] and self._pause_requested and not self._gateway_active:
-                        self._paused.set()
-                continue
-            if kind == "result":
-                return message
-            if kind == "error":
-                raise ProgramExecutionError(message.get("error", "Worker execution failed"))
-            if kind != "request" or message.get("method") != "gateway":
-                raise ProgramExecutionError("Unknown worker request")
-            request_id = message.get("id")
-            if not isinstance(request_id, str):
-                raise ProgramExecutionError("Request has no identity")
+        pending = set()
+        write_lock = asyncio.Lock()
+
+        async def respond(message):
+            request_id = message["id"]
             try:
                 value = await self._dispatch(message["payload"])
                 response = {"id": request_id, "result": value}
@@ -289,8 +266,54 @@ class Runtime:
                     )
                     + b"\n"
                 )
-            await asyncio.to_thread(process.stdin.write, encoded)
-            await asyncio.to_thread(process.stdin.flush)
+            async with write_lock:
+                await asyncio.to_thread(process.stdin.write, encoded)
+                await asyncio.to_thread(process.stdin.flush)
+
+        async with asyncio.TaskGroup() as group:
+            try:
+                while True:
+                    line = await asyncio.to_thread(process.stdout.readline, 8 * 1024 * 1024)
+                    if not line:
+                        raise ProgramExecutionError(
+                            "Worker stopped without a result; inspect its stderr.log"
+                        )
+                    try:
+                        message = json.loads(line)
+                    except ValueError as exc:
+                        raise ProgramExecutionError("Invalid worker protocol") from exc
+                    if not isinstance(message, dict):
+                        raise ProgramExecutionError("Invalid worker message")
+                    kind = message.get("type")
+                    if kind == "ready":
+                        continue
+                    if kind == "boundary":
+                        active = self._active
+                        if active is not None:
+                            active["waiting"] = message.get("state") == "waiting"
+                            if (
+                                active["waiting"]
+                                and self._pause_requested
+                                and not self._gateway_active
+                            ):
+                                self._paused.set()
+                        continue
+                    if kind == "result":
+                        return message
+                    if kind == "error":
+                        raise ProgramExecutionError(message.get("error", "Worker execution failed"))
+                    if kind != "request" or message.get("method") != "gateway":
+                        raise ProgramExecutionError("Unknown worker request")
+                    if not isinstance(message.get("id"), str):
+                        raise ProgramExecutionError("Request has no identity")
+                    if pending and self._active is not None:
+                        self._active["parallel_gateway"] = True
+                    task = group.create_task(respond(message))
+                    pending.add(task)
+                    task.add_done_callback(pending.discard)
+            finally:
+                for task in pending:
+                    task.cancel()
 
     async def _dispatch(self, request):
         if self._pause_requested:
@@ -526,6 +549,14 @@ class Runtime:
         If no operation boundary arrives, defer the backup rather than copy a
         journal while core effects may be unrecorded.
         """
+        # Concurrent branches can receive responses before every sibling step
+        # is journaled. Defer backup until the tree finishes or awaits input.
+        if (
+            self._active
+            and self._active.get("parallel_gateway")
+            and not self._active.get("waiting")
+        ):
+            raise RuntimeError("Concurrent workflow has not reached a durable idle boundary")
         self._pause_requested = True
         self._gate.clear()
         self._paused.clear()

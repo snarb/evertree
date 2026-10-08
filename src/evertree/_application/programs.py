@@ -377,11 +377,17 @@ class ProgramsMixin:
 
         async def evaluate(branch, revision):
             async def model_call(payload, context):
+                profile_name = payload.get("profile")
+                if profile_name not in {None, "search", "remember"}:
+                    raise ValueError("Unknown model profile")
+                profile = getattr(self.semantic_config, profile_name) if profile_name else None
                 return await self._invoke(
                     task_id,
                     AgentRequest(
                         payload["prompt"],
                         context.workspace,
+                        model=profile.model if profile else None,
+                        effort=profile.effort if profile else None,
                         instructions=payload.get("instructions", ""),
                         mode="model",
                         output_schema=payload.get("output_schema"),
@@ -402,6 +408,7 @@ class ProgramsMixin:
                 self._program,
                 runtime_factory=self._runtime_factory,
                 model_call=model_call,
+                semantic_config=self.semantic_config,
                 observation_ids=frozenset(self._observations),
                 beliefs=self.beliefs,
                 attribution=self.attribution,

@@ -106,7 +106,12 @@ class RetentionPolicy:
 def _ref(value: Any) -> TraceOutputRef | None:
     if isinstance(value, TraceOutputRef):
         return value
-    if isinstance(value, Mapping) and set(value) == {"event_ref", "output_path"}:
+    if (
+        isinstance(value, Mapping)
+        and set(value) == {"event_ref", "output_path"}
+        and isinstance(value["event_ref"], int)
+        and isinstance(value["output_path"], (list, tuple))
+    ):
         return TraceOutputRef(value["event_ref"], tuple(value["output_path"]))
     return None
 

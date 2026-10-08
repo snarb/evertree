@@ -23,7 +23,7 @@ class AnswerVerification(BaseModel):
 
 
 CONSCIOUSNESS_INSTRUCTIONS = """You are the consciousness of EverTree. Solve the current task,
-respect its exact specification, constraints and finite budget. Use existing Programs when
+respect its exact specification, constraints and finite budget. Use graph.search to find concepts and graph.describe to discover their properties before graph.read_property. Use graph.remember to preserve sourced knowledge. Load specialized tool sets only when needed; sets expire after this invocation. Use existing Programs when
 appropriate; learn and improve reusable mechanisms only when the expected benefit justifies
 the task's self-improvement allowance. Never equate an unsupported claim with an observation.
 Use native tools for coding in the provided task workspace. Core state and live Program code
@@ -60,7 +60,7 @@ CANDIDATE_INSTRUCTIONS = (
 )
 
 
-def consciousness_tools():
+def _all_tools():
     def tool(name, description, properties, required=()):
         if name in {
             "create_candidate",
@@ -103,17 +103,6 @@ def consciousness_tools():
             "Write files, run commands and test code inside this task's isolated workspace.",
             {"instruction": string},
             ("instruction",),
-        ),
-        tool(
-            "read_graph",
-            "Read a concept by identity, or find concepts by name.",
-            {"id": integer, "name": string},
-        ),
-        tool(
-            "remember",
-            "Propose a sourced concept or claim to remember; unsupported claims gain no support.",
-            {"name": string, "description": string},
-            ("name", "description"),
         ),
         tool(
             "recall",
@@ -182,4 +171,187 @@ def consciousness_tools():
             {"session": string, "command": {}, "operation_id": string},
             ("session", "command", "operation_id"),
         ),
+    )
+
+
+def semantic_tools():
+    def define(name, description, properties, required, read_only=True):
+        return ToolDefinition(
+            name,
+            description,
+            {
+                "type": "object",
+                "properties": properties,
+                "required": required,
+                "additionalProperties": False,
+            },
+            read_only=read_only,
+        )
+
+    reference = {"type": ["string", "integer"]}
+    string = {"type": "string"}
+    return (
+        define(
+            "graph.search",
+            "Find graph objects by name, ID, meaning, taxonomy or relationships. Exact matches bypass model calls. Use cursor to continue a result.",
+            {
+                "query": reference,
+                "kind": string,
+                "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+                "cursor": string,
+            },
+            ["query"],
+        ),
+        define(
+            "graph.describe",
+            "Describe an object, known properties and links. focus=properties lists properties without invoking computation. at is world time, defaults to now.",
+            {"subject": reference, "focus": string, "at": string},
+            ["subject"],
+        ),
+        define(
+            "graph.read_property",
+            "Read a discovered property. Use describe to discover properties and required parameters. at is world time, defaults to now.",
+            {
+                "subject": reference,
+                "property": reference,
+                "at": string,
+                "parameters": {"type": "object"},
+            },
+            ["subject", "property"],
+        ),
+        define(
+            "graph.remember",
+            "Save sourced statements using a learnable knowledge Program. Use input source_ref or retained trace output references as sources; include relevant context, arguments and evidence. Returns a concise receipt or unresolved ambiguity.",
+            {
+                "statements": {"type": "array", "items": string, "minItems": 1},
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "event_ref": {"type": "integer"},
+                            "output_path": {
+                                "type": "array",
+                                "items": {"type": ["string", "integer"]},
+                            },
+                        },
+                        "required": ["event_ref"],
+                        "additionalProperties": False,
+                    },
+                    "minItems": 1,
+                },
+                "context": {},
+            },
+            ["statements", "sources"],
+            False,
+        ),
+    )
+
+
+def tool_sets():
+    from ..core.toolsets import ToolSet
+
+    def low(name, description, properties, required=(), read_only=True):
+        return ToolDefinition(
+            name,
+            description,
+            {
+                "type": "object",
+                "properties": properties,
+                "required": list(required),
+                "additionalProperties": False,
+            },
+            read_only=read_only,
+        )
+
+    reference = {"type": ["string", "integer"]}
+    string = {"type": "string"}
+    catalog = _all_tools()
+    development = {
+        "create_candidate",
+        "propose_program",
+        "develop_candidate",
+        "evaluate_candidate",
+        "choose_candidate",
+    }
+    return (
+        ToolSet(
+            "low_level_graph_tools",
+            "Load exact graph reads, relation schemas/views, navigation, history and deltas only when high-level tools are insufficient or fail.",
+            (
+                low(
+                    "graph.get",
+                    "Read the raw node by integer ID.",
+                    {"id": {"type": "integer"}},
+                    ("id",),
+                ),
+                low(
+                    "graph.query",
+                    "Execute a declared relation view with named slot inputs and optional world/knowledge time.",
+                    {
+                        "relation": reference,
+                        "view": string,
+                        "inputs": {"type": "object"},
+                        "valid_at": string,
+                        "known_at": string,
+                    },
+                    ("relation", "view"),
+                ),
+                low(
+                    "graph.neighbors",
+                    "Read adjacent facts and their objects.",
+                    {"subject": reference},
+                    ("subject",),
+                ),
+                low(
+                    "graph.history",
+                    "Read the change history and provenance of an object.",
+                    {"subject": reference},
+                    ("subject",),
+                ),
+                low(
+                    "graph.read_property_at",
+                    "Read a property at explicit world and knowledge time using the attribution contract.",
+                    {
+                        "subject": reference,
+                        "property": reference,
+                        "valid_at": string,
+                        "known_at": string,
+                        "parameters": {"type": "object"},
+                    },
+                    ("subject", "property"),
+                ),
+                low(
+                    "graph.apply",
+                    "Apply a typed GraphDelta through protected validation. Program/lifecycle and belief authority cannot be changed.",
+                    {
+                        "creates": {"type": "array"},
+                        "updates": {"type": "array"},
+                        "deletes": {"type": "array"},
+                    },
+                    read_only=False,
+                ),
+            ),
+        ),
+        ToolSet(
+            "program_development_tools",
+            "Develop, evaluate and select reusable Programs.",
+            tuple(t for t in catalog if t.name in development),
+        ),
+        ToolSet(
+            "external_action_tools",
+            "Inspect and request approved external actions.",
+            tuple(t for t in catalog if t.name in {"list_actions", "take_action"}),
+        ),
+    )
+
+
+def consciousness_tools():
+    from ..core.toolsets import loader_definition
+
+    grouped = {t.name for s in tool_sets() for t in s.tools}
+    return (
+        tuple(t for t in _all_tools() if t.name not in grouped)
+        + semantic_tools()
+        + (loader_definition(tool_sets()),)
     )

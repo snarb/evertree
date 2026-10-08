@@ -19,6 +19,7 @@ from .prompts import (
     CONSCIOUSNESS_INSTRUCTIONS,
     AnswerVerification,
     Decision,
+    tool_sets,
 )
 
 
@@ -169,6 +170,14 @@ class ConsciousnessMixin:
                 return
             inputs = self._inputs[state.id]
             input_count = len(inputs)
+            for incoming in inputs:
+                if incoming.get("role") == "user" and incoming.get("source_id"):
+                    value = {key: value for key, value in incoming.items() if key != "source_ref"}
+                    incoming["source_ref"] = json_value(
+                        self.observe(
+                            value, source_id="input:" + incoming["source_id"], task_id=state.id
+                        )
+                    )
             context = prepare_context(
                 state,
                 state.episode_ids[-1] if state.episode_ids else None,
@@ -192,6 +201,7 @@ class ConsciousnessMixin:
                     mode="exec",
                     output_schema=Decision.model_json_schema(),
                     tools=self._tools(),
+                    tool_sets=tool_sets(),
                     timeout_seconds=self._remaining_seconds(state),
                 ),
                 conversation=True,
@@ -276,6 +286,8 @@ class ConsciousnessMixin:
     async def _stop_task(self, state, status, reason, verification=None):
         await self.runtime.cancel(state.id)
         self._pending_programs.pop(state.id, None)
+        if self._semantic_service is not None:
+            self._semantic_service.release(state.id)
         for identity in state.program_run_ids:
             run_id = self._run_map.get(identity)
             if run_id and self.memory.get_run(run_id).status == "running":

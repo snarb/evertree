@@ -97,7 +97,9 @@ async def test_controller_uses_self_contained_context_without_resuming_session(a
         [
             framing(),
             [
-                AgentEvent("tool_call", {"name": "read_graph", "arguments": {"id": node.id}}),
+                AgentEvent(
+                    "tool_call", {"name": "graph.describe", "arguments": {"subject": node.id}}
+                ),
                 *decision("Continue from the retained result", "continue"),
             ],
             decision(),
@@ -229,3 +231,33 @@ async def test_unavailable_usage_is_retained_and_cannot_satisfy_an_explicit_toke
         and event.output["data"]["available"] is False
         for event in app.memory.events
     )
+
+
+async def test_user_input_exposes_stable_remember_source_across_cycles(app):
+    from evertree.core.memory.types import TraceOutputRef
+
+    class Provider(ScriptedProvider):
+        def __init__(self):
+            super().__init__([framing(), decision(status="continue"), decision(), verification()])
+            self.contexts = []
+
+        async def run(self, request_id, request, **kwargs):
+            if request.mode == "exec":
+                self.contexts.append(json.loads(request.prompt))
+            async for event in super().run(request_id, request, **kwargs):
+                yield event
+
+    provider = Provider()
+    app.provider = provider
+    await app.run("Remember that cats are animals")
+    retained = [
+        event
+        for event in app.memory.events
+        if event.operator == "observation"
+        and event.arguments.get("source_id", "").startswith("input:")
+    ]
+    assert len(retained) == 1
+    for context in provider.contexts:
+        assert '"source_ref"' in json.dumps(context)
+    ref = app._inputs[next(iter(app._inputs))][0]["source_ref"]
+    assert app.memory.resolve(TraceOutputRef(**ref))["content"] == "Remember that cats are animals"

@@ -134,3 +134,90 @@ async def test_live_native_coding_tools(tmp_path):
 pytestmark = pytest.mark.skipif(
     os.environ.get("EVERTREE_CODEX_INTEGRATION") != "1", reason="Explicit live SDK opt-in required"
 )
+
+
+async def test_live_luna_loads_callable_tool_set(tmp_path):
+    from evertree.core.toolsets import ToolSet
+
+    provider = CodexProvider()
+    calls = []
+
+    async def handler(name, arguments):
+        calls.append((name, arguments))
+        return {"value": 731}
+
+    tools = (
+        ToolSet(
+            "test_values",
+            "Load graph.test_value to read the verification number.",
+            (
+                ToolDefinition(
+                    "graph.test_value",
+                    "Return the verification number",
+                    {"type": "object", "properties": {}, "additionalProperties": False},
+                    read_only=True,
+                ),
+            ),
+        ),
+    )
+    try:
+        events, result = await collect(
+            provider,
+            AgentRequest(
+                "Load test_values, call graph.test_value, and return its value as JSON.",
+                tmp_path,
+                model="gpt-6-luna",
+                effort="low",
+                tool_sets=tools,
+                output_schema={
+                    "type": "object",
+                    "properties": {"value": {"type": "integer"}},
+                    "required": ["value"],
+                    "additionalProperties": False,
+                },
+            ),
+            tool_handler=handler,
+        )
+        (tmp_path / "toolset-trace.json").write_text(
+            json.dumps(
+                {"events": [{"kind": e.kind, "data": e.data} for e in events], "calls": calls},
+                indent=2,
+            )
+        )
+        assert result["parsed"] == {"value": 731}
+        assert calls == [("graph.test_value", {})]
+        session = next(e.data for e in reversed(events) if e.kind == "session")
+        next_events, next_result = await collect(
+            provider,
+            AgentRequest(
+                "Do not load any tool sets. If graph.test_value is currently callable, call it. Otherwise return value=-1. Do not reuse a value from history.",
+                tmp_path,
+                model="gpt-6-luna",
+                effort="low",
+                session=SessionRef("codex", session["id"]),
+                timeout_seconds=180,
+                output_schema={
+                    "type": "object",
+                    "properties": {"value": {"type": "integer"}},
+                    "required": ["value"],
+                    "additionalProperties": False,
+                },
+            ),
+            tool_handler=handler,
+        )
+        (tmp_path / "toolset-reset-trace.json").write_text(
+            json.dumps(
+                {"events": [{"kind": e.kind, "data": e.data} for e in next_events], "calls": calls},
+                indent=2,
+            )
+        )
+        assert (
+            next(e.data for e in next_events if e.kind == "session")["capability_restrictions"][
+                "dynamic_tools"
+            ]
+            == []
+        )
+        assert next_result["parsed"] == {"value": -1}
+        assert calls == [("graph.test_value", {})]
+    finally:
+        await provider.close()

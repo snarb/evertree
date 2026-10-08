@@ -25,9 +25,12 @@ from .configuration import (
     thread_config,
 )
 from .protocol import (
+    _add_usage,
+    _continuation_input,
     _json,
     _native_tool_events,
     _request,
+    _thread_history,
     _usage,
 )
 
@@ -39,6 +42,30 @@ class _Invocation:
     thread_id: str | None = None
     turn_id: str | None = None
     callbacks: set = field(default_factory=set)
+    cancelling: bool = False
+
+
+def _dynamic_tools(tools):
+    definitions = []
+    namespaces = {}
+    for tool in tools:
+        spec = {
+            "type": "function",
+            "name": tool.name,
+            "description": tool.description,
+            "inputSchema": tool.input_schema,
+        }
+        if "." in tool.name:
+            namespace, name = tool.name.split(".", 1)
+            spec["name"] = name
+            namespaces.setdefault(namespace, []).append(spec)
+        else:
+            definitions.append(spec)
+    definitions.extend(
+        {"type": "namespace", "name": name, "description": name + " operations", "tools": group}
+        for name, group in namespaces.items()
+    )
+    return definitions
 
 
 class CodexProvider:
@@ -58,6 +85,7 @@ class CodexProvider:
         self._executor_factory = executor_factory
         self._active: dict[str, _Invocation] = {}
         self._thread_usage: dict[str, dict[str, int]] = {}
+        self._thread_tools: dict[str, list] = {}
 
     def _client(self, *, request: AgentRequest | None = None, handler=None, model_catalog=None):
         return create_client(
@@ -68,8 +96,8 @@ class CodexProvider:
             model_catalog=model_catalog,
         )
 
-    async def _computation_catalog(self):
-        return await computation_catalog(self.state_dir, self._client)
+    async def _computation_catalog(self, model_name=MODEL, effort=EFFORT):
+        return await computation_catalog(self.state_dir, self._client, model_name, effort)
 
     _thread_config = staticmethod(thread_config)
 
@@ -149,22 +177,38 @@ class CodexProvider:
             raise ProviderError("Request is already running")
         if request.session and request.session.provider != self.name:
             raise ProviderError("Cannot resume another provider's session")
-        if request.mode == "model" and request.tools:
+        if request.mode == "model" and any(not t.read_only for t in request.tools):
             raise ProviderError("Model calls cannot expose action tools")
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue[AgentEvent | None] = asyncio.Queue()
-        allowed_tools = {tool.name for tool in request.tools}
+        model_name, effort = request.model or MODEL, request.effort or EFFORT
+        available_sets = {s.name: s.for_mode(request.mode) for s in request.tool_sets}
+        active_tools = {tool.name: tool for tool in request.tools}
+        loaded_sets = set()
+        pending_load = False
+        if available_sets:
+            from ..toolsets import loader_definition
+
+            active_tools["load_tool_set"] = loader_definition(tuple(available_sets.values()))
+        allowed_tools = set(active_tools)
 
         async def dispatch_server_request(method, params):
+            nonlocal pending_load
             params = params or {}
             await queue.put(AgentEvent("provider_event", {"method": method, "payload": params}))
             if method == "item/tool/call":
                 name = params.get("tool", "")
+                if params.get("namespace"):
+                    name = params["namespace"] + "." + name
                 call_id = params.get("callId") or uuid.uuid4().hex
                 arguments = params.get("arguments", {})
                 if isinstance(arguments, str):
                     arguments = json.loads(arguments)
-                if name not in allowed_tools or tool_handler is None or request.mode != "exec":
+                if (
+                    name not in allowed_tools
+                    or (tool_handler is None and name != "load_tool_set")
+                    or (request.mode == "model" and not active_tools[name].read_only)
+                ):
                     return {
                         "success": False,
                         "contentItems": [
@@ -178,7 +222,23 @@ class CodexProvider:
                     )
                 )
                 try:
-                    result = await tool_handler(name, arguments)
+                    if name == "load_tool_set":
+                        selected = available_sets[arguments["name"]]
+                        if selected.name not in loaded_sets:
+                            for tool in selected.tools:
+                                active_tools[tool.name] = tool
+                            allowed_tools.update(t.name for t in selected.tools)
+                            loaded_sets.add(selected.name)
+                            pending_load = True
+                        result = {
+                            "loaded": selected.name,
+                            "tools": [t.name for t in selected.tools],
+                            "continuation": "End this SDK turn now. EverTree will continue with these callable tools; do not try them before the continuation."
+                            if pending_load
+                            else "Already available in this turn.",
+                        }
+                    else:
+                        result = await tool_handler(name, arguments)
                     text = json.dumps(result, ensure_ascii=False, allow_nan=False)
                     await queue.put(
                         AgentEvent(
@@ -258,12 +318,16 @@ class CodexProvider:
         self._active[request_id] = invocation
 
         async def produce():
+            nonlocal pending_load
             final_text = ""
             process_tree = None
             executor = None
             client = None
             usage_seen = False
             baseline = self._thread_usage.get(request.session.id) if request.session else {}
+            carried_usage = {key: 0 for key in _usage({}, None) if key != "available"}
+            carried_usage["available"] = True
+            latest_usage = None
 
             async def report_missing_usage():
                 nonlocal usage_seen
@@ -274,7 +338,9 @@ class CodexProvider:
             try:
                 async with asyncio.timeout(request.timeout_seconds):
                     catalog, catalog_digest = (
-                        (None, None) if request.native_coding else await self._computation_catalog()
+                        (None, None)
+                        if request.native_coding
+                        else await self._computation_catalog(model_name, effort)
                     )
                     client = self._client(request=request, handler=handler, model_catalog=catalog)
                     invocation.client = client
@@ -289,7 +355,7 @@ class CodexProvider:
                         executor.command_environment if executor else None,
                     )
                     params = {
-                        "model": MODEL,
+                        "model": model_name,
                         "cwd": str(request.workspace.resolve()),
                         "approvalPolicy": "never",
                         "approvalsReviewer": "user",
@@ -298,6 +364,11 @@ class CodexProvider:
                         "selectedCapabilityRoots": [],
                         "allowProviderModelFallback": False,
                         "developerInstructions": request.instructions
+                        + (
+                            "\nAfter load_tool_set reports a pending continuation, end this SDK turn immediately. EverTree will continue the same operation with registered tools."
+                            if available_sets
+                            else ""
+                        )
                         + (
                             "\nNative commands run in a Windows AppContainer with cmd.exe as the default shell. "
                             "Python is on PATH. Use Python pathlib/os for directory listing, reading and editing, "
@@ -316,39 +387,42 @@ class CodexProvider:
                                 else ""
                             )
                         ),
-                        "config": thread_config,
+                        "config": {**thread_config, "model_reasoning_effort": effort},
                     }
                     params["environments"] = [executor.environment] if executor else []
-                    # Empty is intentional: a resumed computational session must
-                    # not inherit the previous invocation's dynamic tool set.
-                    params["dynamicTools"] = [
-                        {
-                            "type": "function",
-                            "name": t.name,
-                            "description": t.description,
-                            "inputSchema": t.input_schema,
-                        }
-                        for t in request.tools
-                    ]
-                    if request.session:
+                    # Persisted tool definitions cannot be changed by thread/resume.
+                    # Changed or unknown definitions require a new internal thread.
+                    params["dynamicTools"] = _dynamic_tools(active_tools.values())
+                    prompt = request.prompt
+                    if (
+                        request.session
+                        and self._thread_tools.get(request.session.id) == params["dynamicTools"]
+                    ):
+                        # Resume is safe only when its persisted tool definitions are unchanged.
+                        resume_params = {k: v for k, v in params.items() if k != "dynamicTools"}
                         started = await asyncio.to_thread(
                             _request,
                             client,
                             "thread/resume",
-                            {"threadId": request.session.id, **params},
+                            {"threadId": request.session.id, **resume_params},
                         )
                     else:
-                        # Keep experimental request AND response fields omitted by
-                        # the pinned SDK's generated models, notably permissions.
+                        if request.session:
+                            history = await asyncio.to_thread(
+                                _thread_history, client, request.session.id
+                            )
+                            prompt = _continuation_input(history, request.prompt)
+                            baseline = {}
                         started = await asyncio.to_thread(_request, client, "thread/start", params)
                     invocation.thread_id = started["thread"]["id"]
+                    self._thread_tools[invocation.thread_id] = params["dynamicTools"]
                     if (started.get("activePermissionProfile") or {}).get(
                         "id"
                     ) != client._evertree_profile:
                         raise ProviderError(
                             "Codex did not activate the required filesystem permissions"
                         )
-                    if started.get("model") != MODEL:
+                    if started.get("model") != model_name:
                         raise ProviderError("Codex did not select the requested model")
                     await queue.put(
                         AgentEvent(
@@ -356,8 +430,8 @@ class CodexProvider:
                             {
                                 "provider": self.name,
                                 "id": invocation.thread_id,
-                                "requested_model": MODEL,
-                                "requested_effort": EFFORT,
+                                "requested_model": model_name,
+                                "requested_effort": effort,
                                 "effective_model": started.get("model", "unknown"),
                                 "sdk_version": importlib.metadata.version("openai-codex"),
                                 "runtime": metadata,
@@ -377,8 +451,8 @@ class CodexProvider:
                         )
                     )
                     turn_params = {
-                        "model": MODEL,
-                        "effort": EFFORT,
+                        "model": model_name,
+                        "effort": effort,
                         "approvalPolicy": "never",
                         "runtimeWorkspaceRoots": [str(request.workspace.resolve())],
                     }
@@ -397,7 +471,7 @@ class CodexProvider:
                         turn_params["outputSchema"] = request.output_schema
                     turn = _json(
                         await asyncio.to_thread(
-                            client.turn_start, invocation.thread_id, request.prompt, turn_params
+                            client.turn_start, invocation.thread_id, prompt, turn_params
                         )
                     )
                     invocation.turn_id = turn["turn"]["id"]
@@ -441,17 +515,71 @@ class CodexProvider:
                                     await queue.put(normalized)
                         elif method == "thread/tokenUsage/updated":
                             total = data["tokenUsage"]["total"]
-                            usage = _usage(total, baseline)
+                            usage = _add_usage(carried_usage, _usage(total, baseline))
+                            latest_usage = usage
                             if not usage["available"]:
                                 baseline = None
                             self._thread_usage[invocation.thread_id] = dict(total)
                             usage_seen = True
                             await queue.put(AgentEvent("usage", usage))
-                        elif method == "model/rerouted" and data.get("toModel") != MODEL:
+                        elif method == "model/rerouted" and data.get("toModel") != model_name:
                             raise ProviderError("Codex rerouted the explicitly requested model")
                         elif method == "turn/completed":
-                            await report_missing_usage()
                             status = data["turn"]["status"]
+                            if (
+                                pending_load
+                                and not invocation.cancelling
+                                and status in {"completed", "interrupted"}
+                            ):
+                                pending_load = False
+                                params["dynamicTools"] = _dynamic_tools(active_tools.values())
+                                previous_thread = invocation.thread_id
+                                history = await asyncio.to_thread(
+                                    _thread_history, client, previous_thread
+                                )
+                                carried_usage = latest_usage or _usage({}, None)
+                                baseline, latest_usage = {}, None
+                                resumed = await asyncio.to_thread(
+                                    _request, client, "thread/start", params
+                                )
+                                if (
+                                    resumed.get("model") != model_name
+                                    or (resumed.get("activePermissionProfile") or {}).get("id")
+                                    != client._evertree_profile
+                                ):
+                                    raise ProviderError(
+                                        "Codex continuation changed the requested model or permissions"
+                                    )
+                                invocation.thread_id = resumed["thread"]["id"]
+                                self._thread_tools[invocation.thread_id] = params["dynamicTools"]
+                                await queue.put(
+                                    AgentEvent(
+                                        "session",
+                                        {
+                                            "provider": self.name,
+                                            "id": invocation.thread_id,
+                                            "continued_from": previous_thread,
+                                            "requested_model": model_name,
+                                            "requested_effort": effort,
+                                            "effective_model": resumed["model"],
+                                        },
+                                    )
+                                )
+                                usage_seen = False
+                                turn = _json(
+                                    await asyncio.to_thread(
+                                        client.turn_start,
+                                        invocation.thread_id,
+                                        _continuation_input(
+                                            history, request.prompt, continued=True
+                                        ),
+                                        turn_params,
+                                    )
+                                )
+                                invocation.turn_id = turn["turn"]["id"]
+                                final_text = ""
+                                continue
+                            await report_missing_usage()
                             if status == "completed":
                                 parsed = None
                                 if request.output_schema is not None:
@@ -509,6 +637,7 @@ class CodexProvider:
         invocation = self._active.get(request_id)
         if invocation is None:
             return
+        invocation.cancelling = True
         if invocation.thread_id and invocation.turn_id:
             try:
                 async with asyncio.timeout(5):

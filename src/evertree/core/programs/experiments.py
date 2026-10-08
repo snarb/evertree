@@ -88,6 +88,8 @@ async def evaluate_pair(
     attribution: AttributionRuntime | None = None,
     evaluations: EvaluationStore | None = None,
     protected_nodes: frozenset[int] = frozenset(),
+    semantic_config=None,
+    search_index_factory=None,
 ) -> EvaluationExperiment:
     """Run a holdout without giving Programs labels, live state, or live effects.
 
@@ -232,6 +234,20 @@ async def evaluate_pair(
                 observation_ids,
                 protected_nodes,
             )
+            from ..semantics.config import SemanticConfig
+            from ..semantics.index import RedisSearchIndex
+            from ..semantics.service import SemanticService
+
+            config = semantic_config or SemanticConfig()
+            search_index = (search_index_factory or RedisSearchIndex)(config, side)
+            semantics = SemanticService(
+                context.graph,
+                context.memory,
+                operations.attribution,
+                config,
+                search_index,
+                operations,
+            )
             run_map: dict[str, int] = {}
             side_events: list[dict[str, Any]] = []
 
@@ -268,13 +284,17 @@ async def evaluate_pair(
                             run, status="completed" if kind == "run_finished" else "failed"
                         )
 
-            async def gateway(method, payload, *, context=context, operations=operations):
+            async def gateway(
+                method, payload, *, context=context, operations=operations, semantics=semantics
+            ):
                 payload = dict(payload)
                 metadata = payload.pop("_runtime")
                 # The default ready-model protocol must not train on held-out cases.
                 if method in {"learning.learn", "learning.coordinate"}:
                     raise PermissionError("Learning is disabled during ready-model evaluation")
                 authorize_operation(method, metadata["program"]["role"])
+                if method.startswith("semantic."):
+                    return await semantics.execute(method, payload, metadata)
                 if method == "resolve_program":
                     resolved = registry[payload["program_id"]]
                     return asdict(replace(resolved, revision=context.revision))
@@ -345,6 +365,7 @@ async def evaluate_pair(
                     traces.append(audit)
             finally:
                 await runtime.close()
+                await search_index.close()
             # A partial or infinite score cannot silently become a better mean.
             # Missing required metrics block acceptance in the protected policy.
             metrics[label] = {

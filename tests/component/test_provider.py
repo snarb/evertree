@@ -68,6 +68,21 @@ class FakeClient:
         if method == "environment/add":
             self.environment_connection = params
             return response_model.model_validate({})
+        if method == "thread/items/list":
+            return response_model.model_validate(
+                {
+                    "data": [
+                        {
+                            "item": {
+                                "type": "userMessage",
+                                "content": [{"type": "text", "text": "prior request"}],
+                            },
+                            "turnId": "old",
+                        }
+                    ],
+                    "nextCursor": None,
+                }
+            )
         if method == "thread/start":
             return response_model.model_validate(self.thread_start(params))
         assert method == "config/read"
@@ -592,7 +607,7 @@ async def test_missing_exact_model_metadata_fails_without_a_turn(tmp_path, model
         )
     ]
     assert events[-1].kind == "error"
-    assert "Exact Luna metadata" in events[-1].data["message"]
+    assert "Exact gpt-6-luna metadata" in events[-1].data["message"]
     assert not any(e.kind == "session" for e in events)
 
 
@@ -660,13 +675,13 @@ async def test_absent_catalog_bootstrap_cannot_silently_fallback(tmp_path, model
         )
     ]
     assert events[-1].kind == "error"
-    assert "Exact Luna metadata" in events[-1].data["message"]
+    assert "Exact gpt-6-luna metadata" in events[-1].data["message"]
     assert len(clients) == 1 and clients[0].closed
     assert not hasattr(clients[0], "turn_params")
 
 
 @pytest.mark.asyncio
-async def test_model_resume_explicitly_clears_previous_dynamic_tools(tmp_path):
+async def test_unknown_session_starts_with_cleared_tools_and_retained_context(tmp_path):
     from evertree.core.provider import SessionRef
 
     clients = []
@@ -693,6 +708,7 @@ async def test_model_resume_explicitly_clears_previous_dynamic_tools(tmp_path):
     ]
     assert events[-1].kind == "completed"
     assert clients[0].turn_params["effort"] == "high"
+    assert clients[0].params["dynamicTools"] == []
 
 
 async def test_usage_counts_all_responses_and_excludes_known_resumed_history(tmp_path):
@@ -728,9 +744,7 @@ async def test_usage_counts_all_responses_and_excludes_known_resumed_history(tmp
 
 
 @pytest.mark.parametrize("reported", [True, False])
-async def test_unknown_resume_baseline_or_missing_usage_is_explicitly_unavailable(
-    tmp_path, reported
-):
+async def test_unknown_session_uses_fresh_usage_and_missing_usage_is_explicit(tmp_path, reported):
     from evertree.core.provider import SessionRef
 
     class UsageClient(FakeClient):
@@ -756,8 +770,11 @@ async def test_unknown_resume_baseline_or_missing_usage_is_explicitly_unavailabl
     ]
     usage = [e.data for e in events if e.kind == "usage"]
     assert len(usage) == 1
-    assert usage[0]["available"] is False
-    assert all(value is None for key, value in usage[0].items() if key != "available")
+    assert usage[0]["available"] is reported
+    if reported:
+        assert usage[0]["total_tokens"] == 9000
+    else:
+        assert all(value is None for key, value in usage[0].items() if key != "available")
     assert events[-1].kind == "completed"
 
 
@@ -887,3 +904,220 @@ async def test_failed_dynamic_tool_result_keeps_call_identity(tmp_path):
         "result": None,
         "error": "Missing observation",
     }
+
+
+@pytest.mark.parametrize("invalid_resume", [None, "model", "permission"])
+async def test_tool_set_continuation_registers_real_schemas_and_resets_next_invocation(
+    tmp_path, invalid_resume
+):
+    from evertree.core.provider import SessionRef
+    from evertree.core.toolsets import ToolSet
+
+    clients, reads = [], []
+
+    class LoadingClient(FakeClient):
+        def __init__(self, *args):
+            super().__init__(*args)
+            self.turns = 0
+            self.schemas = []
+
+        def request(self, method, params, response_model):
+            if method in {"thread/start", "thread/resume"}:
+                self.schemas.append(params["dynamicTools"])
+                result = self.thread_start(params)
+                if len(self.schemas) > 1 and invalid_resume:
+                    if invalid_resume == "model":
+                        result["model"] = "unexpected-model"
+                    else:
+                        result["activePermissionProfile"] = {"id": "unexpected-permissions"}
+                return response_model.model_validate(result)
+            if method == "turn/interrupt":
+                return response_model.model_validate({})
+            return super().request(method, params, response_model)
+
+        def turn_start(self, thread_id, prompt, params):
+            self.turns += 1
+            if len(clients) == 1 and self.turns == 1:
+                result = self.handler(
+                    "item/tool/call", {"tool": "load_tool_set", "arguments": {"name": "low"}}
+                )
+                assert result["success"]
+                self.events = [
+                    SimpleNamespace(
+                        method="item/completed",
+                        payload={"item": {"type": "dynamicToolCall", "tool": "load_tool_set"}},
+                    ),
+                    SimpleNamespace(
+                        method="turn/completed", payload={"turn": {"status": "completed"}}
+                    ),
+                ]
+            else:
+                result = self.handler(
+                    "item/tool/call", {"namespace": "graph", "tool": "get", "arguments": {"id": 7}}
+                )
+                assert result["success"] == (len(clients) == 1)
+                if len(clients) == 1:
+                    # Loading the same set is idempotent, with no third SDK turn.
+                    assert self.handler(
+                        "item/tool/call", {"tool": "load_tool_set", "arguments": {"name": "low"}}
+                    )["success"]
+                self.events = [
+                    SimpleNamespace(
+                        method="turn/completed", payload={"turn": {"status": "completed"}}
+                    )
+                ]
+            self.events.insert(0, token_notification(10 if self.turns == 1 else 20))
+            if self.turns > 1:
+                assert "prior request" in prompt
+            return {"turn": {"id": f"turn{self.turns}"}}
+
+    def factory(config, approval_handler):
+        client = LoadingClient(config, approval_handler)
+        clients.append(client)
+        return client
+
+    async def read(name, args):
+        reads.append((name, args))
+        return {"id": args["id"]}
+
+    definitions = (
+        ToolSet(
+            "low",
+            "Low-level reads",
+            (ToolDefinition("graph.get", "Get", {"type": "object"}, read_only=True),),
+        ),
+    )
+    provider = CodexProvider(state_dir=tmp_path / "provider", client_factory=factory)
+    events = [
+        event
+        async for event in provider.run(
+            "one", AgentRequest("read", tmp_path, tool_sets=definitions), tool_handler=read
+        )
+    ]
+    if invalid_resume:
+        assert events[-1].kind == "error"
+        assert "continuation changed" in events[-1].data["message"]
+        assert not reads and clients[0].turns == 1
+        return
+    assert events[-1].kind == "completed", events
+    assert len([e for e in events if e.kind == "completed"]) == 1
+    assert reads == [("graph.get", {"id": 7})]
+    assert clients[0].turns == 2
+    assert [e.data["total_tokens"] for e in events if e.kind == "usage"] == [10, 30]
+    assert [d["name"] for d in clients[0].schemas[0]] == ["load_tool_set"]
+    assert clients[0].schemas[1][1]["name"] == "graph"
+    events = [
+        event
+        async for event in provider.run(
+            "two",
+            AgentRequest(
+                "again", tmp_path, session=SessionRef("codex", "thread1"), tool_sets=definitions
+            ),
+            tool_handler=read,
+        )
+    ]
+    assert events[-1].kind == "completed"
+    assert [d["name"] for d in clients[1].schemas[0]] == ["load_tool_set"]
+    assert len(reads) == 1
+
+
+async def test_readonly_child_cannot_load_write_authority(tmp_path):
+    from evertree.core.toolsets import ToolSet
+
+    provider = ScriptedProvider(
+        [
+            [
+                AgentEvent("tool_call", {"name": "load_tool_set", "arguments": {"name": "low"}}),
+                AgentEvent("tool_call", {"name": "graph.apply", "arguments": {}}),
+            ]
+        ]
+    )
+    request = AgentRequest(
+        "read",
+        tmp_path,
+        tool_sets=(ToolSet("low", "Mixed tools", (ToolDefinition("graph.apply", "Write", {}),)),),
+    )
+
+    async def handler(*args):
+        pytest.fail("Write authority leaked into model invocation")
+
+    with pytest.raises(ProviderError, match="not declared"):
+        async for _ in provider.run("model", request, tool_handler=handler):
+            pass
+
+
+async def test_independent_model_effort_profiles(tmp_path, model_cache):
+    data = json.loads(model_cache.read_text())
+    data["models"][0]["supported_reasoning_levels"].append({"effort": "low", "description": "Low"})
+    model_cache.write_text(json.dumps(data))
+    clients = []
+
+    def factory(config, approval_handler):
+        client = FakeClient(config, approval_handler)
+        clients.append(client)
+        return client
+
+    provider = CodexProvider(state_dir=tmp_path / "provider", client_factory=factory)
+    for effort in ("low", "high"):
+        events = [
+            event
+            async for event in provider.run(
+                effort, AgentRequest("inspect", tmp_path, effort=effort)
+            )
+        ]
+        assert events[-1].kind == "completed", events
+        assert clients[-1].turn_params["effort"] == effort
+
+
+def test_continuation_history_keeps_tools_and_flattens_prior_context():
+    from evertree.core.codex.protocol import _continuation_input, _thread_history
+
+    result = {
+        "type": "dynamicToolCall",
+        "tool": "read",
+        "contentItems": [{"type": "inputText", "text": "retained result"}],
+    }
+    pages = iter(
+        [
+            {
+                "data": [
+                    {
+                        "item": {
+                            "type": "userMessage",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": _continuation_input(
+                                        [result], "old request", continued=True
+                                    ),
+                                }
+                            ],
+                        },
+                        "turnId": "1",
+                    }
+                ],
+                "nextCursor": "next",
+            },
+            {
+                "data": [{"item": {"type": "agentMessage", "text": "old answer"}, "turnId": "1"}],
+                "nextCursor": None,
+            },
+        ]
+    )
+    requests = []
+
+    class Client:
+        def request(self, method, params, response_model):
+            requests.append((method, params))
+            return response_model.model_validate(next(pages))
+
+    history = _thread_history(Client(), "thread")
+    assert history == [
+        result,
+        {"type": "userMessage", "content": [{"type": "text", "text": "old request"}]},
+        {"type": "agentMessage", "text": "old answer"},
+    ]
+    assert requests[1][1]["cursor"] == "next"
+    prompt = _continuation_input(history, "new request")
+    assert prompt.endswith("Current user request:\nnew request")
+    assert prompt.count("<evertree-history>") == 1

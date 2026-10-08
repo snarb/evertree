@@ -7,6 +7,7 @@ slots. This function is not consulted to route subsequent Program calls.
 from __future__ import annotations
 
 PROCESS_GROUPS = {
+    "semantic_processing": ("SemanticProcessing", ("semantic_search", "knowledge_remembering")),
     "task_management": (
         "TaskManagement",
         (
@@ -52,6 +53,18 @@ PROCESS_GROUPS = {
 
 def bootstrap_catalog() -> tuple[dict, ...]:
     entries = (
+        (
+            "SemanticSearch",
+            "semantic_search",
+            "model",
+            "Find semantic objects through exact, lexical, vector and graph retrieval.",
+        ),
+        (
+            "KnowledgeRemembering",
+            "knowledge_remembering",
+            "exec",
+            "Prepare and validate sourced semantic knowledge before atomic persistence.",
+        ),
         (
             "TaskFraming",
             "task_framing",

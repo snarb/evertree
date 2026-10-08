@@ -233,8 +233,8 @@ def create_client(
     native_coding = request is not None and request.native_coding
     profile_id, profile = _profile(request)
     overrides = [
-        'model="gpt-6-luna"',
-        'model_reasoning_effort="high"',
+        "model=" + json.dumps(request.model or MODEL if request else MODEL),
+        "model_reasoning_effort=" + json.dumps(request.effort or EFFORT if request else EFFORT),
         'model_provider="openai"',
         'approval_policy="never"',
         'web_search="disabled"',
@@ -282,7 +282,7 @@ def create_client(
     return client
 
 
-async def computation_catalog(state_dir: Path, create_client):
+async def computation_catalog(state_dir: Path, create_client, model_name=MODEL, effort=EFFORT):
     cache = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")) / "models_cache.json"
     if not cache.is_file():
         # model/list refreshes public metadata without starting/billing a turn.
@@ -300,12 +300,16 @@ async def computation_catalog(state_dir: Path, create_client):
                 await asyncio.to_thread(bootstrap.close)
     try:
         cached = json.loads(cache.read_text(encoding="utf-8"))
-        selected = next(model for model in cached["models"] if model.get("slug") == MODEL)
+        selected = next(model for model in cached["models"] if model.get("slug") == model_name)
     except (OSError, ValueError, KeyError, TypeError, StopIteration) as exc:
-        raise ProviderError("Exact Luna metadata is unavailable; refusing model fallback") from exc
+        raise ProviderError(
+            f"Exact {model_name} metadata is unavailable; refusing model fallback"
+        ) from exc
     efforts = selected.get("supported_reasoning_levels", [])
-    if not any(item.get("effort") == EFFORT for item in efforts):
-        raise ProviderError("Exact Luna metadata does not support high reasoning effort")
+    if not any(item.get("effort") == effort for item in efforts):
+        raise ProviderError(
+            f"Exact {model_name} metadata does not support {effort} reasoning effort"
+        )
     model = {key: value for key, value in selected.items() if key in _MODEL_METADATA_FIELDS}
     model.update(_COMPUTATION_CAPABILITIES)
     encoded = json.dumps({"models": [model]}, ensure_ascii=False, sort_keys=True).encode("utf-8")

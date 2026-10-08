@@ -1590,3 +1590,14 @@ An axis may be created in three main ways, depending on what is known about the 
 
 > [!WARNING] Limitation of Latent Axes
 > **Interpretability is not guaranteed.** If a latent axis obtained through PCA has no clear meaning or useful Criterion, it must remain an *internal technical coordinate*, not become a full ontological `PropertyConcept`.
+
+
+## Property Discovery for Consciousness
+
+`describe` and `read_property` share property definitions and Attribution Runtime, so discovery cannot invent a different reading contract. Discover properties through saved property facts, categorical scopes and declared bindings/domains; ordinary classification alone is insufficient. An Instance includes its applicable Facets and inherited type domains. A missing value does not remove a property.
+
+Property cards show name, description, required parameters and any ordinary reading. Description never runs Programs or LLMs: it reports `needs_parameters`, `requires_computation` or `unknown` where needed. Keep distributions, uncertainty and sources; do not replace a distribution with its winning class. Explicit Program readings use a compatible bound reader, otherwise return unknown.
+
+Both tools use `subject` and `at` (world time, default now). A description fixes one instant; Facet intervals are half-open `[valid_from, valid_until)`, and unavailable readings are unknown. `parameters` supplies contract inputs such as a reference frame; `known_at` is reserved for low-level historical reconstruction.
+
+Property nodes may store their definition in `properties.attribution`; `applies_to` names subject/type IDs. Graph-backed definitions participate in atomic validation and history. See [[Semantics Plane#Consciousness Interface]] for the public tools.

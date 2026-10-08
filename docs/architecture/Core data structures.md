@@ -699,3 +699,12 @@ Graph state is saved together with the rest of core and the DBOS database in the
 DBOS uses local SQLite; a separate graph database or database server is not required in the MVP.
 
 `GraphStore` defines the graph's logical storage interface; its physical backend may be replaced later without changing the rest of the architecture.
+
+
+## Graph Identity and Canonical Names
+
+Stable positive integer IDs are identity; canonical names are the default human/LLM address. For `concept`, `prototype`, `property`, `process` and `relation_type`, names contain 1–3 whitespace-separated words and are unique across that canonical namespace. Comparison uses Unicode NFC, trimmed/collapsed whitespace and `casefold`. These invariants are validated atomically on creation and rename. Semantically similar names do not authorize automatic merging.
+
+Instances, Facets, fact instances and technical records may have repeated or longer names. `GraphStore.lookup(name_or_id, kind?)` returns exact matches and never chooses arbitrarily among ambiguous names. A canonical name takes precedence over fact names unless `kind` explicitly selects facts. `find` is a strict internal convenience and rejects ambiguity. Strings containing digits are still names; only an integer argument denotes an ID.
+
+GraphStore revisions track committed deltas; change notifications update derived indexes after every commit. Restored snapshots must exclude newer index data. See [[Semantics Plane#Storage and Models]] for the rebuildable search index.
