@@ -8,6 +8,8 @@ from .structured import validate
 
 
 async def search(ctx, query, kind=None, limit=20, cursor=None):
+    if kind is not None:
+        kind = kind.strip().casefold()
     exact = await ctx.step(
         "semantic.lookup", {"query": query, "kind": kind, "limit": limit, "cursor": cursor}
     )

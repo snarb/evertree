@@ -9,6 +9,8 @@ import urllib.request
 from array import array
 from contextlib import asynccontextmanager
 
+from ..graph.types import normalize_name
+
 
 class OpenAIEmbeddings:
     def __init__(self, config):
@@ -146,7 +148,7 @@ class RedisSearchIndex:
 
     @staticmethod
     def _text(node):
-        return " ".join((node["name"] + " " + (node.get("description") or "")).split())
+        return node["name"] + " " + (node.get("description") or "")
 
     async def _indexed(self, index, count):
         while True:
@@ -212,7 +214,7 @@ class RedisSearchIndex:
                     pipe.hset(
                         index + ":node:" + str(node["id"]),
                         mapping={
-                            "text": self._text(node),
+                            "text": normalize_name(self._text(node)),
                             "kind": node["kind"],
                             "identity": node["id"],
                         },
@@ -279,11 +281,11 @@ class RedisSearchIndex:
     def _kind(kind):
         if kind is None:
             return "*"
-        return "@kind:{" + re.sub(r"([^\w])", r"\\\1", kind) + "}"
+        return "@kind:{" + re.sub(r"([^\w])", r"\\\1", kind.strip().casefold()) + "}"
 
     async def lexical(self, nodes, query, kind=None):
         async with self._generation_lease(nodes) as index:
-            terms = re.findall(r"\w+", query, flags=re.UNICODE)
+            terms = re.findall(r"\w+", normalize_name(query), flags=re.UNICODE)
             if not terms:
                 return []
             text_query = "@text:(" + "|".join(terms) + ")"

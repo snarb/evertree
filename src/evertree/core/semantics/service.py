@@ -21,6 +21,7 @@ class SemanticService:
         self._pages = {key: page for key, page in self._pages.items() if page["task_id"] != task_id}
 
     def lookup(self, query, kind=None, limit=20, cursor=None, *, task_id):
+        kind = kind.strip().casefold() if kind is not None else None
         if type(limit) is not int or not 1 <= limit <= 100:
             raise ContractError("limit must be between 1 and 100")
         if cursor:
@@ -65,7 +66,7 @@ class SemanticService:
                 "query": query,
                 "page_id": uuid4().hex,
                 "revision": self.graph.revision,
-                "kind": kind,
+                "kind": kind.strip().casefold() if kind is not None else None,
                 "items": items,
                 "errors": errors,
                 "task_id": task_id,

@@ -154,6 +154,8 @@ async def test_real_fulltext_bm25_by_kind_and_field(
     world, cards, index = corpus_index
     query = name_term if field == "name" else description_term
     ids = await index.lexical(cards, query, kind)
+    variant = " \t " + "   ".join(query.upper().split()) + "  "
+    assert await index.lexical(cards, variant, kind.upper()) == ids
     assert world.targets[kind].id in ids
     assert all(world.graph.get(identity).kind == kind for identity in ids)
     assert len(ids) <= 7

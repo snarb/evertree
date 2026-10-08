@@ -69,12 +69,14 @@ async def test_parallel_channels_dedup_filter_failure_and_cached_pages():
             if len(started) == 2:
                 ready.set()
             await asyncio.wait_for(ready.wait(), 2)
-            return ids[:7] if name == "bm25" else ids[:12]
+            return (ids[:7] if name == "bm25" else ids[:12]) * 2
 
-        async def lexical(self, *args):
+        async def lexical(self, nodes, query, kind):
+            assert query == "  ReLATED \t  TYPES  " and kind == "prototype"
             return await self.run("bm25")
 
-        async def vector(self, *args):
+        async def vector(self, nodes, query, kind):
+            assert query == "  ReLATED \t  TYPES  " and kind == "prototype"
             return await self.run("vector")
 
     world = semantic_world(index=Index())
@@ -86,6 +88,7 @@ async def test_parallel_channels_dedup_filter_failure_and_cached_pages():
     async def model(payload):
         data = json.loads(payload["prompt"])
         calls.append(data)
+        assert data["query"] == "  ReLATED \t  TYPES  "
         if "reads" in data:
             return relation_decision("finish")
         if "nodes" in data:
@@ -95,15 +98,25 @@ async def test_parallel_channels_dedup_filter_failure_and_cached_pages():
                     for n in data["nodes"]
                 ]
             }
+        candidate_ids = [n["id"] for n in data["candidates"]]
+        assert len(candidate_ids) == len(set(candidate_ids))
         raise ValueError("filter unavailable")
 
-    first = (await search(context(world, model), "related types"))["result"]
-    assert first["status"] == "incomplete" and len(first["items"]) == 20 and first["total"] == 25
-    assert set(first["items"][0]["channels"]) == {"bm25", "vector", "taxonomy"}
-    before = len(calls)
-    second = (await search(context(world, model), "related types", cursor=first["cursor"]))[
+    first = (await search(context(world, model), "  ReLATED \t  TYPES  ", kind=" PROTOTYPE "))[
         "result"
     ]
+    assert first["status"] == "incomplete" and len(first["items"]) == 20 and first["total"] == 25
+    assert set(first["items"][0]["channels"]) == {"bm25", "vector", "taxonomy"}
+    assert all(data["query"] == "  ReLATED \t  TYPES  " for data in calls)
+    batches = [data["candidates"] for data in calls if "candidates" in data]
+    assert batches
+    assert all(len(batch) == len({n["id"] for n in batch}) for batch in batches)
+    before = len(calls)
+    second = (
+        await search(
+            context(world, model), "  ReLATED \t  TYPES  ", kind="Prototype", cursor=first["cursor"]
+        )
+    )["result"]
     assert len(second["items"]) == 5 and len(calls) == before
     assert {n["id"] for n in first["items"] + second["items"]} == set(ids)
     with pytest.raises(ContractError):
