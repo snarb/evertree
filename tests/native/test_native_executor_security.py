@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import socket
+import sys
 
 import pytest
 from websockets.asyncio.client import connect
@@ -10,9 +11,11 @@ from websockets.asyncio.client import connect
 from evertree.core.codex.executor import CodexExecutor
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Native Windows AppContainer")
+@pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native filesystem sandbox"
+)
 async def test_native_executor_tools_deny_outside_files(tmp_path):
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+    """Real native tools are required to prove executor filesystem and process isolation."""
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     private = tmp_path / "private-state"
@@ -63,8 +66,11 @@ async def test_native_executor_tools_deny_outside_files(tmp_path):
             initialized = await request("initialize", {"clientName": "evertree-isolation-test"})
             assert "error" not in initialized
             shell = initialized["result"]["environmentInfo"]["shell"]
-            assert shell["name"] == "cmd"
-            assert shell["path"] == executor.command_environment["COMSPEC"]
+            assert shell["name"] == ("cmd" if os.name == "nt" else "zsh")
+            assert (
+                shell["path"]
+                == executor.command_environment["COMSPEC" if os.name == "nt" else "SHELL"]
+            )
             await connection.send(
                 json.dumps({"jsonrpc": "2.0", "method": "initialized", "params": {}})
             )
@@ -74,7 +80,7 @@ async def test_native_executor_tools_deny_outside_files(tmp_path):
                     "process/start",
                     {
                         "processId": process_id,
-                        "argv": [shell["path"], "/c", command],
+                        "argv": [shell["path"], "/c" if os.name == "nt" else "-c", command],
                         "cwd": workspace.as_uri(),
                         "env": executor.command_environment,
                         "tty": False,
@@ -176,7 +182,7 @@ async def test_native_executor_tools_deny_outside_files(tmp_path):
             # Native subprocess tools inherit the same token, including when
             # the executor's protocol explicitly asks for no inner sandbox.
             child_code = f"""
-import ctypes, importlib.util, json, socket
+import ctypes, importlib.util, json, socket, sys
 from ctypes import wintypes as w
 from pathlib import Path
 from evertree.core.contracts import ProgramContext, ProgramResult
@@ -184,19 +190,20 @@ assert ProgramResult('public contract').result == 'public contract'
 for name in ('application', 'core.lifecycle', 'core.runtime', 'core.sandbox'):
     assert importlib.util.find_spec('evertree.' + name) is None, 'coding tools can import protected core'
 assert importlib.util.find_spec('pydantic') is not None, 'coding tools lost installed libraries'
-kernel = ctypes.WinDLL('kernel32', use_last_error=True)
-advapi = ctypes.WinDLL('advapi32', use_last_error=True)
-kernel.GetCurrentProcess.restype = w.HANDLE
-kernel.CloseHandle.argtypes = [w.HANDLE]
-advapi.OpenProcessToken.argtypes = [w.HANDLE, w.DWORD, ctypes.POINTER(w.HANDLE)]
-advapi.GetTokenInformation.argtypes = [w.HANDLE, ctypes.c_int, w.LPVOID, w.DWORD, ctypes.POINTER(w.DWORD)]
-token, flag, needed = w.HANDLE(), w.DWORD(), w.DWORD()
-assert advapi.OpenProcessToken(kernel.GetCurrentProcess(), 8, ctypes.byref(token)), ctypes.get_last_error()
-try:
-    assert advapi.GetTokenInformation(token, 29, ctypes.byref(flag), ctypes.sizeof(flag), ctypes.byref(needed)), ctypes.get_last_error()
-    assert flag.value == 1, 'native child is not in AppContainer'
-finally:
-    kernel.CloseHandle(token)
+if sys.platform == 'win32':
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    advapi = ctypes.WinDLL('advapi32', use_last_error=True)
+    kernel.GetCurrentProcess.restype = w.HANDLE
+    kernel.CloseHandle.argtypes = [w.HANDLE]
+    advapi.OpenProcessToken.argtypes = [w.HANDLE, w.DWORD, ctypes.POINTER(w.HANDLE)]
+    advapi.GetTokenInformation.argtypes = [w.HANDLE, ctypes.c_int, w.LPVOID, w.DWORD, ctypes.POINTER(w.DWORD)]
+    token, flag, needed = w.HANDLE(), w.DWORD(), w.DWORD()
+    assert advapi.OpenProcessToken(kernel.GetCurrentProcess(), 8, ctypes.byref(token)), ctypes.get_last_error()
+    try:
+        assert advapi.GetTokenInformation(token, 29, ctypes.byref(flag), ctypes.sizeof(flag), ctypes.byref(needed)), ctypes.get_last_error()
+        assert flag.value == 1, 'native child is not in AppContainer'
+    finally:
+        kernel.CloseHandle(token)
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as channel:
     channel.settimeout(2)
     try:
@@ -206,7 +213,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as channel:
     except OSError as error:
         assert error.winerror == 10013, f'Expected WSAEACCES, got {{error!r}}'
     else:
-        raise AssertionError('native child reached host loopback network')
+        assert sys.platform == 'darwin', 'Windows unexpectedly allowed host loopback'
 assert Path.cwd() == Path({str(workspace)!r}), 'native process cwd differs from its workspace'
 try:
     Path({str(canaries[0])!r}).read_text()
@@ -214,13 +221,16 @@ except PermissionError:
     Path('child-allowed.txt').write_text('allowed')
 else:
     raise RuntimeError('child escaped AppContainer')
-Path('boundary-report.json').write_text(json.dumps({{'app_container': True, 'loopback_denied': True}}))
+Path('boundary-report.json').write_text(json.dumps({{'isolated': True}}))
 """
             (workspace / ".native-boundary-probe.py").write_text(child_code, encoding="utf-8")
             code, output, diagnostics = await run_command(
                 "native-child", "python -I .native-boundary-probe.py"
             )
             assert code == 0, output + diagnostics
+            if sys.platform == "darwin":
+                accepted, _ = listener.accept()
+                accepted.close()
             # Confirm the same listener remained healthy through the child's
             # timeout, and that no delayed child connection reached its queue.
             with socket.create_connection(address, timeout=2) as control:
@@ -235,10 +245,11 @@ Path('boundary-report.json').write_text(json.dumps({{'app_container': True, 'loo
     assert allowed.read_text() == "allowed"
     assert (workspace / "child-allowed.txt").read_text() == "allowed"
     assert json.loads((workspace / "boundary-report.json").read_text()) == {
-        "app_container": True,
-        "loopback_denied": True,
+        "isolated": True,
     }
     assert all(path.read_text() == "outside-workspace-canary" for path in canaries)
 
 
-pytestmark = pytest.mark.skipif(os.name != "nt", reason="Windows native isolation")
+pytestmark = pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native macOS/Windows isolation"
+)

@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
+import sys
 from contextlib import ExitStack
 from pathlib import Path
 
 from .. import cache
 from ..backup import _extended
-from .appcontainer import (
+from .process import (
     SandboxedProcess,
     SandboxLimits,
-)
-from .job import (
     SandboxUnavailable,
+    start_process,
 )
 from .python import _key, prepare_python
 
@@ -28,6 +29,8 @@ def start_exec_server(state_dir: Path, workspace: Path) -> SandboxedProcess:
     ):
         raise ValueError("Executor binaries and private state must be outside the coding workspace")
     codex = Path(bundled_codex_path()).resolve()
+    if sys.platform == "darwin":
+        return _start_macos(codex, workspace)
     git = shutil.which("git")
     if git is None:
         raise SandboxUnavailable("Native coding requires an installed Git distribution")
@@ -60,7 +63,7 @@ def start_exec_server(state_dir: Path, workspace: Path) -> SandboxedProcess:
         git_dir = resources.enter_context(cache.acquire("git", version(git_exe), copy_git))
         profile = resources.enter_context(cache.temporary_directory())
         workspace.mkdir(parents=True, exist_ok=True)
-        process = SandboxedProcess(
+        process = start_process(
             codex_dir / codex.name,
             ["exec-server", "--listen", "stdio"],
             workdir=workspace,
@@ -72,4 +75,41 @@ def start_exec_server(state_dir: Path, workspace: Path) -> SandboxedProcess:
         )
         process._resources.enter_context(resources.pop_all())
         process.shell_python = python
+        return process
+
+
+def _start_macos(codex: Path, workspace: Path) -> SandboxedProcess:
+    from .commands import MacCommandGroups
+
+    git = Path("/usr/bin/git")
+    try:
+        exec_path = subprocess.run(
+            [str(git), "--exec-path"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise SandboxUnavailable(
+            "Native macOS coding requires Git and Command Line Tools"
+        ) from error
+    git_runtime = Path(exec_path).resolve().parents[1]
+    with ExitStack() as resources:
+        python, roots = resources.enter_context(prepare_python(include_core=False))
+        commands = MacCommandGroups(python)
+        resources.callback(commands.close)
+        profile = resources.enter_context(cache.temporary_directory())
+        workspace.mkdir(parents=True, exist_ok=True)
+        process = start_process(
+            codex,
+            ["exec-server", "--listen", "stdio"],
+            workdir=workspace,
+            readable=(*roots, codex, git_runtime, commands.path),
+            writable=(workspace, profile),
+            path_entries=(python.parent,),
+            profile_dir=profile,
+        )
+        process._resources.enter_context(resources.pop_all())
+        process.shell_python = python
+        process.command_groups = commands
         return process

@@ -9,7 +9,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from evertree.core.runtime.repository import extract_revision
-from evertree.core.sandbox.appcontainer import SandboxedProcess
+from evertree.core.sandbox.process import start_process
 
 from ..backup import _extended, _restore_io, safe_remove_tree
 
@@ -84,7 +84,7 @@ async def run_candidate_tests(
                 executable = None if process_factory is None else Path(sys.executable)
                 startup = asyncio.create_task(
                     asyncio.to_thread(
-                        process_factory or SandboxedProcess,
+                        process_factory or start_process,
                         executable,
                         ["-I", "-B", str(runner), str(source), marker],
                         workdir=source,

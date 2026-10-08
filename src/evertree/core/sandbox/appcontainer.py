@@ -9,19 +9,12 @@ import threading
 import time
 import uuid
 from contextlib import ExitStack
-from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
 
 from .. import cache
-from .job import SandboxUnavailable
+from .process import SandboxLimits, SandboxUnavailable
 from .python import prepare_python
-
-
-@dataclass(frozen=True)
-class SandboxLimits:
-    memory_bytes: int = 512 * 1024 * 1024
-    process_count: int = 32
 
 
 def _grant(path: Path, sid: str, rights: str) -> None:
@@ -226,6 +219,9 @@ class SandboxedProcess:
         sid_string = configure(
             advapi, "ConvertSidToStringSidW", [w.LPVOID, ctypes.POINTER(w.LPWSTR)]
         )
+        parse_sid = configure(
+            advapi, "ConvertStringSidToSidW", [w.LPCWSTR, ctypes.POINTER(w.LPVOID)]
+        )
         free_sid = configure(advapi, "FreeSid", [w.LPVOID], w.LPVOID)
         local_free = configure(kernel, "LocalFree", [w.LPVOID], w.LPVOID)
         create_pipe = configure(
@@ -279,6 +275,7 @@ class SandboxedProcess:
             return ok
 
         sid = w.LPVOID()
+        internet_sid = w.LPVOID()
         sid_text = w.LPWSTR()
         handles = []
         attr = None
@@ -289,7 +286,7 @@ class SandboxedProcess:
             if hr < 0:
                 # A service/restricted host may have no loaded user profile. An
                 # ephemeral AppContainer SID still gives the identical OS token
-                # boundary; no profile storage or network capability is needed.
+                # boundary without requiring profile storage.
                 hr = derive_sid(self._profile, ctypes.byref(sid))
                 if hr < 0:
                     raise SandboxUnavailable(
@@ -326,7 +323,13 @@ class SandboxedProcess:
             initialize(None, 2, 0, ctypes.byref(size))
             attr = ctypes.create_string_buffer(size.value)
             checked(initialize(attr, 2, 0, ctypes.byref(size)), "Initialize attributes")
-            caps = SECURITY_CAPABILITIES(sid, None, 0, 0)
+
+            class SID_AND_ATTRIBUTES(ctypes.Structure):
+                _fields_ = [("Sid", w.LPVOID), ("Attributes", w.DWORD)]
+
+            checked(parse_sid("S-1-15-3-1", ctypes.byref(internet_sid)), "Internet capability SID")
+            capabilities = (SID_AND_ATTRIBUTES * 1)(SID_AND_ATTRIBUTES(internet_sid, 4))
+            caps = SECURITY_CAPABILITIES(sid, ctypes.cast(capabilities, w.LPVOID), 1, 0)
             checked(
                 update(attr, 0, 0x00020009, ctypes.byref(caps), ctypes.sizeof(caps), None, None),
                 "Set AppContainer capabilities",
@@ -447,6 +450,8 @@ class SandboxedProcess:
                 local_free(sid_text)
             if sid:
                 free_sid(sid)
+            if internet_sid:
+                local_free(internet_sid)
 
     def poll(self) -> int | None:
         from ctypes import wintypes as w

@@ -11,7 +11,7 @@ Complex behavior does not require expensive infrastructure. Most tests should ex
 | `unit` | Algorithms, validation, classes, and state transitions | Objects in memory |
 | `component` | Real components working together, including complex behavioral scenarios | One process; small temporary files when needed |
 | `integration` | Git, persistent snapshots, worker IPC, DBOS, application startup/recovery | Real dependencies required by the contract |
-| `native` | OS permissions, sandbox enforcement, process-tree ownership, isolated tool distributions | Windows native isolation |
+| `native` | OS permissions, sandbox enforcement, process ownership, isolated tool environments | macOS Seatbelt / Windows AppContainer |
 | `live` | Compatibility with the signed-in SDK and external model | Explicit opt-in; may use account resources |
 
 `pytest` selects only `unit` and `component` by default. A subprocess audit guard covers their setup, execution, and teardown, including subprocess aliases and asyncio subprocess launches; sandbox construction is also rejected. The pytest-xdist worker processes are created outside these test boundaries.
@@ -21,8 +21,10 @@ Complex behavior does not require expensive infrastructure. Most tests should ex
 uv run pytest -q
 # Portable infrastructure
 uv run pytest tests/integration -q
-# Windows-only native contracts, sequentially
+# Native contracts on macOS or Windows, sequentially
 uv run pytest tests/native -q -n 0
+# Optional outgoing HTTPS smoke (PowerShell: $env:EVERTREE_NETWORK_SMOKE = "1")
+EVERTREE_NETWORK_SMOKE=1 uv run pytest tests/native/test_network.py -q -n 0
 # All offline suites: both commands are required
 uv run pytest tests/unit tests/component tests/integration -q
 uv run pytest tests/native -q -n 0
@@ -41,7 +43,9 @@ Live checks require both explicit selection and `EVERTREE_CODEX_INTEGRATION=1`:
 EVERTREE_CODEX_INTEGRATION=1 uv run pytest tests/live -q -n 0
 ```
 
-CI runs the fast and portable integration suites sequentially and in parallel on macOS and Windows. A separate Windows job checks native isolation. macOS development support does not mean the production macOS sandbox is implemented. Platform skips belong to native checks, not entire modules containing portable business rules.
+CI runs the fast and portable integration suites sequentially and in parallel on macOS and Windows. Separate native jobs on Apple Silicon, Intel macOS, and Windows check filesystem isolation, real Programs/DBOS, executor tools, cancellation, and outgoing HTTPS. Platform skips belong to OS-specific native checks, not entire modules containing portable business rules.
+
+On macOS, native tests must run outside any enclosing sandbox that prohibits applying Seatbelt (for example a sandboxed agent terminal). A nested-sandbox failure is an environment limitation, not grounds to remove the native boundary. macOS uses process groups for cancellation without resource monitoring; Windows retains Job Object limits. The external network smoke is explicitly selected so ordinary local test runs do not depend on an internet endpoint.
 
 After an edit, run affected tests. After a complete change, run related regressions and the fast suite. Run integration/native tests when their boundaries change. Do not repeat the full suite after every local edit. An explicit path selects that suite independently of the default `testpaths`.
 

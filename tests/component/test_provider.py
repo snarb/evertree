@@ -311,7 +311,7 @@ async def test_native_coding_has_scoped_profile_and_never_escalates(tmp_path):
     rules = next(iter(tomllib.loads(profile)["permissions"].values()))
     assert rules["filesystem"][str(tmp_path.resolve())] == "write"
     assert rules["filesystem"][":root"] == "deny"
-    assert rules["network"]["enabled"] is False
+    assert rules["network"]["enabled"] is True
 
 
 @pytest.mark.asyncio
@@ -444,7 +444,7 @@ async def test_native_start_and_resume_bind_only_current_executor(tmp_path, resu
     assert clients[0].turn_params["environments"] == [executors[0].environment]
     assert clients[0].turn_params["sandboxPolicy"] == {
         "type": "externalSandbox",
-        "networkAccess": "restricted",
+        "networkAccess": "enabled",
     }
     shell_policy = clients[0].params["config"]["shell_environment_policy"]
     assert shell_policy["inherit"] == "none"

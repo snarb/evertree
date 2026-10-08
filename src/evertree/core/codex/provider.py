@@ -6,12 +6,14 @@ import asyncio
 import importlib.metadata
 import json
 import logging
+import os
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from evertree.core.provider import AgentEvent, AgentRequest, ProviderError
+from evertree.core.sandbox.process import sandbox_backend
 
 from .configuration import (
     _COMPUTATION_CAPABILITIES,
@@ -99,7 +101,7 @@ class CodexProvider:
                 workspace = self.state_dir / "diagnostics" / uuid.uuid4().hex / "workspace"
                 workspace.mkdir(parents=True, exist_ok=True)
                 executor = await self._open_executor(client, workspace)
-                native = {"available": True, "status": "connected", "isolation": "app_container"}
+                native = {"available": True, "status": "connected", "isolation": sandbox_backend()}
                 selected = next(
                     (m for m in models["data"] if m.get("model") == MODEL or m["id"] == MODEL),
                     None,
@@ -303,8 +305,16 @@ class CodexProvider:
                             "and Git can return Access denied inside this container even within the workspace. "
                             "Use Python commands or the native filesystem tools in that case; do not retry with "
                             "broader permissions. Git commits and protected evaluation are performed by EverTree core."
-                            if request.native_coding
-                            else ""
+                            if request.native_coding and os.name == "nt"
+                            else (
+                                "\nNative commands run in a macOS Seatbelt filesystem sandbox. "
+                                "Python and Git are on PATH. Outgoing internet access is allowed. "
+                                "Use stdio commands (tty=false); interactive terminals are unavailable. "
+                                "Only the workspace and temporary profile are writable. "
+                                "Git commits and protected evaluation are performed by EverTree core."
+                                if request.native_coding
+                                else ""
+                            )
                         ),
                         "config": thread_config,
                     }
@@ -375,11 +385,11 @@ class CodexProvider:
                     turn_params["environments"] = [executor.environment] if executor else []
                     if executor:
                         # Only the selected exec-server receives tool commands.
-                        # Its OS process already owns an AppContainer token;
-                        # a second SDK sandbox would fail inside that container.
+                        # Its OS process already has native filesystem isolation;
+                        # nested SDK sandboxing would fail inside that boundary.
                         turn_params["sandboxPolicy"] = {
                             "type": "externalSandbox",
-                            "networkAccess": "restricted",
+                            "networkAccess": "enabled",
                         }
                     else:
                         turn_params["permissions"] = client._evertree_profile

@@ -14,7 +14,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from evertree.core.sandbox.appcontainer import SandboxedProcess, SandboxLimits
+from evertree.core.sandbox.process import SandboxLimits, start_process
 
 from ..backup import _extended, _restore_io, safe_remove_tree
 from .repository import (
@@ -78,7 +78,7 @@ class Runtime:
         self.state_dir = Path(state_dir).resolve()
         self.repository = Path(repository).resolve()
         self.gateway, self.trace, self.limits = gateway, trace, limits or SandboxLimits()
-        self._factory = process_factory or SandboxedProcess
+        self._factory = process_factory or start_process
         self._native = process_factory is None
         self._admission = asyncio.Lock()
         self._active: dict[str, Any] | None = None

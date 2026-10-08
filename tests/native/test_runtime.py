@@ -8,16 +8,19 @@ import sys
 
 import pytest
 
+from evertree.core.codex.configuration import _LAUNCHER
 from evertree.core.runtime.controller import ProgramSpec, Runtime, RuntimeBusy
 from evertree.core.runtime.repository import ProgramExecutionError
-from evertree.core.sandbox.appcontainer import SandboxedProcess
-from evertree.core.sandbox.job import WindowsProcessTree
+from evertree.core.sandbox.job import own_process_tree
+from evertree.core.sandbox.process import start_process
 from tests.support.runtime import commit_programs
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Windows SDK process-tree ownership")
+@pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native SDK process ownership"
+)
 def test_sdk_process_tree_stops_all_children():
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+    """Real native isolation is required; a test transport cannot prove this OS contract."""
     code = """
 import subprocess, sys, time
 sys.stdin.readline()
@@ -27,14 +30,14 @@ print(child.pid, flush=True)
 time.sleep(100)
 """
     parent = subprocess.Popen(
-        [sys.executable, "-I", "-c", code],
+        [sys.executable, "-I", "-S", "-c", _LAUNCHER, sys.executable, "-I", "-c", code],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
     tree = None
     try:
-        tree = WindowsProcessTree(parent.pid)
+        tree = own_process_tree(parent.pid)
         parent.stdin.write(b"start\n")
         parent.stdin.flush()
         assert int(parent.stdout.readline()) > 0
@@ -51,9 +54,11 @@ time.sleep(100)
         parent.stderr.close()
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Native Windows AppContainer smoke test")
-def test_appcontainer_denies_core_files_and_owns_process(tmp_path):
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+@pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native filesystem isolation"
+)
+def test_native_sandbox_denies_core_files_and_owns_process(tmp_path):
+    """Real native isolation is required; a test transport cannot prove this OS contract."""
     secret = tmp_path / "protected-secret.txt"
     secret.write_text("must remain outside worker", encoding="utf-8")
     scratch = tmp_path / "scratch"
@@ -75,7 +80,7 @@ except PermissionError:
 Path('allowed.txt').write_text('allowed')
 print(json.dumps(checks), flush=True)
 """
-    with SandboxedProcess(
+    with start_process(
         None,
         ["-I", "-c", code],
         workdir=scratch,
@@ -88,17 +93,37 @@ print(json.dumps(checks), flush=True)
     assert (scratch / "allowed.txt").read_text(encoding="utf-8") == "allowed"
 
 
+def test_native_wait_timeout_retains_ownership_until_close(tmp_path):
+    """A real process verifies that wait timeout cannot release the worker's lifetime owner."""
+    with start_process(
+        None,
+        ["-I", "-c", "import time; print('ready', flush=True); time.sleep(100)"],
+        workdir=tmp_path,
+        readable=(),
+        writable=(tmp_path,),
+    ) as process:
+        assert process.stdout.readline().strip() == b"ready"
+        with pytest.raises(subprocess.TimeoutExpired):
+            process.wait(timeout=0.01)
+        assert process.poll() is None
+    assert process.poll() is not None
+    process.close()
+
+
 @pytest.mark.parametrize(
     "process_factory",
     [
         pytest.param(
-            None, marks=pytest.mark.skipif(os.name != "nt", reason="Native Windows runtime")
+            None,
+            marks=pytest.mark.skipif(
+                os.name != "nt" and sys.platform != "darwin", reason="Native runtime"
+            ),
         ),
     ],
     ids=["native"],
 )
 async def test_nested_programs_and_durable_steps(tmp_path, process_factory):
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+    """Real native isolation is required; a test transport cannot prove this OS contract."""
     repository = tmp_path / "programs"
     revision = commit_programs(
         repository,
@@ -161,13 +186,16 @@ async def run(ctx, value):
     "process_factory",
     [
         pytest.param(
-            None, marks=pytest.mark.skipif(os.name != "nt", reason="Native Windows runtime")
+            None,
+            marks=pytest.mark.skipif(
+                os.name != "nt" and sys.platform != "darwin", reason="Native runtime"
+            ),
         ),
     ],
     ids=["native"],
 )
 async def test_cancellation_stops_tree_and_blocks_task_recovery(tmp_path, process_factory):
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+    """Real native isolation is required; a test transport cannot prove this OS contract."""
     repository = tmp_path / "programs"
     revision = commit_programs(
         repository,
@@ -203,7 +231,7 @@ async def run(ctx, spawn_child=False):
         await runtime.execute("another", spec, {})
     await runtime.cancel("task")
     assert not runtime.is_running("task")
-    if child_pid:
+    if child_pid and os.name == "nt":
         import ctypes
         from ctypes import wintypes
 
@@ -220,6 +248,17 @@ async def run(ctx, spawn_child=False):
                 assert status.value != 259
             finally:
                 kernel.CloseHandle(handle)
+    elif child_pid:
+        status = (
+            await asyncio.to_thread(
+                subprocess.run,
+                ["/bin/ps", "-p", str(child_pid), "-o", "stat="],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        ).stdout.strip()
+        assert not status or status.startswith("Z")
     with pytest.raises(ProgramExecutionError):
         await execution
     with pytest.raises(ProgramExecutionError, match="finalized"):
@@ -227,4 +266,6 @@ async def run(ctx, spawn_child=False):
     await runtime.close()
 
 
-pytestmark = pytest.mark.skipif(os.name != "nt", reason="Windows native isolation")
+pytestmark = pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native macOS/Windows isolation"
+)

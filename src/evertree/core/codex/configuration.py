@@ -30,12 +30,15 @@ _ENVIRONMENT_NAMES = frozenset(
         "COMSPEC",
         "TEMP",
         "TMP",
+        "TMPDIR",
         "USERPROFILE",
         "HOMEDRIVE",
         "HOMEPATH",
         "LOCALAPPDATA",
         "APPDATA",
         "HOME",
+        "SHELL",
+        "ZDOTDIR",
         "LANG",
         "LC_ALL",
         "TERM",
@@ -46,9 +49,10 @@ _ENVIRONMENT_NAMES = frozenset(
 
 _LAUNCHER = (
     "import os,sys,subprocess,threading\n"
+    "if sys.platform == 'darwin': os.setsid()\n"
     f"allowed={tuple(sorted(_ENVIRONMENT_NAMES))!r}\n"
     "env={k:v for k,v in os.environ.items() if k.upper() in allowed}\n"
-    # Wait for SDK initialize, sent only after the launcher joins its Job Object.
+    # Initialize is sent only after the launcher joins its Job Object/private session.
     # Thus even the server itself cannot race process-tree ownership.
     "first=sys.stdin.buffer.readline()\n"
     "if not first: sys.exit(0)\n"
@@ -175,7 +179,7 @@ def _profile(request: AgentRequest | None) -> tuple[str, dict[str, Any]]:
                 filesystem[str(hidden)] = "deny"
     filesystem[str(Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).resolve())] = "deny"
     filesystem[str(Path(__file__).resolve().parents[1])] = "deny"
-    return profile, {"filesystem": filesystem, "network": {"enabled": False}}
+    return profile, {"filesystem": filesystem, "network": {"enabled": True}}
 
 
 def _toml(value: Any) -> str:
@@ -190,9 +194,9 @@ def _attach_process_tree(client):
     process = getattr(client, "_proc", None)
     if process is None:
         return None
-    from evertree.core.sandbox.job import WindowsProcessTree
+    from evertree.core.sandbox.job import own_process_tree
 
-    return WindowsProcessTree(process.pid)
+    return own_process_tree(process.pid)
 
 
 async def _start_owned_client(client):
@@ -233,7 +237,6 @@ def create_client(
         'model_reasoning_effort="high"',
         'model_provider="openai"',
         'approval_policy="never"',
-        'windows.sandbox="elevated"',
         'web_search="disabled"',
         "allow_login_shell=false",
         "notify=[]",
@@ -248,6 +251,8 @@ def create_client(
         "default_permissions=" + json.dumps(profile_id),
         "permissions." + profile_id + "=" + _toml(profile),
     ]
+    if os.name == "nt":
+        overrides.append('windows.sandbox="elevated"')
     if not native_coding:
         overrides.append("tools.update_plan.enabled=false")
     if model_catalog is not None:

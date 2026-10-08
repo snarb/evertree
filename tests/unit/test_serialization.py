@@ -120,7 +120,7 @@ def test_unknown_or_empty_extensions_are_rejected(extension):
         ("evertree.core.learning.contracts", "LearningSignal"),
         ("evertree.core.evaluation.contracts", "EvaluationResult"),
         ("evertree.core.evaluation.acceptance", "AcceptanceCriteria"),
-        ("evertree.core.sandbox.appcontainer", "SandboxLimits"),
+        ("evertree.core.sandbox.process", "SandboxLimits"),
         ("evertree.core.runtime.controller", "ProgramSpec"),
         ("evertree.core.runtime.controller", "RunResult"),
         ("evertree._application.prompts", "Decision"),

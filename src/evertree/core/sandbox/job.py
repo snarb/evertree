@@ -1,14 +1,49 @@
-"""Windows Job Object ownership of a trusted subprocess tree."""
+"""Lifetime ownership for trusted SDK servers and their subprocesses."""
 
 from __future__ import annotations
 
 import ctypes
 import os
+import signal
+import sys
+import threading
 import time
 
+from .process import SandboxUnavailable
 
-class SandboxUnavailable(RuntimeError):
-    """The required native containment could not be established."""
+
+class MacProcessGroup:
+    """Own an already-created session; descendants inherit its process group."""
+
+    def __init__(self, pid: int):
+        if sys.platform != "darwin":
+            raise SandboxUnavailable("macOS process groups require macOS")
+        deadline = time.monotonic() + 10
+        while os.getpgid(pid) != pid:
+            if time.monotonic() >= deadline:
+                raise SandboxUnavailable("SDK launcher did not establish its private session")
+            time.sleep(0.01)
+        self.pid = pid
+        self._closed = False
+        self._lock = threading.RLock()
+
+    def close(self):
+        with self._lock:
+            if self._closed:
+                return
+            try:
+                os.killpg(self.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            self._closed = True
+
+
+def own_process_tree(pid: int):
+    if os.name == "nt":
+        return WindowsProcessTree(pid)
+    if sys.platform == "darwin":
+        return MacProcessGroup(pid)
+    raise SandboxUnavailable("SDK process ownership requires macOS or Windows")
 
 
 class WindowsProcessTree:

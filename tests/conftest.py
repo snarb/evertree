@@ -53,12 +53,13 @@ def no_fast_subprocesses(request):
     _fast_test_active = True
     try:
         with pytest.MonkeyPatch.context() as patch:
-            from evertree.core.sandbox.appcontainer import SandboxedProcess
+            from evertree.core.sandbox import appcontainer, seatbelt
 
             def forbidden(*args, **kwargs):
                 raise AssertionError("Fast tests must not create an OS sandbox")
 
-            patch.setattr(SandboxedProcess, "__init__", forbidden)
+            patch.setattr(appcontainer.SandboxedProcess, "__init__", forbidden)
+            patch.setattr(seatbelt.SandboxedProcess, "__init__", forbidden)
             yield
     finally:
         _fast_test_active = False

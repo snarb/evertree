@@ -3,18 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from .. import cache
-from .appcontainer import (
-    SandboxedProcess,
-)
-from .job import (
-    SandboxUnavailable,
-)
+from .process import SandboxUnavailable, sandbox_backend, start_process
 
 
-def check_sandbox() -> dict[str, bool]:
+def check_sandbox() -> dict[str, bool | str]:
     """Run a native token/filesystem probe for ``evertree doctor``.
 
     This launches only the fixed diagnostic below, with no model or network call.
@@ -23,12 +19,13 @@ def check_sandbox() -> dict[str, bool]:
         return _check_sandbox(probe)
 
 
-def _check_sandbox(probe: Path) -> dict[str, bool]:
+def _check_sandbox(probe: Path) -> dict[str, bool | str]:
     scratch = probe / "scratch"
     scratch.mkdir(parents=True)
     protected = probe / "protected.txt"
     protected.write_text("protected", encoding="utf-8")
-    code = f"""
+    token_probe = (
+        """
 import ctypes, json
 from ctypes import wintypes as w
 from pathlib import Path
@@ -40,7 +37,14 @@ advapi.GetTokenInformation.argtypes = [w.HANDLE, ctypes.c_int, w.LPVOID, w.DWORD
 token, flag, needed = w.HANDLE(), w.DWORD(), w.DWORD()
 assert advapi.OpenProcessToken(kernel.GetCurrentProcess(), 8, ctypes.byref(token))
 assert advapi.GetTokenInformation(token, 29, ctypes.byref(flag), ctypes.sizeof(flag), ctypes.byref(needed))
-result = {{'app_container': bool(flag.value)}}
+result = {'isolated': bool(flag.value)}
+"""
+        if os.name == "nt"
+        else "import json\nfrom pathlib import Path\nresult = {'isolated': True}\n"
+    )
+    code = (
+        token_probe
+        + f"""
 for mode in ('read', 'write'):
     try:
         path = Path({str(protected)!r})
@@ -52,7 +56,8 @@ Path('allowed.txt').write_text('allowed')
 result['scratch_writable'] = True
 print(json.dumps(result), flush=True)
 """
-    with SandboxedProcess(
+    )
+    with start_process(
         None,
         ["-I", "-c", code],
         workdir=scratch,
@@ -65,4 +70,4 @@ print(json.dumps(result), flush=True)
         result = json.loads(process.stdout.read())
         if not all(result.values()):
             raise SandboxUnavailable("Native sandbox probe did not enforce its boundaries")
-        return result
+        return {"backend": sandbox_backend(), **result}

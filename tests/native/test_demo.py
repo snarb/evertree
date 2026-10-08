@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import os
+import sys
 
 import pytest
 
 from evertree.demo import run_demo
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Lifecycle demonstration uses native Windows workers")
+@pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin",
+    reason="Lifecycle demonstration uses native workers",
+)
 async def test_full_program_improvement_and_restart_demo(tmp_path):
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+    """Real native isolation is required; a test transport cannot prove this OS contract."""
     result = await run_demo(tmp_path / "demo")
     assert result["provider"] == "demo-scripted"
     assert result["incident"] == [1, 3]
@@ -27,7 +31,9 @@ async def test_full_program_improvement_and_restart_demo(tmp_path):
     assert result["tool_calls"].count("run_program") == 4
 
 
-pytestmark = pytest.mark.skipif(os.name != "nt", reason="Windows native isolation")
+pytestmark = pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native macOS/Windows isolation"
+)
 
 pytestmark = [
     pytestmark,

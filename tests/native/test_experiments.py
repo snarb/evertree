@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from tests.support.lifecycle_backup import change
 
 @pytest.mark.parametrize("factory", [Runtime], ids=["native"])
 async def test_isolated_pair_pins_helpers_and_keeps_outcomes_hidden(tmp_path, factory):
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+    """Real native isolation is required; a test transport cannot prove this OS contract."""
     source = """
 async def run(value, ctx):
     from evertree.common.calculation import calculate
@@ -70,4 +71,6 @@ async def run(value, ctx):
     assert experiment.report.trace_ids
 
 
-pytestmark = pytest.mark.skipif(os.name != "nt", reason="Windows native isolation")
+pytestmark = pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native macOS/Windows isolation"
+)

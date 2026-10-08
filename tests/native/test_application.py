@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 
 import pytest
 
@@ -9,7 +10,7 @@ from tests.support.application import decision, framing, verification
 
 
 async def test_native_framing_verification_delivery_and_budget(tmp_path):
-    """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
+    """Real native isolation is required; a test transport cannot prove this OS contract."""
     provider = ScriptedProvider([framing(minutes=4, improvement=15), decision(), verification()])
     async with EverTree(tmp_path / "agent", provider=provider) as agent:
         result = await asyncio.wait_for(agent.run("Count the r characters in strawberry"), 60)
@@ -29,6 +30,8 @@ async def test_native_framing_verification_delivery_and_budget(tmp_path):
 
 
 pytestmark = [
-    pytest.mark.skipif(os.name != "nt", reason="Windows native workers"),
+    pytest.mark.skipif(
+        os.name != "nt" and sys.platform != "darwin", reason="Native macOS/Windows workers"
+    ),
     pytest.mark.usefixtures("offline_application"),
 ]

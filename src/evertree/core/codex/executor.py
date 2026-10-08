@@ -1,4 +1,4 @@
-"""Authenticated loopback transport for an AppContainer-owned Codex executor.
+"""Authenticated loopback transport for a native sandbox-owned Codex executor.
 
 The SDK harness keeps account credentials on the trusted host. Its native tools
 use an external execution environment whose server has only stdio handles and
@@ -58,6 +58,7 @@ class CodexExecutor:
         self._started = False
         self._close_task = None
         self._metadata_requests: dict[str | int, str] = {}
+        self._process_reads: dict[str | int, str] = {}
 
     @property
     def environment(self) -> dict[str, Any]:
@@ -151,12 +152,31 @@ class CodexExecutor:
             if message.get("method") in {"initialize", "environment/info"} and "id" in message:
                 self._metadata_requests[message["id"]] = message["method"]
             params = message.get("params")
+            if (
+                message.get("method") == "process/read"
+                and isinstance(params, dict)
+                and "id" in message
+            ):
+                self._process_reads[message["id"]] = params.get("processId")
             if message.get("method") == "process/start" and isinstance(params, dict):
+                if getattr(process, "command_groups", None) is not None and params.get("tty"):
+                    await connection.send(
+                        json.dumps(
+                            {
+                                "id": message.get("id"),
+                                "error": {
+                                    "code": -32602,
+                                    "message": "macOS executor supports stdio commands only; use tty=false",
+                                },
+                            }
+                        )
+                    )
+                    continue
                 argv = params.get("argv")
                 if (
                     isinstance(argv, list)
                     and len(argv) == 3
-                    and argv[0] == process.command_environment["COMSPEC"]
+                    and argv[0] == process.command_environment.get("COMSPEC")
                     and argv[1] == "/c"
                     and isinstance(argv[2], str)
                     and params.get("arg0") is None
@@ -178,6 +198,28 @@ class CodexExecutor:
                     frame = json.dumps(
                         message, ensure_ascii=False, separators=(",", ":"), allow_nan=False
                     )
+                elif (
+                    isinstance(argv, list)
+                    and len(argv) == 3
+                    and argv[0] == process.command_environment.get("SHELL")
+                    and argv[1] in {"-c", "-lc"}
+                    and isinstance(argv[2], str)
+                    and params.get("arg0") is None
+                ):
+                    # Remote tool commands must not load host or workspace shell startup files.
+                    params["argv"] = [argv[0], "-f", "-c", argv[2]]
+                    frame = json.dumps(
+                        message, ensure_ascii=False, separators=(",", ":"), allow_nan=False
+                    )
+                commands = getattr(process, "command_groups", None)
+                if commands is not None and isinstance(params.get("argv"), list):
+                    params["argv"] = commands.wrap(
+                        params["processId"], params["argv"], params.get("arg0")
+                    )
+                    params["arg0"] = None
+                    frame = json.dumps(
+                        message, ensure_ascii=False, separators=(",", ":"), allow_nan=False
+                    )
             packet = (frame + "\n").encode("utf-8")
             await asyncio.to_thread(self._write, process.stdin, packet)
 
@@ -195,6 +237,13 @@ class CodexExecutor:
                 raise ValueError("Invalid or oversized executor output frame")
             frame = _frame(line)
             message = json.loads(frame)
+            process_id = self._process_reads.pop(message.get("id"), None)
+            result = message.get("result")
+            # Descendants may keep pipes open after exit; waiting for closed would deadlock.
+            if process_id and isinstance(result, dict) and result.get("exited") is True:
+                commands = getattr(process, "command_groups", None)
+                if commands is not None:
+                    await asyncio.to_thread(commands.release, process_id)
             if "id" in message and (method := self._metadata_requests.pop(message["id"], None)):
                 result = message.get("result")
                 if isinstance(result, dict):

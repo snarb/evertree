@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from evertree.core.sandbox.appcontainer import SandboxedProcess
+from evertree.core.sandbox.process import start_process
 
 
 @pytest.mark.parametrize(
@@ -29,4 +29,4 @@ async def test_fast_suite_rejects_async_child_process_launch():
 
 def test_fast_suite_rejects_native_sandbox_construction(tmp_path):
     with pytest.raises(AssertionError, match="must not create an OS sandbox"):
-        SandboxedProcess(None, [], workdir=tmp_path, readable=(), writable=())
+        start_process(None, [], workdir=tmp_path, readable=(), writable=())

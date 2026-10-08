@@ -1,8 +1,8 @@
 """A repeatable Program evolution demonstration.
 
-Run ``python -m evertree.demo --home .state/demo`` on Windows. The default
+Run ``python -m evertree.demo --home .state/demo`` on macOS or Windows. The default
 provider is explicitly scripted and makes no paid model calls, while Programs
-still run in real AppContainer workers and DBOS workflows. ``--live`` uses the
+still run in real native sandbox workers and DBOS workflows. ``--live`` uses the
 configured Codex SDK, local authentication and Luna/high, and can consume usage.
 
 The sorting domain exists only in this example, never in the bootstrap graph.

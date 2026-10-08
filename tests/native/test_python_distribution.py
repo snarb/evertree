@@ -1,12 +1,13 @@
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
 
 from evertree.core import cache
 from evertree.core.sandbox import python as python_environment
-from evertree.core.sandbox.appcontainer import SandboxedProcess
+from evertree.core.sandbox.process import start_process
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Private Windows Python distribution")
@@ -60,7 +61,7 @@ else:
     raise AssertionError('shared libraries are writable')
 print(json.dumps([VERSION, str(Path.home())]))
 """
-            with SandboxedProcess(
+            with start_process(
                 None,
                 ["-I", "-c", code],
                 workdir=scratch,
@@ -78,7 +79,7 @@ print(json.dumps([VERSION, str(Path.home())]))
     assert len(list((tmp_path / "cache/python").glob("*/python.exe"))) == 1
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Shared Windows AppContainer ACLs")
+@pytest.mark.skipif(os.name != "nt" and sys.platform != "darwin", reason="Native shared tools")
 def test_parallel_sandboxes_keep_access_to_shared_python(tmp_path, monkeypatch):
     """Real Windows isolation/tools are required; a test process cannot prove this OS contract."""
     from concurrent.futures import ThreadPoolExecutor
@@ -88,7 +89,7 @@ def test_parallel_sandboxes_keep_access_to_shared_python(tmp_path, monkeypatch):
     def run(index):
         scratch = tmp_path / str(index)
         scratch.mkdir()
-        with SandboxedProcess(
+        with start_process(
             None,
             ["-I", "-c", "import dbos, pydantic, time; time.sleep(0.1); print('ready')"],
             workdir=scratch,
@@ -104,4 +105,6 @@ def test_parallel_sandboxes_keep_access_to_shared_python(tmp_path, monkeypatch):
     assert not list((tmp_path / "cache/temporary").iterdir())
 
 
-pytestmark = pytest.mark.skipif(os.name != "nt", reason="Windows native isolation")
+pytestmark = pytest.mark.skipif(
+    os.name != "nt" and sys.platform != "darwin", reason="Native macOS/Windows isolation"
+)

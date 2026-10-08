@@ -1,1 +1,1 @@
-"""Execution environments, shared Python distributions and native sandbox probes."""
+"""Native filesystem sandboxes with outgoing internet access on macOS and Windows."""
