@@ -7,7 +7,7 @@ name = "evertree"
 version = "0.1.0"
 description = "EverTree agent architecture implementation"
 readme = "README.md"
-requires-python = ">=3.13.16,<3.14"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "dbos>=3.2,<4",
     "msgpack>=1.2,<2",

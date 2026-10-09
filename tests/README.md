@@ -43,7 +43,7 @@ Live checks require both explicit selection and `EVERTREE_CODEX_INTEGRATION=1`:
 EVERTREE_CODEX_INTEGRATION=1 uv run pytest tests/live -q -n 0
 ```
 
-CI runs the fast and portable integration suites sequentially and in parallel on macOS and Windows. Separate native jobs on Apple Silicon, Intel macOS, and Windows check filesystem isolation, real Programs/DBOS, executor tools, cancellation, and outgoing HTTPS. Platform skips belong to OS-specific native checks, not entire modules containing portable business rules.
+CI runs the fast and portable integration suites sequentially and in parallel on Linux, macOS, and Windows, using an available Python 3.13 patch release. Separate native jobs on Apple Silicon, Intel macOS, and Windows check filesystem isolation, real Programs/DBOS, executor tools, cancellation, and outgoing HTTPS. Platform skips belong to OS-specific native checks, not entire modules containing portable business rules.
 
 On macOS, native tests must run outside any enclosing sandbox that prohibits applying Seatbelt (for example a sandboxed agent terminal). A nested-sandbox failure is an environment limitation, not grounds to remove the native boundary. macOS uses process groups for cancellation without resource monitoring; Windows retains Job Object limits. The external network smoke is explicitly selected so ordinary local test runs do not depend on an internet endpoint.
 
@@ -119,7 +119,7 @@ See the migration measurements below for locally verified results and environmen
 
 ### Migration measurements — 2026-10-07
 
-Local host: macOS, Python **3.13.13**, Git **2.54.0**, locked runtime dependencies, pytest 9.1.1, pytest-xdist 3.8.0. The installed uv could not obtain the project's pinned Python **3.13.16**, so local verification used an explicitly prepared `.venv` and `.venv/bin/python -m pytest`. The project's Python requirement and CI version were not relaxed. Times below are pytest-reported totals, excluding dependency installation.
+Local host: macOS, Python **3.13.13**, Git **2.54.0**, locked runtime dependencies, pytest 9.1.1, pytest-xdist 3.8.0. These historical measurements used an explicitly prepared `.venv` because the former exact Python patch pin was unavailable. Setup now accepts available Python 3.13 patch releases and supports the standard `uv` commands. Times below are pytest-reported totals, excluding dependency installation.
 
 | Run | Result | Time |
 | --- | --- | --- |

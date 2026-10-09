@@ -6,9 +6,14 @@ A local agent with a semantic graph, memory, and executable Programs that evolve
 **Program execution and native coding tools use macOS Seatbelt or Windows AppContainer.** Filesystem access is limited to declared inputs, runtime tools and writable task directories. Outgoing internet access is always allowed. Execution fails if the native sandbox is unavailable.
 
 ```sh
-uv python install 3.13.16
+uv python install 3.13
 uv sync --frozen
 ```
+
+The project uses Python 3.13 and accepts its patch releases. `.python-version`
+and CI select that minor version so setup can use an available interpreter.
+Installation and the portable test suites support Linux, macOS, and Windows;
+native Program execution requires the macOS or Windows sandbox described above.
 
 Before application startup, trusted core sources must be committed and pushed to `origin`. Startup verifies publication and stops if sources are dirty or the remote is inaccessible.
 
