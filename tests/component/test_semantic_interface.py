@@ -1,5 +1,4 @@
 import asyncio
-import json
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -7,7 +6,6 @@ import pytest
 from evertree.common.semantic_search import search
 from evertree.core.attribution import PropertyDefinition
 from evertree.core.graph.types import (
-    AccessView,
     Facet,
     GraphDelta,
     Instance,
@@ -17,14 +15,9 @@ from evertree.core.graph.types import (
     RelationType,
     Slot,
 )
-from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.reading import describe, read_property
 from evertree.core.values import ContractError, json_value
 from tests.support.semantics import EmptyIndex, context, semantic_world
-
-
-def relation_decision(action, **kwargs):
-    return {"action": action, "query": "", "id": 0, "inputs_json": "{}", "results": [], **kwargs}
 
 
 async def never(_):
@@ -59,7 +52,7 @@ async def test_exact_normalization_ambiguity_and_atomic_rename():
     assert g.lookup("cat")[0].id == cat.id
 
 
-async def test_parallel_channels_dedup_filter_failure_and_cached_pages():
+async def test_parallel_indexes_rank_fusion_and_cached_pages():
     started = set()
     ready = asyncio.Event()
 
@@ -69,7 +62,7 @@ async def test_parallel_channels_dedup_filter_failure_and_cached_pages():
             if len(started) == 2:
                 ready.set()
             await asyncio.wait_for(ready.wait(), 2)
-            return (ids[:7] if name == "bm25" else ids[:12]) * 2
+            return (ids if name == "bm25" else [ids[1], ids[0], *ids[2:]]) * 2
 
         async def lexical(self, nodes, query, kind):
             assert query == "  ReLATED \t  TYPES  " and kind == "prototype"
@@ -83,134 +76,23 @@ async def test_parallel_channels_dedup_filter_failure_and_cached_pages():
     nodes = [Prototype(world.graph.reserve_id(), f"Type{i}") for i in range(25)]
     ids = [n.id for n in nodes]
     world.graph.apply(GraphDelta(creates=nodes), provenance="test")
-    calls = []
 
-    async def model(payload):
-        data = json.loads(payload["prompt"])
-        calls.append(data)
-        assert data["query"] == "  ReLATED \t  TYPES  "
-        if "reads" in data:
-            return relation_decision("finish")
-        if "nodes" in data:
-            return {
-                "decisions": [
-                    {"id": n["id"], "include": n["id"] in ids, "descend": True}
-                    for n in data["nodes"]
-                ]
-            }
-        candidate_ids = [n["id"] for n in data["candidates"]]
-        assert len(candidate_ids) == len(set(candidate_ids))
-        raise ValueError("filter unavailable")
-
-    first = (await search(context(world, model), "  ReLATED \t  TYPES  ", kind=" PROTOTYPE "))[
+    first = (await search(context(world, never), "  ReLATED \t  TYPES  ", kind=" PROTOTYPE "))[
         "result"
     ]
-    assert first["status"] == "incomplete" and len(first["items"]) == 20 and first["total"] == 25
-    assert set(first["items"][0]["channels"]) == {"bm25", "vector", "taxonomy"}
-    assert all(data["query"] == "  ReLATED \t  TYPES  " for data in calls)
-    batches = [data["candidates"] for data in calls if "candidates" in data]
-    assert batches
-    assert all(len(batch) == len({n["id"] for n in batch}) for batch in batches)
-    before = len(calls)
+    assert first["status"] == "complete" and len(first["items"]) == 20 and first["total"] == 25
+    assert started == {"bm25", "vector"}
+    assert [item["id"] for item in first["items"][:2]] == ids[:2]
+    assert set(first["items"][0]["channels"]) == {"bm25", "vector"}
     second = (
         await search(
-            context(world, model), "  ReLATED \t  TYPES  ", kind="Prototype", cursor=first["cursor"]
+            context(world, never), "  ReLATED \t  TYPES  ", kind="Prototype", cursor=first["cursor"]
         )
     )["result"]
-    assert len(second["items"]) == 5 and len(calls) == before
+    assert len(second["items"]) == 5
     assert {n["id"] for n in first["items"] + second["items"]} == set(ids)
     with pytest.raises(ContractError):
         world.service.lookup("other", cursor=first["cursor"], task_id="task")
-
-
-async def test_taxonomy_deep_multiple_roots_intermediate_nodes_and_concurrency():
-    world = semantic_world(config=SemanticConfig(concurrency=4))
-    g = world.graph
-    roots = [Prototype(g.reserve_id(), f"Root{i}") for i in range(6)]
-    nodes, facts = list(roots), []
-    for root in roots:
-        parent = root
-        for depth in range(45):
-            child = Prototype(g.reserve_id(), f"Branch{root.id}_{depth}")
-            nodes.append(child)
-            facts.append(g.new_fact("SUBTYPE_OF", {"type": child.id, "supertype": parent.id}))
-            parent = child
-    g.apply(GraphDelta(creates=tuple(nodes + facts)), provenance="test")
-    active, maximum = 0, 0
-
-    async def model(payload):
-        nonlocal active, maximum
-        data = json.loads(payload["prompt"])
-        if "reads" in data:
-            return relation_decision("finish")
-        if "candidates" in data:
-            return {"keep": [n["id"] for n in data["candidates"]]}
-        active += 1
-        maximum = max(active, maximum)
-        await asyncio.sleep(0)
-        active -= 1
-        return {
-            "decisions": [
-                {"id": n["id"], "include": n["id"] in {roots[0].id, nodes[-1].id}, "descend": True}
-                for n in data["nodes"]
-            ]
-        }
-
-    result = (await search(context(world, model), "a deep category"))["result"]
-    assert result["status"] == "complete"
-    assert {n["id"] for n in result["items"]} == {roots[0].id, nodes[-1].id}
-    assert 1 < maximum <= 4
-
-
-async def test_relations_find_unmentioned_daughter_and_facet_with_evidence():
-    world = semantic_world(config=SemanticConfig(taxonomy_enabled=False))
-    g = world.graph
-    mother, daughter = Instance(g.reserve_id(), "Светлана"), Instance(g.reserve_id(), "Анна")
-    facet = Facet(g.reserve_id(), "Текущее состояние")
-    relation = RelationType(
-        g.reserve_id(),
-        "DAUGHTER_OF",
-        signature=(Slot("daughter", "instance"), Slot("mother", "instance")),
-        views=(AccessView("get_daughters", ("mother",), ("daughter",)),),
-    )
-    person = Prototype(g.reserve_id(), "Person")
-    links = tuple(
-        g.new_fact("IDENTITY_TYPE", {"instance": n.id, "type": person.id})
-        for n in (mother, daughter)
-    )
-    from evertree.core.graph.types import RelationInstance
-
-    fact = RelationInstance(
-        g.reserve_id(),
-        relation.name,
-        relation_type=relation.id,
-        args={"daughter": daughter.id, "mother": mother.id},
-    )
-    state = g.new_fact("STATE_IDENTITY", {"facet": facet.id, "instance": daughter.id})
-    g.apply(
-        GraphDelta(creates=(person, mother, daughter, facet, relation, *links, fact, state)),
-        provenance="test",
-    )
-
-    async def model(payload):
-        data = json.loads(payload["prompt"])
-        if "candidates" in data:
-            assert data["candidates"][0]["evidence"][0]["args"]
-            return {"keep": [facet.id]}
-        reads = data["reads"]
-        if not reads:
-            return relation_decision("lookup", query="Светлана")
-        if len(reads) == 1:
-            return relation_decision("neighbors", id=mother.id)
-        if len(reads) == 2:
-            return relation_decision("neighbors", id=daughter.id)
-        return relation_decision(
-            "finish", results=[{"id": facet.id, "source_facts": [fact.id, state.id]}]
-        )
-
-    result = (await search(context(world, model), "дочь Светланы", kind="facet"))["result"]
-    assert result["status"] == "complete" and [n["id"] for n in result["items"]] == [facet.id]
-    assert result["items"][0]["source_facts"] == [fact.id, state.id]
 
 
 def test_describe_discovers_properties_without_computing_and_uses_one_time(monkeypatch):
@@ -349,56 +231,17 @@ def test_graph_declared_property_domain_inherits_to_types_and_facets():
         assert [(p["name"], p["status"]) for p in result["properties"]] == [("Mass", "unknown")]
 
 
-async def test_taxonomy_reaches_instances_and_facets_without_relation_agent():
-    world = semantic_world()
-    g = world.graph
-    kind = Prototype(g.reserve_id(), "Vehicle")
-    instance = Instance(g.reserve_id(), "Object")
-    facet = Facet(g.reserve_id(), "State")
-    links = (
-        g.new_fact("IDENTITY_TYPE", {"instance": instance.id, "type": kind.id}),
-        g.new_fact("STATE_IDENTITY", {"instance": instance.id, "facet": facet.id}),
-    )
-    g.apply(GraphDelta(creates=(kind, instance, facet, *links)), provenance="source")
-
-    async def model(payload):
-        data = json.loads(payload["prompt"])
-        if "reads" in data:
-            return relation_decision("finish")
-        if "candidates" in data:
-            return {"keep": [n["id"] for n in data["candidates"]]}
-        return {
-            "decisions": [
-                {
-                    "id": n["id"],
-                    "include": n["id"] in {kind.id, instance.id, facet.id},
-                    "descend": False,
-                }
-                for n in data["nodes"]
-            ]
-        }
-
-    result = (await search(context(world, model), "vehicles now", kind="facet"))["result"]
-    assert result["status"] == "complete"
-    assert [n["id"] for n in result["items"]] == [facet.id]
-    assert result["items"][0]["source_facts"] == [f.id for f in links]
-    assert result["items"][0]["evidence"][0]["provenance"] == "source"
-
-
-async def test_anchor_failure_is_not_silently_successful_and_cards_are_authoritative():
+async def test_index_failure_reports_incomplete_and_cards_are_authoritative():
     class Index(EmptyIndex):
         async def lexical(self, *args):
             raise RuntimeError("unavailable")
 
     world = semantic_world(index=Index())
-    service = world.service
-    metadata = {"task_id": "task"}
-    result = await service.execute(
-        "semantic.anchor", {"query": "missing", "revision": world.graph.revision}, metadata
-    )
-    assert result["errors"] == ["bm25: RuntimeError"]
+    result = (await search(context(world, never), "missing"))["result"]
+    assert result["status"] == "incomplete"
+    assert result["errors"][0]["channel"] == "bm25"
     node = next(iter(world.graph.nodes()))
-    result = await service.execute(
+    result = await world.service.execute(
         "semantic.results",
         {
             "query": "query",
@@ -407,7 +250,7 @@ async def test_anchor_failure_is_not_silently_successful_and_cards_are_authorita
             "errors": [],
             "limit": 20,
         },
-        metadata,
+        {"task_id": "task"},
     )
     assert result["items"][0]["name"] == node.name
 
@@ -513,26 +356,6 @@ def test_remember_dedup_preserves_conditions_and_checks_updates():
         )
 
 
-async def test_invalid_relation_evidence_does_not_erase_other_channels():
-    world = semantic_world()
-    node = next(iter(world.graph.nodes()))
-    result = await world.service.execute(
-        "semantic.results",
-        {
-            "query": "missing",
-            "revision": world.graph.revision,
-            "limit": 20,
-            "errors": [],
-            "items": [
-                {"id": node.id, "channels": ["bm25", "relations"], "source_facts": [node.id]}
-            ],
-        },
-        {"task_id": "task"},
-    )
-    assert result["status"] == "incomplete"
-    assert result["items"][0]["channels"] == ["bm25"]
-
-
 async def test_remember_can_disambiguate_by_id():
     from types import SimpleNamespace
 
@@ -576,30 +399,3 @@ async def test_populated_graph_exact_names_per_kind_without_external_calls(kind)
     assert all(item["kind"] == kind for item in result["items"])
     by_id = (await search(context(world, never), target.id, kind=kind))["result"]
     assert [item["id"] for item in by_id["items"]] == [target.id]
-
-
-async def test_relation_repeated_casefolded_lookup_reuses_read_and_can_finish():
-    world = semantic_world(config=SemanticConfig(taxonomy_enabled=False))
-    queries = []
-    original = world.service.execute
-
-    async def execute(method, payload, metadata):
-        if method == "semantic.anchor":
-            queries.append(payload["query"])
-        return await original(method, payload, metadata)
-
-    world.service.execute = execute
-    decisions = iter(
-        [
-            relation_decision("lookup", query="Nobody"),
-            relation_decision("lookup", query=" nobody "),
-            relation_decision("finish"),
-        ]
-    )
-
-    async def model(payload):
-        return next(decisions)
-
-    result = (await search(context(world, model), "no matching relations"))["result"]
-    assert result["status"] == "complete"
-    assert queries == ["Nobody"]

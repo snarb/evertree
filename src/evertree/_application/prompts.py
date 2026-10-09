@@ -193,7 +193,7 @@ def semantic_tools():
     return (
         define(
             "graph.search",
-            "Find graph objects by name, ID, meaning, taxonomy or relationships. Exact matches bypass model calls. Use cursor to continue a result.",
+            "Find graph objects by name, ID, or similarity of names and descriptions. Exact matches bypass indexes. Use cursor to continue a result.",
             {
                 "query": reference,
                 "kind": string,

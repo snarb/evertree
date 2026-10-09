@@ -75,22 +75,16 @@ export EVERTREE_REDIS_URL=redis://127.0.0.1:6379
 # Set OPENAI_API_KEY in the core process environment using your secret manager.
 ```
 
-On Windows, or for a managed service, set `EVERTREE_REDIS_URL` to the provider's `rediss://` connection URL (TLS, including its credentials). These secrets belong to the trusted core process, never Program arguments or LLM context. Search decisions use the existing authenticated Codex SDK; embeddings use OpenAI API billing separately. Queries use `TIMEOUT 0`; if the managed server enforces a ceiling, configure its timeout policy to fail instead of returning partial results ([Redis configuration](https://redis.io/docs/latest/develop/ai/search-and-query/administration/configuration/)). Index outages produce an explicitly incomplete non-exact search. GraphStore and backups remain authoritative.
+On Windows, or for a managed service, set `EVERTREE_REDIS_URL` to the provider's `rediss://` connection URL (TLS, including its credentials). These secrets belong to the trusted core process, never Program arguments or LLM context. Embeddings use OpenAI API billing. Queries use `TIMEOUT 0`; if the managed server enforces a ceiling, configure its timeout policy to fail instead of returning partial results ([Redis configuration](https://redis.io/docs/latest/develop/ai/search-and-query/administration/configuration/)). Index outages produce an explicitly incomplete non-exact search. GraphStore and backups remain authoritative.
 
 Optional `<agent-home>/evertree.toml`:
 
 ```toml
 [semantics]
-taxonomy_enabled = true
-concurrency = 4
 redis_url_env = "EVERTREE_REDIS_URL"
 openai_key_env = "OPENAI_API_KEY"
 embedding_model = "text-embedding-3-large"
 embedding_dimensions = 3072
-
-[semantics.search]
-model = "gpt-6-luna"
-effort = "low"
 
 [semantics.remember]
 model = "gpt-6-luna"

@@ -274,7 +274,7 @@ class ToolsMixin:
                 else self._remaining_seconds(state)
             )
             profile_name = payload.get("profile")
-            if profile_name not in {None, "search", "remember"}:
+            if profile_name not in {None, "remember"}:
                 raise ValueError("Unknown model profile")
             profile = getattr(self.semantic_config, profile_name) if profile_name else None
             request = AgentRequest(

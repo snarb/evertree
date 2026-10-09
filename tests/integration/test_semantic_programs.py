@@ -108,21 +108,13 @@ async def test_search_channels_really_start_in_parallel_across_worker_ipc(tmp_pa
         async def vector(self, *args):
             return await self.leg("vector")
 
-    world = semantic_world(index=Index(), config=SemanticConfig(taxonomy_enabled=False))
+    world = semantic_world(index=Index(), config=SemanticConfig())
 
     async def gateway(method, payload):
         payload = dict(payload)
         metadata = payload.pop("_runtime")
         if method == "agent.run":
-            return {
-                "parsed": {
-                    "action": "finish",
-                    "query": "",
-                    "id": 0,
-                    "inputs_json": "{}",
-                    "results": [],
-                }
-            }
+            raise AssertionError("Search must not invoke a model")
         return await world.service.execute(method, payload, metadata)
 
     runtime = Runtime(tmp_path / "runtime", tmp_path / "repo", gateway, process_factory=TestProcess)

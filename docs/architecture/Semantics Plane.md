@@ -30,7 +30,7 @@ Consciousness uses compact semantic tools; cheap Programs handle retrieval and k
 
 | Tool | Purpose |
 | --- | --- |
-| `graph.search(query, kind?, limit=20, cursor?)` | Find existing objects by name, ID, description, taxonomy or relations. |
+| `graph.search(query, kind?, limit=20, cursor?)` | Find existing objects by name, ID, or indexed name and description similarity. |
 | `graph.describe(subject, focus?, at?)` | Describe an object, its applicable properties and significant relations; `focus="properties"` returns only properties. |
 | `graph.read_property(subject, property, at?, parameters?)` | Read a property through Attribution Runtime, preserving uncertainty and sources. |
 | `graph.remember(statements, sources, context?)` | Prepare and save sourced knowledge through `KnowledgeRemembering.exec`. |
@@ -40,18 +40,16 @@ Both reading tools use `subject` and world time `at` (default: now, internally `
 
 ### Retrieval Contract
 
-1. **Exact first:** resolve integer ID or normalized name in GraphStore, respecting `kind`. Return all exact alternatives without Redis, embeddings, traversal or LLM calls. Canonical names take precedence over same-named facts unless `kind` selects facts.
-2. **Parallel retrieval:** BM25 returns 7 candidates; vector search returns 12; graph exploration runs alongside them. Both indexes use name + description. Embeddings default to `text-embedding-3-large`, 3072 dimensions. Exact-name and BM25 matching normalize Unicode, case and whitespace; embeddings and Luna retain the original text because case can carry meaning.
-3. **Taxonomy:** start at every `SUBTYPE_OF` root. Evaluate sibling batches with their path, descriptions and immediate-child preview. Decide node relevance and subtree exploration separately; retain relevant internal nodes and leaves, explore uncertain branches. Independent branches run concurrently, with at most 4 simultaneous search LLM calls by default. `kind` filters results, not traversal. Reach Instances through `IDENTITY_TYPE` and Facets through `STATE_IDENTITY`, separately from taxonomy edges.
-4. **Relations:** resolve anchors without recursively starting a full search, then read actual facts and declared views. Return observed objects with supporting facts; avoid repeated reads and visits. Thus “дочь Светланы” can find an object whose description contains neither word. Search creates no knowledge.
-5. **Merge and filter:** wait for every selected branch; deduplicate by stable ID before LLM filtering and preserve channels and evidence. Luna returns retained IDs, removing only clearly irrelevant candidates. Uncertainty or a failed filter keeps candidates. Channel failure yields `incomplete`, never a silently empty successful search. Only the Task budget and cancellation bound the overall search; no separate deadline or depth limit.
-6. **Pages:** return compact cards, 20 by default, with a cursor over retained results. Continuation repeats no search. Cursors belong to the Task/query and expire on graph changes, Task completion or restart, preventing stale identities.
+1. **Exact first:** resolve integer ID or normalized name in GraphStore, respecting `kind`. Return all exact alternatives without Redis or embeddings. Canonical names take precedence over same-named facts unless `kind` selects facts.
+2. **Parallel retrieval:** BM25 returns 7 candidates and vector search returns 12. Both indexes use name + description. Embeddings default to `text-embedding-3-large`, 3072 dimensions. Exact-name and BM25 matching normalize Unicode, case and whitespace; embeddings retain the original text because case can carry meaning.
+3. **Merge and rank:** deduplicate by stable ID and combine the ordered lists with reciprocal rank fusion (constant 60). Preserve the contributing index names on each result. An index failure yields `incomplete`; results from the other index remain available. Search creates no knowledge.
+4. **Pages:** return compact cards, 20 by default, with a cursor over ranked results. Continuation repeats no search. Cursors belong to the Task/query and expire on graph changes, Task completion or restart, preventing stale identities.
 
 ### Storage and Models
 
 GraphStore remains authoritative; **Redis 8.4+ with Search** is a rebuildable index. Every graph commit, including lifecycle changes, updates it. Content generations prevent restored state from reading a newer index; obsolete unused generations are removed. Index failure cannot undo a graph commit or block exact lookup. BM25 and vector queries remain separate for their 7/12 quotas; fuzzy search is omitted.
 
-Search uses **`gpt-6-luna / low`**, remembering **`gpt-6-luna / medium`**, through Codex SDK. Each profile's model/effort is configurable; consciousness keeps its own profile. Taxonomy is enabled by default. Redis and the separate embedding API credentials remain in core. Configuration and local/managed Redis setup are in the repository README.
+Remembering uses **`gpt-6-luna / medium`** through Codex SDK. Its model/effort is configurable; consciousness keeps its own profile. Redis and the separate embedding API credentials remain in core. Configuration and local/managed Redis setup are in the repository README.
 
 ### Knowledge Preparation
 

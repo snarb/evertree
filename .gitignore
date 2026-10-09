@@ -24,6 +24,7 @@ CLAUDE.local.md
 /.state/
 /tmp/
 /temp/
+/artifacts/search-pilot/
 *.log
 
 # Editor/OS state and generated documentation

@@ -145,7 +145,7 @@ Lint, formatting, source/taxonomy validation, and `git diff --check` passed. Nat
 
 ## Semantic interface checks
 
-`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel retrieval, taxonomy traversal/concurrency, relation evidence, pagination and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including child calls, invalid-delta repair, replay and an IPC concurrency barrier.
+`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, pagination and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including child calls, invalid-delta repair, replay and an IPC concurrency barrier.
 
 A separate Redis integration test uses a real Redis 8.4+ Search server and deterministic embeddings (no model charges):
 
@@ -157,10 +157,4 @@ It uses private random index namespaces and deletes those test indexes afterward
 
 The Redis suite separately tests names and descriptions for concepts, prototypes, Instances, Facets, relation types and facts; KNN uses known vectors to verify ranking and `kind` independently of embedding quality. Exact-name tests assert zero model/index calls.
 
-Live populated-graph tests cover Luna taxonomy (including internal nodes and child previews), relation evidence for multiple daughters and their Facets, fact results, and absent matches:
-
-```sh
-EVERTREE_CODEX_INTEGRATION=1 uv run pytest tests/live/test_semantic_search.py -q -n 0
-```
-
-With `EVERTREE_TEST_REDIS_URL`, this also exercises the actual Program through DBOS, Redis and Luna, then verifies durable replay without repeated calls. The `test-embeddings` case deliberately uses known vectors; the separate `openai-embeddings` case requires `OPENAI_API_KEY` and uses real `text-embedding-3-large`. Test traces are saved under pytest's temporary directory on failure. Live tests use the authenticated account and may incur usage charges.
+The separate opt-in `tests/live/test_embeddings.py` checks real OpenAI embeddings with `OPENAI_API_KEY`. Live tests may incur usage charges.

@@ -198,7 +198,7 @@ ImprovementOutcomeModel
 
 The Router is called within an already established `Task` context; [[Cognition and Attention#^input-reception|input reception and initial task binding]] happen before this call. If a tool result is already associated with a waiting call, the runtime delivers it directly. The Router is needed when the semantic recipient must be identified or reconsidered; it is not a mandatory step for every input.
 
-The Router uses semantic graph search: participants, temporal relationships, [[#^semantic-program-organization|process scope and associated Programs]], and the context of recently active executions. It matches an observation to a specific object and episode: two attempts to start the same engine may belong to separate executions of the same process.
+The Router uses semantic graph facts and declared views for participants, temporal relationships, [[#^semantic-program-organization|process scope and associated Programs]], together with the context of recently active executions. It matches an observation to a specific object and episode: two attempts to start the same engine may belong to separate executions of the same process.
 
 For one context, the standard path uses one selected working program or composition. When delegating, this is an `exec` program and the models and subprograms it calls; consciousness may also directly organize a separate call. The caller uses the Router result to continue an appropriate existing execution; a new one is created when a separate episode begins or new task work is needed. Each observation does not create a new run by itself. The [[Cognition and Attention#^durable-program-execution|runtime]] manages live or unloaded execution state.
 

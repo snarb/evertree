@@ -378,7 +378,7 @@ class ProgramsMixin:
         async def evaluate(branch, revision):
             async def model_call(payload, context):
                 profile_name = payload.get("profile")
-                if profile_name not in {None, "search", "remember"}:
+                if profile_name not in {None, "remember"}:
                     raise ValueError("Unknown model profile")
                 profile = getattr(self.semantic_config, profile_name) if profile_name else None
                 return await self._invoke(

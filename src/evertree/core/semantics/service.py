@@ -7,8 +7,8 @@ from uuid import uuid4
 from ..graph.store import GraphStore
 from ..graph.types import GraphDelta, RelationInstance, RelationType, node_from_dict
 from ..memory.types import TraceOutputRef
-from ..values import UNKNOWN, ContractError, json_value
-from .reading import card, fact_card, fact_nodes
+from ..values import ContractError, json_value
+from .reading import card
 
 
 class SemanticService:
@@ -238,93 +238,13 @@ class SemanticService:
         task_id = metadata["task_id"]
         if method == "semantic.lookup":
             return self.lookup(**payload, task_id=task_id)
-        if method == "semantic.snapshot":
-            return {
-                "revision": self.graph.revision,
-                "nodes": [card(n) for n in self.graph.nodes()],
-                "facts": [
-                    {
-                        "id": f.id,
-                        "relation": self.graph.get(f.relation_type).name,
-                        "args": json_value(f.args),
-                    }
-                    for f in self.graph.facts()
-                ],
-                "concurrency": self.config.concurrency,
-                "taxonomy_enabled": self.config.taxonomy_enabled,
-            }
-        if method in {
-            "semantic.bm25",
-            "semantic.vector",
-            "semantic.anchor",
-            "semantic.neighbors",
-            "semantic.view",
-        }:
+        if method == "semantic.revision":
+            return self.graph.revision
+        if method in {"semantic.bm25", "semantic.vector"}:
             self._check_revision(payload["revision"])
             nodes = [card(n) for n in self.graph.nodes()]
-            if method in {"semantic.neighbors", "semantic.view"}:
-                identity = payload["id"]
-                if method == "semantic.view":
-                    matches = self.graph.query_view(identity, payload["view"], **payload["inputs"])
-                    if matches is UNKNOWN:
-                        raise ContractError("Relation view is unknown")
-                    matches = (
-                        matches
-                        if isinstance(matches, list)
-                        else [matches]
-                        if matches is not None
-                        else []
-                    )
-                    facts = [match.source_fact for match in matches]
-                else:
-                    facts = [
-                        f
-                        for f in self.graph.facts()
-                        if identity in fact_nodes(self.graph, f)
-                        or identity in {f.id, f.relation_type}
-                    ]
-                ids = {identity}
-                for fact in facts:
-                    ids.update(fact_nodes(self.graph, fact))
-                    ids.update((fact.id, fact.relation_type))
-                return {
-                    "nodes": [card(self.graph.get(i)) for i in sorted(ids)],
-                    "facts": [fact_card(self.graph, f) for f in facts],
-                    "schemas": [
-                        json_value(self.graph.get(i))
-                        for i in sorted(ids)
-                        if isinstance(self.graph.get(i), RelationType)
-                    ],
-                }
-            if method == "semantic.anchor":
-                exact = self.graph.lookup(payload["query"])
-                if exact:
-                    return {"nodes": [card(n) for n in exact], "facts": []}
-                import asyncio
-
-                legs = await asyncio.gather(
-                    self.index.lexical(nodes, payload["query"]),
-                    self.index.vector(nodes, payload["query"]),
-                    return_exceptions=True,
-                )
-                ids = set()
-                for leg in legs:
-                    if not isinstance(leg, Exception):
-                        ids.update(leg)
-                if all(isinstance(leg, Exception) for leg in legs):
-                    raise RuntimeError("Anchor retrieval channels unavailable")
-                result = {
-                    "nodes": [card(self.graph.get(i)) for i in sorted(ids)],
-                    "facts": [],
-                    "errors": [
-                        f"{channel}: {type(leg).__name__}"
-                        for channel, leg in zip(("bm25", "vector"), legs, strict=True)
-                        if isinstance(leg, Exception)
-                    ],
-                }
-            else:
-                operation = self.index.lexical if method == "semantic.bm25" else self.index.vector
-                result = await operation(nodes, payload["query"], payload.get("kind"))
+            operation = self.index.lexical if method == "semantic.bm25" else self.index.vector
+            result = await operation(nodes, payload["query"], payload.get("kind"))
             self._check_revision(payload["revision"])
             return result
         if method == "semantic.results":
@@ -338,35 +258,9 @@ class SemanticService:
                 if payload.get("kind") is not None and node.kind != payload["kind"]:
                     raise ContractError("Search result violates kind filter")
                 channels = list(item.get("channels", []))
-                try:
-                    evidence = [self.graph.get(i) for i in item.get("source_facts", [])]
-                    if any(not isinstance(fact, RelationInstance) for fact in evidence):
-                        raise ContractError("Search evidence must reference existing facts")
-                    if "relations" in channels and not any(
-                        node.id in fact_nodes(self.graph, fact) or node.id == fact.id
-                        for fact in evidence
-                    ):
-                        raise ContractError("Relation result needs an incident supporting fact")
-                except (KeyError, ContractError) as exc:
-                    errors.append({"channel": "relations", "error": str(exc)})
-                    channels = [
-                        channel for channel in channels if channel not in {"relations", "taxonomy"}
-                    ]
-                    evidence = []
-                    if not channels:
-                        continue
-                checked.append(
-                    {
-                        **card(node),
-                        "channels": channels,
-                        "source_facts": [f.id for f in evidence],
-                        **(
-                            {"evidence": [fact_card(self.graph, f) for f in evidence]}
-                            if evidence
-                            else {}
-                        ),
-                    }
-                )
+                if not channels or set(channels) - {"bm25", "vector"}:
+                    raise ContractError("Search result has an unknown index channel")
+                checked.append({**card(node), "channels": channels, "source_facts": []})
             return self.results(
                 payload["query"], payload.get("kind"), checked, errors, payload["limit"], task_id
             )
