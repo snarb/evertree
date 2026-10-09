@@ -12,7 +12,7 @@ def test_sports_taxonomy_fixture_is_self_contained_and_consistent():
     nodes = {node["id"]: node for node in dataset["tree"]["nodes"]}
     articles = dataset["articles"]
     questions = dataset["questions"]
-    assert len(nodes) == 1369
+    assert len(nodes) == len(dataset["tree"]["nodes"]) == 1369
     assert len(articles) == 211
     assert len(questions) == 609
     assert dataset["tree"]["root_id"] == 0
@@ -20,6 +20,14 @@ def test_sports_taxonomy_fixture_is_self_contained_and_consistent():
 
     roots = [node for node in nodes.values() if node["parent_id"] is None]
     assert len(roots) == 1 and roots[0]["id"] == dataset["tree"]["root_id"]
+    visited = set()
+    pending = [roots[0]["id"]]
+    while pending:
+        identity = pending.pop()
+        assert identity not in visited
+        visited.add(identity)
+        pending.extend(nodes[identity]["children_ids"])
+    assert visited == nodes.keys()
     for node in nodes.values():
         parent = node["parent_id"]
         if parent is not None:

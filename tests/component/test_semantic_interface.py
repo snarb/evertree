@@ -21,7 +21,7 @@ from tests.support.semantics import EmptyIndex, context, semantic_world
 
 
 async def never(_):
-    pytest.fail("Exact lookup must not invoke a model")
+    pytest.fail("Search must not invoke a model")
 
 
 async def test_exact_normalization_ambiguity_and_atomic_rename():
@@ -54,15 +54,19 @@ async def test_exact_normalization_ambiguity_and_atomic_rename():
 
 async def test_parallel_indexes_rank_fusion_and_cached_pages():
     started = set()
+    calls = []
     ready = asyncio.Event()
 
     class Index(EmptyIndex):
         async def run(self, name):
+            calls.append(name)
             started.add(name)
             if len(started) == 2:
                 ready.set()
             await asyncio.wait_for(ready.wait(), 2)
-            return (ids if name == "bm25" else [ids[1], ids[0], *ids[2:]]) * 2
+            return (
+                [ids[0], ids[17], *ids[1:6]] if name == "bm25" else [ids[6], ids[17], *ids[7:17]]
+            ) * 2
 
         async def lexical(self, nodes, query, kind):
             assert query == "  ReLATED \t  TYPES  " and kind == "prototype"
@@ -73,23 +77,23 @@ async def test_parallel_indexes_rank_fusion_and_cached_pages():
             return await self.run("vector")
 
     world = semantic_world(index=Index())
-    nodes = [Prototype(world.graph.reserve_id(), f"Type{i}") for i in range(25)]
+    nodes = [Prototype(world.graph.reserve_id(), f"Type{i}") for i in range(18)]
     ids = [n.id for n in nodes]
     world.graph.apply(GraphDelta(creates=nodes), provenance="test")
 
-    first = (await search(context(world, never), "  ReLATED \t  TYPES  ", kind=" PROTOTYPE "))[
-        "result"
-    ]
-    assert first["status"] == "complete" and len(first["items"]) == 20 and first["total"] == 25
+    first = (
+        await search(context(world, never), "  ReLATED \t  TYPES  ", kind=" PROTOTYPE ", limit=5)
+    )["result"]
+    assert first["status"] == "complete" and len(first["items"]) == 5 and first["total"] == 18
     assert started == {"bm25", "vector"}
-    assert [item["id"] for item in first["items"][:2]] == ids[:2]
+    assert [item["id"] for item in first["items"]] == [ids[i] for i in (17, 0, 6, 1, 7)]
     assert set(first["items"][0]["channels"]) == {"bm25", "vector"}
     second = (
         await search(
             context(world, never), "  ReLATED \t  TYPES  ", kind="Prototype", cursor=first["cursor"]
         )
     )["result"]
-    assert len(second["items"]) == 5
+    assert len(second["items"]) == 13 and len(calls) == 2
     assert {n["id"] for n in first["items"] + second["items"]} == set(ids)
     with pytest.raises(ContractError):
         world.service.lookup("other", cursor=first["cursor"], task_id="task")
@@ -231,16 +235,27 @@ def test_graph_declared_property_domain_inherits_to_types_and_facets():
         assert [(p["name"], p["status"]) for p in result["properties"]] == [("Mass", "unknown")]
 
 
-async def test_index_failure_reports_incomplete_and_cards_are_authoritative():
+@pytest.mark.parametrize("failed", [{"bm25"}, {"vector"}, {"bm25", "vector"}])
+async def test_index_failure_reports_incomplete_and_cards_are_authoritative(failed):
     class Index(EmptyIndex):
         async def lexical(self, *args):
-            raise RuntimeError("unavailable")
+            if "bm25" in failed:
+                raise RuntimeError("unavailable")
+            return [node.id]
+
+        async def vector(self, *args):
+            if "vector" in failed:
+                raise RuntimeError("unavailable")
+            return [node.id]
 
     world = semantic_world(index=Index())
+    node = next(iter(world.graph.nodes()))
     result = (await search(context(world, never), "missing"))["result"]
     assert result["status"] == "incomplete"
-    assert result["errors"][0]["channel"] == "bm25"
-    node = next(iter(world.graph.nodes()))
+    assert {error["channel"] for error in result["errors"]} == failed
+    assert [item["id"] for item in result["items"]] == ([] if len(failed) == 2 else [node.id])
+    if result["items"]:
+        assert set(result["items"][0]["channels"]) == {"bm25", "vector"} - failed
     result = await world.service.execute(
         "semantic.results",
         {

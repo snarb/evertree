@@ -78,8 +78,8 @@ async def test_remember_repairs_delta_calls_search_child_and_replays_once(tmp_pa
         await runtime.close()
 
 
-async def test_search_channels_really_start_in_parallel_across_worker_ipc(tmp_path):
-    """A barrier in core detects transport serialization, which in-process tests cannot."""
+async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_path):
+    """Real IPC and DBOS prove concurrent reads, ordered results, and replay without index calls."""
     import asyncio
 
     from evertree.core.semantics.config import SemanticConfig
@@ -93,14 +93,16 @@ async def test_search_channels_really_start_in_parallel_across_worker_ipc(tmp_pa
     ]
     revision = commit_programs(tmp_path / "repo", {p: (root / p).read_text() for p in paths})
     started, ready = set(), asyncio.Event()
+    reads = []
 
     class Index(EmptyIndex):
         async def leg(self, name):
+            reads.append(name)
             started.add(name)
             if len(started) == 2:
                 ready.set()
             await asyncio.wait_for(ready.wait(), 5)
-            return []
+            return [ids[0], ids[2]] if name == "bm25" else [ids[1], ids[2]]
 
         async def lexical(self, *args):
             return await self.leg("bm25")
@@ -109,6 +111,7 @@ async def test_search_channels_really_start_in_parallel_across_worker_ipc(tmp_pa
             return await self.leg("vector")
 
     world = semantic_world(index=Index(), config=SemanticConfig())
+    ids = [node.id for node in world.graph.nodes()][:3]
 
     async def gateway(method, payload):
         payload = dict(payload)
@@ -119,10 +122,12 @@ async def test_search_channels_really_start_in_parallel_across_worker_ipc(tmp_pa
 
     runtime = Runtime(tmp_path / "runtime", tmp_path / "repo", gateway, process_factory=TestProcess)
     try:
-        result = await runtime.execute(
-            "task", ProgramSpec(1, paths[0], revision, role="model"), {"query": "missing"}
-        )
+        spec = ProgramSpec(1, paths[0], revision, role="model")
+        result = await runtime.execute("task", spec, {"query": "missing"}, run_id="search")
         assert result.result["status"] == "complete", result.result
         assert started == {"bm25", "vector"}
+        assert [item["id"] for item in result.result["items"]] == [ids[2], ids[0], ids[1]]
+        replay = await runtime.execute("task", spec, {"query": "missing"}, run_id="search")
+        assert replay.result == result.result and len(reads) == 2
     finally:
         await runtime.close()
