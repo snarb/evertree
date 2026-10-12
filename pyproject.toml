@@ -23,7 +23,13 @@ dependencies = [
 evertree = "evertree.cli:main"
 
 [dependency-groups]
-dev = ["ruff>=0.15", "pytest>=8", "pytest-asyncio>=1", "pytest-xdist>=3.8,<4"]
+dev = [
+    "ruff>=0.15",
+    "pytest>=8",
+    "pytest-asyncio>=1",
+    "pytest-xdist>=3.8,<4",
+    "python-dotenv>=1.2.4",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/component"]

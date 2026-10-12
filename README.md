@@ -61,45 +61,44 @@ The default suite runs unit and component tests with up to four workers. Integra
 ### Debug experience integration in PyCharm
 
 Open [`src/evertree/debug_integration.py`](src/evertree/debug_integration.py), select the
-project's `.venv` Python interpreter, and choose **Debug**. No parameters or services are
-required. The equivalent terminal command is:
+project's `.venv` Python interpreter, and choose **Debug**. No command-line parameters are
+needed. The script always calls the real Codex model from `KnowledgeIntegration.exec`.
+
+Before running, sign in to Codex. The script loads `EVERTREE_REDIS_URL` and `OPENAI_API_KEY`
+from repository-root `.env`; variables already set in PyCharm or the shell
+take precedence. For this isolated harness, `EVERTREE_TEST_REDIS_URL` is also accepted when
+the regular Redis URL is absent. This file is ignored by Git and its values are never
+printed or included in model input. Search uses the production
+`RedisSearchIndex` with Redis 8.4+ Search and OpenAI embeddings; see
+[search configuration](#semantic-search-configuration). Missing variables are reported before
+model calls. Codex and embeddings consume account resources. Optional repository-root
+`evertree.toml` selects the semantic model and search settings just as for an agent home.
 
 ```sh
 uv run python src/evertree/debug_integration.py
 ```
 
-The Russian example contains a user task, a short paragraph about pump Н-1, and an explicit
-intermediate analytical Note. The expected graph contains one pump Instance, its Prototype,
-two Facets with known time intervals, one `IDENTITY_TYPE` fact, two `STATE_IDENTITY` facts,
-and a Note preserving the analysis and its limitations. No state after the observed interval
-or cause of the transition is inferred.
+Edit `USER_TASK`, `INPUT_TEXT`, and `CONSCIOUS_ANALYSIS` at the top of the script. These are
+the user task, a paragraph describing pump Н-1, and a supplied intermediate analytical Note.
+The integrator's LLM generates all search requests, graph proposals and `decisions` during
+execution. There are no scripted model responses or predetermined graph objects. The example
+asks to preserve the pump's two observed state intervals; the actual representation is chosen
+by the model and validated by Core.
 
 Useful breakpoints, in execution order:
 
 - `DebugSession.record_experience`: source references and the typed Note with `preserve=True`.
 - `knowledge_integration/_exec.py:run`: model proposal, search, schema reads, repair and commit.
-- `SemanticService.commit` in `core/semantics/service.py`: decisions, validation and receipt.
-- `CoreOperations.apply_delta`, then `GraphStore.apply`: actual graph mutation and provenance.
-- `DebugSession.run`, at `return created`: inspect `created`, `self.graph`, `self.memory`,
-  and `self.receipt` together.
+- `DebugSession.model`: actual Codex request and returned structured proposal.
+- `SemanticService.commit`: decisions, validation and receipt.
+- `CoreOperations.apply_delta`, then `GraphStore.apply`: graph mutation and provenance.
+- `DebugSession.run`, at `return created`: inspect the graph, trace and receipt together.
 
-Each run starts with an isolated bootstrap graph and writes `graph.json`, `trace.json`,
-`receipt.json` and `calls.json` under a new `tmp/debug-integration/<run>/` directory.
-The console prints that directory before execution; artifacts are also written on failure.
-These are diagnostic snapshots, not the main application's persistent state.
-
-By default, model decisions are fixed to make stepping reproducible; changing the text does
-**not** change this scripted proposal. To investigate the model's selection, add `--live`
-to the PyCharm run configuration's **Parameters**. It uses the signed-in Codex account and
-the default integration profile (`gpt-6-luna`, `medium`), consumes model usage, and can produce
-a different valid representation. Edit `USER_TASK`, `INPUT_TEXT`, and `CONSCIOUS_ANALYSIS`
-at the top of the script to vary that input. The analytical text is a supplied example in
-both modes; this script runs the integrator, not the consciousness loop.
-
-Both modes use the real integration Program, semantic validation, graph and trace stores in
-one Python process, so ordinary breakpoints work. Search enumerates the small isolated graph
-in both channels; it does not test Redis, embeddings or production ranking. Worker admission,
-the application coordinator, sandboxing and durable restart are outside this debugger harness.
+Each run uses an isolated bootstrap graph and Redis namespace, writing `graph.json`,
+`trace.json`, `receipt.json` and `calls.json` under `tmp/debug-integration/<run>/`, also on
+failure. The path is printed before execution. Ordinary Python breakpoints work because the
+Program and Core execute in one process. This harness invokes the integrator directly;
+application scheduling, worker admission and durable restart are outside its scope.
 
 ### Code conventions
 

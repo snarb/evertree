@@ -1,19 +1,19 @@
-"""Run in PyCharm with the project's .venv interpreter; no arguments are required.
+"""Debug KnowledgeIntegration.exec in-process with real Codex decisions and search.
 
-Offline by default: only model decisions and the search index are substituted.
-Use --live for real Codex model decisions (signed-in account, consumes model usage).
-Program orchestration, trace, validation, graph mutations and receipts are real,
-in one process. This isolated harness does not run the application coordinator,
-worker admission, Redis, native sandbox or durable application recovery.
+Run this file in PyCharm using the project interpreter and sign in to Codex.
+Search settings are loaded from repository .env or the environment.
+Only the input experience below is supplied; the model generates all proposals.
 """
 
-import argparse
 import asyncio
 import hashlib
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
+
+from dotenv import dotenv_values
 
 from evertree.core.attribution import AttributionRuntime
 from evertree.core.beliefs import BeliefStore
@@ -26,12 +26,13 @@ from evertree.core.memory.store import TraceStore
 from evertree.core.operations import CoreOperations, authorize_operation
 from evertree.core.provider import AgentRequest
 from evertree.core.semantics.config import SemanticConfig
+from evertree.core.semantics.index import RedisSearchIndex
 from evertree.core.semantics.service import SemanticService
 from evertree.core.values import json_value
 from evertree.processes.semantic_processing.knowledge_integration._exec import run as integrate
 from evertree.processes.semantic_processing.semantic_search._model import run as search
 
-# Edit these three texts to explore a different experience in --live mode.
+# Edit these inputs; KnowledgeIntegration chooses their graph representation.
 USER_TASK = (
     "Запомни историю работы насоса Н-1: когда он был выключен и когда работал. "
     "Сохрани состояния с их временными границами и связь каждого состояния с насосом."
@@ -50,95 +51,25 @@ CONSCIOUS_ANALYSIS = (
 )
 
 
-class ExhaustiveDebugIndex:
-    """Return the entire tiny graph in both channels; no embeddings or ranking."""
-
-    async def lexical(self, nodes, query, kind):
-        return [node["id"] for node in nodes if kind is None or node["kind"] == kind]
-
-    vector = lexical
-
-
-def scripted_decision(material, graph):
-    """Fixed model response for this example; deliberately not a text extractor."""
-    schema = {name: graph.lookup(name)[0].id for name in ("IDENTITY_TYPE", "STATE_IDENTITY")}
-    creates = [
-        {"id": -1, "kind": "prototype", "name": "Насос", "description": "Класс насосов"},
-        {"id": -2, "kind": "instance", "name": "Насос Н-1"},
-        {
-            "id": -3,
-            "kind": "facet",
-            "name": "Н-1: выключен 12 октября 09:00–09:10 UTC",
-            "description": "По сообщению пользователя насос выключен в этом интервале.",
-            "valid_from": "2026-10-12T09:00:00+00:00",
-            "valid_until": "2026-10-12T09:10:00+00:00",
-        },
-        {
-            "id": -4,
-            "kind": "facet",
-            "name": "Н-1: работает 12 октября 09:10–09:20 UTC",
-            "description": "По сообщению пользователя насос работает в этом интервале.",
-            "valid_from": "2026-10-12T09:10:00+00:00",
-            "valid_until": "2026-10-12T09:20:00+00:00",
-        },
-        {
-            "id": -5,
-            "kind": "relation_instance",
-            "name": "IDENTITY_TYPE",
-            "relation_type": schema["IDENTITY_TYPE"],
-            "args": {"instance": -2, "type": -1},
-        },
-        *[
-            {
-                "id": identity,
-                "kind": "relation_instance",
-                "name": "STATE_IDENTITY",
-                "relation_type": schema["STATE_IDENTITY"],
-                "args": {"facet": facet, "instance": -2},
-            }
-            for identity, facet in ((-6, -3), (-7, -4))
-        ],
-        {"id": -8, "kind": "note", "name": "Разбор истории Н-1", "description": CONSCIOUS_ANALYSIS},
-    ]
-    task_ref, source_ref, note_ref = [item["reference"] for item in material["experience"]]
-    decisions = [
-        {
-            "disposition": "trace_only",
-            "reason": "Задание задаёт цель отбора; само по себе не является фактом о насосе.",
-            "source_refs": [task_ref],
-            "affected_ids": [],
-        },
-        {
-            "disposition": "materialize",
-            "reason": "Один объект и два явно ограниченных во времени состояния из абзаца.",
-            "source_refs": [source_ref],
-            "affected_ids": list(range(-1, -8, -1)),
-        },
-        {
-            "disposition": "materialize",
-            "reason": "Сохранить промежуточный разбор и ограничения без повышения belief.",
-            "source_refs": [note_ref],
-            "affected_ids": [-8],
-            "preservation_ids": [
-                item["id"] for item in material["context"]["preservation_intents"]
-            ],
-        },
-    ]
-    return {
-        "action": "commit",
-        "query": "",
-        "delta_json": json.dumps({"creates": creates}, ensure_ascii=False),
-        "decisions_json": json.dumps(decisions, ensure_ascii=False),
-        "summary": "Сохранить один насос, два состояния, три связи и аналитическую Note.",
-    }
+def load_debug_environment(repository: Path, config: SemanticConfig):
+    names = (config.redis_url_env, config.openai_key_env, "EVERTREE_TEST_REDIS_URL")
+    path = repository / ".env"
+    if path.is_file():
+        values = dotenv_values(path, interpolate=False)
+        for name in names:
+            if values.get(name):
+                os.environ.setdefault(name, values[name])
+    # This harness has private graph/index state, so the configured test Redis is suitable.
+    if os.environ.get("EVERTREE_TEST_REDIS_URL"):
+        os.environ.setdefault(config.redis_url_env, os.environ["EVERTREE_TEST_REDIS_URL"])
 
 
 class DebugSession:
     """Inspect graph, memory, calls, experience_refs and receipt in the debugger."""
 
-    def __init__(self, output_dir: Path, *, live=False):
+    def __init__(self, output_dir: Path):
         self.output_dir = output_dir
-        self.config = SemanticConfig()
+        self.config = SemanticConfig.load(Path(__file__).resolve().parents[2])
         self.graph, self.memory, beliefs = GraphStore(), TraceStore(), BeliefStore()
         self.graph.bootstrap(provenance="debug-bootstrap")
         self.seed_ids = {node.id for node in self.graph.nodes()}
@@ -146,12 +77,13 @@ class DebugSession:
         self.operations = CoreOperations(
             self.graph, self.memory, beliefs, attribution, EvaluationStore(), LearningStore(), set()
         )
+        self.index = RedisSearchIndex(self.config, output_dir)
         self.service = SemanticService(
             self.graph,
             self.memory,
             attribution,
             self.config,
-            ExhaustiveDebugIndex(),
+            self.index,
             self.operations,
         )
         revision = hashlib.sha256(Path(integrate.__code__.co_filename).read_bytes()).hexdigest()
@@ -178,7 +110,7 @@ class DebugSession:
                 "self": [],
             },
         }
-        self.provider = CodexProvider(state_dir=output_dir / "codex") if live else None
+        self.provider = CodexProvider(state_dir=output_dir / "codex")
         self.calls = []
         self.experience_refs = []
         self.receipt = None
@@ -197,8 +129,6 @@ class DebugSession:
         self.experience_refs.append(note_ref)
 
     async def model(self, payload):
-        if self.provider is None:
-            return scripted_decision(json.loads(payload["prompt"])["material"], self.graph)
         parsed = None
         async for event in self.provider.run(
             uuid4().hex,
@@ -255,6 +185,16 @@ class DebugSession:
     async def run(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         try:
+            missing = [
+                name
+                for name in (self.config.redis_url_env, self.config.openai_key_env)
+                if not os.environ.get(name)
+            ]
+            if missing:
+                raise RuntimeError(
+                    "Для штатного поиска задайте в .env или PyCharm: " + ", ".join(missing)
+                )
+            self.index.attach(self.graph)
             self.record_experience()
             outcome = await integrate(
                 self, self.experience_refs
@@ -268,27 +208,29 @@ class DebugSession:
             # Breakpoint here: inspect created, self.receipt, self.graph and self.memory.
             return created
         finally:
-            for name, value in {
-                "graph": self.graph.snapshot(),
-                "trace": self.memory.snapshot(),
-                "receipt": self.receipt,
-                "calls": self.calls,
-            }.items():
-                (self.output_dir / f"{name}.json").write_text(
-                    json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8"
-                )
-            if self.provider:
-                await self.provider.close()
+            try:
+                for name, value in {
+                    "graph": self.graph.snapshot(),
+                    "trace": self.memory.snapshot(),
+                    "receipt": self.receipt,
+                    "calls": self.calls,
+                }.items():
+                    (self.output_dir / f"{name}.json").write_text(
+                        json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8"
+                    )
+            finally:
+                try:
+                    await self.index.close()
+                finally:
+                    await self.provider.close()
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--live", action="store_true", help="Решения реальной модели через Codex")
-    args = parser.parse_args()
     repository = Path(__file__).resolve().parents[2]
     output_dir = repository / "tmp" / "debug-integration" / uuid4().hex[:12]
-    session = DebugSession(output_dir, live=args.live)
-    print(f"Режим: {'реальная модель' if args.live else 'заданные решения модели'}")
+    session = DebugSession(output_dir)
+    load_debug_environment(repository, session.config)
+    print(f"Codex: {session.config.remember.model}, {session.config.remember.effort}")
     print(f"Задание: {USER_TASK}\nАбзац: {INPUT_TEXT}\nАнализ: {CONSCIOUS_ANALYSIS}")
     print(f"Артефакты: {output_dir}", flush=True)
     created = asyncio.run(session.run())

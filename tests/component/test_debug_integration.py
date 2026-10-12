@@ -1,46 +1,73 @@
-"""The debugger example exercises real writes, temporal views and receipt replay."""
+"""Debug harness configuration and provider forwarding without external services."""
 
 import json
 
-from evertree.core.graph.store import GraphStore
-from evertree.core.memory.store import TraceStore
-from evertree.core.memory.types import TraceOutputRef
-from evertree.debug_integration import CONSCIOUS_ANALYSIS, DebugSession
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+import pytest
+
+from evertree.core.provider import AgentEvent
+from evertree.core.semantics.config import SemanticConfig
+from evertree.core.semantics.index import RedisSearchIndex
+from evertree.debug_integration import DebugSession, load_debug_environment
 
 
-async def test_debug_example_preserves_history_and_replays_without_another_model_call(tmp_path):
-    session = DebugSession(tmp_path)
-    created = await session.run()
-    graph = GraphStore.from_snapshot(json.loads((tmp_path / "graph.json").read_text()))
-    memory = TraceStore.from_snapshot(json.loads((tmp_path / "trace.json").read_text()))
-    pump = next(node for node in created if node["kind"] == "instance")
-    facets = sorted(
-        (node for node in created if node["kind"] == "facet"),
-        key=lambda n: graph.get(n["id"]).valid_from,
-    )
-    assert len(facets) == 2
-    for at, expected in (
-        ("2026-10-12T09:05:00+00:00", [facets[0]["id"]]),
-        ("2026-10-12T09:10:00+00:00", [facets[1]["id"]]),
-        ("2026-10-12T09:20:00+00:00", []),
+def test_load_local_secrets_preserves_environment_and_accepts_test_redis(tmp_path, monkeypatch):
+    for name in (
+        "OPENAI_API_KEY",
+        "EVERTREE_REDIS_URL",
+        "EVERTREE_TEST_REDIS_URL",
+        "UNRELATED_KEY",
     ):
-        rows = graph.query_view("STATE_IDENTITY", "get_facets", instance=pump["id"], valid_at=at)
-        assert [row.value for row in rows] == expected
-    assert sum(node["kind"] == "relation_instance" for node in created) == 3
-    assert (
-        next(node for node in created if node["kind"] == "note")["description"]
-        == CONSCIOUS_ANALYSIS
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "from-pycharm")
+    (tmp_path / ".env").write_text(
+        'OPENAI_API_KEY="from-file"\nEVERTREE_TEST_REDIS_URL="redis://test/$literal"\n'
+        'UNRELATED_KEY="do-not-load"\n',
+        encoding="utf-8",
     )
-    assert (
-        memory.resolve(TraceOutputRef(**session.experience_refs[-1]))["text"] == CONSCIOUS_ANALYSIS
-    )
-    assert not session.receipt["pending_preservation_ids"]
-    assert not session.operations.beliefs.snapshot()["targets"]
+    load_debug_environment(tmp_path, SemanticConfig())
+    import os
 
-    before = len(session.calls), session.graph.revision
-    session.metadata["run_id"] = "debug-retry"
-    replay = await run(session, session.experience_refs)
-    assert replay["result"] == session.receipt
-    assert session.graph.revision == before[1]
-    assert [call["method"] for call in session.calls[before[0] :]] == ["semantic.sources"]
+    assert os.environ["OPENAI_API_KEY"] == "from-pycharm"
+    assert os.environ["EVERTREE_REDIS_URL"] == "redis://test/$literal"
+    assert "UNRELATED_KEY" not in os.environ
+
+
+async def test_missing_search_configuration_stops_before_model_usage(tmp_path, monkeypatch):
+    session = DebugSession(tmp_path)
+    for name in (session.config.redis_url_env, session.config.openai_key_env):
+        monkeypatch.delenv(name, raising=False)
+    assert isinstance(session.index, RedisSearchIndex)
+    with pytest.raises(RuntimeError, match="PyCharm"):
+        await session.run()
+    assert session.calls == []
+    assert json.loads((tmp_path / "receipt.json").read_text()) is None
+    assert (tmp_path / "graph.json").is_file()
+    assert (tmp_path / "trace.json").is_file()
+
+
+async def test_model_forwards_program_request_and_returns_provider_output(tmp_path):
+    session = DebugSession(tmp_path)
+    requests = []
+    provider_output = {"action": "search", "query": "new query from provider"}
+
+    class RecordingProvider:
+        async def run(self, run_id, request):
+            requests.append(request)
+            yield AgentEvent("completed", {"parsed": provider_output})
+
+    session.provider = RecordingProvider()
+    payload = {
+        "prompt": "experience selected by the Program",
+        "instructions": "instructions selected by the Program",
+        "output_schema": {"type": "object"},
+    }
+    result = await session.step("agent.run", payload)
+    assert result["parsed"] is provider_output
+    assert len(requests) == 1
+    request = requests[0]
+    assert request.prompt == payload["prompt"]
+    assert request.instructions == payload["instructions"]
+    assert request.output_schema == payload["output_schema"]
+    assert request.model == session.config.remember.model
+    assert request.effort == session.config.remember.effort
+    assert session.calls[0]["result"] == result
