@@ -1,1 +1,0 @@
-"""KnowledgeRemembering process."""

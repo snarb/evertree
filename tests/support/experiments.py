@@ -58,3 +58,40 @@ class EntrypointTest(unittest.TestCase):
     memory.finish_run(run)
     learning.create_state("beta_bernoulli", state_id="known")
     return repo, lifecycle, branch, ProgramSpec("program", PATH, revision), graph, memory, learning
+
+
+INTEGRATION_PATH = "src/evertree/processes/knowledge_integration.py"
+INTEGRATION_SOURCE = """
+async def run(name, ctx):
+    refs = [{'event_ref': 1, 'output_path': []}]
+    material = await ctx.step('semantic.sources', {'experience_refs': refs})
+    assert material['context']['task']['mode'] == 'evaluation'
+    return {'result': await ctx.step('semantic.commit', {
+        'experience_refs': refs,
+        'proposal': {'updates': [{'id': 1, 'changes': {'name': name}}]},
+        'decisions': [{'disposition': 'materialize', 'reason': 'Source correction',
+            'source_refs': refs, 'affected_ids': [1], 'preservation_ids': []}]
+    })}
+"""
+
+
+def register_integration(graph, revision):
+    """An admitted semantic child exercises mutation in the isolated experiment."""
+    graph.apply(
+        GraphDelta(
+            creates=(
+                Node(
+                    2,
+                    "KnowledgeIntegration.exec",
+                    kind="program",
+                    properties={
+                        "git_path": INTEGRATION_PATH,
+                        "slug": "knowledge_integration",
+                        "active": True,
+                    },
+                ),
+            )
+        ),
+        provenance="registered test integration",
+    )
+    return ProgramSpec(2, INTEGRATION_PATH, revision)

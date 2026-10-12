@@ -15,13 +15,15 @@ Consciousness may continue execution, change the solution method, suspend a `Tas
 Consciousness works as a resumable loop:
 
 ```text
-observe current Task / Program / ProgramRun
+Task + current plan + local step goal
         ↓
-interpret current situation
+reason / use tools / delegate within the step budget
         ↓
-act / delegate / suspend
+save intermediate analytical result and working state
         ↓
-observe again
+integrate experience
+        ↓
+continue / revise plan / wait / propose completion
 ```
 
 #topic_details
@@ -230,7 +232,7 @@ PreparedContext
 → data prepared for the next processing of a Task and Episode.
 ```
 
-`TaskState` stores progress, the current [[#Planning|`Plan`]], [[#Execution Budgets|budgets and recorded spending]], unresolved questions, waits, status, task-specification revision, and references to current objects, related Episodes, material results, and [[Memory#^def-ProgramRun|`ProgramRun`s]]. Execution facts belong to `ProgramRun` and [[Memory#^def-TraceEvent|`TraceEvent`]]. [[Memory#^active-state|`active_state`]] is part of Memory and speeds access to recently active tasks and episodes; Memory controls this cache's size and cleanup.
+`TaskState` stores progress, the current [[#Planning|`Plan`]], [[#Execution Budgets|budgets and recorded spending]], unresolved questions, waits, status, task-specification and input revisions, current conscious step, latest analytical result and its reference, and the integration checkpoint. It also stores references to current objects, related Episodes, material results, and [[Memory#^def-ProgramRun|`ProgramRun`s]]. Execution facts belong to `ProgramRun` and [[Memory#^def-TraceEvent|`TraceEvent`]]. [[Memory#^active-state|`active_state`]] is part of Memory and speeds access to recently active tasks and episodes; Memory controls this cache's size and cleanup.
 
 > [!definition]
 > **PreparedContext** (formerly `WorkingContext`) — a typed [[Memory#^def-OperatorOutput|`OperatorOutput`]] that prepares data for work on a Task and its related Episode: current input, selected information from memory, and references to its sources.
@@ -275,6 +277,8 @@ self_improvement_budget = 20  # Approx. up to 24 extra minutes for self-improvem
 The Task and Episode define the search scope: preparation retrieves related results and history, and, when useful, similar or other relevant experience. Recent data are available through references in `active_state`; older data are found through retrieval. Use the exact saved content or a compressed representation with known loss of detail and preserved provenance.
 
 Include the latest incoming message in full. Selected earlier messages from the user and agent, tool calls, and tool results may be passed as `messages`, preserving roles, order, and the link between each call and its result.
+
+For the next conscious step, include the current plan, the complete most recent analytical Note and its trace reference, open questions, the integration receipt, and selected earlier results. This working state is available even when integration chose `trace_only`. Internal Notes are not appended to the user-message history; retrieve earlier analyses by their references rather than copying the complete sequence into every prompt.
 
 Minimal interface for a standalone preparation program:
 
@@ -1011,6 +1015,48 @@ The shared cycle connects incoming data to a task and episode, retrieves relevan
 
 Preparation selects useful experience, while [[Process Plane/Program Layer#^granularity-adaptation|granularity control]] selects an appropriate level of detail within the budget. When learning a process model, this allows significant transitions to be forecast and checked separately; for familiar tasks, it can reduce processing costs.
 
+### Conscious Step Contract
+
+A conscious step advances one local objective or reaches one meaningful point of reconsideration. It may produce a plan, partial analysis, experimental result, revised hypothesis or an identified information gap. It need not solve the task or send a user response. Several closely related tool calls can belong to one step; neither a tool call nor a text fragment defines a step automatically.
+
+`ConsciousStepSpec` records:
+
+```text
+local_goal          — the next advancement to obtain;
+expected_result     — the intermediate result or decision boundary;
+active_time_minutes — a finite limit within the remaining Task budget.
+```
+
+Initial TaskFraming chooses the first step; a simple task may complete in that step. Later steps are proposed in `ConsciousStepResult`. Runtime enforces the step limit, rather than giving every invocation the entire remaining task allowance. A step ends when its local result is obtained, evidence changes the direction, a new substantial decision or external information is needed, or its budget is reached.
+
+`ConsciousStepResult` contains:
+
+```text
+analysis             — AnalyticalNote with text and source_refs;
+findings             — optional selected Notes or Claims;
+plan / progress      — current working plan and achieved advancement;
+unresolved_questions — what remains open;
+disposition          — continue | waiting | propose_completion | failed;
+next_step            — required proposal when continuing;
+user_message         — optional, separately composed external message.
+```
+
+`AnalyticalNote` uses existing Note/Claim semantics: `text`, `source_refs`, `kind` (`note` or `claim`), optional `significance` and `significance_reason`, and `preserve`. It records a readable analytical result with the premises, relevant sources, qualifications and next checks needed to understand or challenge it. This is an explicit model output, not access to hidden model reasoning or a claim to record every internal computation. Its contents are appropriate to the step; no fixed list of reasoning sections or final conclusion is required.
+
+The result and its parts are addressable in trace. A new base graph type for reasoning is unnecessary. `preserve` requests durable representation of the selected meaning; a significance assessment alone guides integration without imposing that obligation. The same contract can express a provisional hypothesis without promoting it to established knowledge.
+
+On forced interruption, runtime retains actual calls, results and the `interrupted` state. It does not manufacture a completed Note. Resumption uses the saved working state and trace to choose the next step. `ConsciousStepSpec` is separate from `EpisodeStepSelection`, which selects an input fragment; a fragment can be an input to a conscious step.
+
+### Step Integration and Recovery
+
+At a completed step boundary runtime saves the result, updates working state, and runs [[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] over that result and accumulated experience before applying the next control decision. Nested tool calls and child Programs belong to their owner's batch; they do not each trigger an additional integration. Standalone delegated work uses the same boundary when returning its result to the controller. Explicit integration within a step remains available when subsequent work needs the graph immediately.
+
+Integration reads the full eligible history through a checkpoint, including experience older than a recent-context window. Large material is processed as addressable fragments with explicit remaining work. Own integration events and duplicate technical delivery notifications are excluded from automatic reprocessing. `trace_only` and explicitly recorded ordinary uncertainty are valid outcomes; processing errors, unprocessed material, or unmet `preserve` obligations leave integration incomplete. A failure or insufficient budget leaves the task waiting with its checkpoint; no following step or successful completion bypasses that obligation. Basic integration uses the main task budget even when the additional self-improvement allowance is zero. Cancellation remains immediate.
+
+The checkpoint records input/specification versions, source boundary, completed batches, pending batch and phase. Runtime-issued operation IDs survive new run IDs after restart. A completed graph mutation, audit and receipt are recovered together; a crash before advancing the task checkpoint must not duplicate knowledge. General Program completion recovery must not turn a resumed integration into a new user message or treat it as ordinary delegated work.
+
+New input preserves an already recorded analysis as historical experience, but invalidates an outdated next step or prepared final message. A material specification change requires reconsidering experience under the new specification. The existing memory lifecycle controls eventual retention and compaction; step integration introduces no background scheduler or autonomous Goal store.
+
 ### Overall Flow
 
 #topic_details
@@ -1033,12 +1079,14 @@ Goal / internal Event / Replay → create or continue a Task
                  → target Program and its contract
                  → ready arguments or arguments_formatter
                  → call ProcessModel or exec-Program
-                 → ProgramResult → continue / wait / check
+                 → intermediate result + analytical Note + working state
+                 → KnowledgeIntegration → receipt
+                 → continue / wait / propose completion
                                   ↺
 
 for an action selected by either control path:
     applicable Verification and CommitmentControl
-    → execute action / GraphDelta / send response
+    → execute action / integrate knowledge / send response
     → observed outcome → Memory and related Task / Episode
 ```
 
@@ -1100,6 +1148,8 @@ The accepted action is carried out by the appropriate execution mechanism throug
 
 The text of a composed response is an internal result. **Sending a response to a user is a separate external action** with a specific recipient, channel, and content, subject to the same applicable rules. Returning `ProgramResult`, sending a message, and completing a Task are different events. A clarifying question usually leaves the task waiting for a reply; an intermediate message leaves it in progress; a final response completes it only when the objective, success criteria, and required conditions are satisfied. A send error is not treated as successful delivery.
 
+Internal `analysis` is never used as the default outgoing response. Only `user_message` supplies text for delivery. `propose_completion` asks the controller to check that eligible experience has been integrated, preservation obligations have been met, input and specification versions are still current, and independent answer verification succeeds. Only then may it deliver the final response and mark the Task successful. Completion of a conscious step is not completion of its Task.
+
 Therefore, preparation that detects missing data returns that information to the caller. The caller decides whether to request information from the user, read another source, wait for continuation, or change the solution method. Feedback by itself does not authorize sending a message or taking an external action.
 
 ### Checking the Overall Flow Against Scenarios
@@ -1154,10 +1204,10 @@ Reflection may also occur within an unfinished [[#`Goal`, `Task`, and Task Speci
 
 To keep irrelevant schemas out of context, each logical invocation starts with base tools and a short catalog. `load_tool_set(name)` adds callable definitions from a shared `ToolSet` registry:
 
-- `low_level_graph_tools`: exact views, schemas, navigation, history, temporal readings and GraphDelta;
+- `low_level_graph_tools`: exact views, schemas, navigation, history and temporal readings;
 - `program_development_tools`: development and independent evaluation of Programs;
 - `external_action_tools`: external action inspection and execution.
 
-Loading is idempotent, lasts one logical invocation, and never expands permissions. The next invocation starts with base tools even when reusing an SDK thread. The pinned SDK ignores `dynamicTools` on `thread/resume`. At an SDK-turn boundary the adapter therefore starts a new internal thread with updated tools and the complete public history/tool results. It remains one logical invocation with cumulative resource accounting; listing schemas in text alone is insufficient.
+Loading is idempotent, lasts one logical invocation, and never expands permissions. All Codex threads use `ephemeral: true` so helper calls do not enter the user’s Codex history. The provider retains public messages and tool results locally while it is open; reasoning items are excluded. Continuations start a fresh ephemeral thread with that context and current tool definitions, because the previous client process has already closed. The next logical invocation starts with base tools. Tool-loading continuations remain one logical invocation with cumulative resource accounting; listing schemas in text alone is insufficient.
 
-The [[Semantics Plane#Consciousness Interface|semantic interface]] delegates retrieval and knowledge preparation to separate cheap Programs without changing consciousness's model profile.
+The [[Semantics Plane#Consciousness Interface|semantic interface]] delegates retrieval and experience integration to separate cheap Programs without changing consciousness's model profile.

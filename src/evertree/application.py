@@ -20,6 +20,7 @@ from evertree.core.runtime.controller import Runtime
 
 from ._application.consciousness import ConsciousnessMixin
 from ._application.execution import TaskExecutionMixin
+from ._application.integration import KnowledgeIntegrationMixin
 from ._application.persistence import PersistenceMixin
 from ._application.programs import ProgramsMixin
 from ._application.prompts import (
@@ -80,7 +81,14 @@ class EventSubscription:
             self._queue.put_nowait(None)
 
 
-class EverTree(ConsciousnessMixin, TaskExecutionMixin, PersistenceMixin, ProgramsMixin, ToolsMixin):
+class EverTree(
+    ConsciousnessMixin,
+    TaskExecutionMixin,
+    KnowledgeIntegrationMixin,
+    PersistenceMixin,
+    ProgramsMixin,
+    ToolsMixin,
+):
     """An asynchronous local agent. Use as an async context manager.
 
     ``directory`` is the agent's home, not an unrestricted tool working directory.
@@ -352,9 +360,13 @@ class EverTree(ConsciousnessMixin, TaskExecutionMixin, PersistenceMixin, Program
                 raise ValueError("User resource limits must be finite and positive")
             state.hard_limits = dict(hard_limits)
         state.review_required = True
-        return await self.submit(
-            text or "Continue the saved task from its retained state.", task_id=task_id
-        )
+        if text:
+            return await self.submit(text, task_id=task_id)
+        state.status = "queued"
+        self.attention.request_attention(state.id, state.attention_priority)
+        if self._pump is None or self._pump.done():
+            self._pump = asyncio.create_task(self._run_queue())
+        return state
 
     async def _publish(self, kind, task_id=None, data=None):
         event = EverTreeEvent(kind, task_id, data or {})

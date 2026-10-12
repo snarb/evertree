@@ -10,11 +10,11 @@ from tests.support.runtime import TestProcess, commit_programs
 from tests.support.semantics import semantic_world
 
 
-async def test_remember_repairs_delta_calls_search_child_and_replays_once(tmp_path):
+async def test_integration_repairs_delta_calls_search_child_and_replays_once(tmp_path):
     """Only worker/DBOS replay can prove the child call is outside a durable step."""
     root = Path(__file__).resolve().parents[2]
     paths = [
-        "src/evertree/processes/semantic_processing/knowledge_remembering/_exec.py",
+        "src/evertree/processes/semantic_processing/knowledge_integration/_exec.py",
         "src/evertree/processes/semantic_processing/semantic_search/_model.py",
         "src/evertree/common/semantic_search.py",
         "src/evertree/common/structured.py",
@@ -27,14 +27,18 @@ async def test_remember_repairs_delta_calls_search_child_and_replays_once(tmp_pa
     event = world.memory.record(run, "input", output="Cat is an animal")
     world.memory.finish_run(run)
     arguments = {
-        "statements": ["Cat is an animal"],
-        "sources": [json_value(world.memory.output_ref(event))],
+        "experience_refs": [json_value(world.memory.output_ref(event))],
     }
     attempts, traces = [], []
 
     async def gateway(method, payload):
         payload = dict(payload)
         metadata = payload.pop("_runtime")
+        metadata.update(
+            knowledge_integration_authorized=metadata["program"]["program_id"] == parent.program_id,
+            integration_operation_id="packet",
+            integration_context={},
+        )
         if method == "resolve_program":
             assert payload["program_id"] in {"semantic_search", child.program_id}
             return asdict(child)
@@ -45,15 +49,27 @@ async def test_remember_repairs_delta_calls_search_child_and_replays_once(tmp_pa
                 "action": "search",
                 "query": "Process",
                 "delta_json": "",
+                "decisions_json": "[]",
                 "summary": "Inspect existing knowledge",
             }
             if len(attempts) > 1:
                 creates = [{"id": -1, "name": "Cat"}]
-                if len(attempts) == 2:
+                if len(attempts) in {2, 3}:
                     creates.append({"id": -2, "name": "cat"})
                 decision.update(
                     action="commit",
                     delta_json=json.dumps({"creates": creates}),
+                    decisions_json=json.dumps(
+                        [
+                            {
+                                "disposition": "materialize",
+                                "reason": "Useful class",
+                                "source_refs": arguments["experience_refs"],
+                                "affected_ids": [item["id"] for item in creates],
+                                "preservation_ids": [],
+                            }
+                        ]
+                    ),
                     summary="Saved Cat",
                 )
             return {"parsed": decision}
@@ -67,13 +83,13 @@ async def test_remember_repairs_delta_calls_search_child_and_replays_once(tmp_pa
     )
     try:
         result = await runtime.execute("task", parent, arguments, run_id="remember")
-        assert result.result["status"] == "saved"
-        assert len(attempts) == 3 and attempts[-1]["errors"]
-        assert len([e for e in traces if e["type"] == "run_started"]) == 2
+        assert result.result["status"] == "complete"
+        assert len(attempts) == 4 and attempts[-1]["errors"]
+        assert len([e for e in traces if e["type"] == "run_started"]) == 3
         revision_before = world.graph.revision
         again = await runtime.execute("task", parent, arguments, run_id="remember")
         assert again.result == result.result and world.graph.revision == revision_before
-        assert len(attempts) == 3
+        assert len(attempts) == 4
     finally:
         await runtime.close()
 

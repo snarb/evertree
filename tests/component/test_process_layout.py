@@ -50,7 +50,7 @@ def test_own_process_tree_preserves_general_process_and_role_semantics(seed_tree
         node.id for node in graph.ancestors(graph.find("Process").id)
     }
     assert graph.find("SemanticSearch.model").properties["role"] == "model"
-    assert graph.find("KnowledgeRemembering.exec").properties["role"] == "exec"
+    assert graph.find("KnowledgeIntegration.exec").properties["role"] == "exec"
 
 
 @pytest.mark.parametrize(

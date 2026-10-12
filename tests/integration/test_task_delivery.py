@@ -6,8 +6,8 @@ from functools import partial
 import pytest
 
 from evertree.application import EverTree
-from evertree.core.provider import ScriptedProvider
 from evertree.core.runtime.controller import Runtime
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import completed, decision, verification, wait_for_event
 from tests.support.runtime import TestProcess
 
@@ -24,6 +24,11 @@ def task_frame(objective, *, constraints=(), success_criteria=()):
             "execution_budget": {"active_time_minutes": 3},
             "self_improvement_budget": 0,
             "budget_reason": "Small deterministic acceptance scenario",
+            "initial_step": {
+                "local_goal": objective,
+                "expected_result": "A checked result or a clarification question",
+                "active_time_minutes": 1,
+            },
         }
     )
 
@@ -60,13 +65,13 @@ async def test_durable_intake_and_program_provenance_before_delivery(
         assert not task.terminal
         assert task.specification.constraints == constraints
         assert task.specification.source_ids == ("report-request",)
-        assert json.loads(provider.requests[0].prompt)["request"] == request
+        assert json.loads(provider.task_requests[0].prompt)["request"] == request
         for index, candidate in ((2, wrong_answer), (4, corrected)):
-            check = json.loads(provider.requests[index].prompt)
+            check = json.loads(provider.task_requests[index].prompt)
             assert check["answer"] == candidate
             assert check["specification"]["constraints"] == list(constraints)
             assert check["specification"]["source_ids"] == ["report-request"]
-        assert rejection in provider.requests[3].prompt
+        assert rejection in provider.task_requests[3].prompt
         intake = [
             json.loads(line)
             for line in (app.state_dir / "intake.jsonl").read_text(encoding="utf-8").splitlines()

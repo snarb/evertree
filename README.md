@@ -97,3 +97,11 @@ effort = "medium"
 ```
 
 This does not change the consciousness profile. Graph commits schedule index reconciliation; query-time generation checks repair missing indexes and prevent reads from a newer restored state. Redis contents are disposable and excluded from state backups.
+
+### Conscious steps and experience integration
+
+Consciousness works in bounded iterations: a local objective, related tool or Program calls, and an explicit analytical Note. The result may be an intermediate plan or hypothesis. The latest Note and working plan remain available to the next iteration through task state and trace; only a separately composed `user_message` is delivered to the user.
+
+After each step, `KnowledgeIntegration` examines the recorded experience before work continues. Use `graph.integrate(experience_refs, focus=None)` from consciousness, or `ctx.call("knowledge_integration", ...)` from a Program, when graph integration is needed earlier. References point to already recorded material; callers need not pre-extract every statement. The runtime supplies the task and Self context. Explicit `preserve` intentions must be fulfilled or reported as obstacles, while routine material may remain in trace. Public `graph.apply` is unavailable.
+
+The `semantics.remember` configuration above selects the integration model profile. Integration receipts and checkpoints survive task resumption; final delivery requires completed integration and answer verification. See [the conscious step contract](docs/architecture/Cognition%20and%20Attention.md#conscious-step-contract) and [knowledge integration](docs/architecture/Semantics%20Plane.md#knowledge-integration).

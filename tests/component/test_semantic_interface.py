@@ -1,4 +1,5 @@
 import asyncio
+import json
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -181,28 +182,40 @@ def test_describe_discovers_properties_without_computing_and_uses_one_time(monke
     assert read_property(g, runtime, entity.id, relative.id)["status"] == "needs_parameters"
 
 
-def test_remember_invalid_proposal_atomic_and_idempotent_sources():
+def test_integration_invalid_proposal_atomic_and_idempotent_sources():
     world = semantic_world()
     g, memory = world.graph, world.memory
     run = memory.start_run("input", "revision", {})
     event = memory.record(run, "message", output="Кошка — животное")
     memory.finish_run(run)
     payload = {
-        "statements": ["Кошка — животное"],
-        "sources": [json_value(memory.output_ref(event))],
+        "experience_refs": [json_value(memory.output_ref(event))],
+        "decisions": [
+            {
+                "disposition": "materialize",
+                "reason": "Useful class",
+                "source_refs": [json_value(memory.output_ref(event))],
+                "affected_ids": [-1],
+                "preservation_ids": [],
+            }
+        ],
         "proposal": {"creates": [{"id": -1, "name": "Кошка"}, {"id": -2, "name": "кошка"}]},
     }
     metadata = {
-        "run_id": "remember",
+        "run_id": "integration",
         "task_id": "task",
+        "knowledge_integration_authorized": True,
+        "integration_operation_id": "packet",
+        "integration_context": {},
         "program": {"role": "exec", "revision": "revision"},
     }
     before, identity = g.revision, g._next_id
     assert world.service.commit(payload, metadata)["status"] == "invalid"
     assert g.revision == before and g._next_id == identity
     payload["proposal"]["creates"].pop()
+    world.service.results("Кошка", None, [], [], 20, "task")
     result = world.service.commit(payload, metadata)
-    assert result["status"] == "saved"
+    assert result["status"] == "complete"
     assert world.service.commit(payload, metadata) == result
     assert g.revision == before + 1
     change = g._history[-1]
@@ -371,26 +384,43 @@ def test_remember_dedup_preserves_conditions_and_checks_updates():
         )
 
 
-async def test_remember_can_disambiguate_by_id():
-    from types import SimpleNamespace
+async def test_integration_can_disambiguate_by_id():
+    from evertree.processes.semantic_processing.knowledge_integration._exec import run
 
-    from evertree.processes.semantic_processing.knowledge_remembering._exec import run
-
-    calls = []
+    world = semantic_world()
+    input_run = world.memory.start_run("input", "revision", {})
+    event = world.memory.record(input_run, "input", output="Ambiguous term")
+    refs = [json_value(world.memory.output_ref(event))]
+    identity = world.graph.find("Process").id
     answers = iter(
         [
-            {"action": "describe", "query": 42, "delta_json": "", "summary": ""},
-            {"action": "unresolved", "query": "", "delta_json": "", "summary": "Clarify"},
+            {"action": "describe", "query": identity},
+            {
+                "action": "commit",
+                "delta_json": "{}",
+                "decisions_json": json.dumps(
+                    [
+                        {
+                            "disposition": "unresolved",
+                            "reason": "Ambiguous meaning",
+                            "source_refs": refs,
+                            "affected_ids": [],
+                            "preservation_ids": [],
+                        }
+                    ]
+                ),
+            },
         ]
     )
 
-    async def step(method, payload):
-        calls.append((method, payload))
-        return {"parsed": next(answers)} if method == "agent.run" else {}
+    async def model(payload):
+        if "reads" in json.loads(payload["prompt"]) and json.loads(payload["prompt"])["reads"]:
+            assert json.loads(payload["prompt"])["reads"][0]["query"] == identity
+        return next(answers)
 
-    result = await run(SimpleNamespace(step=step), ["statement"], [])
-    assert result["result"]["status"] == "unresolved"
-    assert ("graph.describe", {"subject": 42}) in calls
+    result = await run(context(world, model, role="exec"), refs)
+    assert result["result"]["complete"]
+    assert result["result"]["decisions"][0]["disposition"] == "unresolved"
 
 
 @pytest.mark.parametrize(

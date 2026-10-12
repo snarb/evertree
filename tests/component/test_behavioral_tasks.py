@@ -5,7 +5,7 @@ import pytest
 
 from evertree.core.cognition.control import verification_result
 from evertree.core.cognition.tasks import TaskStore
-from evertree.core.provider import ScriptedProvider
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import completed, decision, verification, wait_for_event
 from tests.support.component import component_app
 
@@ -20,6 +20,11 @@ def task_frame(objective, *, constraints=(), success_criteria=()):
             "execution_budget": {"active_time_minutes": 3},
             "self_improvement_budget": 0,
             "budget_reason": "Small deterministic acceptance scenario",
+            "initial_step": {
+                "local_goal": objective,
+                "expected_result": "A checked result or a clarification question",
+                "active_time_minutes": 1,
+            },
         }
     )
 
@@ -59,13 +64,13 @@ async def test_cog_01_requirements_and_sources_reach_verification_before_deliver
         assert not task.terminal
         assert task.specification.constraints == constraints
         assert task.specification.source_ids == ("report-request",)
-        assert json.loads(provider.requests[0].prompt)["request"] == request
+        assert json.loads(provider.task_requests[0].prompt)["request"] == request
         for index, candidate in ((2, wrong_answer), (4, corrected)):
-            check = json.loads(provider.requests[index].prompt)
+            check = json.loads(provider.task_requests[index].prompt)
             assert check["answer"] == candidate
             assert check["specification"]["constraints"] == list(constraints)
             assert check["specification"]["source_ids"] == ["report-request"]
-        assert rejection in provider.requests[3].prompt
+        assert rejection in provider.task_requests[3].prompt
         intake = [
             json.loads(line)
             for line in (app.state_dir / "intake.jsonl").read_text(encoding="utf-8").splitlines()
@@ -90,6 +95,7 @@ async def test_cog_02_clarification_resumes_same_task_with_both_sources(tmp_path
         [
             task_frame("Count the requested letter in strawberry"),
             decision("Which letter should I count?", "waiting"),
+            task_frame("Count r in strawberry"),
             decision("3"),
             verification(),
         ]
@@ -114,7 +120,7 @@ async def test_cog_02_clarification_resumes_same_task_with_both_sources(tmp_path
         assert len(app.tasks.all()) == 1
         assert tuple(task.episode_ids) == original_episode
         assert task.source_ids == ["question", "clarification"]
-        continuation = json.loads(provider.requests[2].prompt)
+        continuation = json.loads(provider.task_requests[3].prompt)
         assert continuation["task_id"] == task.id
         assert continuation["source_ids"] == ["question", "clarification"]
         assert continuation["incoming"]["source_id"] == "clarification"
@@ -124,7 +130,8 @@ async def test_cog_02_clarification_resumes_same_task_with_both_sources(tmp_path
             and message["content"] == "Count a letter in strawberry"
             for message in continuation["messages"]
         )
-        assert len(provider.requests) == 4  # Framing is not repeated for the reply.
+        assert len(provider.task_requests) == 5
+        assert task.specification.revision == 3
 
 
 @pytest.mark.parametrize("results", [{}, {"report_format": None}])
@@ -166,6 +173,6 @@ async def test_cog_05_unavailable_check_feedback_returns_task_to_waiting(tmp_pat
         task = app.tasks.get(result["task_id"])
         assert result["status"] == "waiting"
         assert not task.terminal
-        assert reason in provider.requests[3].prompt
+        assert reason in provider.task_requests[3].prompt
         assert app.learning.statistics("verified_task_rate")["observed_count"] == 0
-        assert len(provider.requests) == 4
+        assert len(provider.task_requests) == 4

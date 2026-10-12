@@ -1025,6 +1025,20 @@ is not needed for replay, Evaluation, or debugging.
 
 A persistent result is retained longer because it participates in long-term reasoning and retrieval, but it too may later be compacted, replaced, or queued for deletion under the shared memory rules.
 
+### Integrating Recorded Experience
+
+Recording, graph integration and compaction answer separate questions. Runtime records the full registered experience without requiring a significance judgment for each item. [[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] decides how recorded experience should be made available in the persistent graph. Compaction later revisits the amount and form of retained material under the existing lifecycle.
+
+Experience includes [[Cognition and Attention#Conscious Step Contract|intermediate analytical results of consciousness]], not just external observations and final answers. A planning iteration, failed hypothesis or partial explanation can be a trace-local Note with addressable parts. The next step receives the latest Note through working state even if integration chooses not to materialize it. Internal analyses remain separate from outgoing user messages.
+
+Routine observations and analytical results use one integration mechanism. For routine experience, the learnable Program selects useful organization according to task and Self context. For analytical results, it preserves the discovered conditions and reasons, considers significance, and fulfills explicit `preserve` intentions or reports a concrete obstacle. A coherent persistent Note is sufficient when finer formalization would lose meaning. Large sets of ordinary measurements may be useful collectively without creating a Facet for every value.
+
+Distinguish **not examined yet**, **examined and left in trace**, and **examined but unresolved**. The task checkpoint records the source boundary, versions, completed batches, remaining material and current phase. Processing failures and unsatisfied explicit preservation intentions leave the batch incomplete; an empty accepted graph delta is valid. Own integration traces do not continually feed a new automatic integration cycle. A stable operation ID allows a restarted task to reuse a mutation receipt before advancing its checkpoint.
+
+The integration audit records decisions, reasons and grounds outside semantic fact properties, so it does not alter fact identity or create independent evidence. The audit of an atomic graph delta retains the grounds of its materialized candidates; objects changed by that delta share the audit. The complete batch report is not a shared retention parent of every created fact: materializing one candidate must not pin unrelated `trace_only` inputs. The normal retention closure still applies to any shared source that a fact actually needs. No review label, significance assessment or repeated integration increases belief by itself.
+
+An unfinished task holds temporary retention obligations for its working results, required integration sources and receipts. They survive waiting and recovery; the task releases its own obligations on completion, failure or cancellation. These temporary obligations do not become permanent dependencies of materialized facts.
+
 ### Memory Lifecycle Components
 
 The compaction and deletion lifecycle is distributed across several components with non-overlapping responsibilities.
@@ -1590,6 +1604,8 @@ Choose the highest level justified by the assessment. The scale is [[Attribution
 Assess selectively during substantive review by [[#^def-CompactExpirienceProgram|compaction]], [[#^def-MemoryConsolidationProgram|consolidation]], [[Self#From Experience to a Confirmed Problem|Reflection]], or [[Cognition and Attention#^def-Consciousness|consciousness]]. Retain a brief rationale and scope in the review result with ordinary [[#^def-ResultProvenance|provenance]]. Significance may be raised or lowered; it need not be assessed when every object is created. For immutable trace objects, store it separately with a reference to the object.
 
 `significance` is an additional feature for [[#^def-RankMemories|RankMemories]] and for selecting storage detail in [[#^def-CompactExpirienceProgram|CompactExpirienceProgram]]. It is an assessment for memory management; the final retrieval score depends on the current query.
+
+During integration, significance and its rationale also help select the representation of new experience. This is separate from current-task relevance and from an explicit `preserve` intention. The latter obliges integration to save the selected meaning or report an obstacle; it does not imply exceptional significance, truth, permanent retention or exemption from later compaction.
 
 #### Cautions
 

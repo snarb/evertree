@@ -34,6 +34,11 @@ def framed(minutes=11, improvement=35):
         "execution_budget": {"active_time_minutes": minutes},
         "self_improvement_budget": improvement,
         "budget_reason": "Specific scope and benefit",
+        "initial_step": {
+            "local_goal": "Inspect the available task inputs",
+            "expected_result": "Identify the first testable explanation",
+            "active_time_minutes": 1,
+        },
     }
 
 
@@ -55,6 +60,7 @@ async def test_framing_keeps_task_specific_budget_and_uses_only_provider_gateway
     result = await frame(context, "Solve the request", {"hard_limits": {"active_time_minutes": 20}})
     assert result["result"]["execution_budget"] == {"active_time_minutes": 11}
     assert result["result"]["self_improvement_budget"] == 35
+    assert result["result"]["initial_step"] == framed()["initial_step"]
     assert len(context.calls) == 1
     method, payload = context.calls[0]
     assert method == "agent.run"
@@ -70,6 +76,21 @@ async def test_framing_rejects_nonfinite_or_missing_budget_instead_of_inserting_
     del malformed["execution_budget"]
     with pytest.raises(ValueError, match="missing"):
         await frame(Context(malformed), "Task")
+
+
+async def test_framing_requires_a_bounded_initial_step_and_resource_review_does_not():
+    from evertree.processes.cognitive_control.resource_control._exec import run as review
+
+    missing_step = framed()
+    del missing_step["initial_step"]
+    with pytest.raises(ValueError, match="initial_step"):
+        await frame(Context(missing_step), "Task")
+    oversized = framed()
+    oversized["initial_step"]["active_time_minutes"] = 12
+    with pytest.raises(ValueError, match="cannot exceed"):
+        await frame(Context(oversized), "Task")
+    reviewed = await review(Context(missing_step), {"progress": "First hypothesis tested"})
+    assert reviewed["result"]["execution_budget"] == missing_step["execution_budget"]
 
 
 async def test_next_episode_step_cannot_access_unavailable_sources():

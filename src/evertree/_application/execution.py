@@ -55,13 +55,21 @@ class TaskExecutionMixin:
                 if improvement:
                     meter["charged_seconds"] += seconds
 
-    async def _invoke(self, task_id, request: AgentRequest, *, run_ref=None, conversation=False):
+    async def _invoke(
+        self,
+        task_id,
+        request: AgentRequest,
+        *,
+        run_ref=None,
+        conversation=False,
+        run_name="Consciousness",
+    ):
         request_id = uuid4().hex
         async with self._state_lock:
             self._active_requests[request_id] = task_id
         own_run = run_ref is None
         run = (
-            self.memory.start_run("Consciousness", self._program_revision(), {"task_id": task_id})
+            self.memory.start_run(run_name, self._program_revision(), {"task_id": task_id})
             if own_run
             else self.memory.get_run(run_ref)
         )
@@ -88,6 +96,7 @@ class TaskExecutionMixin:
             usage_known = False
             result = None
             session = None
+            interrupted = False
             try:
 
                 async def handle_tool(name, args):
@@ -107,7 +116,7 @@ class TaskExecutionMixin:
                 async for event in self.provider.run(
                     request_id, request, tool_handler=handle_tool, approval_handler=handle_approval
                 ):
-                    self.memory.record(
+                    trace_event = self.memory.record(
                         run, "provider_event", output={"kind": event.kind, "data": event.data}
                     )
                     if event.kind == "session":
@@ -115,7 +124,11 @@ class TaskExecutionMixin:
                         if conversation:
                             self._sessions[task_id] = session
                     elif event.kind == "completed":
-                        result = {**event.data, "session": session}
+                        result = {
+                            **event.data,
+                            "session": session,
+                            "source_ref": dataclasses.asdict(self.memory.output_ref(trace_event)),
+                        }
                     elif event.kind == "error":
                         raise RuntimeError(event.data["message"])
                     elif event.kind == "cancelled":
@@ -130,7 +143,6 @@ class TaskExecutionMixin:
                                 "Provider usage is unknown; cannot enforce the user token limit"
                             )
                     if event.kind in {
-                        "message",
                         "tool_call",
                         "tool_result",
                         "approval",
@@ -144,10 +156,21 @@ class TaskExecutionMixin:
                         "Provider usage is unknown; cannot enforce the user token limit"
                     )
                 return result
+            except (asyncio.CancelledError, TimeoutError):
+                interrupted = True
+                await self.provider.cancel(request_id)
+                raise
             finally:
                 self._active_requests.pop(request_id, None)
                 if own_run:
-                    self.memory.finish_run(run, status="completed" if result else "failed")
+                    self.memory.finish_run(
+                        run,
+                        status="interrupted"
+                        if interrupted
+                        else "completed"
+                        if result
+                        else "failed",
+                    )
                 if used_tokens:
                     self.tasks.record_usage(
                         task_id,

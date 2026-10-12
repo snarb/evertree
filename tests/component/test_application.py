@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from evertree.application import EverTree
-from evertree.core.provider import ScriptedProvider
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import decision, framing, verification, wait_for_event
 from tests.support.component import component_app
 
@@ -45,6 +45,7 @@ async def test_clarification_continues_same_task_with_previous_context(tmp_path)
         [
             framing("Count a requested letter"),
             decision("Which letter?", "waiting"),
+            framing("Count r in strawberry"),
             decision("3"),
             verification(),
         ]
@@ -62,8 +63,8 @@ async def test_clarification_continues_same_task_with_previous_context(tmp_path)
             agent.tasks.get(identity).spent["active_time_minutes"]
             >= usage_before["active_time_minutes"]
         )
-        assert "The letter r" in provider.requests[2].prompt
-        assert "strawberry" in provider.requests[2].prompt
+        assert "The letter r" in provider.task_requests[3].prompt
+        assert "strawberry" in provider.task_requests[3].prompt
 
 
 async def test_incomplete_verification_returns_to_work_instead_of_success(tmp_path):
@@ -74,8 +75,8 @@ async def test_incomplete_verification_returns_to_work_instead_of_success(tmp_pa
         result = await asyncio.wait_for(agent.run("Count r in strawberry"), 60)
         assert result["status"] == "succeeded", result
         assert result["answer"] == "3"
-        assert len(provider.requests) == 5
-        assert "Verification requires correction" in provider.requests[3].prompt
+        assert len(provider.task_requests) == 5
+        assert "Recheck calculation" in provider.task_requests[3].prompt
 
 
 async def test_delivery_failure_leaves_task_waiting(tmp_path):
@@ -105,7 +106,7 @@ async def test_queue_does_not_start_second_task_before_first_delivery(tmp_path):
         first_answer, _ = await wait_for_event(agent, "answer")
         second = await agent.submit("Second")
         await asyncio.sleep(0.05)
-        assert len(provider.requests) == 3
+        assert len(provider.task_requests) == 3
         assert agent.attention.running_task == first.id
         assert second.status == "queued"
         await agent.acknowledge_delivery(first_answer.data["delivery_id"])

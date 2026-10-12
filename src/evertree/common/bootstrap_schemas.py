@@ -1,6 +1,10 @@
 """Shared structural response contracts, independent of any Program implementation."""
 
-TASK_FRAMING_SCHEMA = {
+from copy import deepcopy
+
+from evertree.core.cognition.steps import ConsciousStepSpec
+
+RESOURCE_CONTROL_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
@@ -27,3 +31,7 @@ TASK_FRAMING_SCHEMA = {
         "budget_reason",
     ],
 }
+
+TASK_FRAMING_SCHEMA = deepcopy(RESOURCE_CONTROL_SCHEMA)
+TASK_FRAMING_SCHEMA["properties"]["initial_step"] = ConsciousStepSpec.model_json_schema()
+TASK_FRAMING_SCHEMA["required"].append("initial_step")

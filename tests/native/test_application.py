@@ -5,7 +5,7 @@ import sys
 import pytest
 
 from evertree.application import EverTree
-from evertree.core.provider import ScriptedProvider
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import decision, framing, verification
 
 
@@ -19,10 +19,10 @@ async def test_native_framing_verification_delivery_and_budget(tmp_path):
         task = agent.tasks.get(result["task_id"])
         assert task.execution_budget.resources == {"active_time_minutes": 4}
         assert task.self_improvement_budget == 15
-        assert len(provider.requests) == 3
-        assert provider.requests[0].mode == "model"
-        assert provider.requests[1].mode == "exec"
-        assert provider.requests[2].mode == "model"
+        assert len(provider.task_requests) == 3
+        assert provider.task_requests[0].mode == "model"
+        assert provider.task_requests[1].mode == "exec"
+        assert provider.task_requests[2].mode == "model"
         assert task.specification.revision == 2
         assert not agent.runtime.is_running()
         assert any(event.operator == "provider_request" for event in agent.memory.events)

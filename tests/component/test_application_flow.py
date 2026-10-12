@@ -3,7 +3,8 @@ import json
 
 import pytest
 
-from evertree.core.provider import AgentEvent, AgentRequest, ScriptedProvider
+from evertree.core.provider import AgentEvent, AgentRequest
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import decision, framing, verification
 
 
@@ -108,9 +109,9 @@ async def test_controller_uses_self_contained_context_without_resuming_session(a
     )
     result = await app.run("Count r in strawberry")
     assert result["status"] == "succeeded"
-    controllers = [request for request in app.provider.requests if request.mode == "exec"]
+    controllers = [request for request in app.provider.task_requests if request.mode == "exec"]
     assert len(controllers) == 2
-    assert all(request.session is None for request in app.provider.requests)
+    assert all(request.session is None for request in app.provider.task_requests)
     context = json.loads(controllers[1].prompt)
     assert any(
         event["output"].get("kind") == "tool_result"
@@ -127,7 +128,7 @@ async def test_initial_framing_assigns_only_the_models_budget_and_honors_hard_gu
 
     class InspectingProvider(ScriptedProvider):
         async def run(self, request_id, request, **kwargs):
-            if not self.requests:
+            if not self.task_requests:
                 task = app.tasks.all()[0]
                 inspected.append(
                     (task.execution_budget, list(task.budget_history), request.timeout_seconds)
@@ -143,11 +144,11 @@ async def test_initial_framing_assigns_only_the_models_budget_and_honors_hard_gu
     assert 0 < inspected[0][2] <= 12
     assert len(task.budget_history) == 1
     assert task.execution_budget.resources["active_time_minutes"] == 0.15
-    assert len(app.provider.requests) == 3
+    assert len(app.provider.task_requests) == 3
 
 
-async def test_explicit_reassessment_uses_resource_control_and_preserves_spending(app):
-    """Real ResourceControl revises a budget while accumulated usage remains intact."""
+async def test_changed_request_reframes_and_preserves_spending(app):
+    """A new request revises the specification and budget without erasing accumulated usage."""
     app.provider = ScriptedProvider(
         [
             framing(minutes=3),
@@ -168,9 +169,9 @@ async def test_explicit_reassessment_uses_resource_control_and_preserves_spendin
     assert len(task.budget_history) == 2
     assert task.execution_budget.resources["active_time_minutes"] == 4
     assert task.spent["active_time_minutes"] >= spent
-    resource_control = app.graph.find("ResourceControl.exec")
-    assert any(run.program == resource_control.id for run in app.memory.runs)
-    assert "task_state" in json.loads(app.provider.requests[2].prompt)
+    task_framing = app.graph.find("TaskFraming.exec")
+    assert sum(run.program == task_framing.id for run in app.memory.runs) == 2
+    assert "r in strawberry" in app.provider.task_requests[2].prompt
 
 
 async def test_exhausted_hard_limit_does_not_run_initial_framing(app):
@@ -181,7 +182,7 @@ async def test_exhausted_hard_limit_does_not_run_initial_framing(app):
     assert result["status"] == "waiting"
     assert task.execution_budget is None
     assert task.budget_history == []
-    assert app.provider.requests == []
+    assert app.provider.task_requests == []
 
 
 async def test_budget_review_cannot_reexecute_a_pending_nonpolicy_program(app):
@@ -196,7 +197,7 @@ async def test_budget_review_cannot_reexecute_a_pending_nonpolicy_program(app):
     }
     with pytest.raises(RuntimeError, match="Resume the pending ProgramRun"):
         await app._ensure_budget(task)
-    assert app.provider.requests == []
+    assert app.provider.task_requests == []
     assert not app.runtime.is_running(task.id)
     app._pending_programs.clear()
 
@@ -233,7 +234,7 @@ async def test_unavailable_usage_is_retained_and_cannot_satisfy_an_explicit_toke
     )
 
 
-async def test_user_input_exposes_stable_remember_source_across_cycles(app):
+async def test_user_input_exposes_stable_integration_source_across_cycles(app):
     from evertree.core.memory.types import TraceOutputRef
 
     class Provider(ScriptedProvider):

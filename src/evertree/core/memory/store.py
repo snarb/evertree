@@ -7,6 +7,7 @@ import json
 import re
 import threading
 from collections.abc import Mapping
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -40,6 +41,40 @@ class TraceStore:
         self._pending_reviews: set[int] = set()
         self._early_reviews: dict[int, tuple[datetime, str]] = {}
         self._lock = threading.RLock()
+
+    @contextmanager
+    def transaction(self):
+        """Roll back trace and retention writes together without copying immutable records."""
+        with self._lock:
+            fields = (
+                "_runs",
+                "_events",
+                "_traces",
+                "_next_run",
+                "_next_event",
+                "_protections",
+                "_run_protections",
+                "_deleted",
+                "_reviews",
+                "_pending_reviews",
+                "_early_reviews",
+            )
+            before = {}
+            for name in fields:
+                value = getattr(self, name)
+                if isinstance(value, dict):
+                    value = {
+                        k: v.copy() if isinstance(v, (set, list)) else v for k, v in value.items()
+                    }
+                elif isinstance(value, set):
+                    value = value.copy()
+                before[name] = value
+            try:
+                yield
+            except BaseException:
+                for name, value in before.items():
+                    setattr(self, name, value)
+                raise
 
     @property
     def runs(self) -> tuple[ProgramRun, ...]:

@@ -30,7 +30,6 @@ from .protocol import (
     _json,
     _native_tool_events,
     _request,
-    _thread_history,
     _usage,
 )
 
@@ -84,8 +83,7 @@ class CodexProvider:
         self._client_factory = client_factory
         self._executor_factory = executor_factory
         self._active: dict[str, _Invocation] = {}
-        self._thread_usage: dict[str, dict[str, int]] = {}
-        self._thread_tools: dict[str, list] = {}
+        self._histories: dict[str, list] = {}
 
     def _client(self, *, request: AgentRequest | None = None, handler=None, model_catalog=None):
         return create_client(
@@ -324,7 +322,8 @@ class CodexProvider:
             executor = None
             client = None
             usage_seen = False
-            baseline = self._thread_usage.get(request.session.id) if request.session else {}
+            baseline = {}
+            history = []
             carried_usage = {key: 0 for key in _usage({}, None) if key != "available"}
             carried_usage["available"] = True
             latest_usage = None
@@ -356,6 +355,7 @@ class CodexProvider:
                     )
                     params = {
                         "model": model_name,
+                        "ephemeral": True,
                         "cwd": str(request.workspace.resolve()),
                         "approvalPolicy": "never",
                         "approvalsReviewer": "user",
@@ -390,32 +390,25 @@ class CodexProvider:
                         "config": {**thread_config, "model_reasoning_effort": effort},
                     }
                     params["environments"] = [executor.environment] if executor else []
-                    # Persisted tool definitions cannot be changed by thread/resume.
-                    # Changed or unknown definitions require a new internal thread.
                     params["dynamicTools"] = _dynamic_tools(active_tools.values())
                     prompt = request.prompt
-                    if (
-                        request.session
-                        and self._thread_tools.get(request.session.id) == params["dynamicTools"]
-                    ):
-                        # Resume is safe only when its persisted tool definitions are unchanged.
-                        resume_params = {k: v for k, v in params.items() if k != "dynamicTools"}
-                        started = await asyncio.to_thread(
-                            _request,
-                            client,
-                            "thread/resume",
-                            {"threadId": request.session.id, **resume_params},
-                        )
-                    else:
-                        if request.session:
-                            history = await asyncio.to_thread(
-                                _thread_history, client, request.session.id
-                            )
-                            prompt = _continuation_input(history, request.prompt)
-                            baseline = {}
-                        started = await asyncio.to_thread(_request, client, "thread/start", params)
+                    if request.session:
+                        if request.session.id not in self._histories:
+                            raise ProviderError("Session history is unavailable in this provider")
+                        history = list(self._histories[request.session.id])
+                        prompt = _continuation_input(history, request.prompt)
+                    # Ephemeral threads disappear with the client process. Carry public
+                    # context locally instead of persisting helper chats in Codex history.
+                    history.append(
+                        {
+                            "type": "userMessage",
+                            "content": [{"type": "text", "text": request.prompt}],
+                        }
+                    )
+                    started = await asyncio.to_thread(_request, client, "thread/start", params)
                     invocation.thread_id = started["thread"]["id"]
-                    self._thread_tools[invocation.thread_id] = params["dynamicTools"]
+                    if started["thread"].get("ephemeral") is not True:
+                        raise ProviderError("Codex did not create an ephemeral thread")
                     if (started.get("activePermissionProfile") or {}).get(
                         "id"
                     ) != client._evertree_profile:
@@ -430,6 +423,7 @@ class CodexProvider:
                             {
                                 "provider": self.name,
                                 "id": invocation.thread_id,
+                                "ephemeral": True,
                                 "requested_model": model_name,
                                 "requested_effort": effort,
                                 "effective_model": started.get("model", "unknown"),
@@ -504,6 +498,8 @@ class CodexProvider:
                                     await queue.put(normalized)
                         elif method == "item/completed":
                             item = data.get("item", {})
+                            if item.get("type") not in {"reasoning", "userMessage", None}:
+                                history.append(item)
                             if item.get("type") == "agentMessage":
                                 final_text = item.get("text", final_text)
                             elif item.get("type") in {
@@ -519,7 +515,6 @@ class CodexProvider:
                             latest_usage = usage
                             if not usage["available"]:
                                 baseline = None
-                            self._thread_usage[invocation.thread_id] = dict(total)
                             usage_seen = True
                             await queue.put(AgentEvent("usage", usage))
                         elif method == "model/rerouted" and data.get("toModel") != model_name:
@@ -534,9 +529,7 @@ class CodexProvider:
                                 pending_load = False
                                 params["dynamicTools"] = _dynamic_tools(active_tools.values())
                                 previous_thread = invocation.thread_id
-                                history = await asyncio.to_thread(
-                                    _thread_history, client, previous_thread
-                                )
+                                self._histories[previous_thread] = list(history)
                                 carried_usage = latest_usage or _usage({}, None)
                                 baseline, latest_usage = {}, None
                                 resumed = await asyncio.to_thread(
@@ -544,6 +537,7 @@ class CodexProvider:
                                 )
                                 if (
                                     resumed.get("model") != model_name
+                                    or resumed["thread"].get("ephemeral") is not True
                                     or (resumed.get("activePermissionProfile") or {}).get("id")
                                     != client._evertree_profile
                                 ):
@@ -551,13 +545,13 @@ class CodexProvider:
                                         "Codex continuation changed the requested model or permissions"
                                     )
                                 invocation.thread_id = resumed["thread"]["id"]
-                                self._thread_tools[invocation.thread_id] = params["dynamicTools"]
                                 await queue.put(
                                     AgentEvent(
                                         "session",
                                         {
                                             "provider": self.name,
                                             "id": invocation.thread_id,
+                                            "ephemeral": True,
                                             "continued_from": previous_thread,
                                             "requested_model": model_name,
                                             "requested_effort": effort,
@@ -587,6 +581,7 @@ class CodexProvider:
                                     from evertree.common.structured import validate
 
                                     validate(parsed, request.output_schema)
+                                self._histories[invocation.thread_id] = list(history)
                                 await queue.put(
                                     AgentEvent("completed", {"text": final_text, "parsed": parsed})
                                 )
@@ -655,3 +650,4 @@ class CodexProvider:
     async def close(self):
         for request_id in list(self._active):
             await self.cancel(request_id)
+        self._histories.clear()

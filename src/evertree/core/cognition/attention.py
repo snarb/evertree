@@ -169,6 +169,9 @@ def prepare_context(
         {
             "progress": task.progress,
             "plan": task.plan,
+            "current_step": task.current_step,
+            "step_state": task.step_state,
+            "last_step_ref": task.last_step_ref,
             "unresolved_questions": task.unresolved_questions,
             "waiting_for": task.waiting_for,
             "spent": task.spent,

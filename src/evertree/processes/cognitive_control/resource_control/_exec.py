@@ -1,6 +1,6 @@
 """Prepare a task-specific budget reassessment; core validates protected limits."""
 
-from evertree.common.bootstrap_schemas import TASK_FRAMING_SCHEMA as SCHEMA
+from evertree.common.bootstrap_schemas import RESOURCE_CONTROL_SCHEMA as SCHEMA
 from evertree.common.structured import ask
 
 

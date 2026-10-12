@@ -16,9 +16,10 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 from evertree.application import EverTree
-from evertree.core.provider import ScriptedProvider
-from evertree.core.runtime.controller import RunResult, Runtime
+from evertree.core.contracts import ProgramResult
+from evertree.core.runtime.controller import ProgramSpec, RunResult, Runtime
 from evertree.core.runtime.repository import ProgramExecutionError
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 
 REVISION = "0" * 40
 
@@ -53,18 +54,25 @@ class SourceRuntime(Runtime):
             finally:
                 self._active = None
 
-    async def _call(self, spec, arguments, run_id):
+    async def _call(self, spec, arguments, run_id, parent_run_id=None):
         async def step(method, payload=None):
             return await self._dispatch(
                 {"run_id": run_id, "method": method, "payload": payload or {}}
             )
+
+        async def call(program, arguments=None):
+            if isinstance(program, (str, int)):
+                program = await step("resolve_program", {"program_id": program})
+            child_spec = program if isinstance(program, ProgramSpec) else ProgramSpec(**program)
+            output = await self._call(child_spec, arguments or {}, uuid4().hex, run_id)
+            return ProgramResult(output["result"], output.get("feedback"))
 
         await self._dispatch(
             {
                 "run_id": run_id,
                 "method": "run_started",
                 "program": asdict(spec),
-                "payload": {"arguments": arguments, "parent_run_id": None},
+                "payload": {"arguments": arguments, "parent_run_id": parent_run_id},
             }
         )
         path = Path(spec.git_path)
@@ -74,7 +82,7 @@ class SourceRuntime(Runtime):
         )
         kwargs = dict(arguments)
         if "ctx" in inspect.signature(function).parameters:
-            kwargs["ctx"] = SimpleNamespace(step=step)
+            kwargs["ctx"] = SimpleNamespace(step=step, call=call)
         result = function(**kwargs)
         if inspect.isawaitable(result):
             result = await result

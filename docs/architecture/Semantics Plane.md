@@ -26,17 +26,17 @@ The Semantics subsystem describes **static meaning**: concepts and facts about t
 
 ## Consciousness Interface
 
-Consciousness uses compact semantic tools; cheap Programs handle retrieval and knowledge preparation to reduce its context and model cost. Names are the default address; integer IDs remain available. Ambiguous names return candidates.
+Consciousness uses compact semantic tools; separate Programs handle retrieval and integration of experience. Consciousness and reasoning Programs discover meaning, hypotheses and significance while solving a task; integration organizes routine experience and preserves these analytical results without requiring their authors to design graph mutations. Names are the default address; integer IDs remain available. Ambiguous names return candidates.
 
 | Tool | Purpose |
 | --- | --- |
 | `graph.search(query, kind?, limit=20, cursor?)` | Find existing objects by name, ID, or indexed name and description similarity. |
 | `graph.describe(subject, focus?, at?)` | Describe an object, its applicable properties and significant relations; `focus="properties"` returns only properties. |
 | `graph.read_property(subject, property, at?, parameters?)` | Read a property through Attribution Runtime, preserving uncertainty and sources. |
-| `graph.remember(statements, sources, context?)` | Prepare and save sourced knowledge through `KnowledgeRemembering.exec`. |
+| `graph.integrate(experience_refs, focus?)` | Integrate recorded experience and analytical results through `KnowledgeIntegration.exec`. |
 | `load_tool_set(name)` | Load specialized tools for one logical invocation; see [[Cognition and Attention#Dynamic Tool Sets]]. |
 
-Both reading tools use `subject` and world time `at` (default: now, internally `valid_at`). A description uses one instant. Property discovery and parameter requirements follow [[Attribution Plane#Property Discovery for Consciousness]]. Historical `known_at`, raw graph operations and exact declared-view `graph.query` belong to `low_level_graph_tools`. These tools replace `read_graph` and direct `remember` writes.
+Both reading tools use `subject` and world time `at` (default: now, internally `valid_at`). A description uses one instant. Property discovery and parameter requirements follow [[Attribution Plane#Property Discovery for Consciousness]]. Historical `known_at`, raw graph reads and exact declared-view `graph.query` belong to `low_level_graph_tools`. Public `graph.apply` is not exposed: domain knowledge enters the graph through integration.
 
 ### Retrieval Contract
 
@@ -49,13 +49,44 @@ Both reading tools use `subject` and world time `at` (default: now, internally `
 
 GraphStore remains authoritative; **Redis 8.4+ with Search** is a rebuildable index. Every graph commit, including lifecycle changes, updates it. Content generations prevent restored state from reading a newer index; obsolete unused generations are removed. Index failure cannot undo a graph commit or block exact lookup. BM25 and vector queries remain separate for their 7/12 quotas; fuzzy search is omitted.
 
-Remembering uses **`gpt-6-luna / medium`** through Codex SDK. Its model/effort is configurable; consciousness keeps its own profile. Redis and the separate embedding API credentials remain in core. Configuration and local/managed Redis setup are in the repository README.
+Integration uses **`gpt-6-luna / medium`** through Codex SDK. Its model/effort is configurable; consciousness keeps its own profile. Redis and the separate embedding API credentials remain in core. Configuration and local/managed Redis setup are in the repository README.
 
-### Knowledge Preparation
+### Knowledge Integration
 
-`KnowledgeRemembering.exec` receives statements, retained source references and selected context. User inputs expose a stable `source_ref` in consciousness context. It searches existing knowledge, inspects schemas, prepares a GraphDelta, and repairs validation errors. Core checks references, types, names, cardinalities, taxonomy and provenance, then applies the delta atomically. Sources are retained; duplicate saving does not create independent evidence. Durable replay reuses a completed commit.
+`KnowledgeIntegration.exec` receives `experience_refs`: `TraceOutputRef`s to saved messages, materials, observations, Program results, and analytical Notes. These are **materials to examine**; the particular references supporting a materialized assertion are its **grounds**. A complete document can be an input without every saved assertion depending on that entire document. User inputs expose a stable `source_ref` in consciousness context. `focus`, when supplied, directs attention; a caller need not preselect every statement.
 
-Structural validity does not establish truth: ambiguity, conditions, inference and uncertainty must remain explicit; belief updates still require evidence assessment. Consciousness receives a short saved/reused/unresolved summary; IDs and preparation stay in trace. Both semantic Programs follow the normal learning and independent evaluation lifecycle; child calls use `ctx.call` outside DBOS steps.
+Programs call the same mechanism through `ctx.call("knowledge_integration", {"experience_refs": ..., "focus": ...})`. Runtime supplies authoritative task specification and revision, constraints, remaining budget, definitions of `EpistemicQuality` and `AgentCapability`, and selected existing Self information with provenance. Caller text cannot replace this context. Missing goals or interests remain unknown. Isolated evaluations use their own task and Self context.
+
+| Material | Owner of the preservation decision |
+| --- | --- |
+| Ordinary experience | Integration selects useful organization in the current task and Self context. |
+| Analytical Note or Claim with significance and rationale | Integration uses the author's assessment along with the recorded grounds. |
+| Explicit `preserve` intention | The author has decided the meaning must be saved. Integration implements that decision or returns a concrete obstacle. |
+
+The first path makes bulk observations accessible without asking consciousness to enumerate trivial facts. The second preserves insights already discovered by thinking. A significance assessment is a soft signal; an explicit preservation intention is an obligation. If precise relations cannot yet express an insight, preserve a coherent Note and its references. Lack of a finished ontology must not silently discard a required result.
+
+The Program reads the material, identifies candidates, searches existing objects and inspects relevant schemas, then chooses `materialize`, `reuse`, `trace_only`, or `unresolved`. Search is an orchestration step before creating identities, not only a prompt suggestion. Incomplete search does not establish absence. It prepares a minimal `GraphDelta` and repairs structural validation errors. An empty delta is a successful result when nothing needs materialization. The result records decisions, reasons, grounds, and IDs; consciousness receives a compact receipt and a reference to the detailed trace.
+
+| Structure | Reason to create it |
+| --- | --- |
+| Relation instance | A supported or explicitly uncertain assertion whose independent representation is useful for retrieval, reasoning, checking, or reuse. Inverse navigation uses views. |
+| Instance | An identity that must remain recognizable between observations; another mention alone does not create another object. |
+| Facet | A meaningful changing aspect of an Instance. Compatible facts about the same state share a Facet; different aspects may overlap in time. |
+| Concept | An operationally useful distinction that existing concepts do not express. |
+| RelationType | A required meaning and participant roles not expressed by existing schemas; different wording is insufficient. |
+| Prototype | A useful class schema or a warranted generalization. Declaring a class does not establish its typical properties or empirical priors. |
+
+State time is the time described by the experience, not its recording time. Unknown state time remains unresolved; a prior state is closed only with grounds for a transition. Bulk measurements can stay in an accessible dataset or coherent trace result linked to their object and conditions; one value need not create one graph node. Extraction preserves qualifications, counterexamples, uncertainty and dependencies between grounds and conclusions.
+
+Task goals, Values and significance determine attention and the value of organization. Evidence determines reliability. Structural validity, explicit preservation, repeated saving and aggregation do not establish truth or increase belief; evidence assessment remains separate.
+
+Core checks references, types, names, cardinalities, taxonomy, provenance and consistency between decisions and mutations. `semantic.commit` is admitted only for the authorized KnowledgeIntegration run on its pinned Program revision, including evaluation runs. Bootstrap, lifecycle and specialized core operations retain their internal mutation paths. The learned Program decides semantic usefulness; core enforces the write contract.
+
+Graph mutation, trace audit and receipt form one transaction. Failure to store the receipt rolls back the mutation and its retention changes; graph observers are notified only after the transaction succeeds. Runtime accepts completion only with the original core receipt for the current operation, not a Program's bare success flag. Successful explicit integration counts toward the next step boundary's coverage, so already reviewed sources are not automatically submitted again under the same specification.
+
+Runtime invokes integration after each [[Cognition and Attention#Conscious Step Contract|meaningful step]], before continuing or finishing a task. An explicit early call is available when the graph is needed inside the step; new analytical material must first be recorded. A stable operation ID identifies a batch across restarts, independently of a new run ID. Mutation, audit and receipt are saved consistently; replay returns a completed receipt rather than creating duplicate knowledge. Retention depends on the grounds of each materialized result, not the batch report or unrelated `trace_only` material. Recording and later compaction still follow [[Memory|Memory's lifecycle]].
+
+Both semantic Programs follow the normal learning and independent evaluation lifecycle; child calls use `ctx.call` outside DBOS steps. Reflection and Consolidation submit proposals through the same integration path with the original sources; their conclusions are not independent observations.
 
 ## RelationType: Fact Prototype
 #topic_core
@@ -340,11 +371,11 @@ One `TraceEvent` may create a `Facet` and its associated facts at the same time.
 
 By default, this result remains local to `SemanticTrace` and is interpreted in its `Semantic Call Tree` context.
 
-To make the state part of the persistent graph, a program explicitly creates a `GraphDelta`:
+To make the state part of the persistent graph, the caller passes its recorded result to KnowledgeIntegration, which prepares the internal `GraphDelta`:
 
 ```text
 local Facet + related facts
-→ graph-writing operator
+→ KnowledgeIntegration
 → GraphDelta
 → persistent Facet + related facts
 ```

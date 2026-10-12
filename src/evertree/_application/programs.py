@@ -287,6 +287,28 @@ class ProgramsMixin:
                     self.memory.finish_run(
                         run, status="completed" if kind == "run_finished" else "failed"
                     )
+                if kind == "run_finished":
+                    product = event.get("result", {}).get("result")
+                    slug = self.graph.get(run.program).properties.get("slug")
+                    if (
+                        isinstance(product, dict)
+                        and "analysis" in product
+                        and slug
+                        not in {
+                            "knowledge_integration",
+                            "task_framing",
+                            "resource_control",
+                            "semantic_search",
+                        }
+                    ):
+                        for note in [product["analysis"], *product.get("findings", [])]:
+                            self._record_analysis(
+                                event["task_id"],
+                                note,
+                                producer=run.program,
+                                revision=run.base_commit_sha,
+                                owner_run=run.id,
+                            )
 
     def _activated(self, branch, revision):
         self._validate_program_layout(branch, revision)

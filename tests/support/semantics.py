@@ -39,7 +39,7 @@ def semantic_world(*, index=None, config=None):
     )
 
 
-def context(world, model, *, role="model"):
+def context(world, model, *, role="model", integration_context=None, operation_id="packet"):
     async def step(method, payload):
         authorize_operation(method, role)
         if method == "agent.run":
@@ -48,12 +48,23 @@ def context(world, model, *, role="model"):
             "task_id": "task",
             "run_id": "run",
             "program": {"role": role, "revision": "revision"},
+            "knowledge_integration_authorized": role == "exec",
+            "integration_operation_id": operation_id,
+            "integration_context": integration_context or {},
         }
         if method.startswith("semantic."):
             return await world.service.execute(method, payload, metadata)
         return world.operations.execute(method, payload, metadata=metadata)
 
-    return SimpleNamespace(step=step)
+    async def call(program, arguments):
+        from evertree.processes.semantic_processing.semantic_search._model import run
+
+        if program != "semantic_search":
+            raise AssertionError("Unsupported semantic child: " + program)
+        result = await run(context(world, model, role="model"), **arguments)
+        return SimpleNamespace(**result)
+
+    return SimpleNamespace(step=step, call=call)
 
 
 def populated_search_world(**kwargs):

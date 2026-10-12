@@ -81,7 +81,15 @@ class CoreOperations:
         )
 
     def apply_delta(
-        self, delta: GraphDelta, *, task_id: str, revision: str, run_mode="live", source_refs=()
+        self,
+        delta: GraphDelta,
+        *,
+        task_id: str,
+        revision: str,
+        run_mode="live",
+        source_refs=(),
+        integration_operation_id=None,
+        integration_decisions=(),
     ):
         protect_prediction_delta(self.graph, delta)
         binding = self.graph.find("PROGRAM_FOR_PROCESS")
@@ -130,7 +138,14 @@ class CoreOperations:
             "GraphMutation", revision, {"task_id": task_id}, run_mode=run_mode
         )
         event = self.memory.record(
-            run, "graph_delta", output=json_value(delta), dependencies=source_refs
+            run,
+            "graph_delta",
+            arguments={
+                "integration_operation_id": integration_operation_id,
+                "decisions": integration_decisions,
+            },
+            output=json_value(delta),
+            dependencies=source_refs,
         )
         ref = self.memory.output_ref(event)
         try:
@@ -218,11 +233,30 @@ class CoreOperations:
                 **payload.get("inputs", {}),
             )
         elif method == "graph.apply":
-            result = self.apply_delta(
-                GraphDelta.from_dict(payload), task_id=task_id, revision=revision, run_mode=run_mode
-            )
+            raise PermissionError("Public graph.apply is unavailable; use KnowledgeIntegration")
         elif method in {"memory.retrieve", "memory.rank"}:
             result = self.memory.retrieve(payload.get("query", ""), limit=payload.get("limit", 10))
+        elif method == "memory.note":
+            from .cognition.steps import AnalyticalNote
+
+            note = AnalyticalNote.model_validate(payload)
+            for reference in note.source_refs:
+                self.memory.resolve(reference)
+            run = self.memory.start_run(
+                "AnalyticalNote",
+                revision,
+                {
+                    "task_id": task_id,
+                    "producer_program": metadata["program"].get("program_id"),
+                    "owner_run": metadata.get("owner_run"),
+                },
+                run_mode=run_mode,
+            )
+            event = self.memory.record(
+                run, "analytical_note", output=note, dependencies=tuple(note.source_refs)
+            )
+            self.memory.finish_run(run)
+            result = self.memory.output_ref(event)
         elif method == "memory.resolve":
             result = self.memory.resolve(TraceOutputRef(**payload["reference"]))
         elif method == "memory.review":

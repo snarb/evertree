@@ -1,0 +1,62 @@
+[
+  {
+    "id": "conditional_insight",
+    "objective": "Investigate intermittent Nimbus connection failures and preserve the current provisional explanation for the next experiment.",
+    "materials": [
+      {
+        "kind": "observation",
+        "content": "Case A: a connection failed after a server switch while reusing an existing connection. Case B: the same sequence failed again. Case C: high load without a server switch did not fail. No controlled reconnect experiment has run. These are three observations from one investigation, not three independent studies."
+      },
+      {
+        "kind": "analysis",
+        "content": "Working hypothesis: a reused connection becomes stale after a server switch; load alone does not explain the failures. A and B motivate this hypothesis, while C constrains it. Causality is unconfirmed. Next, compare forced reconnection with reuse after a switch. Preserve the distinction between server switching and load, and the outstanding causal check; it changes the direction of the investigation.",
+        "preserve": true
+      }
+    ],
+    "max_created": 16,
+    "criteria": {
+      "preserved_meaning": "The saved graph content, possibly one coherent Note, preserves the conditional hypothesis about reuse after server switching and the contrast with load alone.",
+      "uncertainty": "Saved content preserves the provisional nature of the explanation and the need for the controlled reconnect check; it does not present causality as established.",
+      "grounds": "The materialization cites the recorded analysis or observations and does not count the analytical conclusion as another independent observation."
+    }
+  },
+  {
+    "id": "routine_measurements",
+    "objective": "Keep this routine temperature series available for later trend analysis. No current trend conclusion or separate per-reading state representation is needed.",
+    "materials": [
+      {
+        "kind": "observation",
+        "content": {
+          "sensor": "Greenhouse north sensor",
+          "unit": "Celsius",
+          "started_at": "2026-10-09T08:00:00Z",
+          "interval_seconds": 60,
+          "values": [20.1, 20.0, 20.1, 20.2, 20.1, 20.0, 20.0, 20.1, 20.1, 20.2, 20.1, 20.0, 20.1, 20.0, 20.1, 20.2, 20.1, 20.0, 20.0, 20.1, 20.1, 20.2, 20.1, 20.0]
+        }
+      }
+    ],
+    "max_created": 8,
+    "criteria": {
+      "bounded_representation": "The result retains access to the source series and gives a reason for its chosen organization; trace_only is acceptable because the complete series remains saved in trace. It does not create an identity or Facet for every reading.",
+      "no_invented_generalization": "The result does not claim a learned long-term temperature pattern, calibrated reliability, or a typical class property from this single short series.",
+      "time_grounding": "Any saved temporal assertions use the supplied observation timing, without replacing it with integration time."
+    }
+  },
+  {
+    "id": "intermediate_plan",
+    "objective": "Plan the next experiment for the Nimbus investigation. Preserve the experiment design so another conscious step can execute it; do not report the investigation solved.",
+    "materials": [
+      {
+        "kind": "analysis",
+        "content": "Intermediate plan: hold server switching constant and compare reused connections against forced reconnection. Record failures and latency in both groups. If both groups fail equally, inspect server-side session state next. This iteration designs the test only; it contains no experiment results and no final diagnosis.",
+        "preserve": true
+      }
+    ],
+    "max_created": 10,
+    "criteria": {
+      "plan_preserved": "The saved representation preserves the comparison between reused connections and forced reconnection, measured outcomes, and the conditional next investigation.",
+      "intermediate_status": "The plan is preserved as an intermediate analytical result, not an observation of an executed experiment or a final diagnosis.",
+      "no_fabricated_results": "No experiment outcome, causal fact, or successful task completion has been invented."
+    }
+  }
+]

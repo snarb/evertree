@@ -6,6 +6,7 @@ import logging
 import math
 import threading
 from collections.abc import Callable, Mapping
+from contextlib import contextmanager
 from datetime import datetime
 from types import MappingProxyType
 from typing import Any
@@ -69,6 +70,26 @@ class GraphStore:
         """Register a non-I/O invalidation callback for every committed delta."""
         self._change_listeners.append(listener)
         return lambda: self._change_listeners.remove(listener)
+
+    @contextmanager
+    def transaction(self):
+        """Publish graph changes only after the surrounding core write succeeds."""
+        with self._lock:
+            nodes, next_id, history = self._nodes, self._next_id, list(self._history)
+            listeners, self._change_listeners = self._change_listeners, []
+            try:
+                yield
+            except BaseException:
+                self._nodes, self._next_id, self._history = nodes, next_id, history
+                raise
+            finally:
+                self._change_listeners = listeners
+            for change in self._history[len(history) :]:
+                for listener in tuple(listeners):
+                    try:
+                        listener(change)
+                    except Exception:
+                        logging.getLogger(__name__).exception("Graph change observer failed")
 
     def reserve_id(self) -> int:
         with self._lock:

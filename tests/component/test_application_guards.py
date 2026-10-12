@@ -11,8 +11,15 @@ from evertree.core.evaluation.scoring import evaluate_prediction
 from evertree.core.graph.types import GraphDelta
 from evertree.core.learning.contracts import LearningCredit, LearningObjective, LearningSignal
 from evertree.core.programs.lifecycle import ProgramBranch
-from evertree.core.provider import AgentEvent, AgentRequest, ScriptedProvider
-from tests.support.application import decision, framing, verification, wait_for_event
+from evertree.core.provider import AgentEvent, AgentRequest
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
+from tests.support.application import (
+    decision,
+    framing,
+    is_integration_request,
+    verification,
+    wait_for_event,
+)
 from tests.support.component import component_app
 
 
@@ -238,7 +245,7 @@ async def test_switching_provider_does_not_resume_another_providers_session(tmp_
         await app._pump
         identity = first["task_id"]
         assert app._sessions[identity]["provider"] == "scripted"
-        replacement = ScriptedProvider([decision(), verification()])
+        replacement = ScriptedProvider([framing(), decision(), verification()])
         replacement.name = "other-provider"
         app.provider = replacement
         result = await app.run("r in strawberry", task_id=identity)
@@ -257,7 +264,7 @@ async def test_input_accepted_during_turn_reaches_controller_before_delivery(tmp
             self.entered, self.release = asyncio.Event(), asyncio.Event()
 
         async def run(self, request_id, request, **kwargs):
-            if len(self.requests) == pause_at:
+            if not is_integration_request(request) and len(self.task_requests) == pause_at:
                 self.entered.set()
                 await self.release.wait()
             async for event in super().run(request_id, request, **kwargs):
@@ -266,7 +273,7 @@ async def test_input_accepted_during_turn_reaches_controller_before_delivery(tmp
     scripts = [framing(), decision("stale")]
     if pause_at == 2:
         scripts.append(verification())
-    scripts.extend([decision("updated"), verification()])
+    scripts.extend([framing("Answer the updated request"), decision("updated"), verification()])
     provider = PausingProvider(scripts)
     async with component_app(
         tmp_path / "agent",
@@ -279,7 +286,7 @@ async def test_input_accepted_during_turn_reaches_controller_before_delivery(tmp
         answer, seen = await wait_for_event(app, "answer")
         assert answer.data["text"] == "updated"
         assert [event.data["text"] for event in seen if event.kind == "answer"] == ["updated"]
-        revised_controller = provider.requests[-2]
+        revised_controller = provider.task_requests[-2]
         assert revised_controller.mode == "exec"
         assert "New accepted constraint" in revised_controller.prompt
         await app.acknowledge_delivery(answer.data["delivery_id"])

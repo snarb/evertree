@@ -2,18 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict
 
+from ..core.cognition.steps import AnalyticalNote
 from ..core.provider import ToolDefinition
-
-
-class Decision(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    status: Literal["completed", "waiting", "continue", "failed"]
-    answer: str
-    progress: str
 
 
 class AnswerVerification(BaseModel):
@@ -22,15 +14,33 @@ class AnswerVerification(BaseModel):
     reason: str
 
 
-CONSCIOUSNESS_INSTRUCTIONS = """You are the consciousness of EverTree. Solve the current task,
-respect its exact specification, constraints and finite budget. Use graph.search to find concepts and graph.describe to discover their properties before graph.read_property. Use graph.remember to preserve sourced knowledge. Load specialized tool sets only when needed; sets expire after this invocation. Use existing Programs when
+CONSCIOUSNESS_INSTRUCTIONS = """You are the consciousness of EverTree. Execute the current
+ConsciousStepSpec: one local result or meaningful revision within its finite step budget.
+Respect the exact TaskSpecification. A step may produce a plan, partial analysis, experiment,
+hypothesis revision, or open question; it need not solve the whole task. Several related tool
+calls can belong to one step. Stop when its local result is reached, direction must change,
+information is missing, or its budget is nearly spent. Return ConsciousStepResult.
+Write analysis as an explicit readable analytical Note: relevant observations and sources,
+assumptions, concise justification, uncertainties and checks useful to the next step.
+This is a reviewable work product, not a transcript of private internal reasoning. Do not
+invent completed work. Flexible prose is sufficient; no mandatory sections or final conclusion.
+Keep plan, progress, unresolved_questions and next_step current. continue requires a bounded
+next_step; waiting and failed explain the actual obstacle. propose_completion only proposes
+task completion, subject to integration, independent verification and acknowledged delivery.
+Only user_message is delivered to the user. analysis is internal working material.
+The next step receives the complete latest analysis and its reference even without graph storage.
+Ordinary experience is integrated automatically after this step. Set preserve=true on an
+analysis or finding when its meaning must be retained; significance is a soft attention signal,
+not evidence of truth. Use record_analysis to register new work before an explicit graph.integrate
+call if you need the graph updated within this step. Pass only retained experience_refs, with
+optional focus; runtime supplies authoritative task and Self context.
+Use graph.search to find concepts and graph.describe before graph.read_property.
+Load specialized tool sets only when needed; sets expire after this invocation. Use existing Programs when
 appropriate; learn and improve reusable mechanisms only when the expected benefit justifies
 the task's self-improvement allowance. Never equate an unsupported claim with an observation.
 Use native tools for coding in the provided task workspace. Core state and live Program code
 can only change through the declared EverTree tools. Candidate code must pass the protected
-lifecycle. Ask for missing information using status=waiting. Return the required structured
-decision. completed means the proposed answer satisfies the task; an independent verification
-and actual answer delivery still follow. All referenced files must use absolute paths.
+lifecycle. All referenced files must use absolute paths.
 Task workspaces are deleted when a task finishes, fails or is cancelled. Persist useful
 artifacts by committing them under artifacts/ in a candidate through the lifecycle tools.
 After a restart, recreate temporary files or ask the user for missing inputs. Check retained
@@ -63,6 +73,7 @@ CANDIDATE_INSTRUCTIONS = (
 def _all_tools():
     def tool(name, description, properties, required=()):
         if name in {
+            "run_program",
             "create_candidate",
             "propose_program",
             "develop_candidate",
@@ -220,11 +231,10 @@ def semantic_tools():
             ["subject", "property"],
         ),
         define(
-            "graph.remember",
-            "Save sourced statements using a learnable knowledge Program. Use input source_ref or retained trace output references as sources; include relevant context, arguments and evidence. Returns a concise receipt or unresolved ambiguity.",
+            "graph.integrate",
+            "Integrate retained experience through KnowledgeIntegration. Use source_ref or recorded analytical Notes. Runtime supplies task, Values and Self context. Explicit preserve intents must be satisfied or reported blocked.",
             {
-                "statements": {"type": "array", "items": string, "minItems": 1},
-                "sources": {
+                "experience_refs": {
                     "type": "array",
                     "items": {
                         "type": "object",
@@ -240,10 +250,17 @@ def semantic_tools():
                     },
                     "minItems": 1,
                 },
-                "context": {},
+                "focus": string,
+                "purpose": {"type": "string", "enum": ["task", "self_improvement"]},
             },
-            ["statements", "sources"],
+            ["experience_refs"],
             False,
+        ),
+        ToolDefinition(
+            "record_analysis",
+            "Record an analytical Note in trace and return its addressable reference before synchronous integration.",
+            AnalyticalNote.model_json_schema(),
+            read_only=False,
         ),
     )
 
@@ -277,7 +294,7 @@ def tool_sets():
     return (
         ToolSet(
             "low_level_graph_tools",
-            "Load exact graph reads, relation schemas/views, navigation, history and deltas only when high-level tools are insufficient or fail.",
+            "Load exact graph reads, relation schemas/views, navigation and history when needed.",
             (
                 low(
                     "graph.get",
@@ -320,16 +337,6 @@ def tool_sets():
                         "parameters": {"type": "object"},
                     },
                     ("subject", "property"),
-                ),
-                low(
-                    "graph.apply",
-                    "Apply a typed GraphDelta through protected validation. Program/lifecycle and belief authority cannot be changed.",
-                    {
-                        "creates": {"type": "array"},
-                        "updates": {"type": "array"},
-                        "deletes": {"type": "array"},
-                    },
-                    read_only=False,
                 ),
             ),
         ),

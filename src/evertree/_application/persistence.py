@@ -66,6 +66,10 @@ class PersistenceMixin:
         ref = self.memory.output_ref(event)
         ids = self.graph.bootstrap(provenance=ref)
         creates = []
+        value_definitions = {
+            "EpistemicQuality": "Seek accurate, source-grounded understanding; preserve uncertainty and distinguish observations, hypotheses and conclusions.",
+            "AgentCapability": "Develop reliable reusable abilities to solve tasks and improve future performance within authorized resources.",
+        }
         for name in (
             "Self",
             "SelfModel",
@@ -78,6 +82,7 @@ class PersistenceMixin:
                 self.graph.reserve_id(),
                 name,
                 kind="value" if name in {"EpistemicQuality", "AgentCapability"} else "concept",
+                description=value_definitions.get(name, ""),
             )
             creates.append(node)
             self._protected_nodes.add(node.id)

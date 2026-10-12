@@ -9,7 +9,15 @@ from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.predictions import PredictionEvaluator
 from evertree.core.runtime.controller import ProgramSpec
 from tests.support.evaluation import dataset
-from tests.support.experiments import PATH, TEST_RUNTIME, evaluate_pair, prepare
+from tests.support.experiments import (
+    INTEGRATION_PATH,
+    INTEGRATION_SOURCE,
+    PATH,
+    TEST_RUNTIME,
+    evaluate_pair,
+    prepare,
+    register_integration,
+)
 from tests.support.lifecycle_backup import change
 
 
@@ -65,7 +73,8 @@ async def run(value, ctx):
     from evertree.common.calculation import calculate
     node = await ctx.step('graph.get', {'id': 1})
     assert node['name'] == 'original'
-    await ctx.step('graph.apply', {'updates': [{'id': 1, 'changes': {'name': 'changed'}}]})
+    result = await ctx.call('knowledge_integration', {'name': 'changed'})
+    assert result.result['complete']
     assert await ctx.step('learning.predict', {'state_id': 'known'}) == 0.5
     answer = await ctx.step('agent.run', {'prompt': str(value), 'mode': 'exec'})
     return {'result': calculate(value) + answer['parsed']}
@@ -76,8 +85,10 @@ async def run(value, ctx):
         {
             "src/evertree/common/calculation.py": "def calculate(value): return value\n",
             "src/evertree/common/__init__.py": "",
+            INTEGRATION_PATH: INTEGRATION_SOURCE,
         },
     )
+    integration = register_integration(graph, spec.revision)
     # Baseline helper is committed before branching so both sides can run.
     initial_helper = Path(branch.workspace) / "src/evertree/common/calculation.py"
     revision = change(
@@ -104,7 +115,7 @@ async def run(value, ctx):
         graph,
         memory,
         learning,
-        lambda _: spec,
+        lambda identity: integration if identity == 2 else spec,
         runtime_factory=factory,
         model_call=model_call,
     )
@@ -121,12 +132,16 @@ async def test_both_sides_receive_separate_full_state_and_model_context(tmp_path
     source = """
 async def run(value, ctx):
     before = await ctx.step('graph.get', {'id': 1})
-    await ctx.step('graph.apply', {'updates': [{'id': 1, 'changes': {'name': 'mutated'}}]})
+    result = await ctx.call('knowledge_integration', {'name': 'mutated'})
+    assert result.result['complete']
     await ctx.step('agent.run', {'prompt': 'input-only'})
     return {'result': before['name']}
 """
-    repo, _, branch, spec, graph, memory, learning = prepare(tmp_path, source)
+    repo, _, branch, spec, graph, memory, learning = prepare(
+        tmp_path, source, {INTEGRATION_PATH: INTEGRATION_SOURCE}
+    )
     revision = change(branch, PATH, source + "\n# revised\n")
+    integration = register_integration(graph, spec.revision)
     contexts = []
 
     async def model_call(payload, context):
@@ -144,7 +159,7 @@ async def run(value, ctx):
         graph,
         memory,
         learning,
-        lambda _: spec,
+        lambda identity: integration if identity == 2 else spec,
         runtime_factory=TEST_RUNTIME,
         model_call=model_call,
     )
@@ -163,6 +178,14 @@ async def run(value, ctx):
     "candidate_source, expected",
     [
         ("def run(value): return value\n", "Program must return"),
+        (
+            "async def run(value,ctx):\n await ctx.step('graph.apply', {})\n return {'result': value}\n",
+            "Public graph.apply",
+        ),
+        (
+            "async def run(value,ctx):\n await ctx.step('semantic.commit', {})\n return {'result': value}\n",
+            "admitted KnowledgeIntegration",
+        ),
         (
             "async def run(value,ctx):\n await ctx.step('actions.take', {})\n return {'result': value}\n",
             "Live effects",

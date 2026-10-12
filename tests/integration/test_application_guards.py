@@ -9,8 +9,9 @@ import pytest
 from evertree.application import EverTree
 from evertree.core.datasets import EvaluationCase
 from evertree.core.evaluation.acceptance import AcceptanceCriteria, MetricGuardrail
-from evertree.core.provider import AgentEvent, ScriptedProvider
+from evertree.core.provider import AgentEvent
 from evertree.core.runtime.controller import Runtime
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import decision, framing, verification, wait_for_event
 from tests.support.runtime import TestProcess
 
@@ -40,7 +41,7 @@ class BlockingModelProvider(ScriptedProvider):
         self.entered, self.release, self.unwound = asyncio.Event(), asyncio.Event(), asyncio.Event()
 
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
-        if len(self.requests) == self.block_after:
+        if len(self.task_requests) == self.block_after:
             self.requests.append(request)
             yield AgentEvent("session", {"provider": self.name, "id": request_id})
             self.entered.set()
@@ -157,7 +158,7 @@ async def test_cancel_stops_real_worker_waiting_inside_provider_gateway(tmp_path
         assert app.learning.statistics("verified_task_rate")["observed_count"] == 0
         provider.release.set()
         await asyncio.sleep(0)
-        assert len(provider.requests) == 1
+        assert len(provider.task_requests) == 1
 
 
 async def test_restart_discards_pending_program_and_starts_a_new_run(tmp_path):
@@ -183,8 +184,8 @@ async def test_restart_discards_pending_program_and_starts_a_new_run(tmp_path):
         assert restored.tasks.get(task.id).program_run_ids.count(saved["run_id"]) == 1
         assert len(restored.tasks.get(task.id).program_run_ids) > 1
         assert task.id not in restored._pending_programs
-        assert provider.requests[0].mode == "model"
-        assert len(provider.requests) == 3
+        assert provider.task_requests[0].mode == "model"
+        assert len(provider.task_requests) == 3
 
 
 async def test_failed_boundary_backup_does_not_stop_the_next_queued_task(agent, monkeypatch):
@@ -204,9 +205,10 @@ async def test_failed_boundary_backup_does_not_stop_the_next_queued_task(agent, 
 
     async def fail_once(*args, **kwargs):
         nonlocal attempts
-        attempts += 1
-        if attempts == 1:
-            raise OSError("Simulated backup disk failure")
+        if first.terminal:
+            attempts += 1
+            if attempts == 1:
+                raise OSError("Simulated backup disk failure")
         return await create(*args, **kwargs)
 
     monkeypatch.setattr(agent.backups, "create", fail_once)

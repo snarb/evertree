@@ -294,6 +294,28 @@ async def evaluate_pair(
                     raise PermissionError("Learning is disabled during ready-model evaluation")
                 authorize_operation(method, metadata["program"]["role"])
                 if method.startswith("semantic."):
+                    admitted = registry.get("knowledge_integration")
+                    metadata["knowledge_integration_authorized"] = bool(
+                        admitted is not None
+                        and metadata["program"]["program_id"] == admitted.program_id
+                        and metadata["program"]["revision"] == context.revision
+                        and metadata["program"]["role"] == "exec"
+                    )
+                    metadata["integration_operation_id"] = "evaluation:" + metadata["run_id"]
+                    metadata["integration_context"] = {
+                        "task": {"id": metadata["task_id"], "mode": "evaluation"},
+                        "values": [
+                            json_value(node)
+                            for node in context.graph.nodes()
+                            if node.name in {"EpistemicQuality", "AgentCapability"}
+                        ],
+                        "self": [
+                            json_value(node)
+                            for node in context.graph.nodes()
+                            if node.name == "Self"
+                        ],
+                        "preservation_intents": [],
+                    }
                     return await semantics.execute(method, payload, metadata)
                 if method == "resolve_program":
                     resolved = registry[payload["program_id"]]

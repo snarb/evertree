@@ -8,7 +8,13 @@ import pytest
 
 from evertree.core.runtime.controller import Runtime
 from tests.support.evaluation import dataset
-from tests.support.experiments import evaluate_pair, prepare
+from tests.support.experiments import (
+    INTEGRATION_PATH,
+    INTEGRATION_SOURCE,
+    evaluate_pair,
+    prepare,
+    register_integration,
+)
 from tests.support.lifecycle_backup import change
 
 
@@ -20,7 +26,8 @@ async def run(value, ctx):
     from evertree.common.calculation import calculate
     node = await ctx.step('graph.get', {'id': 1})
     assert node['name'] == 'original'
-    await ctx.step('graph.apply', {'updates': [{'id': 1, 'changes': {'name': 'changed'}}]})
+    result = await ctx.call('knowledge_integration', {'name': 'changed'})
+    assert result.result['complete']
     assert await ctx.step('learning.predict', {'state_id': 'known'}) == 0.5
     answer = await ctx.step('agent.run', {'prompt': str(value), 'mode': 'exec'})
     return {'result': calculate(value) + answer['parsed']}
@@ -31,8 +38,10 @@ async def run(value, ctx):
         {
             "src/evertree/common/calculation.py": "def calculate(value): return value\n",
             "src/evertree/common/__init__.py": "",
+            INTEGRATION_PATH: INTEGRATION_SOURCE,
         },
     )
+    integration = register_integration(graph, spec.revision)
     # Baseline helper is committed before branching so both sides can run.
     initial_helper = Path(branch.workspace) / "src/evertree/common/calculation.py"
     revision = change(
@@ -59,7 +68,7 @@ async def run(value, ctx):
         graph,
         memory,
         learning,
-        lambda _: spec,
+        lambda identity: integration if identity == 2 else spec,
         runtime_factory=factory,
         model_call=model_call,
     )

@@ -89,7 +89,7 @@ The following inventory preserves the behavioral scenario IDs and acceptance bou
 | BEL-19 | `test_behavioral_beliefs` | Supplied-likelihood updating; automatic SourceReliability estimation/integration is absent. |
 | BEL-20 | `test_behavioral_beliefs` | Old scope identities reject different alternatives; new scopes do not inherit evidence. No automatic structural revision. |
 | LRN-01, LRN-02 | `test_behavioral_generalization` | Evaluate/select prepared generalizations and retain counterexamples. LRN-01 uses a supplied implementation-count metric; no autonomous common-mechanism synthesis or graph-model unification. |
-| LRN-04, LRN-08 | `test_behavioral_generalization` | Reflection proposals with sources do not establish beliefs or rewrite principles. Automatic Note/Claim materialization and scope revision are absent. |
+| LRN-04, LRN-08 | `test_behavioral_generalization`, `test_analytical_programs` | Reflection proposals and analytical Notes retain sources without establishing beliefs or rewriting principles. The owner integrates analytical outputs through KnowledgeIntegration; autonomous scope revision is absent. |
 | LRN-05, LRN-07 | `test_behavioral_generalization` | Independent evaluation, lifecycle activation, and execution of a prepared parser with new input. No autonomous debugging or semantic Task-handler selection. |
 | LRN-06 | `test_behavioral_generalization` | Compacted audit traces retain failures, hypotheses, checks, and activated revisions. |
 | LRN-03, LRN-10–17 | `test_behavioral_learning` | Shared bindings, credit, locks, idempotence, correction, and transaction rollback. |
@@ -158,3 +158,16 @@ It uses private random index namespaces and deletes those test indexes afterward
 The Redis suite separately tests names and descriptions for concepts, prototypes, Instances, Facets, relation types and facts; KNN uses known vectors to verify ranking and `kind` independently of embedding quality. Exact-name tests assert zero model/index calls.
 
 The separate opt-in `tests/live/test_embeddings.py` checks real OpenAI embeddings with `OPENAI_API_KEY`. Live tests may incur usage charges.
+
+## Conscious steps and integration policy
+
+Step-contract and coordinator tests distinguish intermediate analytical Notes from user messages, enforce finite local budgets, retain working state between iterations and gate completion on integration. Semantic component tests exercise explicit preservation obligations, complete decision coverage, source-specific retention, reuse and the restricted write gateway. These tests use supplied model decisions to check contracts; they do not prove autonomous semantic judgment.
+
+`tests/live/test_knowledge_integration.py` evaluates the actual installed KnowledgeIntegration Program with a real Codex model and real in-process semantic stores. Source-backed cases in `knowledge_integration_cases.json` cover a conditional hypothesis whose uncertainty must survive preservation, a routine series that must not explode into per-reading states, and an intermediate experiment plan that must not become a fabricated final result. A fourth case uses the production consciousness instructions and result schema to check that one experiment-planning step returns a bounded continuation rather than pretending to finish the investigation. Hard assertions check accepted receipts, preservation, retained source access, bounded graph growth and absence of unsupported belief targets. Separate model invocations evaluate meaning and step granularity against explicit criteria, with no generator session history; these are fallible semantic evaluations, not deterministic proofs.
+
+```sh
+# Opt-in: actual model calls, including one separate rubric review per case.
+EVERTREE_CODEX_INTEGRATION=1 uv run pytest tests/live/test_knowledge_integration.py -q -n 0
+```
+
+The harness uses deterministic empty non-exact search indexes over an initially empty domain; exact bootstrap lookup and the production semantic search/commit paths remain active. It tests integration policy and single-step model behavior, not embedding quality, worker isolation, durable recovery or full conscious-loop scheduling. Each model call has a 120-second timeout and the production Program bounds its preparation attempts. Failures retain source cases, model exchanges, graph receipts and rubric results in `semantic-policy-evaluation.json` or `conscious-step-evaluation.json` under the pytest case directory. Without the opt-in variable the cases collect and skip without model calls.

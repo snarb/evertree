@@ -8,7 +8,8 @@ import msgpack
 import pytest
 import zstandard
 
-from evertree._application.prompts import AnswerVerification, Decision
+from evertree._application.prompts import AnswerVerification
+from evertree.core.cognition.steps import AnalyticalNote, ConsciousStepResult
 from evertree.core.cognition.tasks import TaskSpecification
 from evertree.core.evaluation.contracts import SupervisorFeedback
 from evertree.core.graph.store import GraphStore
@@ -123,7 +124,7 @@ def test_unknown_or_empty_extensions_are_rejected(extension):
         ("evertree.core.sandbox.process", "SandboxLimits"),
         ("evertree.core.runtime.controller", "ProgramSpec"),
         ("evertree.core.runtime.controller", "RunResult"),
-        ("evertree._application.prompts", "Decision"),
+        ("evertree.core.cognition.steps", "ConsciousStepResult"),
         ("evertree._application.prompts", "AnswerVerification"),
     ],
 )
@@ -145,8 +146,12 @@ def test_defined_types_support_pickle_and_resolve_annotations(module_name, name)
             "evertree.core.learning.contracts.LearningObjective",
         ),
         (
-            Decision(status="completed", answer="Done", progress="Verified"),
-            "evertree._application.prompts.Decision",
+            ConsciousStepResult(
+                analysis=AnalyticalNote(text="Verified"),
+                disposition="propose_completion",
+                user_message="Done",
+            ),
+            "evertree.core.cognition.steps.ConsciousStepResult",
         ),
         (
             AnswerVerification(verified=True, reason="Checked"),

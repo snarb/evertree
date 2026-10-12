@@ -4,8 +4,8 @@ from functools import partial
 import pytest
 
 from evertree.application import EverTree
-from evertree.core.provider import ScriptedProvider
 from evertree.core.runtime.controller import Runtime
+from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import decision, framing, verification
 from tests.support.runtime import TestProcess
 
@@ -29,7 +29,9 @@ async def test_backup_restart_preserves_waiting_task_and_original_budget(tmp_pat
         await first._pump
         saved_usage = dict(first.tasks.get(identity).spent)
         assert first.backups.list()
-    second_provider = ScriptedProvider([decision("3"), verification()])
+    second_provider = ScriptedProvider(
+        [framing("Count r in strawberry", minutes=8, improvement=5), decision("3"), verification()]
+    )
     async with EverTree(
         home,
         provider=second_provider,
@@ -43,7 +45,9 @@ async def test_backup_restart_preserves_waiting_task_and_original_budget(tmp_pat
         result = await asyncio.wait_for(restored.run("r", task_id=identity), 60)
         assert result["status"] == "succeeded", result
         assert result["task_id"] == identity
-        assert len(second_provider.requests) == 2  # No reset or repeated framing.
+        assert len(second_provider.task_requests) == 3
+        assert task.spent["active_time_minutes"] >= saved_usage["active_time_minutes"]
+        assert task.specification.revision == 3
 
 
 pytestmark = pytest.mark.usefixtures("offline_application")

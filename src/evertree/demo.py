@@ -93,7 +93,29 @@ class DemoProvider:
             )
             return
         properties = (request.output_schema or {}).get("properties", {})
-        if "execution_budget" in properties:
+        if {"action", "delta_json", "decisions_json"} <= properties.keys():
+            material = json.loads(request.prompt)["material"]
+            if material["context"].get("preservation_intents"):
+                raise ProviderError("The offline demo does not script mandatory materialization")
+            payload = {
+                "action": "commit",
+                "query": "",
+                "delta_json": "{}",
+                "decisions_json": json.dumps(
+                    [
+                        {
+                            "disposition": "trace_only",
+                            "reason": "Retain demonstration observations in trace; executable skill is already registered by lifecycle",
+                            "source_refs": [item["reference"]],
+                            "affected_ids": [],
+                            "preservation_ids": [],
+                        }
+                        for item in material["experience"]
+                    ]
+                ),
+                "summary": "Demonstration experience reviewed and retained in trace",
+            }
+        elif "execution_budget" in properties:
             payload = {
                 "objective": "Develop the sorting skill"
                 if self.stage != "reuse"
@@ -109,6 +131,12 @@ class DemoProvider:
                 "self_improvement_budget": 90 if self.stage != "reuse" else 0,
                 "budget_reason": "Small deterministic demonstration with independent native executions",
             }
+            if "initial_step" in properties:
+                payload["initial_step"] = {
+                    "local_goal": "Evaluate and execute the requested sorting capability",
+                    "expected_result": "An accepted Program and its checked execution result",
+                    "active_time_minutes": 4 if self.stage != "reuse" else 1,
+                }
         elif "verified" in properties:
             expected = [2, 5, 9] if self.stage == "initial" else [1, 3, 3]
             payload = {
@@ -200,8 +228,17 @@ class DemoProvider:
             if self.last_result != sorted(values):
                 raise ProviderError("Actual execution did not satisfy the demonstration objective")
             payload = {
-                "status": "completed",
-                "answer": json.dumps(self.last_result),
+                "analysis": {
+                    "text": "The accepted sorting Program returned "
+                    + json.dumps(self.last_result)
+                    + ". This matches the requested sequence; the independent fixed evaluation "
+                    "covers the declared input domain. No broader sorting-domain claim is established.",
+                    "source_refs": [],
+                    "kind": "note",
+                    "preserve": False,
+                },
+                "disposition": "propose_completion",
+                "user_message": json.dumps(self.last_result),
                 "progress": "The accepted Program was executed and its result checked",
             }
         yield AgentEvent("completed", {"text": json.dumps(payload), "parsed": payload})

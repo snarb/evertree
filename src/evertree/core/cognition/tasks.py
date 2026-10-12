@@ -13,6 +13,7 @@ from uuid import uuid4
 from evertree.core.evaluation.acceptance import VerificationResult
 
 from ..datasets import freeze_json, thaw_json
+from .steps import ConsciousStepSpec, trace_reference
 
 TERMINAL_STATUSES = frozenset({"succeeded", "failed", "cancelled"})
 
@@ -121,6 +122,9 @@ class TaskState:
     review_required: bool = False
     execution_stopped: bool = True
     budget_history: list[dict[str, Any]] = field(default_factory=list)
+    current_step: dict[str, Any] | None = None
+    step_state: dict[str, Any] = field(default_factory=dict)
+    last_step_ref: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.status not in TASK_STATUSES or not self.id:
@@ -134,6 +138,19 @@ class TaskState:
         for values in (self.spent, self.self_improvement_spent, self.hard_limits):
             for key, value in values.items():
                 _finite_nonnegative(value, key)
+        if self.current_step is not None:
+            self.current_step = ConsciousStepSpec.model_validate(self.current_step).model_dump(
+                mode="json"
+            )
+        if not isinstance(self.step_state, dict):
+            raise TypeError("Conscious step state must be a mapping")
+        self.step_state = thaw_json(freeze_json(self.step_state))
+        if self.last_step_ref is not None:
+            reference = trace_reference(self.last_step_ref)
+            self.last_step_ref = {
+                "event_ref": reference.event_ref,
+                "output_path": list(reference.output_path),
+            }
 
     @property
     def task_id(self) -> str:

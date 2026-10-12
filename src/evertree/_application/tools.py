@@ -90,8 +90,10 @@ class ToolsMixin:
                     task_id,
                 )
             return result["result"]
-        if name == "graph.remember":
-            result = await self._run_program(task_id, "knowledge_remembering", args)
+        if name == "record_analysis":
+            return self._record_analysis(task_id, args)
+        if name == "graph.integrate":
+            result = await self._run_program(task_id, "knowledge_integration", args)
             return result["result"]
         if name.startswith("graph."):
             return await self._graph_tool(task_id, name, args)
@@ -250,8 +252,29 @@ class ToolsMixin:
         if state.terminal or state.hard_limit_reached:
             raise PermissionError("Task is stopped or its explicit resource limit was reached")
         authorize_operation(method, metadata["program"]["role"])
+        if method == "memory.note":
+            return self._record_analysis(
+                task_id,
+                payload,
+                producer=metadata["program"]["program_id"],
+                revision=metadata["program"]["revision"],
+                owner_run=self._run_map.get(metadata.get("run_id")),
+            )
         if method.startswith("semantic."):
-            return await self._semantics().execute(method, payload, metadata)
+            if method in {"semantic.sources", "semantic.commit"}:
+                metadata = self._semantic_metadata(state, payload, metadata)
+            result = await self._semantics().execute(method, payload, metadata)
+            receipt = None
+            if method == "semantic.commit":
+                receipt = result
+            elif method == "semantic.sources":
+                receipt = result.get("receipt")
+            if receipt and receipt.get("receipt_ref"):
+                self.memory.retain(TraceOutputRef(**receipt["receipt_ref"]), "task:" + task_id)
+                if receipt.get("complete") is True:
+                    revision = metadata["integration_context"]["task"]["specification"]["revision"]
+                    self._mark_integrated(state, revision, payload["experience_refs"])
+            return result
         if method == "resolve_program":
             spec = self._program(payload["program_id"])
             revision = metadata["program"]["revision"]

@@ -388,7 +388,9 @@ A Note may preserve coherent content as a whole: for example, an experience desc
 
 A Note is linked to relevant concepts, processes, programs, and experience through ordinary semantic relations. [[Memory#^def-ResultProvenance|Provenance]] records which inputs and computations produced it; related memories may explain its origin, confirm its contents, or show their limits. Originating from an experience does not mean that the experience supports the entire Note.
 
-A Note may remain a result in a trace. If it is needed in the long-term world model, a program explicitly materializes it in the persistent graph through [[#Updating the Persistent Graph|`GraphDelta`]]. Both cases follow the shared [[Memory#^def-Memory|Memory lifecycle]]. Content evaluation is defined in the [[#^note-claim-prompt-evaluation|shared rules below]].
+A Note may remain a result in a trace. If it is needed in the long-term world model, [[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] materializes it through an internal [[#Updating the Persistent Graph|`GraphDelta`]]. Both cases follow the shared [[Memory#^def-Memory|Memory lifecycle]]. Content evaluation is defined in the [[#^note-claim-prompt-evaluation|shared rules below]].
+
+An `AnalyticalNote` in a [[Cognition and Attention#Conscious Step Contract|conscious step result]] is a typed, trace-local representation of this same content, not a new base graph type. It can record an intermediate plan, evidence, qualifications, provisional hypothesis or open question before any final task answer exists. Its `text` and `source_refs` remain available to the next step. Optional significance and rationale guide integration; `preserve` explicitly requests preservation of its meaning. Neither significance nor preservation establishes truth. Materialization can retain the coherent Note when extracting separate Claims would lose important conditions.
 
 ---
 
@@ -408,7 +410,7 @@ When meaning is already represented precisely enough by ordinary EverTree proper
 
 A Claim may first arise as the result of reasoning or program execution.
 
-If a claim becomes an independent `BeliefTarget` that must be used or updated separately from the source [[Memory#^def-ProgramRun|`ProgramRun`]], materialize it in the persistent semantic graph through an ordinary `GraphDelta`.
+If a claim becomes an independent `BeliefTarget` that must be used or updated separately from the source [[Memory#^def-ProgramRun|`ProgramRun`]], pass its recorded result to KnowledgeIntegration for materialization through an ordinary internal `GraphDelta`.
 
 Here, persistent means:
 
@@ -654,6 +656,8 @@ GraphStore
 A write operation is recorded by the corresponding graph-writing [[Memory#^def-TraceEvent|`TraceEvent`]], so the change retains [[Memory#^def-ResultProvenance|provenance]] to the computation and experience on which it was based.
 
 Direct semantic mutation of persistent objects outside `GraphDelta` is prohibited.
+
+Consciousness and learnable Programs submit domain knowledge through `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)`. Public `graph.apply` is not an alternative write path. The authorized, revision-pinned integration Program prepares the delta; core validates and atomically applies it through `semantic.commit`. Bootstrap, lifecycle and specialized core mechanisms retain internal delta operations. This boundary centralizes representation and provenance without requiring consciousness to delegate its judgment about an insight's meaning or explicit preservation.
 
 Runtime state that is not persistent semantic knowledge, such as current `activations`, may be changed separately.
 

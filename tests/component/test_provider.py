@@ -98,12 +98,13 @@ class FakeClient:
     def thread_start(self, params):
         self.params = params
         return {
-            "thread": {"id": "thread1"},
+            "thread": {"id": "thread1", "ephemeral": params["ephemeral"]},
             "model": params["model"],
             "activePermissionProfile": {"id": params["permissions"]},
         }
 
     def turn_start(self, thread_id, prompt, params):
+        self.prompt = prompt
         self.turn_params = params
         self.events = [
             SimpleNamespace(method="item/agentMessage/delta", payload={"delta": '{"ok": true}'}),
@@ -178,6 +179,7 @@ async def test_sdk_model_effort_and_no_permissive_default(tmp_path):
     assert events[-1].kind == "completed"
     assert events[-1].data["parsed"] == {"ok": True}
     assert clients[0].params["model"] == "gpt-6-luna"
+    assert clients[0].params["ephemeral"] is True
     assert clients[0].turn_params["effort"] == "high"
     assert "sandbox" not in clients[0].params
     assert clients[0].params["permissions"].startswith("evertree_")
@@ -333,7 +335,10 @@ async def test_native_coding_has_scoped_profile_and_never_escalates(tmp_path):
 async def test_missing_permission_profile_fails_before_turn(tmp_path):
     class UnsafeClient(FakeClient):
         def thread_start(self, params):
-            return {"thread": {"id": "thread1"}, "model": params["model"]}
+            return {
+                "thread": {"id": "thread1", "ephemeral": params["ephemeral"]},
+                "model": params["model"],
+            }
 
         def turn_start(self, *args):
             raise AssertionError("Must not bill a turn without permissions")
@@ -441,6 +446,9 @@ async def test_native_start_and_resume_bind_only_current_executor(tmp_path, resu
         return executor
 
     provider = CodexProvider(client_factory=client_factory, executor_factory=executor_factory)
+    if resume:
+        prior = [e async for e in provider.run("prior", AgentRequest("prior context", tmp_path))]
+        assert prior[-1].kind == "completed"
     events = [
         event
         async for event in provider.run(
@@ -450,18 +458,21 @@ async def test_native_start_and_resume_bind_only_current_executor(tmp_path, resu
                 tmp_path,
                 mode="exec",
                 native_coding=True,
-                session=SessionRef("codex", "previous-session") if resume else None,
+                session=SessionRef("codex", "thread1") if resume else None,
             ),
         )
     ]
     assert events[-1].kind == "completed"
-    assert clients[0].params["environments"] == [executors[0].environment]
-    assert clients[0].turn_params["environments"] == [executors[0].environment]
-    assert clients[0].turn_params["sandboxPolicy"] == {
+    assert clients[-1].params["ephemeral"] is True
+    if resume:
+        assert "prior context" in clients[-1].prompt
+    assert clients[-1].params["environments"] == [executors[0].environment]
+    assert clients[-1].turn_params["environments"] == [executors[0].environment]
+    assert clients[-1].turn_params["sandboxPolicy"] == {
         "type": "externalSandbox",
         "networkAccess": "enabled",
     }
-    shell_policy = clients[0].params["config"]["shell_environment_policy"]
+    shell_policy = clients[-1].params["config"]["shell_environment_policy"]
     assert shell_policy["inherit"] == "none"
     assert shell_policy["set"]["PATH"] == executors[0].command_environment["PATH"]
     assert shell_policy["set"]["SECRET_TOKEN"] == ""
@@ -681,7 +692,7 @@ async def test_absent_catalog_bootstrap_cannot_silently_fallback(tmp_path, model
 
 
 @pytest.mark.asyncio
-async def test_unknown_session_starts_with_cleared_tools_and_retained_context(tmp_path):
+async def test_unknown_session_reports_unavailable_history(tmp_path):
     from evertree.core.provider import SessionRef
 
     clients = []
@@ -706,12 +717,12 @@ async def test_unknown_session_starts_with_cleared_tools_and_retained_context(tm
             AgentRequest("compute", tmp_path, session=SessionRef("codex", "previous-exec")),
         )
     ]
-    assert events[-1].kind == "completed"
-    assert clients[0].turn_params["effort"] == "high"
-    assert clients[0].params["dynamicTools"] == []
+    assert events[-1].kind == "error"
+    assert "Session history is unavailable" in events[-1].data["message"]
+    assert not hasattr(clients[0], "turn_params")
 
 
-async def test_usage_counts_all_responses_and_excludes_known_resumed_history(tmp_path):
+async def test_ephemeral_continuation_retains_context_and_counts_fresh_usage(tmp_path):
     from evertree.core.provider import SessionRef
 
     totals = iter(((12, 12, 32), (42, 42, 72)))
@@ -729,7 +740,14 @@ async def test_usage_counts_all_responses_and_excludes_known_resumed_history(tmp
             ] + self.events
             return result
 
-    provider = CodexProvider(client_factory=UsageClient)
+    clients = []
+
+    def factory(**kwargs):
+        client = UsageClient(**kwargs)
+        clients.append(client)
+        return client
+
+    provider = CodexProvider(client_factory=factory)
     first = [e async for e in provider.run("first", AgentRequest("first", tmp_path))]
     second = [
         e
@@ -738,15 +756,16 @@ async def test_usage_counts_all_responses_and_excludes_known_resumed_history(tmp
         )
     ]
     assert [e.data["total_tokens"] for e in first if e.kind == "usage"] == [12, 12, 32]
-    assert [e.data["total_tokens"] for e in second if e.kind == "usage"] == [10, 10, 40]
+    assert [e.data["total_tokens"] for e in second if e.kind == "usage"] == [42, 42, 72]
+    assert clients[1].params["ephemeral"] is True
+    assert '"text": "first"' in clients[1].prompt
+    assert '{\\"ok\\": true}' in clients[1].prompt
     assert all(e.data["available"] for e in first + second if e.kind == "usage")
     assert first[-1].kind == second[-1].kind == "completed"
 
 
 @pytest.mark.parametrize("reported", [True, False])
-async def test_unknown_session_uses_fresh_usage_and_missing_usage_is_explicit(tmp_path, reported):
-    from evertree.core.provider import SessionRef
-
+async def test_fresh_usage_and_missing_usage_is_explicit(tmp_path, reported):
     class UsageClient(FakeClient):
         def request(self, method, params, response_model):
             if method == "thread/resume":
@@ -763,9 +782,7 @@ async def test_unknown_session_uses_fresh_usage_and_missing_usage_is_explicit(tm
         e
         async for e in CodexProvider(client_factory=UsageClient).run(
             "unknown",
-            AgentRequest(
-                "resume", tmp_path, session=SessionRef("codex", "old") if reported else None
-            ),
+            AgentRequest("compute", tmp_path),
         )
     ]
     usage = [e.data for e in events if e.kind == "usage"]
@@ -923,6 +940,7 @@ async def test_tool_set_continuation_registers_real_schemas_and_resets_next_invo
 
         def request(self, method, params, response_model):
             if method in {"thread/start", "thread/resume"}:
+                assert params["ephemeral"] is True
                 self.schemas.append(params["dynamicTools"])
                 result = self.thread_start(params)
                 if len(self.schemas) > 1 and invalid_resume:
@@ -968,7 +986,7 @@ async def test_tool_set_continuation_registers_real_schemas_and_resets_next_invo
                 ]
             self.events.insert(0, token_notification(10 if self.turns == 1 else 20))
             if self.turns > 1:
-                assert "prior request" in prompt
+                assert '"text": "read"' in prompt
             return {"turn": {"id": f"turn{self.turns}"}}
 
     def factory(config, approval_handler):
@@ -1069,55 +1087,55 @@ async def test_independent_model_effort_profiles(tmp_path, model_cache):
         assert clients[-1].turn_params["effort"] == effort
 
 
-def test_continuation_history_keeps_tools_and_flattens_prior_context():
-    from evertree.core.codex.protocol import _continuation_input, _thread_history
+async def test_ephemeral_history_keeps_public_tool_results_without_nested_context(tmp_path):
+    from evertree.core.provider import SessionRef
 
-    result = {
-        "type": "dynamicToolCall",
-        "tool": "read",
-        "contentItems": [{"type": "inputText", "text": "retained result"}],
-    }
-    pages = iter(
-        [
-            {
-                "data": [
-                    {
-                        "item": {
-                            "type": "userMessage",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": _continuation_input(
-                                        [result], "old request", continued=True
-                                    ),
-                                }
-                            ],
+    clients = []
+
+    class HistoryClient(FakeClient):
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            if len(clients) == 1:
+                self.events[:0] = [
+                    SimpleNamespace(
+                        method="item/completed",
+                        payload={"item": {"type": "reasoning", "text": "private reasoning"}},
+                    ),
+                    SimpleNamespace(
+                        method="item/completed",
+                        payload={
+                            "item": {
+                                "type": "dynamicToolCall",
+                                "tool": "read",
+                                "contentItems": [{"type": "inputText", "text": "retained result"}],
+                            }
                         },
-                        "turnId": "1",
-                    }
-                ],
-                "nextCursor": "next",
-            },
-            {
-                "data": [{"item": {"type": "agentMessage", "text": "old answer"}, "turnId": "1"}],
-                "nextCursor": None,
-            },
+                    ),
+                ]
+            return result
+
+    def factory(**kwargs):
+        client = HistoryClient(**kwargs)
+        clients.append(client)
+        return client
+
+    provider = CodexProvider(client_factory=factory)
+    for ordinal, prompt in enumerate(("first request", "second request", "new request")):
+        events = [
+            e
+            async for e in provider.run(
+                str(ordinal),
+                AgentRequest(
+                    prompt, tmp_path, session=SessionRef("codex", "thread1") if ordinal else None
+                ),
+            )
         ]
-    )
-    requests = []
-
-    class Client:
-        def request(self, method, params, response_model):
-            requests.append((method, params))
-            return response_model.model_validate(next(pages))
-
-    history = _thread_history(Client(), "thread")
-    assert history == [
-        result,
-        {"type": "userMessage", "content": [{"type": "text", "text": "old request"}]},
-        {"type": "agentMessage", "text": "old answer"},
-    ]
-    assert requests[1][1]["cursor"] == "next"
-    prompt = _continuation_input(history, "new request")
+        assert events[-1].kind == "completed"
+    prompt = clients[-1].prompt
+    assert "retained result" in prompt
+    assert "first request" in prompt and "second request" in prompt
+    assert "private reasoning" not in prompt
     assert prompt.endswith("Current user request:\nnew request")
     assert prompt.count("<evertree-history>") == 1
+    await provider.close()
+    assert not provider._histories

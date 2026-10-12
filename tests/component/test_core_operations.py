@@ -69,7 +69,15 @@ def test_same_read_contracts_and_effect_guards_in_independent_environments():
     for operations in (live, isolated):
         with pytest.raises(PermissionError, match="model Program"):
             invoke(operations, "graph.apply", {"deletes": [1]}, "model")
-    invoke(isolated, "graph.apply", {"updates": [{"id": 1, "changes": {"name": "isolated"}}]})
+        with pytest.raises(PermissionError, match="Public graph.apply"):
+            invoke(
+                operations, "graph.apply", {"updates": [{"id": 1, "changes": {"name": "isolated"}}]}
+            )
+    isolated.apply_delta(
+        GraphDelta.from_dict({"updates": [{"id": 1, "changes": {"name": "isolated"}}]}),
+        task_id="task",
+        revision="commit",
+    )
     assert live.graph.get(1).name == "property"
     assert isolated.graph.get(1).name == "isolated"
 
@@ -131,15 +139,11 @@ def test_binding_facts_cannot_bypass_lifecycle_and_mutations_keep_run_mode():
     fact = operations.graph.new_fact("PROGRAM_FOR_PROCESS", {"program": 1, "process": 1})
     with pytest.raises(PermissionError, match="lifecycle"):
         operations.apply_delta(GraphDelta(creates=(fact,)), task_id="task", revision="commit")
-    operations.execute(
-        "graph.apply",
-        {"creates": [{"id": 4, "name": "new"}]},
-        metadata={
-            "task_id": "task",
-            "run_id": "run",
-            "run_mode": "evaluation",
-            "program": {"role": "exec", "revision": "commit"},
-        },
+    operations.apply_delta(
+        GraphDelta(creates=(Node(4, "new"),)),
+        task_id="task",
+        revision="commit",
+        run_mode="evaluation",
     )
     mutation = next(event for event in operations.memory.events if event.operator == "graph_delta")
     assert operations.memory.get_run(mutation.program_run).run_mode == "evaluation"

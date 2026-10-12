@@ -33,6 +33,7 @@ async def test_reflection_proposal_boundary_does_not_establish_or_rewrite_belief
         source_ids = ["english-1000-counterexample"]
         statement = "Decimal comma interpretation requires a compatible locale"
     proposal = {
+        "analysis": {"text": "The hypothesis needs independent locale checks."},
         "incidents": [],
         "hypotheses": [
             {
