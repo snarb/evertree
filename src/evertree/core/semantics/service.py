@@ -4,10 +4,10 @@ import hashlib
 import json
 from uuid import uuid4
 
-from ..graph.store import GraphStore
-from ..graph.types import GraphDelta, RelationInstance, RelationType, node_from_dict
+from ..graph.types import RelationInstance, node_from_dict
 from ..memory.types import TraceOutputRef, _references
 from ..values import ContractError, json_value
+from .actions import CREATE_ACTIONS, compile_action, validate_action
 from .reading import card
 
 
@@ -91,12 +91,15 @@ class SemanticService:
     @staticmethod
     def _authorize(metadata):
         if (
-            metadata.get("knowledge_integration_authorized") is not True
+            not (
+                metadata.get("knowledge_integration_authorized") is True
+                or metadata.get("consciousness_graph_authorized") is True
+            )
             or metadata.get("program", {}).get("role") != "exec"
             or not metadata.get("program", {}).get("revision")
             or not metadata.get("integration_operation_id")
         ):
-            raise PermissionError("Semantic writes require admitted KnowledgeIntegration execution")
+            raise PermissionError("Semantic writes require admitted graph execution")
 
     @staticmethod
     def _reference(value):
@@ -112,43 +115,6 @@ class SemanticService:
         ):
             raise ContractError("Invalid retained experience reference")
         return TraceOutputRef(**value)
-
-    @staticmethod
-    def _fingerprint(experience, context):
-        stable_context = json_value(context)
-        if isinstance(stable_context.get("task"), dict):
-            for field in (
-                "remaining_active_time_minutes",
-                "self_improvement_remaining",
-                "remaining",
-            ):
-                stable_context["task"].pop(field, None)
-        return hashlib.sha256(
-            json.dumps(
-                [[item["reference"] for item in experience], stable_context],
-                sort_keys=True,
-            ).encode()
-        ).hexdigest()
-
-    def _receipt(self, metadata, fingerprint):
-        key = [metadata["task_id"], metadata["integration_operation_id"]]
-        for event in reversed(self.memory.events):
-            if (
-                event.operator != "semantic_commit"
-                or self.memory.get_run(event.program_run).program != "KnowledgeIntegrationReceipt"
-                or list(event.arguments.get("key", ())) != key
-            ):
-                continue
-            if event.arguments.get("fingerprint") != fingerprint:
-                raise ContractError(
-                    "Integration operation cannot be reused with different experience or context"
-                )
-            if event.output["complete"]:
-                return {
-                    **json_value(event.output),
-                    "receipt_ref": json_value(self.memory.output_ref(event)),
-                }
-        return None
 
     def sources(self, experience_refs, focus=None, *, metadata):
         self._authorize(metadata)
@@ -178,150 +144,11 @@ class SemanticService:
                     },
                 }
             )
-        context = json_value(metadata.get("integration_context", {}))
-        intents = {item["id"]: item for item in context.get("preservation_intents", [])}
-
-        def preserve(value, reference):
-            if isinstance(value, dict):
-                if value.get("preserve") is True and isinstance(value.get("text"), str):
-                    identity = (
-                        str(reference["event_ref"]) + ":" + json.dumps(reference["output_path"])
-                    )
-                    intents[identity] = {
-                        "id": identity,
-                        "source_ref": reference,
-                        "text": value["text"],
-                    }
-                for key, child in value.items():
-                    preserve(child, {**reference, "output_path": [*reference["output_path"], key]})
-            elif isinstance(value, list):
-                for index, child in enumerate(value):
-                    preserve(
-                        child, {**reference, "output_path": [*reference["output_path"], index]}
-                    )
-
-        for item in values:
-            event = self.memory.get_event(item["reference"]["event_ref"])
-            analytical = event.operator == "analytical_note" and event.output_type.endswith(
-                ".AnalyticalNote"
-            )
-            if event.operator == "experience_fragment" and isinstance(item["content"], dict):
-                original = item["content"].get("source_ref")
-                if original is not None:
-                    source_event = self.memory.get_event(self._reference(original).event_ref)
-                    analytical = (
-                        self.memory.get_run(event.program_run).program == "ExperienceFragments"
-                        and source_event.operator == "analytical_note"
-                        and source_event.output_type.endswith(".AnalyticalNote")
-                    )
-            if analytical:
-                preserve(item["content"], item["reference"])
-        context["preservation_intents"] = list(intents.values())
-        fingerprint = self._fingerprint(values, context)
         return {
             "experience": values,
             "focus": focus,
-            "context": context,
-            "receipt": self._receipt(metadata, fingerprint),
+            "context": json_value(metadata.get("integration_context", {})),
         }
-
-    def _proposal(self, proposal):
-        if not isinstance(proposal, dict) or set(proposal) - {"creates", "updates", "deletes"}:
-            raise ContractError("Expected GraphDelta creates/updates/deletes")
-        proposal = json.loads(json.dumps(proposal))
-        creates = proposal.get("creates", [])
-        local = [item["id"] for item in creates]
-        if any(type(i) is not int or i >= 0 for i in local) or len(set(local)) != len(local):
-            raise ContractError("New nodes require unique negative temporary IDs")
-        staged = GraphStore.from_snapshot(self.graph.snapshot())
-        identities = {i: staged.reserve_id() for i in local}
-
-        def ref(value):
-            return identities.get(value, value) if isinstance(value, int) else value
-
-        types = {n.id: n for n in staged.nodes() if isinstance(n, RelationType)}
-        for item in creates:
-            item["id"] = ref(item["id"])
-            if item.get("kind") == "relation_type":
-                for slot in item.get("signature", []):
-                    if slot.get("concept") is not None:
-                        slot["concept"] = ref(slot["concept"])
-                types[item["id"]] = node_from_dict(item)
-        # Resolve the final schema before remapping arguments: a delta may both
-        # change a relation signature and create facts using that signature.
-        for update in proposal.get("updates", []):
-            previous = staged.get(update["id"])
-            changes = update["changes"]
-            if isinstance(previous, RelationType):
-                for slot in changes.get("signature", []):
-                    if slot.get("concept") is not None:
-                        slot["concept"] = ref(slot["concept"])
-                types[previous.id] = node_from_dict({**json_value(previous), **changes})
-
-        def remap(item, previous=None):
-            binding = item.get("properties", {}).get("attribution")
-            if binding is not None:
-                for field in ("applies_to", "classes"):
-                    if field in binding:
-                        binding[field] = [ref(i) for i in binding[field]]
-                if "relation_type" in binding:
-                    binding["relation_type"] = ref(binding["relation_type"])
-            if item.get("belief_target") or previous is not None and "belief_target" in item:
-                raise ContractError("Belief changes require evidence assessment")
-            if (
-                isinstance(previous, RelationInstance)
-                and previous.belief_target
-                and set(item) & {"args", "relation_type", "properties"}
-            ):
-                raise ContractError("Changing assessed evidence requires evidence assessment")
-            if item.get("kind") != "relation_instance" and not isinstance(
-                previous, RelationInstance
-            ):
-                return
-            if "relation_type" in item:
-                item["relation_type"] = ref(item["relation_type"])
-            relation = types.get(
-                item.get("relation_type", getattr(previous, "relation_type", None))
-            )
-            if relation is None:
-                raise ContractError("Unknown relation type")
-            if "args" in item:
-                for slot in relation.signature:
-                    if slot.value_type in {"node", "concept", "prototype", "instance", "facet"}:
-                        value = item["args"].get(slot.label)
-                        if value is not None:
-                            item["args"][slot.label] = (
-                                [ref(v) for v in value] if isinstance(value, list) else ref(value)
-                            )
-            if previous is None:
-                item.setdefault("name", relation.name)
-
-        for item in creates:
-            remap(item)
-        for update in proposal.get("updates", []):
-            remap(update["changes"], staged.get(update["id"]))
-        delta = GraphDelta.from_dict(proposal)
-        # Validation must not reserve live identities or partially write on failure.
-        staged.apply(delta, provenance="proposal-validation")
-
-        def fact_key(fact):
-            return (
-                fact.relation_type,
-                json.dumps(json_value(fact.args), sort_keys=True),
-                json.dumps(json_value(fact.properties), sort_keys=True),
-            )
-
-        changed_ids = {u.id for u in delta.updates} | set(delta.deletes)
-        seen_facts = {fact_key(f) for f in self.graph.facts() if f.id not in changed_ids}
-        for node in (*delta.creates, *(staged.get(u.id) for u in delta.updates)):
-            if isinstance(node, RelationInstance):
-                signature = fact_key(node)
-                if signature in seen_facts:
-                    raise ContractError(
-                        "Fact already exists; reuse it instead of duplicating evidence"
-                    )
-                seen_facts.add(signature)
-        return delta
 
     @staticmethod
     def _contains(parent, child):
@@ -330,181 +157,119 @@ class SemanticService:
             and child.output_path[: len(parent.output_path)] == parent.output_path
         )
 
-    def _decisions(self, payload, material, delta):
-        inputs = tuple(self._reference(item["reference"]) for item in material["experience"])
-        decisions = payload.get("decisions")
-        if not isinstance(decisions, list) or not decisions:
-            raise ContractError("Integration requires explicit decisions covering its experience")
-        local_ids = {
-            item["id"]: node.id
-            for item, node in zip(
-                payload["proposal"].get("creates", []), delta.creates, strict=True
+    def _check_search(self, action, metadata):
+        if action["action"] not in CREATE_ACTIONS:
+            return
+        query = action["name"].strip().casefold()
+        search = self._searches.get(metadata["task_id"], {}).get(query)
+        if not search or not search["complete"] or search["revision"] != self.graph.revision:
+            raise ContractError(
+                "Creating an identity requires a complete current search for " + query
             )
-        }
-        changed = {n.id for n in delta.creates} | {n.id for n in delta.updates} | set(delta.deletes)
-        covered, attributed, sources, normalized, preserved = set(), set(), [], [], set()
-        intents = {item["id"]: item for item in material["context"].get("preservation_intents", [])}
-        for decision in decisions:
-            disposition = decision.get("disposition")
-            if disposition not in {"materialize", "reuse", "trace_only", "unresolved"}:
-                raise ContractError("Unknown integration disposition")
-            reason = decision.get("reason")
-            if reason is not None and (not isinstance(reason, str) or not reason.strip()):
-                raise ContractError("An integration reason must be nonempty text")
-            if disposition == "unresolved" and reason is None:
-                raise ContractError("An unresolved decision requires a concrete obstacle")
-            refs = tuple(self._reference(ref) for ref in decision.get("source_refs", []))
-            if not refs:
-                raise ContractError("Every decision requires source_refs")
-            for ref in refs:
-                self.memory.resolve(ref)
-                parents = {i for i, parent in enumerate(inputs) if self._contains(parent, ref)}
-                if not parents:
-                    raise ContractError("Decision source is outside supplied experience")
-                covered.update(parents)
-            ids = [
-                local_ids.get(identity, identity) for identity in decision.get("affected_ids", [])
-            ]
-            if any(type(identity) is not int for identity in ids):
-                raise ContractError("Decision affected_ids must be graph identities")
-            if disposition == "materialize":
-                if not ids or not set(ids) <= changed:
-                    raise ContractError("Materialization must identify its graph changes")
-                attributed.update(ids)
-                sources.extend(refs)
-            elif disposition == "reuse":
-                if not ids:
-                    raise ContractError("Reuse requires existing identities")
-                if set(ids) & set(delta.deletes):
-                    raise ContractError("Cannot reuse an object deleted by this integration")
-                for identity in ids:
-                    self.graph.get(identity)
-            elif ids:
-                raise ContractError("Trace-only and unresolved decisions cannot change graph nodes")
-            preservation_ids = decision.get("preservation_ids", [])
-            if not isinstance(preservation_ids, list) or set(preservation_ids) - intents.keys():
-                raise ContractError("Unknown preservation intent")
-            if disposition in {"materialize", "reuse"}:
-                if preservation_ids and not set(ids) - set(delta.deletes):
-                    raise ContractError(
-                        "Preservation requires a representation that remains in the graph"
-                    )
-                for identity in preservation_ids:
-                    intent_ref = intents[identity].get("source_ref")
-                    if intent_ref and not any(
-                        self._contains(ref, TraceOutputRef(**intent_ref))
-                        or self._contains(TraceOutputRef(**intent_ref), ref)
-                        for ref in refs
-                    ):
-                        raise ContractError("Preservation decision must cite its analytical source")
-                preserved.update(preservation_ids)
-            normalized.append(
-                {
-                    "disposition": disposition,
-                    **({"reason": reason} if reason is not None else {}),
-                    "source_refs": json_value(refs),
-                    "affected_ids": ids,
-                    "preservation_ids": preservation_ids,
-                }
-            )
-        if len(covered) != len(inputs):
-            raise ContractError("Integration decisions leave unreviewed experience")
-        if attributed != changed:
-            raise ContractError("Every graph change needs an attributed materialization decision")
-        for embedded in _references(json_value(delta)):
-            if not any(self._contains(source, embedded) for source in sources):
-                raise ContractError("Embedded provenance must belong to materialized candidates")
-        return normalized, tuple(dict.fromkeys(sources)), sorted(intents.keys() - preserved)
 
-    def _check_searches(self, proposal, metadata):
-        searches = self._searches.get(metadata["task_id"], {})
-        for item in proposal.get("creates", []):
-            if item.get("kind", "concept") in {"relation_instance", "note"}:
-                continue
-            query = item.get("name", "").strip().casefold()
-            search = searches.get(query)
-            if not search or not search["complete"] or search["revision"] != self.graph.revision:
-                raise ContractError(
-                    "Creating an identity requires a complete current search for " + query
-                )
-
-    def commit(self, payload, metadata):
+    def write(self, payload, metadata):
         self._authorize(metadata)
         try:
-            material = self.sources(payload["experience_refs"], metadata=metadata)
-            if material["receipt"] is not None:
-                return material["receipt"]
-            delta = self._proposal(payload["proposal"])
-            decisions, refs, pending = self._decisions(payload, material, delta)
-            self._check_searches(payload["proposal"], metadata)
-            changed = bool(delta.creates or delta.updates or delta.deletes)
-            receipt = {
-                "operation_id": metadata["integration_operation_id"],
-                "status": "blocked" if pending else "complete",
-                "complete": not pending,
-                "decisions": decisions,
-                "pending_preservation_ids": pending,
-                "created": [] if pending else [card(n) for n in delta.creates],
-                "updated": [],
-                "deleted": [] if pending else list(delta.deletes),
-                "revision": self.graph.revision,
-            }
-            pending_refs = [
-                self._reference(intent["source_ref"])
-                for intent in material["context"].get("preservation_intents", [])
-                if intent["id"] in pending and intent.get("source_ref")
-            ]
-            obstacles = [
-                decision["reason"]
-                for decision in decisions
-                if decision["disposition"] == "unresolved"
-                and any(
-                    self._contains(ref, pending_ref) or self._contains(pending_ref, ref)
-                    for ref in map(self._reference, decision["source_refs"])
-                    for pending_ref in pending_refs
-                )
-            ]
-            if obstacles:
-                receipt["reason"] = "\n".join(dict.fromkeys(obstacles))
+            action = payload["action"]
+            validate_action(action)
+            operation_key = payload["operation_key"]
+            if not isinstance(operation_key, str) or not operation_key.strip():
+                raise ContractError("Graph writes require a runtime operation key")
+            key = [metadata["task_id"], metadata["integration_operation_id"], operation_key]
+            fingerprint = hashlib.sha256(
+                json.dumps(
+                    action,
+                    sort_keys=True,
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
             with self.graph.transaction(), self.memory.transaction():
-                # A blocked packet is retried as a whole. Partial writes would force
-                # a new interpretation of temporary identities during recovery.
-                if changed and not pending:
-                    result = self.operations.apply_delta(
-                        delta,
-                        task_id=metadata["task_id"],
-                        revision=metadata["program"]["revision"],
-                        run_mode=metadata.get("run_mode", "live"),
-                        source_refs=refs,
-                        integration_operation_id=metadata["integration_operation_id"],
-                        integration_decisions=[
-                            item for item in decisions if item["disposition"] == "materialize"
-                        ],
+                # The durable callback may repeat after the mutation but before its acknowledgement.
+                for event in reversed(self.memory.events):
+                    if (
+                        event.operator == "semantic_write"
+                        and self.memory.get_run(event.program_run).program == "SemanticWrite"
+                        and list(event.arguments.get("key", ())) == key
+                    ):
+                        if event.arguments.get("fingerprint") != fingerprint:
+                            raise ContractError(
+                                "A graph operation key cannot be reused with different arguments"
+                            )
+                        return json_value(event.output)
+                inputs = tuple(self._reference(ref) for ref in payload["experience_refs"])
+                refs = list(action.get("sources", []))
+                if action["action"] == "save_note" and action["source"] not in refs:
+                    refs.append(action["source"])
+                sources = tuple(dict.fromkeys(self._reference(ref) for ref in refs))
+                if not sources:
+                    raise ContractError("Graph writes require sources")
+                for ref in sources:
+                    if not any(self._contains(parent, ref) for parent in inputs):
+                        raise ContractError("Write source is outside supplied experience")
+                material = self.sources(json_value(sources), metadata=metadata)
+                self._check_search(action, metadata)
+                delta, identity = compile_action(self.graph, action, material)
+                for embedded in _references(json_value(delta)):
+                    if not any(self._contains(source, embedded) for source in sources):
+                        raise ContractError(
+                            "Embedded provenance must belong to this operation's sources"
+                        )
+                changed_ids = {update.id for update in delta.updates} | set(delta.deletes)
+
+                def fact_key(fact):
+                    return (
+                        fact.relation_type,
+                        json.dumps(json_value(fact.args), sort_keys=True),
+                        json.dumps(json_value(fact.properties), sort_keys=True),
                     )
-                    receipt["revision"] = result.seq
-                    receipt["updated"] = [card(self.graph.get(n.id)) for n in delta.updates]
+
+                known = {
+                    fact_key(fact) for fact in self.graph.facts() if fact.id not in changed_ids
+                }
+                updated = [
+                    node_from_dict(
+                        {**json_value(self.graph.get(update.id)), **json_value(update.changes)}
+                    )
+                    for update in delta.updates
+                ]
+                for node in (*delta.creates, *updated):
+                    if isinstance(node, RelationInstance):
+                        signature = fact_key(node)
+                        if signature in known:
+                            raise ContractError("Fact already exists; use its existing identity")
+                        known.add(signature)
+                change = self.operations.apply_delta(
+                    delta,
+                    task_id=metadata["task_id"],
+                    revision=metadata["program"]["revision"],
+                    run_mode=metadata.get("run_mode", "live"),
+                    source_refs=sources,
+                    integration_operation_id=metadata["integration_operation_id"],
+                )
+                result = {
+                    **({"object": identity} if identity is not None else {}),
+                    "created": [card(node) for node in delta.creates],
+                    "updated": [card(self.graph.get(update.id)) for update in delta.updates],
+                    "deleted": list(delta.deletes),
+                    "revision": change.seq,
+                }
                 run = self.memory.start_run(
-                    "KnowledgeIntegrationReceipt",
+                    "SemanticWrite",
                     metadata["program"]["revision"],
                     {},
                     run_mode=metadata.get("run_mode", "live"),
                 )
                 event = self.memory.record(
                     run,
-                    "semantic_commit",
-                    arguments={
-                        "key": [metadata["task_id"], metadata["integration_operation_id"]],
-                        "fingerprint": self._fingerprint(
-                            material["experience"], material["context"]
-                        ),
-                    },
-                    output=receipt,
+                    "semantic_write",
+                    arguments={"key": key, "fingerprint": fingerprint},
+                    output=result,
                 )
                 self.memory.finish_run(run)
-                receipt["receipt_ref"] = json_value(self.memory.output_ref(event))
-            return receipt
+                self.memory.retain(self.memory.output_ref(event), "task:" + metadata["task_id"])
+                return result
         except (ValueError, KeyError, TypeError, AttributeError, PermissionError) as exc:
-            return {"status": "invalid", "error": str(exc)}
+            return {"error": str(exc)}
 
     async def execute(self, method, payload, metadata):
         task_id = metadata["task_id"]
@@ -544,6 +309,6 @@ class SemanticService:
             )
         if method == "semantic.sources":
             return self.sources(**payload, metadata=metadata)
-        if method == "semantic.commit":
-            return self.commit(payload, metadata)
+        if method == "semantic.write":
+            return self.write(payload, metadata)
         raise ValueError("Unknown semantic operation")

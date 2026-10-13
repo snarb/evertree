@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import json
 import time
 from contextlib import contextmanager
 from uuid import uuid4
 
-from ..core.provider import AgentRequest
+from ..core.provider import AgentRequest, current_tool_call_id
 
 
 class TaskExecutionMixin:
@@ -74,7 +75,7 @@ class TaskExecutionMixin:
             if own_run
             else self.memory.get_run(run_ref)
         )
-        self.memory.record(
+        request_event = self.memory.record(
             run,
             "provider_request",
             output={
@@ -92,6 +93,81 @@ class TaskExecutionMixin:
                 "session": dataclasses.asdict(request.session) if request.session else None,
             },
         )
+        semantic_tools = None
+        source_refs = []
+        completed_calls = {}
+        call_lock = asyncio.Lock()
+
+        def remember_refs(value):
+            from ..core.cognition.steps import trace_reference
+            from ..core.values import json_value
+
+            if isinstance(value, dict):
+                if "event_ref" in value and set(value) <= {"event_ref", "output_path"}:
+                    try:
+                        ref = json_value(trace_reference(value))
+                    except ValueError:
+                        # Context may contain ordinary data that resembles a trace reference.
+                        return
+                    if ref not in source_refs:
+                        source_refs.append(ref)
+                else:
+                    for item in value.values():
+                        remember_refs(item)
+            elif isinstance(value, (list, tuple)):
+                for item in value:
+                    remember_refs(item)
+
+        if conversation:
+            from ..common.integration_actions import SemanticTools
+            from ..core.operations import authorize_operation
+
+            remember_refs(json.loads(request.prompt))
+
+            pages = {}
+
+            async def search(query, next_page=False):
+                payload = {"query": query}
+                page = pages.get(query)
+                if (
+                    next_page
+                    and page
+                    and page["revision"] == self.graph.revision
+                    and page["cursor"]
+                ):
+                    payload["cursor"] = page["cursor"]
+                result = await self._dispatch_tool(task_id, "graph.search", payload)
+                pages[query] = {"revision": self.graph.revision, "cursor": result.get("cursor")}
+                return result
+
+            async def describe(subject):
+                return await self._graph_tool(task_id, "graph.describe", {"subject": subject})
+
+            async def write(action, operation_key):
+                authorize_operation("semantic.write", request.mode)
+                result = await self._semantics().execute(
+                    "semantic.write",
+                    {
+                        "action": action,
+                        "operation_key": current_tool_call_id.get() or operation_key,
+                        "experience_refs": source_refs,
+                    },
+                    {
+                        "task_id": task_id,
+                        "program": {"role": request.mode, "revision": self._program_revision()},
+                        "consciousness_graph_authorized": True,
+                        "integration_operation_id": "consciousness:" + str(request_event.id),
+                    },
+                )
+                await self.backup()
+                return result
+
+            async def revision():
+                return self.graph.revision
+
+            semantic_tools = SemanticTools(
+                search=search, describe=describe, write=write, revision=revision
+            )
         with self._meter(task_id, operation_id=request_id + ":active_time") as meter:
             used_tokens = 0
             usage_known = False
@@ -105,7 +181,22 @@ class TaskExecutionMixin:
                     try:
                         if tool_handler is not None:
                             return await tool_handler(name, args)
-                        return await self._tool(task_id, name, args)
+                        call_id = current_tool_call_id.get()
+                        fingerprint = json.dumps({"name": name, "arguments": args}, sort_keys=True)
+                        async with call_lock:
+                            if conversation and call_id in completed_calls:
+                                previous, output = completed_calls[call_id]
+                                if previous != fingerprint:
+                                    raise ValueError("A tool call ID cannot change its arguments")
+                                return output
+                            output = await self._tool(
+                                task_id, name, args, semantic_tools=semantic_tools
+                            )
+                            if conversation:
+                                remember_refs(output)
+                                if call_id is not None:
+                                    completed_calls[call_id] = (fingerprint, output)
+                            return output
                     finally:
                         self._accounting.reset(inherited)
 

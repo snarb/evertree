@@ -27,7 +27,6 @@ that solves tasks over successive iterations.
 - last_step_result and previous_step_results: saved intermediate work. They may describe
   incomplete understanding; check it against the current task and new evidence.
 - recent_results and memories: recorded evidence, with references for citing sources.
-- integration, when present: graph objects saved after the last step and unresolved issues.
 - recovered_program_result, when present: a saved routine result recovered after interruption.
 - programs: reusable routines available through run_program. Inspect a Program with
   graph.describe when you need more information about its interface.
@@ -52,16 +51,17 @@ Choose disposition:
 - propose_completion: the task criteria appear met; supply a final user_message for checking.
 - failed: the task cannot be completed; explain why in progress.
 Only user_message is sent to the user. Other fields remain working material. Completion is
-confirmed by the controller after memory integration, independent verification and delivery.
+confirmed by the controller after independent verification and delivery.
 
 ## Remember useful work
 The trace is the saved log of inputs, operations and results. The graph holds selected,
 structured knowledge. KnowledgeIntegration automatically considers this step's experience
-for graph storage. Set preserve=true on a note or finding when its meaning must be saved;
-use significance only to indicate usefulness, never confidence that a statement is true.
-If you need graph changes before this step ends, first record new analysis with
-record_analysis, then pass its returned reference to graph.integrate. The controller supplies
-the integrator's task context; you only supply saved experience references and optional focus.
+for graph storage. Express useful emphasis and importance naturally in the text. The integrator
+selects what is worth retaining; its work does not require follow-up from you.
+For precise changes during this step, load graph_write_tools. Record new analysis with
+record_analysis first, then use its returned reference as a source for graph operations.
+You can also request early automatic selection with graph.integrate using saved experience
+references and optional focus. The controller supplies the integrator's task context.
 
 ## Tools and workspace
 Use graph.search to locate objects; use graph.describe before graph.read_property.
@@ -83,8 +83,6 @@ Inputs:
 - answer: the proposed user-facing response.
 - trace: recorded operations and results that may support or contradict the answer.
   A run_mode other than live marks replayed or simulated work, not a new real-world observation.
-- integration: objects actually saved in memory and any unresolved issues. Storage proves
-  that a statement was retained; it does not establish that the statement is true.
 
 Check each success criterion and constraint against the answer and available evidence.
 Distinguish a model's claim that work succeeded from an observed tool or experiment result.
@@ -272,7 +270,7 @@ def semantic_tools():
         ),
         define(
             "graph.integrate",
-            "Ask KnowledgeIntegration to organize saved experience in the knowledge graph. Supply source_ref values or references returned by record_analysis. The controller provides the task, agent priorities and known capabilities. Notes marked preserve=true must be saved or reported blocked.",
+            "Ask KnowledgeIntegration to organize saved experience in the knowledge graph. Supply source_ref values or references returned by record_analysis. The controller provides the task, agent priorities and known capabilities. The integrator independently selects useful knowledge.",
             {
                 "experience_refs": {
                     "type": "array",
@@ -298,7 +296,7 @@ def semantic_tools():
         ),
         ToolDefinition(
             "record_analysis",
-            "Save a work note in the experience log and return its reference. Call before graph.integrate when the graph must include new analysis during this step.",
+            "Save a work note in the experience log and return its reference. Use its returned reference when graph operations need to cite new analysis during this step.",
             AnalyticalNote.model_json_schema(),
             read_only=False,
         ),
@@ -306,6 +304,9 @@ def semantic_tools():
 
 
 def tool_sets():
+    from dataclasses import replace
+
+    from ..common.integration_actions import WRITE_TOOLS
     from ..core.toolsets import ToolSet
 
     def low(name, description, properties, required=(), read_only=True):
@@ -332,6 +333,11 @@ def tool_sets():
         "choose_candidate",
     }
     return (
+        ToolSet(
+            "graph_write_tools",
+            "Create, update or delete graph knowledge using recorded sources. Changes are saved immediately with history and provenance.",
+            tuple(replace(tool, name="graph." + tool.name) for tool in WRITE_TOOLS),
+        ),
         ToolSet(
             "low_level_graph_tools",
             "Load exact graph reads, relation schemas/views, navigation and history when needed.",

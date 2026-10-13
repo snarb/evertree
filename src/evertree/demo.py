@@ -93,20 +93,7 @@ class DemoProvider:
             )
             return
         properties = (request.output_schema or {}).get("properties", {})
-        if {"trace_only", "save_note", "finish"} <= {tool.name for tool in request.tools}:
-            material = json.loads(request.prompt)["material"]
-            if material["context"].get("preservation_intents"):
-                raise ProviderError("The offline demo does not script mandatory materialization")
-            for name, arguments in (
-                ("trace_only", {"sources": [item["reference"] for item in material["experience"]]}),
-                ("finish", {}),
-            ):
-                call = {"call_id": name, "name": name, "arguments": arguments}
-                yield AgentEvent("tool_call", call)
-                result = await tool_handler(name, arguments)
-                yield AgentEvent(
-                    "tool_result", {**call, "status": "completed", "result": result, "error": None}
-                )
+        if {"save_note", "update", "delete"} <= {tool.name for tool in request.tools}:
             payload = None
         elif "execution_budget" in properties:
             payload = {
@@ -230,7 +217,6 @@ class DemoProvider:
                     "covers the declared input domain. No broader sorting-domain claim is established.",
                     "source_refs": [],
                     "kind": "note",
-                    "preserve": False,
                 },
                 "disposition": "propose_completion",
                 "user_message": json.dumps(self.last_result),

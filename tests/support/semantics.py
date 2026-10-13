@@ -11,6 +11,7 @@ from evertree.core.memory.store import TraceStore
 from evertree.core.operations import CoreOperations, authorize_operation
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.service import SemanticService
+from evertree.core.values import json_value
 
 
 class EmptyIndex:
@@ -36,6 +37,38 @@ def semantic_world(*, index=None, config=None):
     )
     return SimpleNamespace(
         graph=graph, memory=memory, attribution=attribution, service=service, operations=operations
+    )
+
+
+def recorded_experience(world, *contents, run_mode="live", context=None):
+    run = world.memory.start_run("experience", "revision", {}, run_mode=run_mode)
+    refs = [
+        json_value(world.memory.output_ref(world.memory.record(run, "input", output=value)))
+        for value in contents
+    ]
+    world.memory.finish_run(run)
+    return refs, {
+        "task_id": "task",
+        "run_id": "original-run",
+        "program": {"role": "exec", "revision": "revision"},
+        "knowledge_integration_authorized": True,
+        "integration_operation_id": "packet",
+        "integration_context": context or {},
+    }
+
+
+def write_action(world, refs, metadata, action, *, key="write", searched=True):
+    """Exercise Core validation; Program tests separately exercise the actual search path."""
+    if searched and action["action"] in {
+        "create_concept",
+        "create_prototype",
+        "create_instance",
+        "create_facet",
+        "define_relation",
+    }:
+        world.service.results(action["name"], None, [], [], 20, metadata["task_id"])
+    return world.service.write(
+        {"experience_refs": refs, "action": action, "operation_key": key}, metadata
     )
 
 

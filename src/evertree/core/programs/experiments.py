@@ -314,7 +314,6 @@ async def evaluate_pair(
                             for node in context.graph.nodes()
                             if node.name == "Self"
                         ],
-                        "preservation_intents": [],
                     }
                     return await semantics.execute(method, payload, metadata)
                 if method == "resolve_program":

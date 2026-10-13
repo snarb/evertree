@@ -81,25 +81,24 @@ uv run python src/evertree/debug_integration.py
 Edit `USER_TASK`, `INPUT_TEXT`, and `CONSCIOUS_ANALYSIS` at the top of the script. These are
 the user task, a paragraph describing pump Н-1, and a supplied intermediate analytical Note.
 The integrator's LLM calls native semantic tools and chooses their sources. Tool handlers
-assign IDs, build the graph delta and derive `decisions` from the performed operations.
-The `finish()` tool validates and commits the draft atomically. There are no scripted
+assign permanent IDs and immediately save each checked operation with its sources and history.
+Normal model completion ends integration; no write is required for routine material. There are no scripted
 model responses or predetermined graph objects. The example
 asks to preserve the pump's two observed state intervals; the actual representation is chosen
 by the model and validated by Core.
 
 Useful breakpoints:
 
-- `DebugSession.record_experience`: source references and the typed Note with `preserve=True`.
+- `DebugSession.record_experience`: source references and the analytical Note with its emphasis in text.
 - `knowledge_integration/_exec.py:handle_tool`: native tool dispatch, search, schema reads and repair.
-- `knowledge_integration/_exec.py:finish`: final validation and atomic commit.
-- `common/integration_actions.py:IntegrationDraft.apply`: ID assignment, structural links and attribution.
+- `common/integration_actions.py`: shared operation schemas and graph tool dispatch.
 - `DebugSession.model`: actual Codex request, declared tools and provider events.
-- `SemanticService.commit`: decisions, validation and receipt.
+- `SemanticService.write`: operation validation, idempotence and atomic persistence.
 - `CoreOperations.apply_delta`, then `GraphStore.apply`: graph mutation and provenance.
-- `DebugSession.run`, at `return created`: inspect the graph, trace and receipt together.
+- `DebugSession.run`, at `return created`: inspect the graph, trace and successful writes together.
 
 Each run uses an isolated bootstrap graph and Redis namespace, writing `graph.json`,
-`trace.json`, `receipt.json` and `calls.json` under `tmp/debug-integration/<run>/`, also on
+`trace.json`, `result.json` and `calls.json` under `tmp/debug-integration/<run>/`, also on
 failure. Each model request also has a readable `model-*.md` file with its tool definitions
 and a separate JSON provider transcript.
 The path is printed before execution. Ordinary Python breakpoints work because the
@@ -123,7 +122,7 @@ application scheduling, worker admission and durable restart are outside its sco
   bookkeeping, transaction payloads and execution reports from actual operations; do not ask
   the model to reconstruct them. Prefer actions that express intent over storage internals.
   Keep semantic choices explicit, including which sources support each result. Request a
-  rationale only when a consumer needs it, such as explaining an unresolved obstacle.
+  rationale only when a consumer needs it to understand a decision.
 - Provide native tools for model-selected operations. Keep structured response schemas
   for results such as plans and assessments; do not encode tool calls as action lists
   in the final response. Tool descriptions, permissions and handlers must agree.
@@ -179,6 +178,6 @@ This does not change the consciousness profile. Graph commits schedule index rec
 
 Consciousness works in bounded iterations: a local objective, related tool or Program calls, and an explicit analytical Note. The result may be an intermediate plan or hypothesis. The latest Note and working plan remain available to the next iteration through task state and trace; only a separately composed `user_message` is delivered to the user.
 
-After each step, `KnowledgeIntegration` examines the recorded experience before work continues. Use `graph.integrate(experience_refs, focus=None)` from consciousness, or `ctx.call("knowledge_integration", ...)` from a Program, when graph integration is needed earlier. References point to already recorded material; callers need not pre-extract every statement. The runtime supplies the task and Self context. Explicit `preserve` intentions must be fulfilled or reported as obstacles, while routine material may remain in trace. Public `graph.apply` is unavailable.
+Between steps, `KnowledgeIntegration` examines recorded experience and independently saves useful facts, connections and insights. Emphasis and requests to remember something belong in ordinary analytical text. References point to already recorded material; callers need not pre-extract every statement or assign review statuses. The runtime supplies task and Self context. Use `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)` when integration is needed earlier. For precise graph editing, consciousness can load `graph_write_tools`, sharing integration’s creation, relation, Note, `update` and `delete` operations. Each operation saves permanent IDs, history and sources immediately; later failures leave previous writes intact. Public raw `graph.apply` is unavailable.
 
-The `semantics.remember` configuration above selects the integration model profile. Integration receipts and checkpoints survive task resumption; final delivery requires completed integration and answer verification. See [the conscious step contract](docs/architecture/Cognition%20and%20Attention.md#conscious-step-contract) and [knowledge integration](docs/architecture/Semantics%20Plane.md#knowledge-integration).
+The `semantics.remember` configuration above selects the integration model profile. Internal checkpoints bound packet processing, and runtime operation keys prevent repeated writes on recovery. Integration failures enter technical diagnostics without blocking the next step or final delivery; answer verification, input freshness and task constraints still apply. Memory compaction may later reduce intermediate detail while retaining significant reasons and provenance. See [the conscious step contract](docs/architecture/Cognition%20and%20Attention.md#conscious-step-contract) and [knowledge integration](docs/architecture/Semantics%20Plane.md#knowledge-integration).

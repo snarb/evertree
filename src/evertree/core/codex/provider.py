@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from evertree.core.provider import AgentEvent, AgentRequest, ProviderError
+from evertree.core.provider import AgentEvent, AgentRequest, ProviderError, current_tool_call_id
 from evertree.core.sandbox.process import sandbox_backend
 
 from .configuration import (
@@ -236,7 +236,11 @@ class CodexProvider:
                             else "Already available in this turn.",
                         }
                     else:
-                        result = await tool_handler(name, arguments)
+                        token = current_tool_call_id.set(call_id)
+                        try:
+                            result = await tool_handler(name, arguments)
+                        finally:
+                            current_tool_call_id.reset(token)
                     text = json.dumps(result, ensure_ascii=False, allow_nan=False)
                     await queue.put(
                         AgentEvent(

@@ -274,9 +274,34 @@ class PersistenceMixin:
             )
             await self._discard_workspaces()
             self._sessions.clear()
-            self._pending_programs.clear()
+            self._pending_programs = {
+                task_id: pending
+                for task_id, pending in self._pending_programs.items()
+                if pending["identity"] == "knowledge_integration"
+                and not self.tasks.get(task_id).terminal
+            }
+            resumable = list(self._pending_programs.values())
+            resumable.extend(
+                pending
+                for state in self.tasks.all()
+                if not state.terminal
+                and (pending := state.step_state.get("integration", {}).get("pending_program"))
+            )
+            resumed_runs = {
+                self._run_map[pending["run_id"]]
+                for pending in resumable
+                if pending["run_id"] in self._run_map
+            }
             for run in self.memory.runs:
-                if run.status == "running":
+                parent = (
+                    self.memory.get_event(run.caller_event).program_run
+                    if run.caller_event
+                    else None
+                )
+                if parent in resumed_runs or run.arguments.get("owner_run") in resumed_runs:
+                    resumed_runs.add(run.id)
+                # Integration has no disposable workspace state; its durable calls can resume.
+                if run.status == "running" and run.id not in resumed_runs:
                     self.memory.finish_run(run.id, status="interrupted")
             for state in self.tasks.all():
                 if not state.terminal:

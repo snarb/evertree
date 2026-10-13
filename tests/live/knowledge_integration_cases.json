@@ -9,8 +9,7 @@
       },
       {
         "kind": "analysis",
-        "content": "Working hypothesis: a reused connection becomes stale after a server switch; load alone does not explain the failures. A and B motivate this hypothesis, while C constrains it. Causality is unconfirmed. Next, compare forced reconnection with reuse after a switch. Preserve the distinction between server switching and load, and the outstanding causal check; it changes the direction of the investigation.",
-        "preserve": true
+        "content": "Working hypothesis: a reused connection becomes stale after a server switch; load alone does not explain the failures. A and B motivate this hypothesis, while C constrains it. Causality is unconfirmed. Next, compare forced reconnection with reuse after a switch. Preserve the distinction between server switching and load, and the outstanding causal check; it changes the direction of the investigation."
       }
     ],
     "max_created": 16,
@@ -37,7 +36,7 @@
     ],
     "max_created": 8,
     "criteria": {
-      "bounded_representation": "The result retains access to the source series and gives a reason for its chosen organization; trace_only is acceptable because the complete series remains saved in trace. It does not create an identity or Facet for every reading.",
+      "bounded_representation": "The result retains access to the source series; no new graph object is necessary because the complete series remains saved in trace. It does not create an identity or Facet for every reading.",
       "no_invented_generalization": "The result does not claim a learned long-term temperature pattern, calibrated reliability, or a typical class property from this single short series.",
       "time_grounding": "Any saved temporal assertions use the supplied observation timing, without replacing it with integration time."
     }
@@ -48,8 +47,7 @@
     "materials": [
       {
         "kind": "analysis",
-        "content": "Intermediate plan: hold server switching constant and compare reused connections against forced reconnection. Record failures and latency in both groups. If both groups fail equally, inspect server-side session state next. This iteration designs the test only; it contains no experiment results and no final diagnosis.",
-        "preserve": true
+        "content": "Intermediate plan: hold server switching constant and compare reused connections against forced reconnection. Record failures and latency in both groups. If both groups fail equally, inspect server-side session state next. This iteration designs the test only; it contains no experiment results and no final diagnosis."
       }
     ],
     "max_created": 10,

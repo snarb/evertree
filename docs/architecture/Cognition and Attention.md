@@ -278,7 +278,7 @@ The Task and Episode define the search scope: preparation retrieves related resu
 
 Include the latest incoming message in full. Selected earlier messages from the user and agent, tool calls, and tool results may be passed as `messages`, preserving roles, order, and the link between each call and its result.
 
-For the next conscious step, include the current plan, the complete most recent analytical Note and its trace reference, open questions, the integration receipt, and selected earlier results. This working state is available even when integration chose `trace_only`. Internal Notes are not appended to the user-message history; retrieve earlier analyses by their references rather than copying the complete sequence into every prompt.
+For the next conscious step, include the current plan, the complete most recent analytical Note and its trace reference, open questions and selected earlier results. This working state is available even when integration creates no graph object. Technical integration diagnostics are not a decision protocol for consciousness. Internal Notes are not appended to the user-message history; retrieve earlier analyses by their references rather than copying the complete sequence into every prompt.
 
 Minimal interface for a standalone preparation program:
 
@@ -1041,9 +1041,9 @@ next_step            — required proposal when continuing;
 user_message         — optional, separately composed external message.
 ```
 
-`AnalyticalNote` uses existing Note/Claim semantics: `text`, `source_refs`, `kind` (`note` or `claim`), optional `significance` and `significance_reason`, and `preserve`. It records a readable analytical result with the premises, relevant sources, qualifications and next checks needed to understand or challenge it. This is an explicit model output, not access to hidden model reasoning or a claim to record every internal computation. Its contents are appropriate to the step; no fixed list of reasoning sections or final conclusion is required.
+`AnalyticalNote` uses existing Note/Claim semantics: `text`, `source_refs` and `kind` (`note` or `claim`). It records a readable analytical result with the premises, relevant sources, qualifications and next checks needed to understand or challenge it. This is an explicit model output, not access to hidden model reasoning or a claim to record every internal computation. Its contents are appropriate to the step; no fixed list of reasoning sections or final conclusion is required.
 
-The result and its parts are addressable in trace. A new base graph type for reasoning is unnecessary. `preserve` requests durable representation of the selected meaning; a significance assessment alone guides integration without imposing that obligation. The same contract can express a provisional hypothesis without promoting it to established knowledge.
+The result and its parts are addressable in trace. A new base graph type for reasoning is unnecessary. Importance, insights and requests to remember something are expressed in the text. Integration interprets them as context for its independent selection, not as formal obligations. A provisional hypothesis remains provisional when saved.
 
 On forced interruption, runtime retains actual calls, results and the `interrupted` state. It does not manufacture a completed Note. Resumption uses the saved working state and trace to choose the next step. `ConsciousStepSpec` is separate from `EpisodeStepSelection`, which selects an input fragment; a fragment can be an input to a conscious step.
 
@@ -1051,9 +1051,9 @@ On forced interruption, runtime retains actual calls, results and the `interrupt
 
 At a completed step boundary runtime saves the result, updates working state, and runs [[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] over that result and accumulated experience before applying the next control decision. Nested tool calls and child Programs belong to their owner's batch; they do not each trigger an additional integration. Standalone delegated work uses the same boundary when returning its result to the controller. Explicit integration within a step remains available when subsequent work needs the graph immediately.
 
-Integration reads the full eligible history through a checkpoint, including experience older than a recent-context window. Large material is processed as addressable fragments with explicit remaining work. Own integration events and duplicate technical delivery notifications are excluded from automatic reprocessing. `trace_only` and explicitly recorded ordinary uncertainty are valid outcomes; processing errors, unprocessed material, or unmet `preserve` obligations leave integration incomplete. A failure or insufficient budget leaves the task waiting with its checkpoint; no following step or successful completion bypasses that obligation. Basic integration uses the main task budget even when the additional self-improvement allowance is zero. Cancellation remains immediate.
+Integration reads eligible history through an internal checkpoint, including experience older than a recent-context window. Large material is processed as addressable fragments with remaining work. Own integration events and duplicate technical delivery notifications are excluded from automatic reprocessing. A completed invocation with zero writes is valid. An integration error is recorded as technical diagnostics; already successful operations stay saved and the next conscious step or final delivery is not blocked. The failed packet is not automatically retried at every boundary, while unexamined packets remain available for later boundaries. Basic integration uses the main task budget even when the additional self-improvement allowance is zero; exhaustion of the overall task budget still follows the usual stop rules. Cancellation remains immediate.
 
-The checkpoint records input/specification versions, source boundary, completed batches, pending batch and phase. Runtime-issued operation IDs survive new run IDs after restart. A completed graph mutation, audit and receipt are recovered together; a crash before advancing the task checkpoint must not duplicate knowledge. General Program completion recovery must not turn a resumed integration into a new user message or treat it as ordinary delegated work.
+The checkpoint records input/specification versions, the source boundary and packet progress. Runtime-generated operation keys survive recovery. Each graph operation, its history/provenance and saved result are atomic; repeating an already completed operation returns that result without another mutation. A crash before checkpoint advancement must not duplicate knowledge. An interrupted integration workflow and its durable child calls survive restore: they require no disposable workspace state, and a fresh provider continues from completed tool exchanges. Other unfinished workspace-based work follows the existing restart policy. General Program recovery must not turn a resumed integration into a new user message or treat it as ordinary delegated work.
 
 New input preserves an already recorded analysis as historical experience, but invalidates an outdated next step or prepared final message. A material specification change requires reconsidering experience under the new specification. The existing memory lifecycle controls eventual retention and compaction; step integration introduces no background scheduler or autonomous Goal store.
 
@@ -1080,7 +1080,7 @@ Goal / internal Event / Replay → create or continue a Task
                  → ready arguments or arguments_formatter
                  → call ProcessModel or exec-Program
                  → intermediate result + analytical Note + working state
-                 → KnowledgeIntegration → receipt
+                 → KnowledgeIntegration → saved graph operations / technical diagnostics
                  → continue / wait / propose completion
                                   ↺
 
@@ -1148,7 +1148,7 @@ The accepted action is carried out by the appropriate execution mechanism throug
 
 The text of a composed response is an internal result. **Sending a response to a user is a separate external action** with a specific recipient, channel, and content, subject to the same applicable rules. Returning `ProgramResult`, sending a message, and completing a Task are different events. A clarifying question usually leaves the task waiting for a reply; an intermediate message leaves it in progress; a final response completes it only when the objective, success criteria, and required conditions are satisfied. A send error is not treated as successful delivery.
 
-Internal `analysis` is never used as the default outgoing response. Only `user_message` supplies text for delivery. `propose_completion` asks the controller to check that eligible experience has been integrated, preservation obligations have been met, input and specification versions are still current, and independent answer verification succeeds. Only then may it deliver the final response and mark the Task successful. Completion of a conscious step is not completion of its Task.
+Internal `analysis` is never used as the default outgoing response. Only `user_message` supplies text for delivery. `propose_completion` asks the controller to check that input and specification versions are still current, task constraints are satisfied, and independent answer verification succeeds. Integration results do not gate completion. Only then may it deliver the final response and mark the Task successful. Completion of a conscious step is not completion of its Task.
 
 Therefore, preparation that detects missing data returns that information to the caller. The caller decides whether to request information from the user, read another source, wait for continuation, or change the solution method. Feedback by itself does not authorize sending a message or taking an external action.
 
@@ -1205,6 +1205,7 @@ Reflection may also occur within an unfinished [[#`Goal`, `Task`, and Task Speci
 To keep irrelevant schemas out of context, each logical invocation starts with base tools and a short catalog. `load_tool_set(name)` adds callable definitions from a shared `ToolSet` registry:
 
 - `low_level_graph_tools`: exact views, schemas, navigation, history and temporal readings;
+- `graph_write_tools`: shared direct creation, relation, Note, update and delete operations with source validation;
 - `program_development_tools`: development and independent evaluation of Programs;
 - `external_action_tools`: external action inspection and execution.
 

@@ -33,7 +33,21 @@ class ConsciousnessMixin:
             try:
                 pending = self._pending_programs.get(identity)
                 if pending and pending["identity"] == "knowledge_integration":
-                    self._pending_programs.pop(identity, None)
+                    operation_id = "run:" + pending["run_id"]
+                    checkpoint = state.step_state.setdefault(
+                        "integration",
+                        {
+                            "operation_id": operation_id,
+                            "experience_refs": pending["arguments"]["experience_refs"],
+                            "specification_revision": state.specification.revision,
+                            "context": state.step_state.get("integration_calls", {})
+                            .get(operation_id, {})
+                            .get("context", self._integration_context(state)),
+                            "status": "interrupted",
+                        },
+                    )
+                    # Budget review can run before the interrupted workflow resumes.
+                    checkpoint["pending_program"] = self._pending_programs.pop(identity)
                     pending = None
                 if pending:
                     if pending["identity"] in {"task_framing", "resource_control"}:
@@ -177,6 +191,13 @@ class ConsciousnessMixin:
                 mode="json"
             )
 
+    async def _verification_waiting(self, state, reason):
+        self.tasks.set_waiting(
+            state.id, waiting_for=["verification"], reason=reason, execution_stopped=True
+        )
+        await self._publish("task_waiting", state.id, {"reason": reason})
+        await self.backup()
+
     async def _execute_task(self, state):
         while not state.terminal:
             if not await self._ensure_budget(state):
@@ -193,11 +214,12 @@ class ConsciousnessMixin:
                         )
                     )
             work = state.step_state
-            if (
-                work.get("integration")
-                or work.get("status") in {"result_ready", "interrupted", "running"}
-            ) and not await self._integrate_step(state):
-                return
+            if work.get("integration") or work.get("status") in {
+                "result_ready",
+                "interrupted",
+                "running",
+            }:
+                await self._integrate_step(state)
             if set(state.source_ids) != set(state.specification.source_ids):
                 continue
             version = self._input_version(state)
@@ -285,8 +307,7 @@ class ConsciousnessMixin:
                 state.plan = decision.plan
                 state.unresolved_questions = decision.unresolved_questions
                 await self.backup()
-                if not await self._integrate_step(state):
-                    return
+                await self._integrate_step(state)
             if (
                 version != self._input_version(state)
                 or work.get("specification_revision") != state.specification.revision
@@ -306,7 +327,7 @@ class ConsciousnessMixin:
             verification = None
             if decision.disposition == "propose_completion":
                 if state.budget_exhausted or state.hard_limit_reached:
-                    await self._integration_waiting(
+                    await self._verification_waiting(
                         state, "Insufficient budget for independent completion verification"
                     )
                     return
@@ -319,7 +340,6 @@ class ConsciousnessMixin:
                                     "specification": self._prompt_specification(state),
                                     "answer": decision.user_message,
                                     "trace": self._prompt_results(state),
-                                    "integration": self._prompt_integration(state),
                                 },
                                 ensure_ascii=False,
                                 indent=2,
@@ -333,7 +353,7 @@ class ConsciousnessMixin:
                     )
                     verification = AnswerVerification.model_validate(check["parsed"])
                 except (TimeoutError, ValueError) as exc:
-                    await self._integration_waiting(
+                    await self._verification_waiting(
                         state, "Completion verification interrupted: " + str(exc)
                     )
                     return
@@ -509,7 +529,8 @@ class ConsciousnessMixin:
             )
             if (
                 run.program in service_programs
-                or run.program in {"KnowledgeIntegrationReceipt", "AnswerVerification"}
+                or run.program
+                in {"KnowledgeIntegrationDiagnostic", "SemanticWrite", "AnswerVerification"}
                 or parent in excluded
                 or run.arguments.get("owner_run") in excluded
             ):
@@ -537,23 +558,6 @@ class ConsciousnessMixin:
             if event["output"] is not None:
                 results.append(self._prompt_event(event))
         return results[-40:]
-
-    @staticmethod
-    def _prompt_integration(state):
-        receipt = state.step_state.get("last_integration_receipt", {})
-        result = {
-            key: receipt[key]
-            for key in ("receipt_ref", "created", "updated", "deleted")
-            if receipt.get(key)
-        }
-        unresolved = [
-            {key: item[key] for key in ("reason", "source_refs")}
-            for item in receipt.get("decisions", [])
-            if item["disposition"] == "unresolved"
-        ]
-        if unresolved:
-            result["unresolved"] = unresolved
-        return result
 
     def _conscious_context(self, state, admitted_step):
         work = state.step_state
@@ -603,8 +607,6 @@ class ConsciousnessMixin:
             for item in result["recent_results"]
             if item["reference"]["event_ref"] not in input_events
         ]
-        if work.get("last_integration_receipt"):
-            result["integration"] = self._prompt_integration(state)
         known = input_events | {item["reference"]["event_ref"] for item in result["recent_results"]}
         for ref in [state.last_step_ref, work.get("analysis_ref"), *work.get("finding_refs", [])]:
             if ref:

@@ -149,11 +149,12 @@ Lint, formatting, source/taxonomy validation, and `git diff --check` passed. Nat
 
 Program tool tests should call the declared `tool_handler` through the provider interface.
 Recovery checks must verify that durable tool exchanges replay callback computations and
-child operations to reconstruct the local draft without repeating committed effects.
+child operations to reconstruct local execution without repeating completed writes or provenance.
 An interrupted transient SDK invocation may resume with the completed tool transcript;
 normal continuation must use native calls and results. Check the same authority boundary
-in isolated evaluation. A returned final message alone must not count as an integration
-receipt: only the `finish()` tool can request the checked atomic commit.
+in isolated evaluation. Normal model completion with no writes is valid. Each successful
+operation must already be visible with permanent IDs and source-backed history; a later
+failed call must leave those writes intact.
 
 A separate Redis integration test uses a real Redis 8.4+ Search server and deterministic embeddings (no model charges):
 
@@ -169,13 +170,13 @@ The separate opt-in `tests/live/test_embeddings.py` checks real OpenAI embedding
 
 ## Conscious steps and integration policy
 
-Step-contract and coordinator tests distinguish intermediate analytical Notes from user messages, enforce finite local budgets, retain working state between iterations and gate completion on integration. Semantic component tests exercise explicit preservation obligations, complete decision coverage, source-specific retention, reuse and the restricted write gateway. These tests supply native tool calls to check mechanical contracts; they do not prove autonomous semantic judgment.
+Step-contract and coordinator tests distinguish intermediate analytical Notes from user messages, enforce finite local budgets and retain working state between iterations. Integration failures must not block continuation or final delivery, and failed packets must not retry at every boundary. Semantic component tests exercise shared direct writes, updates and deletes, per-operation history and sources, idempotent recovery, source-specific retention and the checked write gateway. Model-mode calls remain read-only even when tools are loaded. These tests supply native tool calls to check mechanical contracts; they do not prove autonomous semantic judgment.
 
-`tests/live/test_knowledge_integration.py` evaluates the actual installed KnowledgeIntegration Program with a real Codex model and real in-process semantic stores. Source-backed cases in `knowledge_integration_cases.json` cover a conditional hypothesis whose uncertainty must survive preservation, a routine series that must not explode into per-reading states, and an intermediate experiment plan that must not become a fabricated final result. A fourth case uses the production consciousness instructions and result schema to check that one experiment-planning step returns a bounded continuation rather than pretending to finish the investigation. Hard assertions check accepted receipts, preservation, retained source access, bounded graph growth and absence of unsupported belief targets. Separate model invocations evaluate meaning and step granularity against explicit criteria, with no generator session history; these are fallible semantic evaluations, not deterministic proofs.
+`tests/live/test_knowledge_integration.py` evaluates the actual installed KnowledgeIntegration Program with a real Codex model and real in-process semantic stores. Source-backed cases in `knowledge_integration_cases.json` cover a conditional hypothesis whose uncertainty must survive preservation, a routine series that must not explode into per-reading states, and an intermediate experiment plan that must not become a fabricated final result. A fourth case uses the production consciousness instructions and result schema to check that one experiment-planning step returns a bounded continuation rather than pretending to finish the investigation. Hard assertions check actual write results, retained source access, bounded graph growth and absence of unsupported belief targets. The semantic rubric checks whether important meaning expressed in the source text was usefully retained; no structured preservation flag imposes a runtime obligation. Separate model invocations evaluate meaning and step granularity against explicit criteria, with no generator session history; these are fallible semantic evaluations, not deterministic proofs.
 
 ```sh
 # Opt-in: actual model calls, including one separate rubric review per case.
 EVERTREE_CODEX_INTEGRATION=1 uv run pytest tests/live/test_knowledge_integration.py -q -n 0
 ```
 
-The harness uses deterministic empty non-exact search indexes over an initially empty domain; exact bootstrap lookup and the production semantic search/commit paths remain active. The integration model receives native tools with actual handlers. It tests integration policy and single-step model behavior, not embedding quality, worker isolation, durable recovery or full conscious-loop scheduling. Each model invocation has a 120-second timeout and the production Program bounds its tool calls. Failures retain source cases, model exchanges, graph receipts and rubric results in `semantic-policy-evaluation.json` or `conscious-step-evaluation.json` under the pytest case directory. Without the opt-in variable the cases collect and skip without model calls.
+The harness uses deterministic empty non-exact search indexes over an initially empty domain; exact bootstrap lookup and the production semantic search/write paths remain active. The integration model receives native tools with actual handlers. It tests integration policy and single-step model behavior, not embedding quality, worker isolation, durable recovery or full conscious-loop scheduling. Each model invocation has a 120-second timeout and the production Program bounds its tool calls. Failures retain source cases, model exchanges, actual graph write results and rubric results in `semantic-policy-evaluation.json` or `conscious-step-evaluation.json` under the pytest case directory. Without the opt-in variable the cases collect and skip without model calls.

@@ -13,8 +13,6 @@ from evertree.core.graph.types import (
     Node,
     NodeUpdate,
     Prototype,
-    RelationType,
-    Slot,
 )
 from evertree.core.semantics.reading import describe, read_property
 from evertree.core.values import ContractError, json_value
@@ -208,47 +206,6 @@ def test_describe_preserves_relation_conditions_in_model_reads():
         assert reading["properties"]["conditions"] == conditions
 
 
-def test_integration_invalid_proposal_atomic_and_idempotent_sources():
-    world = semantic_world()
-    g, memory = world.graph, world.memory
-    run = memory.start_run("input", "revision", {})
-    event = memory.record(run, "message", output="Кошка — животное")
-    memory.finish_run(run)
-    payload = {
-        "experience_refs": [json_value(memory.output_ref(event))],
-        "decisions": [
-            {
-                "disposition": "materialize",
-                "reason": "Useful class",
-                "source_refs": [json_value(memory.output_ref(event))],
-                "affected_ids": [-1],
-                "preservation_ids": [],
-            }
-        ],
-        "proposal": {"creates": [{"id": -1, "name": "Кошка"}, {"id": -2, "name": "кошка"}]},
-    }
-    metadata = {
-        "run_id": "integration",
-        "task_id": "task",
-        "knowledge_integration_authorized": True,
-        "integration_operation_id": "packet",
-        "integration_context": {},
-        "program": {"role": "exec", "revision": "revision"},
-    }
-    before, identity = g.revision, g._next_id
-    assert world.service.commit(payload, metadata)["status"] == "invalid"
-    assert g.revision == before and g._next_id == identity
-    payload["proposal"]["creates"].pop()
-    world.service.results("Кошка", None, [], [], 20, "task")
-    result = world.service.commit(payload, metadata)
-    assert result["status"] == "complete"
-    assert world.service.commit(payload, metadata) == result
-    assert g.revision == before + 1
-    change = g._history[-1]
-    producer = memory.get_event(change.provenance["event_ref"])
-    assert producer.dependencies == (memory.output_ref(event),)
-
-
 def test_graph_declared_property_domain_inherits_to_types_and_facets():
     world = semantic_world()
     g = world.graph
@@ -351,68 +308,7 @@ def test_describe_filters_relations_by_facet_time_and_removed_definitions():
     )
 
 
-def test_delta_uses_updated_signature_for_new_facts_and_observer_failure_is_postcommit():
-    world = semantic_world()
-    g = world.graph
-    relation = RelationType(
-        g.reserve_id(), "MEASURE", signature=(Slot("value", "number"),), views=()
-    )
-    g.apply(GraphDelta(creates=(relation,)), provenance="test")
-    delta = world.service._proposal(
-        {
-            "updates": [
-                {
-                    "id": relation.id,
-                    "changes": {"signature": [{"label": "value", "value_type": "node"}]},
-                }
-            ],
-            "creates": [
-                {"id": -1, "name": "Target"},
-                {
-                    "id": -2,
-                    "kind": "relation_instance",
-                    "relation_type": relation.id,
-                    "args": {"value": -1},
-                },
-            ],
-        }
-    )
-    g.on_change(lambda _: (_ for _ in ()).throw(RuntimeError("derived index failed")))
-    g.apply(delta, provenance="test")
-    assert g.facts(relation.id)[0].args["value"] == g.lookup("Target")[0].id
-
-
-def test_remember_dedup_preserves_conditions_and_checks_updates():
-    world = semantic_world()
-    g = world.graph
-    entity = Node(g.reserve_id(), "Object")
-    prop = Node(g.reserve_id(), "Position", kind="property")
-    args = {"entity": entity.id, "property": prop.id, "value": 1, "unit": "m"}
-    fact = replace(
-        g.new_fact("HAS_NUMERIC_VALUE", args), properties={"conditions": {"frame": "world"}}
-    )
-    g.apply(GraphDelta(creates=(entity, prop, fact)), provenance="source")
-    proposal = {
-        "creates": [
-            {**json_value(fact), "id": -1, "properties": {"conditions": {"frame": "local"}}}
-        ]
-    }
-    delta = world.service._proposal(proposal)
-    g.apply(delta, provenance="other frame")
-    with pytest.raises(ContractError, match="Fact already exists"):
-        world.service._proposal(
-            {
-                "updates": [
-                    {
-                        "id": delta.creates[0].id,
-                        "changes": {"properties": json_value(fact.properties)},
-                    }
-                ]
-            }
-        )
-
-
-async def test_integration_can_disambiguate_by_id():
+async def test_integration_can_disambiguate_by_id_without_a_disposition():
     from evertree.processes.semantic_processing.knowledge_integration._exec import run
 
     world = semantic_world()
@@ -424,12 +320,9 @@ async def test_integration_can_disambiguate_by_id():
     async def model(payload, call):
         result = await call("describe", {"subject": identity})
         assert result["subject"]["id"] == identity
-        await call("unresolved", {"reason": "Ambiguous meaning", "sources": refs})
-        await call("finish", {})
 
     result = await run(context(world, model, role="exec"), refs)
-    assert result["result"]["complete"]
-    assert result["result"]["decisions"][0]["disposition"] == "unresolved"
+    assert result == {"result": {"writes": []}, "feedback": None}
 
 
 @pytest.mark.parametrize(

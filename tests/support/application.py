@@ -9,7 +9,7 @@ from evertree.core.provider import AgentEvent, ScriptedProvider
 
 
 def is_integration_request(request):
-    return {"save_note", "finish"} <= {tool.name for tool in request.tools}
+    return {"save_note", "update"} <= {tool.name for tool in request.tools}
 
 
 async def tool_events(request_id, request, handler, calls):
@@ -35,7 +35,7 @@ async def tool_events(request_id, request, handler, calls):
 
 
 class IntegrationScriptedProvider(ScriptedProvider):
-    """Call trace-only tools while exercising real packet validation."""
+    """Complete automatic selection with no writes unless a test selects knowledge."""
 
     @property
     def task_requests(self):
@@ -47,15 +47,7 @@ class IntegrationScriptedProvider(ScriptedProvider):
                 yield event
             return
         self.requests.append(request)
-        material = json.loads(request.prompt)["material"]
-        assert not material["context"].get("preservation_intents"), (
-            "Use explicit integration scripts when testing preservation obligations"
-        )
-        calls = [
-            ("trace_only", {"sources": [item["reference"] for item in material["experience"]]}),
-            ("finish", {}),
-        ]
-        async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
+        async for event in tool_events(request_id, request, kwargs["tool_handler"], []):
             yield event
 
 

@@ -9,7 +9,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    StrictBool,
     StrictStr,
     field_validator,
     model_validator,
@@ -69,16 +68,6 @@ class AnalyticalNote(BaseModel):
     )
     kind: Literal["note", "claim"] = Field(
         "note", description="note for a connected analysis; claim for one assessable assertion."
-    )
-    significance: Literal["baseline", "elevated", "exceptional"] | None = Field(
-        None,
-        description="Optional lasting value: baseline=ordinary, elevated=useful across tasks, exceptional=lasting importance. Not truth confidence.",
-    )
-    significance_reason: Annotated[StrictStr, Field(min_length=1)] | None = Field(
-        None, description="Why the stated significance is justified; otherwise null."
-    )
-    preserve: StrictBool = Field(
-        False, description="Require the integrator to retain this meaning or report an obstacle."
     )
 
     @field_validator("source_refs", mode="before")

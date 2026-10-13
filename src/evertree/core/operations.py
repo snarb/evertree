@@ -91,7 +91,6 @@ class CoreOperations:
         run_mode="live",
         source_refs=(),
         integration_operation_id=None,
-        integration_decisions=(),
     ):
         protect_prediction_delta(self.graph, delta)
         binding = self.graph.find("PROGRAM_FOR_PROCESS")
@@ -144,7 +143,6 @@ class CoreOperations:
             "graph_delta",
             arguments={
                 "integration_operation_id": integration_operation_id,
-                "decisions": integration_decisions,
             },
             output=json_value(delta),
             dependencies=source_refs,
@@ -152,8 +150,10 @@ class CoreOperations:
         ref = self.memory.output_ref(event)
         try:
             result = self.graph.apply(delta, provenance=ref)
-            for node in (*delta.creates, *delta.updates):
-                self.memory.retain(ref, "graph:" + str(node.id))
+            for identity in [node.id for node in (*delta.creates, *delta.updates)] + list(
+                delta.deletes
+            ):
+                self.memory.retain(ref, "graph:" + str(identity))
             for source in source_refs:
                 self.memory.retain(source, "graph_source:" + str(event.id))
             return result

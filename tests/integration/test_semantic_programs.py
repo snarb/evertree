@@ -59,7 +59,6 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
             tool_results.append(await call("create_prototype", {**fields, "parent": 9999}))
             assert tool_results[-1]["error"]
             tool_results.append(await call("create_concept", fields))
-            await call("finish", {})
             return {"text": ""}
         if method.startswith("semantic."):
             return await world.service.execute(method, payload, metadata)
@@ -73,7 +72,7 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
     )
     try:
         result = await runtime.execute("task", parent, arguments, run_id="remember")
-        assert result.result["status"] == "complete"
+        assert len(result.result["writes"]) == 1
         assert len(attempts) == 1 and tool_results[0]["error"]
         assert len([e for e in traces if e["type"] == "run_started"]) == 3
         revision_before = world.graph.revision
@@ -135,5 +134,95 @@ async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_pat
         assert [item["id"] for item in result.result["items"]] == [ids[2], ids[0], ids[1]]
         replay = await runtime.execute("task", spec, {"query": "missing"}, run_id="search")
         assert replay.result == result.result and len(reads) == 2
+    finally:
+        await runtime.close()
+
+
+async def test_interrupted_integration_replays_completed_write_and_continues_same_object(tmp_path):
+    """A killed worker must restore tool sequencing while retaining its committed graph write."""
+    import asyncio
+
+    import pytest
+
+    from evertree.core.runtime.repository import ProgramExecutionError
+    from tests.support.semantics import recorded_experience
+
+    root = Path(__file__).resolve().parents[2]
+    paths = [
+        "src/evertree/processes/semantic_processing/knowledge_integration/_exec.py",
+        "src/evertree/common/integration_actions.py",
+        "src/evertree/common/structured.py",
+    ]
+    repository = tmp_path / "repository"
+    revision = commit_programs(repository, {path: (root / path).read_text() for path in paths})
+    parent = ProgramSpec(101, paths[0], revision, role="exec")
+    world = semantic_world()
+    refs, _ = recorded_experience(world, "The pump appears hot", "The measurement shows 20 C")
+    ready, stopped = asyncio.Event(), asyncio.Event()
+    calls, writes = [], []
+    saved_id = None
+
+    async def gateway(method, payload):
+        nonlocal saved_id
+        payload = dict(payload)
+        metadata = payload.pop("_runtime")
+        metadata.update(
+            knowledge_integration_authorized=True,
+            integration_operation_id="interrupted-packet",
+            integration_context={},
+        )
+        if method == "agent.run":
+            calls.append(payload["prompt"])
+            call = payload["_tool_handler"]
+            if len(calls) == 1:
+                saved = await call(
+                    "save_note", {"name": "Temperature", "source": refs[0], "sources": []}
+                )
+                saved_id = saved["object"]
+                assert world.graph.get(saved_id).description == "The pump appears hot"
+                ready.set()
+                try:
+                    await asyncio.Future()
+                finally:
+                    stopped.set()
+            assert "already completed" in payload["prompt"]
+            assert str(saved_id) in payload["prompt"]
+            result = await call(
+                "update",
+                {
+                    "object": saved_id,
+                    "changes": {"description": "The pump is 20 C"},
+                    "sources": refs[1:],
+                },
+            )
+            assert result["object"] == saved_id
+            return {"text": "Done"}
+        if method == "semantic.write":
+            writes.append(payload["operation_key"])
+        if method.startswith("semantic."):
+            return await world.service.execute(method, payload, metadata)
+        return world.operations.execute(method, payload, metadata=metadata)
+
+    runtime = Runtime(tmp_path / "runtime", repository, gateway, process_factory=TestProcess)
+    arguments = {"experience_refs": refs}
+    try:
+        first = asyncio.create_task(
+            runtime.execute("task", parent, arguments, run_id="resume-integration", timeout=30)
+        )
+        await asyncio.wait_for(ready.wait(), 30)
+        await runtime.cancel("task", finalize=False)
+        with pytest.raises(ProgramExecutionError):
+            await first
+        assert stopped.is_set()
+        assert len(world.graph.nodes(kind="note")) == 1
+        result = await runtime.execute(
+            "task", parent, arguments, run_id="resume-integration", timeout=30
+        )
+        assert [write["object"] for write in result.result["writes"]] == [saved_id, saved_id]
+        assert world.graph.get(saved_id).description == "The pump is 20 C"
+        assert writes == ["1", "2"]
+        changes = [change for change in world.graph._history if saved_id in change.after]
+        assert len(changes) == 2
+        assert len(calls) == 2
     finally:
         await runtime.close()

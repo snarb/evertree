@@ -66,12 +66,11 @@ async def run(name, ctx):
     refs = [{'event_ref': 1, 'output_path': []}]
     material = await ctx.step('semantic.sources', {'experience_refs': refs})
     assert material['context']['task']['mode'] == 'evaluation'
-    return {'result': await ctx.step('semantic.commit', {
-        'experience_refs': refs,
-        'proposal': {'updates': [{'id': 1, 'changes': {'name': name}}]},
-        'decisions': [{'disposition': 'materialize', 'reason': 'Source correction',
-            'source_refs': refs, 'affected_ids': [1], 'preservation_ids': []}]
-    })}
+    write = await ctx.step('semantic.write', {
+        'experience_refs': refs, 'operation_key': 'rename',
+        'action': {'action': 'update', 'object': 1, 'changes': {'name': name}, 'sources': refs}
+    })
+    return {'result': {'writes': [write]}}
 """
 
 

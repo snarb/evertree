@@ -6,7 +6,7 @@ from datetime import timedelta
 
 import pytest
 
-from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.graph.types import GraphDelta
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.values import ContractError, json_value
 from evertree.processes.semantic_processing.knowledge_integration._exec import (
@@ -15,183 +15,89 @@ from evertree.processes.semantic_processing.knowledge_integration._exec import (
 )
 from tests.support.application import (
     IntegrationScriptedProvider,
-    budget_review,
     decision,
     framing,
-    is_integration_request,
     verification,
-    wait_for_event,
 )
-from tests.support.semantics import context, semantic_world
+from tests.support.semantics import context, recorded_experience, semantic_world, write_action
 
 
-def material(world):
-    source_run = world.memory.start_run("Source", "revision", {})
-    event = world.memory.record(source_run, "input", output="A conditional insight")
-    world.memory.finish_run(source_run)
-    refs = [json_value(world.memory.output_ref(event))]
-    choices = [
-        {
-            "disposition": "materialize",
-            "reason": "Keep the conditional result",
-            "source_refs": refs,
-            "affected_ids": [-1],
-            "preservation_ids": [],
-        }
-    ]
-    payload = {
-        "experience_refs": refs,
-        "proposal": {"creates": [{"id": -1, "name": "Insight", "kind": "note"}]},
-        "decisions": choices,
-    }
-    metadata = {
-        "task_id": "task",
-        "run_id": "run",
-        "program": {"role": "exec", "revision": "revision"},
-        "knowledge_integration_authorized": True,
-        "integration_operation_id": "packet",
-        "integration_context": {},
-    }
-    return payload, metadata
-
-
-def test_receipt_failure_rolls_back_mutation_audit_and_retention(monkeypatch):
+def test_result_recording_failure_rolls_back_only_its_operation(monkeypatch):
     world = semantic_world()
-    payload, metadata = material(world)
+    refs, metadata = recorded_experience(world, "Initial observation", "Correction")
+    first = write_action(
+        world,
+        refs,
+        metadata,
+        {"action": "save_note", "name": "Insight", "source": refs[0], "sources": []},
+    )
+    assert "error" not in first, first
     before = (world.graph.snapshot(), world.memory.snapshot())
     notifications = []
     world.graph.on_change(notifications.append)
     original = world.memory.record
 
-    def fail_receipt(run, operator, *args, **kwargs):
-        if operator == "semantic_commit":
-            raise ValueError("Receipt storage failed after mutation")
+    def fail_result(run, operator, *args, **kwargs):
+        if operator == "semantic_write":
+            raise ValueError("Result storage failed after mutation")
         return original(run, operator, *args, **kwargs)
 
-    monkeypatch.setattr(world.memory, "record", fail_receipt)
-    result = world.service.commit(payload, metadata)
-    assert result["status"] == "invalid"
+    action = {
+        "action": "update",
+        "object": first["object"],
+        "changes": {"description": "Corrected"},
+        "sources": refs[1:],
+    }
+    monkeypatch.setattr(world.memory, "record", fail_result)
+    result = write_action(world, refs, metadata, action, key="correction")
+    assert result["error"]
     assert (world.graph.snapshot(), world.memory.snapshot()) == before
     assert notifications == []
     monkeypatch.setattr(world.memory, "record", original)
-    assert world.service.commit(payload, metadata)["complete"]
+    result = write_action(world, refs, metadata, action, key="correction")
+    assert result["object"] == first["object"]
     assert len(notifications) == 1
-    assert len(world.graph.nodes(kind="note")) == 1
+    assert world.graph.get(first["object"]).description == "Corrected"
 
 
-@pytest.mark.parametrize("disposition", ["materialize", "reuse"])
-def test_deleting_a_representation_cannot_fulfill_preservation(disposition):
-    world = semantic_world()
-    payload, metadata = material(world)
-    node = Node(world.graph.reserve_id(), "Earlier note", kind="note")
-    world.graph.apply(GraphDelta(creates=(node,)), provenance="seed")
-    payload["proposal"] = {"deletes": [node.id]}
-    payload["decisions"][0].update(
-        disposition=disposition, affected_ids=[node.id], preservation_ids=["keep"]
-    )
-    metadata["integration_context"] = {
-        "preservation_intents": [
-            {
-                "id": "keep",
-                "text": "Retain the insight",
-                "source_ref": payload["experience_refs"][0],
-            }
-        ]
-    }
-    result = world.service.commit(payload, metadata)
-    assert result["status"] == "invalid"
-    assert world.graph.get(node.id) == node
-
-
-async def test_program_claim_of_completion_without_core_receipt_is_rejected(app, monkeypatch):
+async def test_normal_integration_completion_needs_no_core_receipt(app, monkeypatch):
     task = app.tasks.create_task("Integrate experience")
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Review")
     app._inputs[task.id] = [{"role": "user", "content": task.objective}]
     app.observe("Source", source_id="source", task_id=task.id)
+    calls = []
 
-    async def forged_program(*args, **kwargs):
-        return {"result": {"complete": True, "status": "complete"}}
+    async def completed_program(*args, **kwargs):
+        calls.append(1)
+        return {"result": {"writes": []}, "feedback": None}
 
-    monkeypatch.setattr(app, "_run_program", forged_program)
-    assert not await app._integrate_step(task)
-    assert task.status == "waiting"
-    assert task.step_state["integration"]["status"] == "waiting"
-    assert not task.step_state["integrated"]["1"]
+    monkeypatch.setattr(app, "_run_program", completed_program)
+    await app._integrate_step(task)
+    await app._integrate_step(task)
+    assert len(calls) == 1
+    assert task.status != "waiting"
+    assert "last_integration_receipt" not in task.step_state
 
 
-async def test_program_cannot_modify_committed_receipt(app, monkeypatch):
+async def test_failed_integration_is_not_retried_at_every_step(app, monkeypatch):
     task = app.tasks.create_task("Integrate experience")
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Review")
     app._inputs[task.id] = [{"role": "user", "content": task.objective}]
     app.observe("Source", source_id="source", task_id=task.id)
-    app.provider = IntegrationScriptedProvider([])
-    execute = app._run_program
+    calls = []
 
-    async def modified_receipt(*args, **kwargs):
-        result = await execute(*args, **kwargs)
-        result["result"]["revision"] += 1
-        return result
+    async def failed_program(*args, **kwargs):
+        calls.append(1)
+        raise RuntimeError("Temporary outage")
 
-    monkeypatch.setattr(app, "_run_program", modified_receipt)
-    assert not await app._integrate_step(task)
-    assert "original core receipt" in task.step_state["integration"]["error"]
-    monkeypatch.setattr(app, "_run_program", execute)
-    assert await app._integrate_step(task)
-    assert len(app.provider.requests) == 1
-
-
-async def test_synchronous_integration_is_not_repeated_at_step_boundary(app):
-    task = app.tasks.create_task("Use an insight within this step")
-    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Review")
-    app._inputs[task.id] = [{"role": "user", "content": task.objective}]
-    reference = app._record_analysis(task.id, {"text": "Intermediate result"})
-    app.provider = IntegrationScriptedProvider([])
-    receipt = await app._dispatch_tool(
-        task.id, "graph.integrate", {"experience_refs": [{"event_ref": reference["event_ref"]}]}
-    )
-    assert receipt["complete"]
-    assert await app._integrate_step(task)
-    assert len(app.provider.requests) == 1
-    assert len([event for event in app.memory.events if event.operator == "semantic_commit"]) == 1
-
-
-async def test_new_input_during_recovered_integration_is_reframed_before_next_step(app):
-    class Provider(IntegrationScriptedProvider):
-        attempts = 0
-
-        async def run(self, request_id, request, **kwargs):
-            if is_integration_request(request):
-                self.attempts += 1
-                if self.attempts == 1:
-                    raise RuntimeError("Temporary outage")
-                if self.attempts == 2:
-                    await app.submit("New objective", task_id=app.tasks.all()[0].id)
-            async for event in super().run(request_id, request, **kwargs):
-                yield event
-
-    app.provider = Provider(
-        [
-            framing("Old objective"),
-            decision("Partial work", "continue"),
-            budget_review(),
-            framing("New objective"),
-            decision("New answer"),
-            verification(),
-        ]
-    )
-    waiting = await app.run("Old objective")
-    assert waiting["status"] == "waiting"
-    await app._pump
-    task = app.tasks.get(waiting["task_id"])
-    await app.resume(task.id)
-    answer, _ = await wait_for_event(app, "answer")
-    assert answer.data["text"] == "New answer"
-    assert task.specification.objective == "New objective"
-    controllers = [r for r in app.provider.task_requests if r.mode == "exec"]
-    assert len(controllers) == 2
-    assert json.loads(controllers[-1].prompt)["specification"]["objective"] == "New objective"
-    await app.acknowledge_delivery(answer.data["delivery_id"])
-    await wait_for_event(app, "task_completed")
+    monkeypatch.setattr(app, "_run_program", failed_program)
+    await app._integrate_step(task)
+    await app._integrate_step(task)
+    assert len(calls) == 1
+    assert task.status != "waiting"
+    app.observe("New insight", source_id="follow-up", task_id=task.id)
+    await app._integrate_step(task)
+    assert len(calls) == 2
 
 
 async def test_temporary_budget_clamp_does_not_overwrite_requested_step_budget(app, monkeypatch):
@@ -224,12 +130,12 @@ async def test_recovered_program_result_stays_in_working_context_not_user_histor
     assert task.step_state["recovered_program_ref"]["event_ref"] > 0
 
 
-async def test_waiting_task_protects_working_note_and_receipt_until_terminal(app):
+async def test_waiting_task_protects_working_note_until_terminal(app):
     app.provider = IntegrationScriptedProvider([framing(), decision("Need evidence", "waiting")])
     result = await app.run("Inspect evidence")
     await app._pump
     task = app.tasks.get(result["task_id"])
-    refs = [task.last_step_ref, task.step_state["last_integration_receipt"]["receipt_ref"]]
+    refs = [task.last_step_ref]
     for ref in refs:
         event = app.memory.get_event(ref["event_ref"])
         with pytest.raises(ContractError, match="protected"):
@@ -279,35 +185,32 @@ def test_program_argument_cannot_assign_its_result_to_another_task(app):
 
 def test_integration_exposes_original_producer_of_a_forwarded_reference():
     world = semantic_world()
-    payload, metadata = material(world)
+    refs, metadata = recorded_experience(world, "A conditional insight")
     wrapper_run = world.memory.start_run("Wrapper", "other-revision", {})
-    wrapper = world.memory.record(
-        wrapper_run, "forward", output=TraceOutputRef(**payload["experience_refs"][0])
-    )
+    wrapper = world.memory.record(wrapper_run, "forward", output=TraceOutputRef(**refs[0]))
     world.memory.finish_run(wrapper_run)
     result = world.service.sources(
         [json_value(world.memory.output_ref(wrapper))], metadata=metadata
     )
-    assert result["experience"][0]["origin"]["program"] == "Source"
+    assert result["experience"][0]["origin"]["program"] == "experience"
     assert result["experience"][0]["origin"]["operator"] == "input"
 
 
 @pytest.mark.parametrize("arguments", [None, [], {"name": 42}])
 async def test_invalid_native_tool_arguments_are_repaired_with_feedback(arguments):
     world = semantic_world()
-    payload, _ = material(world)
-    refs = payload["experience_refs"]
+    refs, _ = recorded_experience(world, "A conditional insight")
 
     async def model(request, call):
         invalid = await call("create_concept", arguments)
         assert invalid["error"]
         await call("save_note", {"name": "Insight", "source": refs[0], "sources": refs})
-        await call("finish", {})
 
     result = await run(context(world, model, role="exec"), refs)
-    assert result["result"]["complete"]
+    assert len(result["result"]["writes"]) == 1
     assert (
-        world.graph.get(result["result"]["created"][0]["id"]).description == "A conditional insight"
+        world.graph.get(result["result"]["writes"][0]["object"]).description
+        == "A conditional insight"
     )
 
 

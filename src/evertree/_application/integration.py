@@ -86,7 +86,6 @@ class KnowledgeIntegrationMixin:
             "self": [sourced(node) for node in selected if node is not None]
             + [sourced(fact) for fact in facts[:12]],
             "self_selection": "Core Self identities and their first twelve registered adjacent facts; not exhaustive.",
-            "preservation_intents": [],
         }
 
     def _semantic_metadata(self, state, payload, metadata):
@@ -169,7 +168,8 @@ class KnowledgeIntegrationMixin:
                     "AnswerVerification",
                     "ExperienceFragments",
                     "GraphMutation",
-                    "KnowledgeIntegrationReceipt",
+                    "SemanticWrite",
+                    "KnowledgeIntegrationDiagnostic",
                 }
                 or parent in excluded
                 or run.arguments.get("owner_run") in excluded
@@ -184,7 +184,7 @@ class KnowledgeIntegrationMixin:
                 "code_anchors",
                 "call_program",
                 "conscious_step_started",
-                "semantic_commit",
+                "semantic_write",
             }:
                 continue
             if isinstance(event.operator, int):
@@ -194,8 +194,7 @@ class KnowledgeIntegrationMixin:
             elif event.operator == "memory.note":
                 continue
             if event.operator == "conscious_step_result":
-                # Each Note has its own event so one preserved result cannot
-                # retain unrelated siblings through an event-wide dependency.
+                # Notes have their own references; the enclosing step duplicates them.
                 continue
             if event.operator == "provider_event":
                 kind = event.output.get("kind")
@@ -231,7 +230,6 @@ class KnowledgeIntegrationMixin:
             if analytical:
                 encoded = value["text"]
             for offset in range(0, len(encoded), 12000):
-                preserve = analytical and value.get("preserve") is True
                 event = self.memory.record(
                     run,
                     "experience_fragment",
@@ -244,7 +242,6 @@ class KnowledgeIntegrationMixin:
                         "offset": offset,
                         "total_characters": len(encoded),
                         "text": encoded[offset : offset + 12000],
-                        "preserve": preserve,
                     },
                     dependencies=(ref,),
                 )
@@ -254,106 +251,77 @@ class KnowledgeIntegrationMixin:
             result.extend(parts)
         return result
 
-    async def _integration_waiting(self, state, reason):
-        self.tasks.set_waiting(
-            state.id, waiting_for=["knowledge_integration"], reason=reason, execution_stopped=True
+    def _integration_diagnostic(self, state, checkpoint, error):
+        run = self.memory.start_run(
+            "KnowledgeIntegrationDiagnostic", self._program_revision(), {"task_id": state.id}
         )
-        await self._publish("task_waiting", state.id, {"reason": reason})
-        await self.backup()
-        return False
+        self.memory.record(
+            run,
+            "integration_error",
+            arguments={"operation_id": checkpoint["operation_id"]},
+            output={"error": str(error)},
+        )
+        self.memory.finish_run(run, status="failed")
 
     async def _integrate_step(self, state):
+        """Attempt one bounded packet between steps without gating the conscious result."""
         work = state.step_state
-        while True:
-            checkpoint = work.get("integration")
-            if checkpoint is None:
-                revision = state.specification.revision
-                coverage = work.setdefault("integrated", {}).setdefault(str(revision), [])
-                covered = {json.dumps(ref, sort_keys=True) for ref in coverage}
-                unreviewed = [
-                    ref
-                    for ref in self._experience_refs(state)
-                    if json.dumps(json_value(ref), sort_keys=True) not in covered
-                ]
-                refs = self._bounded_experience(state, unreviewed)
-                remaining = [ref for ref in refs if json.dumps(ref, sort_keys=True) not in covered]
-                if not remaining:
-                    return True
-                batch, size = [], 0
-                for ref in remaining:
-                    cost = len(
-                        json.dumps(
-                            json_value(self.memory.resolve(trace_reference(ref))),
-                            ensure_ascii=False,
-                        )
+        checkpoint = work.get("integration")
+        if checkpoint is None:
+            revision = state.specification.revision
+            coverage = work.setdefault("integrated", {}).setdefault(str(revision), [])
+            covered = {json.dumps(ref, sort_keys=True) for ref in coverage}
+            unreviewed = [
+                ref
+                for ref in self._experience_refs(state)
+                if json.dumps(json_value(ref), sort_keys=True) not in covered
+            ]
+            refs = self._bounded_experience(state, unreviewed)
+            remaining = [ref for ref in refs if json.dumps(ref, sort_keys=True) not in covered]
+            if not remaining:
+                return
+            batch, size = [], 0
+            for ref in remaining:
+                cost = len(
+                    json.dumps(
+                        json_value(self.memory.resolve(trace_reference(ref))), ensure_ascii=False
                     )
-                    if batch and size + cost > 24000:
-                        break
-                    batch.append(ref)
-                    size += cost
-                checkpoint = {
-                    "operation_id": uuid4().hex,
-                    "experience_refs": batch,
-                    "remaining_refs": remaining[len(batch) :],
-                    "specification_revision": revision,
-                    "input_version": self._input_version(state),
-                    "context": self._integration_context(state),
-                    "status": "pending",
-                }
-                work["integration"] = checkpoint
-                for reference in remaining:
-                    self.memory.retain(trace_reference(reference), "task:" + state.id)
-                await self.backup()
-            if state.hard_limit_reached or state.budget_exhausted:
-                return await self._integration_waiting(
-                    state, "Insufficient task budget for required experience integration"
                 )
-            try:
-                checkpoint["status"] = "running"
-                receipt = (
-                    await self._run_program(
-                        state.id,
-                        "knowledge_integration",
-                        {"experience_refs": checkpoint["experience_refs"]},
-                    )
-                )["result"]
-                if not receipt.get("complete"):
-                    raise RuntimeError(
-                        receipt.get("error")
-                        or receipt.get("reason")
-                        or "Unfulfilled preservation or incomplete integration"
-                    )
-                reference = trace_reference(receipt.get("receipt_ref"))
-                event = self.memory.get_event(reference.event_ref)
-                if (
-                    reference.output_path
-                    or event.operator != "semantic_commit"
-                    or self.memory.get_run(event.program_run).program
-                    != "KnowledgeIntegrationReceipt"
-                    or list(event.arguments.get("key", ()))
-                    != [state.id, checkpoint["operation_id"]]
-                    or json_value(event.output)
-                    != {k: v for k, v in receipt.items() if k != "receipt_ref"}
-                    or event.output.get("complete") is not True
-                ):
-                    raise ValueError(
-                        "Integration requires the original core receipt for this operation"
-                    )
-            except asyncio.CancelledError:
-                checkpoint["status"] = "interrupted"
-                raise
-            except Exception as exc:  # noqa: BLE001 -- durable pending work must survive Program failure
-                checkpoint["status"] = "waiting"
-                checkpoint["error"] = str(exc)
-                if (
-                    self._pending_programs.get(state.id, {}).get("identity")
-                    == "knowledge_integration"
-                ):
-                    self._pending_programs.pop(state.id, None)
-                return await self._integration_waiting(state, "KnowledgeIntegration: " + str(exc))
-            self._mark_integrated(
-                state, checkpoint["specification_revision"], checkpoint["experience_refs"]
-            )
-            work["last_integration_receipt"] = receipt
-            work.pop("integration")
+                if batch and size + cost > 24000:
+                    break
+                batch.append(ref)
+                size += cost
+            checkpoint = {
+                "operation_id": uuid4().hex,
+                "experience_refs": batch,
+                "specification_revision": revision,
+                "context": self._integration_context(state),
+                "status": "pending",
+            }
+            work["integration"] = checkpoint
+            for reference in remaining:
+                self.memory.retain(trace_reference(reference), "task:" + state.id)
             await self.backup()
+        if state.hard_limit_reached or state.budget_exhausted:
+            return
+        try:
+            checkpoint["status"] = "running"
+            arguments = {"experience_refs": checkpoint["experience_refs"]}
+            if "pending_program" in checkpoint:
+                self._pending_programs[state.id] = checkpoint.pop("pending_program")
+                arguments = self._pending_programs[state.id]["arguments"]
+            output = await self._run_program(state.id, "knowledge_integration", arguments)
+            if output["result"].get("error"):
+                self._integration_diagnostic(state, checkpoint, output["result"]["error"])
+        except asyncio.CancelledError:
+            checkpoint["status"] = "interrupted"
+            raise
+        except Exception as exc:  # noqa: BLE001 -- integration cannot block conscious work
+            self._integration_diagnostic(state, checkpoint, exc)
+            if self._pending_programs.get(state.id, {}).get("identity") == "knowledge_integration":
+                self._pending_programs.pop(state.id, None)
+        self._mark_integrated(
+            state, checkpoint["specification_revision"], checkpoint["experience_refs"]
+        )
+        work.pop("integration")
+        await self.backup()

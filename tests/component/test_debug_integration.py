@@ -41,7 +41,7 @@ async def test_missing_search_configuration_stops_before_model_usage(tmp_path, m
     with pytest.raises(RuntimeError, match="PyCharm"):
         await session.run()
     assert session.calls == []
-    assert json.loads((tmp_path / "receipt.json").read_text()) is None
+    assert json.loads((tmp_path / "result.json").read_text()) is None
     assert (tmp_path / "graph.json").is_file()
     assert (tmp_path / "trace.json").is_file()
 
@@ -75,16 +75,13 @@ async def test_model_forwards_program_request_and_returns_provider_output(tmp_pa
     assert session.calls[0]["result"] == result
 
 
-async def test_debug_integration_forwards_native_tools_and_saves_their_finish_receipt(tmp_path):
+async def test_debug_integration_forwards_native_tools_and_records_direct_writes(tmp_path):
     session = DebugSession(tmp_path)
     session.record_experience()
     refs = session.experience_refs
     session.provider = ScriptedProvider(
         [
             [
-                AgentEvent(
-                    "tool_call", {"name": "trace_only", "arguments": {"sources": refs[:-1]}}
-                ),
                 AgentEvent(
                     "tool_call",
                     {
@@ -96,7 +93,6 @@ async def test_debug_integration_forwards_native_tools_and_saves_their_finish_re
                         },
                     },
                 ),
-                AgentEvent("tool_call", {"name": "finish", "arguments": {}}),
                 AgentEvent("usage", {"available": True, "total_tokens": 17}),
                 AgentEvent("completed", {"text": ""}),
             ],
@@ -104,15 +100,15 @@ async def test_debug_integration_forwards_native_tools_and_saves_their_finish_re
     )
     try:
         result = (await run(session, refs))["result"]
-        assert result["complete"]
+        assert len(result["writes"]) == 1
         assert session.graph.find("Retained analysis").description == CONSCIOUS_ANALYSIS
         (request,) = session.provider.requests
         assert request.mode == "exec" and not request.native_coding
         assert request.output_schema is None
-        assert {"save_note", "finish"} <= {tool.name for tool in request.tools}
+        assert {"save_note", "update", "delete"} <= {tool.name for tool in request.tools}
         (closed,) = [call for call in session.calls if call["method"] == "agent.close"]
-        finish = closed["payload"]["history"][-1]
-        assert finish["name"] == "finish" and finish["result"] == result
+        saved = closed["payload"]["history"][-1]
+        assert saved["name"] == "save_note" and saved["result"] == result["writes"][0]
         transcripts = [json.loads(path.read_text()) for path in tmp_path.glob("model-*.json")]
         (events,) = transcripts
         assert events[-1]["kind"] == "completed"
@@ -124,7 +120,7 @@ async def test_debug_integration_forwards_native_tools_and_saves_their_finish_re
         await session.index.close()
 
 
-async def test_live_evaluation_native_bridge_records_finish_and_final_usage(tmp_path):
+async def test_live_evaluation_native_bridge_accepts_no_writes_and_records_final_usage(tmp_path):
     from evertree.core.values import json_value
     from tests.live.test_knowledge_integration import _native_context
     from tests.support.semantics import semantic_world
@@ -137,8 +133,6 @@ async def test_live_evaluation_native_bridge_records_finish_and_final_usage(tmp_
     provider = ScriptedProvider(
         [
             [
-                AgentEvent("tool_call", {"name": "trace_only", "arguments": {"sources": refs}}),
-                AgentEvent("tool_call", {"name": "finish", "arguments": {}}),
                 AgentEvent("usage", {"available": True, "total_tokens": 23}),
                 AgentEvent("completed", {"text": ""}),
             ],
@@ -148,11 +142,11 @@ async def test_live_evaluation_native_bridge_records_finish_and_final_usage(tmp_
     try:
         async with _native_context(world, provider, tmp_path, transcript, {}, "test") as ctx:
             result = (await run(ctx, refs))["result"]
-        assert result["complete"]
+        assert result == {"writes": []}
         (request,) = provider.requests
         assert request.tools and request.output_schema is None
         (history,) = [entry["tool_history"] for entry in transcript if "tool_history" in entry]
-        assert history[-1]["name"] == "finish" and history[-1]["result"] == result
+        assert history == []
         (events,) = [entry["events"] for entry in transcript if "events" in entry]
         assert events[-1]["kind"] == "completed"
         assert events[-2] == {"kind": "usage", "data": {"available": True, "total_tokens": 23}}

@@ -36,9 +36,6 @@ def test_partial_result_is_an_explicit_product_without_a_user_answer():
             AnalyticalNote(
                 text="Reconnect may cause the failure only with an old connection.",
                 kind="claim",
-                significance="elevated",
-                significance_reason="Changes which experiment should run next.",
-                preserve=True,
             )
         ],
         disposition="continue",
@@ -50,7 +47,7 @@ def test_partial_result_is_an_explicit_product_without_a_user_answer():
     assert encoded["analysis"]["source_refs"] == [
         {"event_ref": 7, "output_path": ["observations", 0]}
     ]
-    assert encoded["findings"][0]["preserve"] is True
+    assert set(encoded["findings"][0]) == {"text", "source_refs", "kind"}
     assert "belief" not in encoded["findings"][0]
     assert ConsciousStepResult.model_validate(encoded) == result
 
@@ -106,7 +103,7 @@ def test_step_checkpoint_survives_snapshot_and_is_available_without_graph_materi
             "analysis": {"text": "The high-load-only explanation does not fit C."},
             "disposition": "continue",
         },
-        "integration": {"operation_id": "task-step-1", "remaining_refs": [21, 22]},
+        "integration": {"operation_id": "task-step-1", "experience_refs": [21, 22]},
     }
     snapshot = json.loads(json.dumps(tasks.snapshot()))
     restored = TaskStore.from_snapshot(snapshot).get(task.id)
@@ -116,5 +113,5 @@ def test_step_checkpoint_survives_snapshot_and_is_available_without_graph_materi
     assert context["state"]["current_step"] == task.current_step
     assert context["state"]["last_step_ref"] == task.last_step_ref
     assert context["state"]["step_state"] == task.step_state
-    restored.step_state["integration"]["remaining_refs"].clear()
-    assert task.step_state["integration"]["remaining_refs"] == [21, 22]
+    restored.step_state["integration"]["experience_refs"].clear()
+    assert task.step_state["integration"]["experience_refs"] == [21, 22]

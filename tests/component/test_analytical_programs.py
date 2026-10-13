@@ -39,19 +39,16 @@ async def test_analytical_programs_keep_partial_insights_and_original_trace_sour
             },
             "findings": [
                 {
-                    "text": "The explanation may require a locale condition.",
+                    "text": "The explanation may require a locale condition. Keep this; it changes the next test.",
                     "kind": "claim",
                     "source_refs": [reference],
-                    "significance": "elevated",
-                    "significance_reason": "It changes the next test.",
-                    "preserve": True,
                 }
             ],
         }
     )
     result = await program(context, {"experience_refs": [{"event_ref": 5, "output_path": []}]})
     assert result["result"]["analysis"]["source_refs"] == [reference]
-    assert result["result"]["findings"][0]["preserve"] is True
+    assert "Keep this" in result["result"]["findings"][0]["text"]
     assert context.calls == ["agent.run"]
 
 

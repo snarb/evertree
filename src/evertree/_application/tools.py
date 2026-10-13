@@ -18,7 +18,7 @@ from .prompts import CANDIDATE_INSTRUCTIONS, CODING_INSTRUCTIONS
 class ToolsMixin:
     """Internal EverTree method group; state is owned and initialized by EverTree."""
 
-    async def _tool(self, task_id, name, args):
+    async def _tool(self, task_id, name, args, *, semantic_tools=None):
         args = dict(args)
         purpose = args.pop("purpose", "task")
         if purpose not in {"task", "self_improvement"}:
@@ -36,7 +36,9 @@ class ToolsMixin:
             with self._meter(task_id, improvement=improvement):
                 remaining = state.remaining("active_time_minutes", self_improvement=improvement)
                 async with asyncio.timeout(remaining * 60 if remaining else None):
-                    return await self._dispatch_tool(task_id, name, args)
+                    return await self._dispatch_tool(
+                        task_id, name, args, semantic_tools=semantic_tools
+                    )
         except TimeoutError:
             if name != "graph.search":
                 raise
@@ -52,10 +54,16 @@ class ToolsMixin:
             self._tool_tasks[task_id].discard(callback)
             self._improvement.reset(token)
 
-    async def _dispatch_tool(self, task_id, name, args):
+    async def _dispatch_tool(self, task_id, name, args, *, semantic_tools=None):
+        from ..common.integration_actions import WRITE_TOOLS
+
         state = self.tasks.get(task_id)
         if state.terminal or state.hard_limit_reached:
             raise PermissionError("Task is stopped or its explicit resource limit was reached")
+        if name in {"graph." + tool.name for tool in WRITE_TOOLS}:
+            if semantic_tools is None:
+                raise PermissionError("Graph writes require a scoped consciousness invocation")
+            return await semantic_tools.handle(name.removeprefix("graph."), args)
         if name == "list_programs":
             return self.programs()
         if name == "run_program":
@@ -185,6 +193,8 @@ class ToolsMixin:
         from ..core.semantics.reading import fact_card, fact_nodes, resolve
         from ..core.values import timestamp
 
+        if name == "graph.history" and type(args["subject"]) is int:
+            return json_value(self.graph.changes_of(args["subject"]))
         if name in {"graph.neighbors", "graph.history"}:
             node = resolve(self.graph, args["subject"])
             if isinstance(node, dict):
@@ -261,20 +271,9 @@ class ToolsMixin:
                 owner_run=self._run_map.get(metadata.get("run_id")),
             )
         if method.startswith("semantic."):
-            if method in {"semantic.sources", "semantic.commit"}:
+            if method in {"semantic.sources", "semantic.write"}:
                 metadata = self._semantic_metadata(state, payload, metadata)
-            result = await self._semantics().execute(method, payload, metadata)
-            receipt = None
-            if method == "semantic.commit":
-                receipt = result
-            elif method == "semantic.sources":
-                receipt = result.get("receipt")
-            if receipt and receipt.get("receipt_ref"):
-                self.memory.retain(TraceOutputRef(**receipt["receipt_ref"]), "task:" + task_id)
-                if receipt.get("complete") is True:
-                    revision = metadata["integration_context"]["task"]["specification"]["revision"]
-                    self._mark_integrated(state, revision, payload["experience_refs"])
-            return result
+            return await self._semantics().execute(method, payload, metadata)
         if method == "resolve_program":
             spec = self._program(payload["program_id"])
             revision = metadata["program"]["revision"]

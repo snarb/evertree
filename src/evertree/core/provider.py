@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Awaitable, Callable
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Protocol, TypedDict
+
+# Provider identities support idempotent host writes without model-supplied keys.
+current_tool_call_id: ContextVar[str | None] = ContextVar("provider_tool_call_id", default=None)
 
 type ToolHandler = Callable[[str, dict[str, Any]], Awaitable[Any]]
 type ApprovalHandler = Callable[[dict[str, Any]], Awaitable[bool]]
@@ -191,7 +195,11 @@ class ScriptedProvider:
                             "tools": [t.name for t in selected.tools],
                         }
                     else:
-                        result = await tool_handler(call["name"], call["arguments"])
+                        token = current_tool_call_id.set(call["call_id"])
+                        try:
+                            result = await tool_handler(call["name"], call["arguments"])
+                        finally:
+                            current_tool_call_id.reset(token)
                 except Exception as exc:
                     yield AgentEvent(
                         "tool_result",

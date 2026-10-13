@@ -28,7 +28,7 @@ async def run(value, ctx):
     assert node['name'] == 'original'
     async def handle_tool(name, arguments):
         result = await ctx.call('knowledge_integration', arguments)
-        assert result.result['complete']
+        assert result.result['writes'][0]['object'] == 1
         return result.result
     tools = [{'name': 'rename', 'description': 'Apply an isolated correction.',
         'input_schema': {'type': 'object', 'properties': {'name': {'type': 'string'}},
@@ -62,8 +62,8 @@ async def run(value, ctx):
         assert payload["prompt"] == "3" and payload["mode"] == "exec"
         assert [tool["name"] for tool in payload["tools"]] == ["rename"]
         assert context.graph.get(1).name == "original"
-        receipt = await payload["_tool_handler"]("rename", {"name": "changed"})
-        assert receipt["complete"]
+        result = await payload["_tool_handler"]("rename", {"name": "changed"})
+        assert result["writes"][0]["object"] == 1
         assert context.graph.get(1).name == "changed"
         assert context.workspace.exists()
         prepared.append(context)
@@ -84,7 +84,9 @@ async def run(value, ctx):
         model_call=model_call,
     )
     assert experiment.report.baseline_metrics == {"accuracy": 0}
-    assert experiment.report.metrics == {"accuracy": 1}
+    assert experiment.report.metrics == {"accuracy": 1}, [
+        trace["error"] for trace in experiment.traces if "error" in trace
+    ]
     assert all(experiment.report.checks.values())
     assert (graph.snapshot(), memory.snapshot(), learning.snapshot()) == snapshots
     assert len(prepared) == 2

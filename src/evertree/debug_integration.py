@@ -66,7 +66,7 @@ def load_debug_environment(repository: Path, config: SemanticConfig):
 
 
 class DebugSession:
-    """Inspect graph, memory, calls, experience_refs and receipt in the debugger."""
+    """Inspect graph, memory, calls, experience_refs and recorded writes in the debugger."""
 
     def __init__(self, output_dir: Path):
         self.output_dir = output_dir
@@ -116,7 +116,7 @@ class DebugSession:
         self.provider = CodexProvider(state_dir=output_dir / "codex")
         self.calls = []
         self.experience_refs = []
-        self.receipt = None
+        self.result = None
 
     def record_experience(self):
         run = self.memory.start_run("DebugUserInput", "debug", {}, run_mode="evaluation")
@@ -126,7 +126,7 @@ class DebugSession:
         self.memory.finish_run(run)
         note_ref = self.operations.execute(
             "memory.note",
-            {"text": CONSCIOUS_ANALYSIS, "source_refs": self.experience_refs[1:], "preserve": True},
+            {"text": CONSCIOUS_ANALYSIS, "source_refs": self.experience_refs[1:]},
             metadata={**self.metadata, "knowledge_integration_authorized": False},
         )
         self.experience_refs.append(note_ref)
@@ -245,13 +245,11 @@ class DebugSession:
             outcome = await integrate(
                 self, self.experience_refs
             )  # Start stepping into the Program here.
-            self.receipt = outcome["result"]
-            if not self.receipt.get("complete"):
-                raise RuntimeError(f"Интеграция не завершена: {self.receipt}")
+            self.result = outcome["result"]
             created = [
                 json_value(node) for node in self.graph.nodes() if node.id not in self.seed_ids
             ]
-            # Breakpoint here: inspect created, self.receipt, self.graph and self.memory.
+            # Breakpoint here: inspect created, self.result, self.graph and self.memory.
             return created
         finally:
             await self.agents.close_all()
@@ -259,7 +257,7 @@ class DebugSession:
                 for name, value in {
                     "graph": self.graph.snapshot(),
                     "trace": self.memory.snapshot(),
-                    "receipt": self.receipt,
+                    "result": self.result,
                     "calls": self.calls,
                 }.items():
                     (self.output_dir / f"{name}.json").write_text(
@@ -284,7 +282,7 @@ def main():
     print("\nСозданные объекты:")
     for node in created:
         print(f"  {node['id']}: {node['kind']} — {node['name']}")
-    print(f"\nReceipt: {session.receipt['status']}. Граф и trace сохранены в {output_dir}")
+    print(f"\nЗаписей: {len(session.result['writes'])}. Граф и trace сохранены в {output_dir}")
 
 
 if __name__ == "__main__":

@@ -143,7 +143,6 @@ async def test_real_model_integrates_recorded_experience(case, tmp_path):
                 {
                     "text": content,
                     "source_refs": list(refs),
-                    "preserve": material.get("preserve", False),
                 },
                 metadata={
                     "task_id": "evaluation",
@@ -181,27 +180,34 @@ async def test_real_model_integrates_recorded_experience(case, tmp_path):
             world, provider, tmp_path, transcript, integration_context, case["id"]
         ) as ctx:
             outcome = await run(ctx, refs)
-        receipt = outcome["result"]
-        assert receipt.get("complete") is True, receipt
-        assert not receipt["pending_preservation_ids"]
+        writes = outcome["result"]["writes"]
         created = [json_value(node) for node in world.graph.nodes() if node.id not in before]
         assert len(created) <= case["max_created"], created
         assert all(not node.get("belief_target") for node in created), created
         assert all(world.memory.resolve(TraceOutputRef(**ref)) is not None for ref in refs)
-        if any(material.get("preserve") for material in case["materials"]):
-            assert created, "Explicit preservation in an initially empty domain needs a result"
-
         existing_ids = {
-            identity
-            for decision in receipt["decisions"]
-            if decision["disposition"] == "reuse"
-            for identity in decision["affected_ids"]
+            card["id"]
+            for write in writes
+            for card in write.get("updated", [])
+            if card["id"] in before
         }
         for node in world.graph.nodes():
             if isinstance(node, RelationInstance) and (
                 node.id not in before or node.id in existing_ids
             ):
                 existing_ids.update({node.relation_type, *fact_nodes(world.graph, node)} & before)
+        changes = {change["seq"]: change for change in world.graph.snapshot()["history"]}
+        grounded_writes = [
+            {
+                **write,
+                "sources": json_value(
+                    world.memory.get_event(
+                        changes[write["revision"]]["provenance"]["event_ref"]
+                    ).dependencies
+                ),
+            }
+            for write in writes
+        ]
         review_input = {
             "objective": case["objective"],
             "criteria": case["criteria"],
@@ -215,10 +221,7 @@ async def test_real_model_integrates_recorded_experience(case, tmp_path):
             ],
             "saved_nodes": created,
             "existing_nodes": [json_value(world.graph.get(i)) for i in sorted(existing_ids)],
-            "decisions": [
-                {key: decision[key] for key in ("disposition", "source_refs", "affected_ids")}
-                for decision in receipt["decisions"]
-            ],
+            "writes": grounded_writes,
         }
 
         review_schema = {
@@ -253,9 +256,9 @@ async def test_real_model_integrates_recorded_experience(case, tmp_path):
   boundaries may be known or unknown. Unknown time does not establish a current state.
   Relation instances express assertions using the named slots of a relation type.
 - existing_nodes are reused objects or definitions needed to understand saved relations.
-- decisions link source_refs to affected graph IDs. materialize writes graph content;
-  reuse uses existing content; trace_only retains just the recorded experience;
-  unresolved records a remaining ambiguity.
+- writes report successful graph operations and their source references recovered from
+  the persisted provenance. Sources remain available even when the integrator creates no
+  new graph object. No per-source decision or rationale is required.
 
 ## Evaluate
 Check each criterion independently against the actual saved content and its sources.
@@ -279,7 +282,13 @@ For every criterion, return passed and a short reason citing the relevant conten
     finally:
         (tmp_path / "semantic-policy-evaluation.json").write_text(
             json.dumps(
-                {"case": case, "outcome": outcome, "transcript": transcript},
+                {
+                    "case": case,
+                    "outcome": outcome,
+                    "transcript": transcript,
+                    "graph": world.graph.snapshot(),
+                    "trace": world.memory.snapshot(),
+                },
                 ensure_ascii=False,
                 indent=2,
             ),

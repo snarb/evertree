@@ -1,23 +1,21 @@
-"""Required integration survives interruption without inventing or repeating knowledge."""
+"""Integration remains bounded, recoverable and independent of conscious completion."""
 
 from __future__ import annotations
 
+import asyncio
 import json
 from copy import deepcopy
 
 import pytest
 
-from evertree.core.memory.types import TraceOutputRef
 from evertree.core.provider import AgentEvent
 from tests.support.application import (
     IntegrationScriptedProvider,
-    budget_review,
     decision,
     framing,
     is_integration_request,
     tool_events,
     verification,
-    wait_for_event,
 )
 from tests.support.component import component_app
 
@@ -33,111 +31,81 @@ def request_kind(request):
     return "verification" if "answer" in data else "framing"
 
 
-@pytest.mark.parametrize("failure", ["provider", "budget"])
-async def test_pending_result_waits_for_required_integration_before_resume_continues(
-    tmp_path, failure
-):
-    """Real task checkpoints retain a partial result when the provider or allowance fails."""
+async def test_integration_failure_consumes_attempted_packet_and_continues(tmp_path):
+    """A provider failure does not send integration bookkeeping back to consciousness."""
 
-    class RecoverableProvider(IntegrationScriptedProvider):
-        def __init__(self):
-            super().__init__(
-                [
-                    framing(),
-                    decision("First experiment narrowed the hypothesis", "continue"),
-                    budget_review(minutes=6),
-                    decision("Checked explanation"),
-                    verification(),
-                ]
-            )
-            self.stages = []
-            self.injected = False
+    class FailingProvider(IntegrationScriptedProvider):
+        injected = False
 
         async def run(self, request_id, request, **kwargs):
-            kind = request_kind(request)
-            self.stages.append(kind)
-            if failure == "provider" and kind == "integration" and not self.injected:
+            if is_integration_request(request) and not self.injected:
                 self.injected = True
                 self.requests.append(request)
+                self.failed_refs = [
+                    item["reference"]
+                    for item in json.loads(request.prompt)["material"]["experience"]
+                ]
                 raise RuntimeError("Temporary integration provider outage")
             async for event in super().run(request_id, request, **kwargs):
-                if (
-                    failure == "budget"
-                    and kind == "controller"
-                    and event.kind == "completed"
-                    and not self.injected
-                ):
-                    self.injected = True
-                    task = app.tasks.all()[0]
-                    app.tasks.record_usage(
-                        task.id,
-                        "active_time_minutes",
-                        task.remaining("active_time_minutes"),
-                        operation_id="measured-first-iteration-cost",
-                    )
                 yield event
 
-    provider = RecoverableProvider()
-    async with component_app(tmp_path / "agent", provider=provider) as app:
-        waiting = await app.run("Investigate the error")
-        assert waiting["status"] == "waiting"
-        await app._pump
-        task = app.tasks.get(waiting["task_id"])
-        assert task.waiting_for == ["knowledge_integration"]
-        assert task.step_state["status"] == "result_ready"
-        saved = deepcopy(task.step_state["pending_result"])
-        packet = deepcopy(task.step_state["integration"])
-        assert saved["disposition"] == "continue"
-        assert task.last_step_ref is not None
-        assert len([request for request in provider.task_requests if request.mode == "exec"]) == 1
-        original_inputs = deepcopy(app._inputs[task.id])
-        original_version = app._input_version(task)
-        original_revision = task.specification.revision
-        marker = len(provider.stages)
-
-        await app.resume(task.id)
-        answer, _ = await wait_for_event(app, "answer")
-        assert answer.data["text"] == "Checked explanation"
-        assert provider.stages[marker : marker + 3] == [
-            "budget_review",
-            "integration",
-            "controller",
+    provider = FailingProvider(
+        [
+            framing(),
+            decision("First experiment", "continue"),
+            decision("Checked explanation"),
+            verification(),
         ]
+    )
+    async with component_app(tmp_path / "agent", provider=provider) as app:
+        result = await app.run("Investigate the error")
+        assert result["status"] == "succeeded"
+        task = app.tasks.get(result["task_id"])
+        assert not task.step_state.get("integration")
+        assert all(ref in task.step_state["integrated"]["2"] for ref in provider.failed_refs)
+        diagnostics = [
+            event for event in app.memory.events if event.operator == "integration_error"
+        ]
+        assert len(diagnostics) == 1
+        assert "Temporary integration provider outage" in diagnostics[0].output["error"]
         controller = [request for request in provider.task_requests if request.mode == "exec"][1]
-        controller_context = json.loads(controller.prompt)
-        assert controller_context["last_step_result"] == saved
-        receipt_ref = controller_context["integration"]["receipt_ref"]
-        assert (
-            app.memory.resolve(TraceOutputRef(**receipt_ref))["operation_id"]
-            == packet["operation_id"]
-        )
-        assert app._inputs[task.id] == original_inputs
-        assert app._input_version(task) == original_version
-        assert task.specification.revision == original_revision
-        await app.acknowledge_delivery(answer.data["delivery_id"])
-        await wait_for_event(app, "task_completed")
-        assert task.status == "succeeded"
+        context = json.loads(controller.prompt)
+        assert "integration" not in context
+        assert "Temporary integration provider outage" not in controller.prompt
+        attempted = [
+            item["reference"]
+            for request in provider.requests
+            if is_integration_request(request)
+            for item in json.loads(request.prompt)["material"]["experience"]
+        ]
+        assert all(attempted.count(ref) == 1 for ref in provider.failed_refs)
 
 
-async def test_resume_replays_committed_receipt_after_transport_loss_without_second_mutation(
+async def test_exhausted_budget_leaves_packet_pending_without_an_integration_wait_state(app):
+    task = app.tasks.create_task("Review observations when allowance permits")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Review")
+    app._inputs[task.id] = [{"role": "user", "content": task.objective}]
+    source = app._record_analysis(task.id, {"text": "Important, but not a completion gate"})
+    app.tasks.record_usage(task.id, "active_time_minutes", 1, operation_id="exhaust")
+    await app._integrate_step(task)
+    assert task.step_state["integration"]["experience_refs"] == [source]
+    assert task.step_state["integration"]["status"] == "pending"
+    assert task.waiting_for != ["knowledge_integration"]
+    assert not app.provider.requests
+
+
+async def test_successful_write_survives_lost_program_reply_without_blocking_answer(
     tmp_path, monkeypatch
 ):
-    """Lose the completed Program reply; retry uses its committed receipt under a new run ID."""
+    """The graph operation is durable even if the enclosing integration invocation fails."""
 
     class MaterializingProvider(IntegrationScriptedProvider):
-        def __init__(self):
-            super().__init__(
-                [framing(), decision("Checked explanation"), budget_review(), verification()]
-            )
-            self.materialization_requests = 0
-
         async def run(self, request_id, request, **kwargs):
             if not is_integration_request(request):
                 async for event in super().run(request_id, request, **kwargs):
                     yield event
                 return
             self.requests.append(request)
-            self.materialization_requests += 1
             experience = json.loads(request.prompt)["material"]["experience"]
             explanation = next(
                 item["reference"] for item in experience if item["source_kind"] == "analytical_note"
@@ -146,71 +114,57 @@ async def test_resume_replays_committed_receipt_after_transport_loss_without_sec
                 (
                     "save_note",
                     {"name": "Retained explanation", "source": explanation, "sources": []},
-                ),
-                (
-                    "trace_only",
-                    {
-                        "sources": [
-                            item["reference"]
-                            for item in experience
-                            if item["reference"] != explanation
-                        ]
-                    },
-                ),
-                ("finish", {}),
+                )
             ]
             async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
                 yield event
 
-    provider = MaterializingProvider()
+    provider = MaterializingProvider([framing(), decision("Checked explanation"), verification()])
     async with component_app(tmp_path / "agent", provider=provider) as app:
         run_program = app._run_program
-        lost_reply = False
-        integration_runs = []
 
-        async def lose_committed_reply(task_id, identity, arguments, **kwargs):
-            nonlocal lost_reply
+        async def lose_reply(task_id, identity, arguments, **kwargs):
             output = await run_program(task_id, identity, arguments, **kwargs)
             if identity == "knowledge_integration":
-                integration_runs.append(output["run_id"])
-                if not lost_reply:
-                    lost_reply = True
-                    assert output["result"]["complete"]
-                    raise RuntimeError("Worker reply lost after semantic commit")
+                assert output["result"]["writes"]
+                raise RuntimeError("Worker reply lost after graph write")
             return output
 
-        monkeypatch.setattr(app, "_run_program", lose_committed_reply)
-        waiting = await app.run("Explain and retain the observed failure")
-        assert waiting["status"] == "waiting"
-        await app._pump
-        task = app.tasks.get(waiting["task_id"])
-        packet_id = task.step_state["integration"]["operation_id"]
-        saved_result = deepcopy(task.step_state["pending_result"])
-        assert saved_result["disposition"] == "propose_completion"
-        assert len([node for node in app.graph.nodes() if node.name == "Retained explanation"]) == 1
+        monkeypatch.setattr(app, "_run_program", lose_reply)
+        result = await app.run("Explain and retain the observed failure")
+        assert result["status"] == "succeeded"
+        note = app.graph.find("Retained explanation")
+        assert note.description == "Current result: Checked explanation"
+        assert len(app.graph.changes_of(note.id)) == 1
         assert (
-            app.graph.find("Retained explanation").description
-            == "Current result: Checked explanation"
+            len([request for request in provider.requests if is_integration_request(request)]) == 1
         )
-        graph_revision = app.graph.revision
-        receipt_events = [
-            event for event in app.memory.events if event.operator == "semantic_commit"
-        ]
-        assert len(receipt_events) == 1
+        assert (
+            len([event for event in app.memory.events if event.operator == "integration_error"])
+            == 1
+        )
 
-        await app.resume(task.id)
-        answer, _ = await wait_for_event(app, "answer")
-        assert answer.data["text"] == "Checked explanation"
-        assert len(integration_runs) == 2 and integration_runs[0] != integration_runs[1]
-        assert provider.materialization_requests == 1
-        assert len([request for request in provider.task_requests if request.mode == "exec"]) == 1
-        assert app.graph.revision == graph_revision
-        assert (
-            len([event for event in app.memory.events if event.operator == "semantic_commit"]) == 1
-        )
-        assert task.step_state["last_integration_receipt"]["operation_id"] == packet_id
-        await app.acknowledge_delivery(answer.data["delivery_id"])
-        await wait_for_event(app, "task_completed")
+
+async def test_cancelled_integration_keeps_the_packet_for_resume(app, monkeypatch):
+    task = app.tasks.create_task("Continue interrupted integration")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Review")
+    app._inputs[task.id] = [{"role": "user", "content": task.objective}]
+    source = app._record_analysis(task.id, {"text": "A useful observation"})
+    original = app._run_program
+
+    async def interrupt(*args, **kwargs):
+        raise asyncio.CancelledError()
+
+    monkeypatch.setattr(app, "_run_program", interrupt)
+    with pytest.raises(asyncio.CancelledError):
+        await app._integrate_step(task)
+    packet = deepcopy(task.step_state["integration"])
+    assert packet["status"] == "interrupted"
+    assert packet["experience_refs"] == [source]
+    monkeypatch.setattr(app, "_run_program", original)
+    await app._integrate_step(task)
+    assert source in task.step_state["integrated"][str(task.specification.revision)]
+    assert not task.step_state.get("integration")
 
 
 async def test_interrupted_iteration_keeps_actual_tool_trace_without_fabricated_analysis(tmp_path):
@@ -255,5 +209,6 @@ async def test_interrupted_iteration_keeps_actual_tool_trace_without_fabricated_
             run.program == "Consciousness" and run.status == "interrupted"
             for run in app.memory.runs
         )
-        assert task.step_state["last_integration_receipt"]["complete"]
+        assert task.step_state["integrated"]
+        assert "last_integration_receipt" not in task.step_state
         assert provider.cancelled
