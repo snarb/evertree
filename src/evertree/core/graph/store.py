@@ -376,6 +376,20 @@ class GraphStore:
                 else:
                     self._validate_slot(clause.value, slot, nodes)
 
+    def fact_applicability(self, fact: RelationInstance, at: datetime) -> str:
+        statuses = set()
+        for slot in self.get(fact.relation_type).signature:
+            if slot.value_type not in {"node", "concept", "facet"}:
+                continue
+            value = fact.args.get(slot.label)
+            values = value if isinstance(value, (list, tuple)) else (value,)
+            for identity in values:
+                if isinstance(facet := self._nodes.get(identity), Facet):
+                    statuses.add(facet.applicability(at))
+        if "outside" in statuses:
+            return "outside"
+        return "unknown" if "unknown" in statuses else "applicable"
+
     def query_view(
         self,
         relation_type: int | str,
@@ -409,21 +423,11 @@ class GraphStore:
         for fact in self.facts(relation.id):
             if any(fact.args.get(key) != value for key, value in inputs.items()):
                 continue
-            if valid_at is not None:
-                at = timestamp(valid_at)
-                facets = [
-                    self._nodes[value]
-                    for label, value in fact.args.items()
-                    if slots[label].value_type in {"node", "concept", "facet"}
-                    and isinstance(value, int)
-                    and isinstance(self._nodes.get(value), Facet)
-                ]
-                if any(
-                    at < facet.valid_from
-                    or (facet.valid_until is not None and at >= facet.valid_until)
-                    for facet in facets
-                ):
-                    continue
+            temporal = (
+                self.fact_applicability(fact, valid_at) if valid_at is not None else "applicable"
+            )
+            if temporal == "outside":
+                continue
             accepted = True
             for clause in view.constraints.all if view.constraints else ():
                 if clause.field in slots:
@@ -455,6 +459,9 @@ class GraphStore:
                     accepted = False
                     break
             if accepted:
+                # The result set is incomplete when a matching state's time is unknown.
+                if temporal == "unknown":
+                    return UNKNOWN
                 values = tuple(fact.args.get(label) for label in view.outputs)
                 matches.append(ViewMatch(values[0] if len(values) == 1 else values, fact))
         if (

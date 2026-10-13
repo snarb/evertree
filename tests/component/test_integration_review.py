@@ -1,7 +1,7 @@
 """Regression cases found while reviewing the conscious integration boundary."""
 
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import timedelta
 
 import pytest
@@ -9,7 +9,10 @@ import pytest
 from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.values import ContractError, json_value
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.semantic_processing.knowledge_integration._exec import (
+    _material_for_model,
+    run,
+)
 from tests.support.application import (
     IntegrationScriptedProvider,
     budget_review,
@@ -184,7 +187,7 @@ async def test_new_input_during_recovered_integration_is_reframed_before_next_st
     answer, _ = await wait_for_event(app, "answer")
     assert answer.data["text"] == "New answer"
     assert task.specification.objective == "New objective"
-    controllers = [r for r in app.provider.requests if r.mode == "exec"]
+    controllers = [r for r in app.provider.task_requests if r.mode == "exec"]
     assert len(controllers) == 2
     assert json.loads(controllers[-1].prompt)["specification"]["objective"] == "New objective"
     await app.acknowledge_delivery(answer.data["delivery_id"])
@@ -198,7 +201,7 @@ async def test_temporary_budget_clamp_does_not_overwrite_requested_step_budget(a
     assert result["status"] == "waiting"
     task = app.tasks.get(result["task_id"])
     assert task.current_step["active_time_minutes"] == 1.0
-    request = next(r for r in app.provider.requests if r.mode == "exec")
+    request = next(r for r in app.provider.task_requests if r.mode == "exec")
     assert request.timeout_seconds == 1.0
     assert json.loads(request.prompt)["state"]["current_step"]["active_time_minutes"] == 1 / 60
 
@@ -216,7 +219,7 @@ async def test_recovered_program_result_stays_in_working_context_not_user_histor
     result = await app.run("Continue delegated work", task_id=task.id)
     assert result["status"] == "succeeded"
     assert all(item["role"] == "user" for item in app._inputs[task.id])
-    request = next(r for r in app.provider.requests if r.mode == "exec")
+    request = next(r for r in app.provider.task_requests if r.mode == "exec")
     assert "recovered_program_result" in json.loads(request.prompt)
     assert task.step_state["recovered_program_ref"]["event_ref"] > 0
 
@@ -289,24 +292,47 @@ def test_integration_exposes_original_producer_of_a_forwarded_reference():
     assert result["experience"][0]["origin"]["operator"] == "input"
 
 
-@pytest.mark.parametrize(
-    "invalid_delta", [[], {"creates": [None]}, {"creates": [{"id": -1, "name": 42}]}]
-)
-async def test_invalid_model_delta_shape_is_repaired_with_feedback(invalid_delta):
+@pytest.mark.parametrize("arguments", [None, [], {"name": 42}])
+async def test_invalid_native_tool_arguments_are_repaired_with_feedback(arguments):
     world = semantic_world()
     payload, _ = material(world)
-    attempts = []
+    refs = payload["experience_refs"]
 
-    async def model(request):
-        attempts.append(json.loads(request["prompt"]))
-        return {
-            "action": "commit",
-            "query": "",
-            "summary": "Preserve insight",
-            "delta_json": json.dumps(invalid_delta if len(attempts) == 1 else payload["proposal"]),
-            "decisions_json": json.dumps(payload["decisions"]),
-        }
+    async def model(request, call):
+        invalid = await call("create_concept", arguments)
+        assert invalid["error"]
+        await call("save_note", {"name": "Insight", "source": refs[0], "sources": refs})
+        await call("finish", {})
 
-    result = await run(context(world, model, role="exec"), payload["experience_refs"])
+    result = await run(context(world, model, role="exec"), refs)
     assert result["result"]["complete"]
-    assert len(attempts) == 2 and attempts[1]["errors"]
+    assert (
+        world.graph.get(result["result"]["created"][0]["id"]).description == "A conditional insight"
+    )
+
+
+def test_self_context_retains_fact_conditions_while_resolving_participant_names(app):
+    graph = app.graph
+    fact = replace(
+        graph.new_fact(
+            "PART_WHOLE",
+            {
+                "part": graph.find("SelfModel").id,
+                "whole": graph.find("Self").id,
+            },
+        ),
+        properties={"conditions": {"scope": "current task"}, "status": "hypothesis"},
+    )
+    graph.apply(GraphDelta(creates=(fact,)), provenance="test observation")
+    task = app.tasks.create_task("Examine the agent's current model")
+    model_context = _material_for_model(
+        {
+            "context": app._integration_context(task),
+            "experience": [],
+        }
+    )["context"]
+    projected = next(node for node in model_context["self"] if node["id"] == fact.id)
+    assert projected["properties"] == dict(fact.properties)
+    assert projected["relation"] == "PART_WHOLE"
+    assert projected["args"]["part"]["name"] == "SelfModel"
+    assert "provenance" not in projected

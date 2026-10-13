@@ -28,6 +28,8 @@ MODEL_OPERATIONS = frozenset(
     {
         "resolve_program",
         "agent.run",
+        "agent.next",
+        "agent.close",
         "graph.read",
         "graph.get",
         "graph.query",

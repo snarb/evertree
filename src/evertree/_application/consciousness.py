@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 
-from evertree.core.cognition.attention import prepare_context
 from evertree.core.cognition.steps import ConsciousStepResult, ConsciousStepSpec
 from evertree.core.cognition.tasks import TaskSpecification
 from evertree.core.evaluation.acceptance import VerificationResult
@@ -218,52 +217,7 @@ class ConsciousnessMixin:
                 admitted_step = spec.model_copy(
                     update={"active_time_minutes": seconds / 60}
                 ).model_dump(mode="json")
-                context = prepare_context(
-                    state,
-                    state.episode_ids[-1] if state.episode_ids else None,
-                    inputs[-1],
-                    messages=inputs[:-1],
-                    source_ids=state.source_ids,
-                ).to_dict()
-                context["state"]["current_step"] = admitted_step
-                context["state"]["step_state"] = {
-                    key: work[key]
-                    for key in (
-                        "status",
-                        "analysis_ref",
-                        "finding_refs",
-                        "verification_feedback",
-                        "interruption_reason",
-                        "last_integration_receipt",
-                    )
-                    if key in work
-                }
-                context["programs"] = self.programs()
-                context["memories"] = json_value(
-                    self.memory.retrieve(MemoryQuery(text=state.objective), limit=8)
-                )
-                context["memory_review"] = [
-                    event.id for event in self.memory.review_batch(limit=10)
-                ]
-                context["verification_rate"] = self.learning.predict("verified_task_rate")
-                context["recent_results"] = self._recent_trace(state.id)
-                if work.get("recovered_program_ref"):
-                    context["recovered_program_result"] = json_value(
-                        self.memory.resolve(TraceOutputRef(**work["recovered_program_ref"]))
-                    )
-                # Working Notes remain available regardless of graph materialization.
-                if state.last_step_ref:
-                    context["last_step_result"] = json_value(
-                        self.memory.resolve(TraceOutputRef(**state.last_step_ref))
-                    )
-                context["previous_step_results"] = [
-                    {
-                        "reference": ref,
-                        "result": json_value(self.memory.resolve(TraceOutputRef(**ref))),
-                    }
-                    for ref in work.get("history", [])[-3:]
-                    if ref != state.last_step_ref
-                ]
+                context = self._conscious_context(state, admitted_step)
                 work.update(
                     status="running",
                     input_version=version,
@@ -275,7 +229,7 @@ class ConsciousnessMixin:
                         result = await self._invoke(
                             state.id,
                             AgentRequest(
-                                json.dumps(context, ensure_ascii=False),
+                                json.dumps(context, ensure_ascii=False, indent=2),
                                 self._workspace(state.id),
                                 instructions=CONSCIOUSNESS_INSTRUCTIONS,
                                 mode="exec",
@@ -362,12 +316,13 @@ class ConsciousnessMixin:
                         AgentRequest(
                             json.dumps(
                                 {
-                                    "specification": state.specification.to_dict(),
+                                    "specification": self._prompt_specification(state),
                                     "answer": decision.user_message,
-                                    "trace": self._recent_trace(state.id),
-                                    "integration_receipt": work.get("last_integration_receipt"),
+                                    "trace": self._prompt_results(state),
+                                    "integration": self._prompt_integration(state),
                                 },
                                 ensure_ascii=False,
+                                indent=2,
                             ),
                             self._workspace(state.id),
                             instructions=ANSWER_VERIFICATION_INSTRUCTIONS,
@@ -506,7 +461,192 @@ class ConsciousnessMixin:
         await self._discard_workspaces(state.id)
         await self._publish(kind, state.id, {"reason": reason})
 
-    def _recent_trace(self, task_id):
+    @staticmethod
+    def _prompt_specification(state):
+        specification = state.specification.to_dict()
+        return {
+            key: specification[key]
+            for key in ("objective", "success_criteria", "constraints", "preferences")
+        }
+
+    def _prompt_event(self, event):
+        def name(identity):
+            if not isinstance(identity, int):
+                return identity
+            matches = self.graph.lookup(identity)
+            return matches[0].name if matches else identity
+
+        run = self.memory.get_run(event["program_run"])
+        result = {
+            "reference": {"event_ref": event["id"], "output_path": []},
+            "program": name(run.program),
+            "operation": name(event["operator"]),
+            "status": event["status"],
+            "output": event["output"],
+        }
+        if run.run_mode != "live":
+            result["run_mode"] = run.run_mode
+        if event["arguments"]:
+            result["arguments"] = event["arguments"]
+        return result
+
+    def _prompt_excluded_runs(self):
+        service_programs = {
+            node.id
+            for node in self.graph.nodes(kind="program")
+            if node.properties.get("slug")
+            in {"knowledge_integration", "task_framing", "resource_control"}
+        }
+        excluded = {
+            event.program_run
+            for event in self.memory.events
+            if event.operator == "graph_delta"
+            and (event.arguments or {}).get("integration_operation_id")
+        }
+        for run in self.memory.runs:
+            parent = (
+                self.memory.get_event(run.caller_event).program_run if run.caller_event else None
+            )
+            if (
+                run.program in service_programs
+                or run.program in {"KnowledgeIntegrationReceipt", "AnswerVerification"}
+                or parent in excluded
+                or run.arguments.get("owner_run") in excluded
+            ):
+                excluded.add(run.id)
+        return excluded
+
+    def _prompt_results(self, state):
+        excluded = self._prompt_excluded_runs()
+        results = []
+        for event in self._recent_trace(state.id, limit=None):
+            if event["program_run"] in excluded or event["operator"] in {
+                "conscious_step_result",
+                "analytical_note",
+                "code_anchors",
+                "run_started",
+                "step_started",
+            }:
+                continue
+            if event["operator"] == "provider_event":
+                output = event["output"]
+                if output.get("kind") in {"completed", "tool_call"} or output.get("data", {}).get(
+                    "name"
+                ) in {"graph.integrate", "record_analysis"}:
+                    continue
+            if event["output"] is not None:
+                results.append(self._prompt_event(event))
+        return results[-40:]
+
+    @staticmethod
+    def _prompt_integration(state):
+        receipt = state.step_state.get("last_integration_receipt", {})
+        result = {
+            key: receipt[key]
+            for key in ("receipt_ref", "created", "updated", "deleted")
+            if receipt.get(key)
+        }
+        unresolved = [
+            {key: item[key] for key in ("reason", "source_refs")}
+            for item in receipt.get("decisions", [])
+            if item["disposition"] == "unresolved"
+        ]
+        if unresolved:
+            result["unresolved"] = unresolved
+        return result
+
+    def _conscious_context(self, state, admitted_step):
+        work = state.step_state
+        inputs = [
+            {key: item[key] for key in ("role", "content", "source_ref") if key in item}
+            for item in self._inputs[state.id]
+        ]
+        result = {
+            "specification": self._prompt_specification(state),
+            "incoming": inputs[-1],
+            "messages": inputs[:-1],
+            "state": {
+                "current_step": admitted_step,
+                "plan": state.plan,
+                "progress": state.progress,
+                "unresolved_questions": state.unresolved_questions,
+                "remaining": {
+                    key: state.remaining(key) for key in state.execution_budget.resources
+                },
+                "self_improvement_remaining": {
+                    key: state.remaining(key, self_improvement=True)
+                    for key in state.execution_budget.resources
+                },
+                "step_state": {
+                    key: work[key]
+                    for key in (
+                        "analysis_ref",
+                        "finding_refs",
+                        "verification_feedback",
+                        "interruption_reason",
+                    )
+                    if key in work
+                },
+            },
+            "programs": [
+                {"id": node.id, "name": node.name, "description": node.description}
+                for node in self.graph.nodes(kind="program")
+                if node.properties.get("active", True)
+            ],
+            "recent_results": self._prompt_results(state),
+        }
+        input_events = {
+            item["source_ref"]["event_ref"] for item in inputs if item.get("source_ref")
+        }
+        result["recent_results"] = [
+            item
+            for item in result["recent_results"]
+            if item["reference"]["event_ref"] not in input_events
+        ]
+        if work.get("last_integration_receipt"):
+            result["integration"] = self._prompt_integration(state)
+        known = input_events | {item["reference"]["event_ref"] for item in result["recent_results"]}
+        for ref in [state.last_step_ref, work.get("analysis_ref"), *work.get("finding_refs", [])]:
+            if ref:
+                known.add(ref["event_ref"])
+        excluded = self._prompt_excluded_runs()
+        result["memories"] = [
+            self._prompt_event(json_value(group.events[-1]))
+            for group in self.memory.retrieve(MemoryQuery(text=state.objective), limit=8)
+            if group.events[-1].id not in known
+            and group.events[-1].output is not None
+            and group.events[-1].program_run not in excluded
+            and group.events[-1].operator
+            not in {
+                "provider_request",
+                "provider_event",
+                "run_started",
+                "step_started",
+                "code_anchors",
+                "conscious_step_result",
+            }
+        ]
+        if work.get("recovered_program_ref"):
+            result["recovered_program_result"] = {
+                "reference": work["recovered_program_ref"],
+                "result": json_value(
+                    self.memory.resolve(TraceOutputRef(**work["recovered_program_ref"]))
+                ),
+            }
+        # Working Notes remain available regardless of graph materialization.
+        if state.last_step_ref:
+            result["last_step_ref"] = state.last_step_ref
+            result["last_step_result"] = json_value(
+                self.memory.resolve(TraceOutputRef(**state.last_step_ref))
+            )
+        result["previous_step_results"] = [
+            {"reference": ref, "result": json_value(self.memory.resolve(TraceOutputRef(**ref)))}
+            for ref in work.get("history", [])[-3:]
+            if ref != state.last_step_ref
+        ]
+        return result
+
+    def _recent_trace(self, task_id, *, limit=40):
         runs = {
             self._run_map[identity]
             for identity in self.tasks.get(task_id).program_run_ids
@@ -533,4 +673,4 @@ class ConsciousnessMixin:
             meaningful.append(json_value(event))
         # Token deltas and raw SDK notifications stay in the immutable trace,
         # but must not evict actual operation results from verification context.
-        return meaningful[-40:]
+        return meaningful if limit is None else meaningful[-limit:]

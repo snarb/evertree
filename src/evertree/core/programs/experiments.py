@@ -323,7 +323,9 @@ async def evaluate_pair(
                 if method == "agent.run":
                     if model_call is None:
                         raise PermissionError("No isolated model adapter was supplied")
-                    payload["mode"] = "model"
+                    payload["mode"] = (
+                        payload.get("mode", "model") if payload.get("_tool_handler") else "model"
+                    )
                     return json_value(await model_call(payload, context))
                 return operations.execute(method, payload, metadata=metadata)
 

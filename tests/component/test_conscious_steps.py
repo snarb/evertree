@@ -12,6 +12,7 @@ from tests.support.application import (
     completed,
     framing,
     is_integration_request,
+    tool_events,
     verification,
 )
 
@@ -37,7 +38,7 @@ def step(text, *, final=False, preserve=False, plan=None):
 
 
 class PreservingProvider(IntegrationScriptedProvider):
-    """Supply explicit Note fallback decisions; actual core validation still applies."""
+    """Choose source Notes to preserve; code builds and validates their graph changes."""
 
     async def run(self, request_id, request, **kwargs):
         if not is_integration_request(request):
@@ -46,42 +47,27 @@ class PreservingProvider(IntegrationScriptedProvider):
             return
         self.requests.append(request)
         material = json.loads(request.prompt)["material"]
-        creates, decisions = [], []
+        calls, reviewed = [], []
         intents = material["context"]["preservation_intents"]
         for item in material["experience"]:
             selected = [intent for intent in intents if intent["source_ref"] == item["reference"]]
-            ids = []
             for intent in selected:
-                identity = -(len(creates) + 1)
-                creates.append(
-                    {
-                        "id": identity,
-                        "name": "Retained insight " + intent["id"],
-                        "kind": "note",
-                        "description": intent["text"],
-                    }
+                calls.append(
+                    (
+                        "save_note",
+                        {
+                            "name": "Retained insight " + intent["id"],
+                            "source": item["reference"],
+                            "sources": [],
+                        },
+                    )
                 )
-                ids.append(identity)
-            decisions.append(
-                {
-                    "disposition": "materialize" if selected else "trace_only",
-                    "reason": "Preserve chosen analytical meaning"
-                    if selected
-                    else "Available in trace for later analysis",
-                    "source_refs": [item["reference"]],
-                    "affected_ids": ids,
-                    "preservation_ids": [intent["id"] for intent in selected],
-                }
-            )
-        for event in completed(
-            {
-                "action": "commit",
-                "query": "",
-                "delta_json": json.dumps({"creates": creates}),
-                "decisions_json": json.dumps(decisions),
-                "summary": "Reviewed the complete packet",
-            }
-        ):
+            if not selected:
+                reviewed.append(item["reference"])
+        if reviewed:
+            calls.append(("trace_only", {"sources": reviewed}))
+        calls.append(("finish", {}))
+        async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
             yield event
 
 
@@ -120,7 +106,7 @@ async def test_plan_experiment_revision_and_final_result_are_separate_iterations
         result = await execution
     assert result["status"] == "succeeded"
     task = app.tasks.get(result["task_id"])
-    controllers = [r for r in app.provider.requests if r.mode == "exec"]
+    controllers = [r for r in app.provider.task_requests if r.mode == "exec"]
     assert len(controllers) == 4
     for index, request in enumerate(controllers[1:], 1):
         context = json.loads(request.prompt)
@@ -157,11 +143,25 @@ async def test_preserved_insight_uses_note_without_self_reinforcing_belief(app):
     assert len([r for r in app.provider.requests if is_integration_request(r)]) == 1
     prompt = json.loads(next(r for r in app.provider.requests if is_integration_request(r)).prompt)
     context = prompt["material"]["context"]
-    assert context["task"]["specification"]["revision"] == 2
-    assert context["values"] and all(
-        value["description"] and value["provenance"] for value in context["values"]
+    assert context["task"]["objective"] == task.objective
+    assert "revision" not in context["task"]
+    assert context["values"] and all(value["description"] for value in context["values"])
+    assert all("provenance" not in value for value in context["values"])
+    retained = app._integration_context(task)
+    assert retained["task"]["specification"]["revision"] == 2
+    assert all(value["provenance"] for value in retained["values"])
+    assert retained["self"] and all(item["provenance"] for item in retained["self"])
+    check = next(
+        json.loads(request.prompt)
+        for request in app.provider.requests
+        if "answer" in json.loads(request.prompt)
     )
-    assert context["self"] and all(item["provenance"] for item in context["self"])
+    assert check["integration"]["created"][0]["description"] == insight
+    assert "decisions" not in check["integration"]
+    assert (
+        check["integration"]["receipt_ref"]
+        == task.step_state["last_integration_receipt"]["receipt_ref"]
+    )
 
 
 async def test_large_experience_and_more_than_forty_events_are_all_considered(app):
@@ -178,7 +178,7 @@ async def test_large_experience_and_more_than_forty_events_are_all_considered(ap
     app.memory.finish_run(run)
     app.provider = IntegrationScriptedProvider([])
     before = app.graph.revision
-    assert await app._integrate_step(task)
+    assert await app._integrate_step(task), task.progress
     reviewed = [
         item["reference"]
         for request in app.provider.requests
@@ -211,6 +211,8 @@ async def test_every_fragment_of_a_large_preservation_intent_is_required(app):
     assert len(fragments) > 1
     notes = app.graph.nodes(kind="note")
     assert len(notes) == len(fragments)
+    saved = {node.properties["source_ref"]["event_ref"]: node.description for node in notes}
+    assert "".join(saved[event.id] for event in fragments) == note.text
     assert original["event_ref"] in app.memory.retention_closure()
     assert not task.step_state.get("integration")
 
@@ -260,7 +262,7 @@ async def test_observation_during_verification_invalidates_pending_completion(ap
     )
     result = await app.run("Study observations")
     assert result["status"] == "succeeded" and result["answer"] == "Checked result"
-    controllers = [request for request in app.provider.requests if request.mode == "exec"]
+    controllers = [request for request in app.provider.task_requests if request.mode == "exec"]
     assert len(controllers) == 2
     assert "New contradictory result" in controllers[1].prompt
     receipts = [event for event in app.memory.events if event.operator == "semantic_commit"]

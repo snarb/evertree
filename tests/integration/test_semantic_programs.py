@@ -10,13 +10,14 @@ from tests.support.runtime import TestProcess, commit_programs
 from tests.support.semantics import semantic_world
 
 
-async def test_integration_repairs_delta_calls_search_child_and_replays_once(tmp_path):
+async def test_integration_repairs_action_calls_search_child_and_replays_once(tmp_path):
     """Only worker/DBOS replay can prove the child call is outside a durable step."""
     root = Path(__file__).resolve().parents[2]
     paths = [
         "src/evertree/processes/semantic_processing/knowledge_integration/_exec.py",
         "src/evertree/processes/semantic_processing/semantic_search/_model.py",
         "src/evertree/common/semantic_search.py",
+        "src/evertree/common/integration_actions.py",
         "src/evertree/common/structured.py",
     ]
     revision = commit_programs(tmp_path / "repository", {p: (root / p).read_text() for p in paths})
@@ -29,7 +30,7 @@ async def test_integration_repairs_delta_calls_search_child_and_replays_once(tmp
     arguments = {
         "experience_refs": [json_value(world.memory.output_ref(event))],
     }
-    attempts, traces = [], []
+    attempts, tool_results, traces = [], [], []
 
     async def gateway(method, payload):
         payload = dict(payload)
@@ -44,36 +45,25 @@ async def test_integration_repairs_delta_calls_search_child_and_replays_once(tmp
             return asdict(child)
         if method == "agent.run":
             assert payload["profile"] == "remember"
+            assert payload["mode"] == "exec"
+            assert "output_schema" not in payload
+            assert "create_concept" in {tool["name"] for tool in payload["tools"]}
             attempts.append(json.loads(payload["prompt"]))
-            decision = {
-                "action": "search",
-                "query": "Process",
-                "delta_json": "",
-                "decisions_json": "[]",
-                "summary": "Inspect existing knowledge",
+            call = payload["_tool_handler"]
+            await call("search", {"query": "Process", "next_page": False})
+            fields = {
+                "name": "Cat",
+                "description": "The category of domestic cats",
+                "sources": arguments["experience_refs"],
             }
-            if len(attempts) > 1:
-                creates = [{"id": -1, "name": "Cat"}]
-                if len(attempts) in {2, 3}:
-                    creates.append({"id": -2, "name": "cat"})
-                decision.update(
-                    action="commit",
-                    delta_json=json.dumps({"creates": creates}),
-                    decisions_json=json.dumps(
-                        [
-                            {
-                                "disposition": "materialize",
-                                "reason": "Useful class",
-                                "source_refs": arguments["experience_refs"],
-                                "affected_ids": [item["id"] for item in creates],
-                                "preservation_ids": [],
-                            }
-                        ]
-                    ),
-                    summary="Saved Cat",
-                )
-            return {"parsed": decision}
-        return await world.service.execute(method, payload, metadata)
+            tool_results.append(await call("create_prototype", {**fields, "parent": 9999}))
+            assert tool_results[-1]["error"]
+            tool_results.append(await call("create_concept", fields))
+            await call("finish", {})
+            return {"text": ""}
+        if method.startswith("semantic."):
+            return await world.service.execute(method, payload, metadata)
+        return world.operations.execute(method, payload, metadata=metadata)
 
     async def trace(event):
         traces.append(event)
@@ -84,12 +74,12 @@ async def test_integration_repairs_delta_calls_search_child_and_replays_once(tmp
     try:
         result = await runtime.execute("task", parent, arguments, run_id="remember")
         assert result.result["status"] == "complete"
-        assert len(attempts) == 4 and attempts[-1]["errors"]
+        assert len(attempts) == 1 and tool_results[0]["error"]
         assert len([e for e in traces if e["type"] == "run_started"]) == 3
         revision_before = world.graph.revision
         again = await runtime.execute("task", parent, arguments, run_id="remember")
         assert again.result == result.result and world.graph.revision == revision_before
-        assert len(attempts) == 4
+        assert len(attempts) == 1
     finally:
         await runtime.close()
 

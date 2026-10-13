@@ -204,8 +204,9 @@ A Concept is on the Abstraction Ladder and has lists of parents and children, ei
 
 ```python
 Facet {
-  valid_from: <time>
-    "Start of the interval when the state applies in the world."
+  valid_from?: <time>
+    "Start of the interval when the state applies in the world.
+     Absent if the start time is unknown."
 
   valid_until?: <time>
     "End of the applicability interval.
@@ -218,6 +219,30 @@ The interval is interpreted as:
 ```text
 [valid_from, valid_until)
 ```
+
+Neither missing boundary means infinity or the time of recording. A `Facet` may
+retain an undated state; relative conditions such as “after the repair” remain
+part of its description or semantic relations without an invented calendar date.
+
+For a query at a specific world time, applicability has three outcomes:
+
+- **Applicable:** both boundaries are known and the time is inside the interval,
+  or the query is exactly at the known inclusive start. An unknown end does not
+  negate the established onset; it does prevent assuming persistence afterward.
+- **Outside:** a known boundary rules the time out.
+- **Unknown:** the available boundaries do not establish whether the state applies.
+
+Navigation without a world-time filter returns all linked states. A dated access
+view returns `UNKNOWN` if an otherwise matching state's applicability is unknown,
+rather than silently omitting it or claiming a complete list. Dated `describe`
+retains such relations with `temporal_status="unknown"`; relations proved outside
+the requested time are excluded. Undated `describe` navigates relations
+structurally; property readings still use their own `valid_at` (current time by
+default). Unknown applicability produces an unknown property reading only when
+the uncertain state contributes to that property, not unrelated properties.
+
+An unknown calendar interval is not a reason to substitute a Note for a useful
+structured state. The choice of Note concerns the value of coherent content.
 
 The contents of a `Facet` are expressed as property facts and semantic relations attached to it:
 
@@ -385,6 +410,13 @@ If a computation uses contents that are not yet committed, save an exact snapsho
 > ^def-Note
 
 A Note may preserve coherent content as a whole: for example, an experience description, a possible explanation, and a proposed next action. It does not have to be broken into a separate claim for every sentence before it can be stored, retrieved, used, or evaluated. This allows relationships and reasoning that are not yet formalized to be retained.
+
+Materialize a Note when this connected content has independent value for later
+reasoning. Materialize an individual assertion when it needs separate retrieval,
+comparison, checking or revision. The representations may coexist when each has
+that purpose; do not copy every source into the graph or create a second copy of
+each sentence. Material that needs no separate graph representation stays in the
+trace. Unknown dates or uncertain truth do not by themselves require a Note.
 
 A Note is linked to relevant concepts, processes, programs, and experience through ordinary semantic relations. [[Memory#^def-ResultProvenance|Provenance]] records which inputs and computations produced it; related memories may explain its origin, confirm its contents, or show their limits. Originating from an experience does not mean that the experience supports the entire Note.
 

@@ -17,6 +17,7 @@ from typing import Any, Literal
 from evertree.core.sandbox.process import SandboxLimits, start_process
 
 from ..backup import _extended, _restore_io, safe_remove_tree
+from .agents import ProgramAgents
 from .repository import (
     ProgramExecutionError,
     extract_revision,
@@ -178,6 +179,7 @@ class Runtime:
                     "cancelled": False,
                     "run_dir": run_dir,
                     "source_dir": source_dir,
+                    "agents": ProgramAgents(self.gateway),
                 }
                 process = None
                 reader_task = stderr_task = None
@@ -231,6 +233,7 @@ class Runtime:
                         await asyncio.gather(reader_task, return_exceptions=True)
                     if stderr_task:
                         await asyncio.gather(stderr_task, return_exceptions=True)
+                    await self._active["agents"].close_all()
                     self._active = None
                     if self._pause_requested:
                         self._paused.set()
@@ -467,7 +470,17 @@ class Runtime:
                 payload["mode"] = "model"
             payload.pop("_execution", None)
             payload["_runtime"] = metadata
-            result = await self.gateway(method, payload)
+            if method == "agent.next":
+                result = await active["agents"].next(payload, metadata)
+            elif method == "agent.close":
+                result = await active["agents"].close(
+                    payload["invocation_id"],
+                    metadata,
+                    history=payload.get("history"),
+                    drain=payload.get("drain", False),
+                )
+            else:
+                result = await self.gateway(method, payload)
             result = asdict(result) if isinstance(result, ProgramSpec) else result
             await self._trace(
                 {
@@ -549,6 +562,8 @@ class Runtime:
         If no operation boundary arrives, defer the backup rather than copy a
         journal while core effects may be unrecorded.
         """
+        if self._active and self._active["agents"].running:
+            raise RuntimeError("Native agent invocation has not reached a durable idle boundary")
         # Concurrent branches can receive responses before every sibling step
         # is journaled. Defer backup until the tree finishes or awaits input.
         if (

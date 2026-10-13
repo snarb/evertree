@@ -7,14 +7,15 @@ from copy import deepcopy
 
 import pytest
 
+from evertree.core.memory.types import TraceOutputRef
 from evertree.core.provider import AgentEvent
 from tests.support.application import (
     IntegrationScriptedProvider,
     budget_review,
-    completed,
     decision,
     framing,
     is_integration_request,
+    tool_events,
     verification,
     wait_for_event,
 )
@@ -88,7 +89,7 @@ async def test_pending_result_waits_for_required_integration_before_resume_conti
         packet = deepcopy(task.step_state["integration"])
         assert saved["disposition"] == "continue"
         assert task.last_step_ref is not None
-        assert len([request for request in provider.requests if request.mode == "exec"]) == 1
+        assert len([request for request in provider.task_requests if request.mode == "exec"]) == 1
         original_inputs = deepcopy(app._inputs[task.id])
         original_version = app._input_version(task)
         original_revision = task.specification.revision
@@ -102,11 +103,12 @@ async def test_pending_result_waits_for_required_integration_before_resume_conti
             "integration",
             "controller",
         ]
-        controller = [request for request in provider.requests if request.mode == "exec"][1]
+        controller = [request for request in provider.task_requests if request.mode == "exec"][1]
         controller_context = json.loads(controller.prompt)
         assert controller_context["last_step_result"] == saved
+        receipt_ref = controller_context["integration"]["receipt_ref"]
         assert (
-            controller_context["state"]["step_state"]["last_integration_receipt"]["operation_id"]
+            app.memory.resolve(TraceOutputRef(**receipt_ref))["operation_id"]
             == packet["operation_id"]
         )
         assert app._inputs[task.id] == original_inputs
@@ -136,29 +138,28 @@ async def test_resume_replays_committed_receipt_after_transport_loss_without_sec
                 return
             self.requests.append(request)
             self.materialization_requests += 1
-            refs = [
-                item["reference"] for item in json.loads(request.prompt)["material"]["experience"]
+            experience = json.loads(request.prompt)["material"]["experience"]
+            explanation = next(
+                item["reference"] for item in experience if item["source_kind"] == "analytical_note"
+            )
+            calls = [
+                (
+                    "save_note",
+                    {"name": "Retained explanation", "source": explanation, "sources": []},
+                ),
+                (
+                    "trace_only",
+                    {
+                        "sources": [
+                            item["reference"]
+                            for item in experience
+                            if item["reference"] != explanation
+                        ]
+                    },
+                ),
+                ("finish", {}),
             ]
-            proposal = {"creates": [{"id": -1, "name": "Retained explanation", "kind": "note"}]}
-            choices = [
-                {
-                    "disposition": "materialize" if index == 0 else "trace_only",
-                    "reason": "Preserve the explanation once",
-                    "source_refs": [reference],
-                    "affected_ids": [-1] if index == 0 else [],
-                    "preservation_ids": [],
-                }
-                for index, reference in enumerate(refs)
-            ]
-            for event in completed(
-                {
-                    "action": "commit",
-                    "query": "",
-                    "summary": "Explanation saved",
-                    "delta_json": json.dumps(proposal),
-                    "decisions_json": json.dumps(choices),
-                }
-            ):
+            async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
                 yield event
 
     provider = MaterializingProvider()
@@ -187,6 +188,10 @@ async def test_resume_replays_committed_receipt_after_transport_loss_without_sec
         saved_result = deepcopy(task.step_state["pending_result"])
         assert saved_result["disposition"] == "propose_completion"
         assert len([node for node in app.graph.nodes() if node.name == "Retained explanation"]) == 1
+        assert (
+            app.graph.find("Retained explanation").description
+            == "Current result: Checked explanation"
+        )
         graph_revision = app.graph.revision
         receipt_events = [
             event for event in app.memory.events if event.operator == "semantic_commit"
@@ -198,7 +203,7 @@ async def test_resume_replays_committed_receipt_after_transport_loss_without_sec
         assert answer.data["text"] == "Checked explanation"
         assert len(integration_runs) == 2 and integration_runs[0] != integration_runs[1]
         assert provider.materialization_requests == 1
-        assert len([request for request in provider.requests if request.mode == "exec"]) == 1
+        assert len([request for request in provider.task_requests if request.mode == "exec"]) == 1
         assert app.graph.revision == graph_revision
         assert (
             len([event for event in app.memory.events if event.operator == "semantic_commit"]) == 1
@@ -215,7 +220,7 @@ async def test_interrupted_iteration_keeps_actual_tool_trace_without_fabricated_
         async def run(self, request_id, request, **kwargs):
             async for event in super().run(request_id, request, **kwargs):
                 yield event
-            if request.mode == "exec":
+            if request.mode == "exec" and not is_integration_request(request):
                 raise TimeoutError("Iteration allowance reached")
 
     provider = InterruptedProvider(

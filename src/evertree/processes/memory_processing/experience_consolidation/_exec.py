@@ -1,24 +1,73 @@
 """Propose source-grounded knowledge for the owner's common integration boundary."""
 
-import json
-
-from evertree.common.analytical import analytical_schema, validate_analytical_output
+from evertree.common.analytical import (
+    ANALYTICAL_INSTRUCTIONS,
+    analytical_schema,
+    validate_analytical_output,
+)
 from evertree.common.structured import ask
 
-SCHEMA = json.loads(
-    '{"type":"object","additionalProperties":false,"properties":{"claims":{"type":"array","items":{"type":"object","additionalProperties":false,"properties":{"statement":{"type":"string"},"scope":{"type":"string"},"source_ids":{"type":"array","items":{"type":"string"}},"needs_review":{"type":"boolean"}},"required":["statement","scope","source_ids","needs_review"]}},"reusable_principles":{"type":"array","items":{"type":"object","additionalProperties":false,"properties":{"rule":{"type":"string"},"applicability":{"type":"string"},"independent_source_ids":{"type":"array","items":{"type":"string"}}},"required":["rule","applicability","independent_source_ids"]}}},"required":["claims","reusable_principles"]}'
+SCHEMA = analytical_schema(
+    {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "claims": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "statement": {"type": "string"},
+                        "scope": {"type": "string"},
+                        "source_ids": {"type": "array", "items": {"type": "string"}},
+                        "needs_review": {"type": "boolean"},
+                    },
+                    "required": ["statement", "scope", "source_ids", "needs_review"],
+                },
+            },
+            "reusable_principles": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "rule": {"type": "string"},
+                        "applicability": {"type": "string"},
+                        "independent_source_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                    "required": ["rule", "applicability", "independent_source_ids"],
+                },
+            },
+        },
+        "required": ["claims", "reusable_principles"],
+    }
 )
-INSTRUCTIONS = "Propose persistent knowledge from supplied experience. Preserve source identities and shared dependencies; compressed or replayed material is not independent evidence. Keep hypotheses scoped; propose a general principle only when its transfer has independent support. Never treat successful completion as proof of every explanation."
-SCHEMA = analytical_schema(SCHEMA)
-INSTRUCTIONS += (
-    " Return an analytical Note preserving the relationships between sources, conditions, "
-    "counterexamples and the proposed knowledge. Partial synthesis is valid. Cite only "
-    "supplied experience_refs or their fragments in source_refs; without trace references "
-    "leave source_refs empty. Optional findings isolate useful claims without losing their "
-    "conditions. Use significance with a reason for important results; preserve=true "
-    "requires preservation through KnowledgeIntegration, without raising belief. The "
-    "owner integrates this output together with original experience at its step boundary. "
-    "Do not turn repetition into independent evidence or write the graph directly."
+INSTRUCTIONS = (
+    """Synthesize useful knowledge from the experience supplied by the caller.
+The input contains source material, the question being examined and any source labels or
+trace references. Preserve the conditions under which each proposed conclusion holds.
+
+Work in this order
+1. Identify supported observations, hypotheses, disagreements and relevant counterexamples.
+2. Propose claims useful beyond this immediate analysis. Keep uncertain explanations tentative.
+3. Propose a reusable principle only if independent cases support its application beyond the
+   original case. Replays, summaries and repeated statements of the same source are not
+   independent evidence. Successful task completion does not prove every explanation of it.
+
+Output categories
+- claims: statement, scope of applicability, supporting source_ids and needs_review.
+  Set needs_review=true for unresolved uncertainty, contradictory sources or missing checks.
+- reusable_principles: rule, applicability conditions and independent_source_ids.
+  Use [] when the supplied sources do not establish independent support for generalization.
+Explain shared evidence and important counterexamples in analysis; do not erase them during
+synthesis. Unsupported but useful hypotheses may remain scoped claims requiring review.
+
+"""
+    + ANALYTICAL_INSTRUCTIONS
 )
 
 

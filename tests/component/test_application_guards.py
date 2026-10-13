@@ -101,6 +101,40 @@ async def test_verification_retains_tool_evidence_after_long_stream(agent):
     assert not any(event["output"].get("kind") == "message" for event in trace)
 
 
+def test_prompt_results_keep_observations_ahead_of_integration_bookkeeping(agent):
+    """Service rounds cannot evict independent observations from the model's bounded context."""
+    task = prepared_task(agent)
+    run = agent.memory.start_run("Experiment", "commit", {"task_id": task.id})
+    observation = agent.memory.record(run, "measurement", output={"temperature": 42})
+    agent.memory.finish_run(run)
+    program = agent.graph.find("KnowledgeIntegration.exec")
+    integration = agent.memory.start_run(program.id, "commit", {})
+    task.program_run_ids.append("integration-run")
+    agent._run_map["integration-run"] = integration.id
+    for _ in range(50):
+        agent.memory.record(integration, "model_proposal", output={"delta_json": "{}"})
+    agent.memory.finish_run(integration)
+
+    results = agent._prompt_results(task)
+
+    assert len(results) == 1
+    assert results[0]["reference"]["event_ref"] == observation.id
+    assert results[0]["output"] == {"temperature": 42}
+    assert results[0]["program"] == "Experiment"
+    assert results[0]["operation"] == "measurement"
+    assert not {"program_run", "seq", "occurred_at", "output_type"} & results[0].keys()
+    assert len(agent.memory.semantic_trace(integration.id).events) >= 50
+
+    mutation = agent.memory.start_run(
+        "GraphMutation", "commit", {"task_id": task.id}, run_mode="simulation"
+    )
+    changed = agent.memory.record(mutation, "graph_delta", output={"deletes": [123]})
+    agent.memory.finish_run(mutation)
+    results = agent._prompt_results(task)
+    assert results[-1]["reference"]["event_ref"] == changed.id
+    assert results[-1]["run_mode"] == "simulation"
+
+
 async def test_close_wakes_a_waiting_event_consumer(agent):
     """Coordinator shutdown wakes a subscriber without needing a worker or Git repository."""
 

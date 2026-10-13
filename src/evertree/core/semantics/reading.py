@@ -5,7 +5,13 @@ from ..values import UNKNOWN, ContractError, json_value, timestamp, utcnow
 
 
 def card(node):
-    return {"id": node.id, "name": node.name, "kind": node.kind, "description": node.description}
+    result = {"id": node.id, "name": node.name, "kind": node.kind, "description": node.description}
+    if isinstance(node, Facet):
+        result.update(
+            valid_from=node.valid_from.isoformat() if node.valid_from else None,
+            valid_until=node.valid_until.isoformat() if node.valid_until else None,
+        )
+    return result
 
 
 def resolve(graph, subject):
@@ -40,13 +46,16 @@ def fact_card(graph, fact):
                 args[slot.label] = [card(graph.get(v)) for v in value]
             elif value is not None:
                 args[slot.label] = card(graph.get(value))
-    return {
+    result = {
         **card(fact),
         "relation": relation.name,
         "args": args,
         "belief_target": fact.belief_target,
         "provenance": json_value(graph.changes_of(fact.id)[-1].provenance),
     }
+    if fact.properties:
+        result["properties"] = json_value(fact.properties)
+    return result
 
 
 def read_property(graph, attribution, subject, property, at=None, parameters=None):
@@ -88,26 +97,35 @@ def describe(graph, attribution, subject, focus=None, at=None):
                     status="unknown" if reading is UNKNOWN else "known", reading=json_value(reading)
                 )
         properties.append(item)
-    result = {"subject": card(node), "at": when.isoformat(), "properties": properties}
+    result = {
+        "subject": card(node),
+        "at": when.isoformat() if at is not None else None,
+        "properties": properties,
+    }
+    if isinstance(node, Facet) and at is not None:
+        result["subject"]["temporal_status"] = node.applicability(when)
     if focus != "properties":
-
-        def current(fact):
-            return all(
-                not isinstance(subject, Facet)
-                or subject.valid_from <= when
-                and (subject.valid_until is None or when < subject.valid_until)
-                for subject in (graph.get(i) for i in fact_nodes(graph, fact))
-            )
-
-        facts = [f for f in graph.facts() if node.id in fact_nodes(graph, f) and current(f)]
+        facts = []
+        for fact in graph.facts():
+            if node.id not in fact_nodes(graph, fact):
+                continue
+            item = fact_card(graph, fact)
+            if at is not None:
+                status = graph.fact_applicability(fact, when)
+                if status == "outside":
+                    continue
+                item["temporal_status"] = status
+            facts.append(item)
         if focus:
             term = focus.casefold()
-            facts = [f for f in facts if term in str(fact_card(graph, f)).casefold()]
+            facts = [f for f in facts if term in str(f).casefold()]
             result["properties"] = [p for p in properties if term in str(p).casefold()]
-        result["relations"] = [fact_card(graph, f) for f in facts[:20]]
+        result["relations"] = facts[:20]
         result["relations_truncated"] = len(facts) > 20
         if isinstance(node, RelationType):
             result["schema"] = json_value(node)
         elif isinstance(node, RelationInstance):
             result["fact"] = fact_card(graph, node)
+            if at is not None:
+                result["fact"]["temporal_status"] = graph.fact_applicability(node, when)
     return result

@@ -70,7 +70,7 @@ async def test_durable_intake_and_program_provenance_before_delivery(
             check = json.loads(provider.task_requests[index].prompt)
             assert check["answer"] == candidate
             assert check["specification"]["constraints"] == list(constraints)
-            assert check["specification"]["source_ids"] == ["report-request"]
+            assert "source_ids" not in check["specification"]
         assert rejection in provider.task_requests[3].prompt
         intake = [
             json.loads(line)

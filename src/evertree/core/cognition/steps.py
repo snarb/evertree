@@ -38,20 +38,48 @@ def trace_reference(value: Any) -> TraceOutputRef:
 class ConsciousStepSpec(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    local_goal: Annotated[StrictStr, Field(min_length=1)]
-    expected_result: Annotated[StrictStr, Field(min_length=1)]
-    active_time_minutes: Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)]
+    local_goal: Annotated[
+        StrictStr, Field(min_length=1, description="One local objective for this iteration.")
+    ]
+    expected_result: Annotated[
+        StrictStr,
+        Field(min_length=1, description="The intermediate result that ends this step."),
+    ]
+    active_time_minutes: Annotated[
+        float,
+        Field(
+            strict=True,
+            gt=0,
+            allow_inf_nan=False,
+            description="Positive time limit in minutes, within the remaining task allowance.",
+        ),
+    ]
 
 
 class AnalyticalNote(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    text: Annotated[StrictStr, Field(min_length=1)]
-    source_refs: list[TraceOutputRef] = Field(default_factory=list)
-    kind: Literal["note", "claim"] = "note"
-    significance: Literal["baseline", "elevated", "exceptional"] | None = None
-    significance_reason: Annotated[StrictStr, Field(min_length=1)] | None = None
-    preserve: StrictBool = False
+    text: Annotated[
+        StrictStr,
+        Field(min_length=1, description="Readable work product with relevant grounds and limits."),
+    ]
+    source_refs: list[TraceOutputRef] = Field(
+        default_factory=list,
+        description="Available trace references supporting this note; use [] when none exist.",
+    )
+    kind: Literal["note", "claim"] = Field(
+        "note", description="note for a connected analysis; claim for one assessable assertion."
+    )
+    significance: Literal["baseline", "elevated", "exceptional"] | None = Field(
+        None,
+        description="Optional lasting value: baseline=ordinary, elevated=useful across tasks, exceptional=lasting importance. Not truth confidence.",
+    )
+    significance_reason: Annotated[StrictStr, Field(min_length=1)] | None = Field(
+        None, description="Why the stated significance is justified; otherwise null."
+    )
+    preserve: StrictBool = Field(
+        False, description="Require the integrator to retain this meaning or report an obstacle."
+    )
 
     @field_validator("source_refs", mode="before")
     @classmethod
@@ -65,16 +93,28 @@ class AnalyticalNote(BaseModel):
 class ConsciousStepResult(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    analysis: AnalyticalNote
-    findings: list[AnalyticalNote] = Field(default_factory=list)
-    plan: list[dict[str, Any]] = Field(default_factory=list)
-    progress: StrictStr = ""
+    analysis: AnalyticalNote = Field(
+        description="This iteration's analytical result, possibly partial."
+    )
+    findings: list[AnalyticalNote] = Field(
+        default_factory=list, description="Optional separately selected insights or hypotheses."
+    )
+    plan: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Complete updated working plan; use clear descriptions and statuses for steps.",
+    )
+    progress: StrictStr = Field("", description="Brief progress summary, including any obstacle.")
     unresolved_questions: list[Annotated[StrictStr, Field(min_length=1)]] = Field(
-        default_factory=list
+        default_factory=list, description="Questions still needed to advance or verify the task."
     )
     disposition: Literal["continue", "waiting", "propose_completion", "failed"]
-    next_step: ConsciousStepSpec | None = None
-    user_message: Annotated[StrictStr, Field(min_length=1)] | None = None
+    next_step: ConsciousStepSpec | None = Field(
+        None, description="Required for continue; the next bounded iteration to perform."
+    )
+    user_message: Annotated[StrictStr, Field(min_length=1)] | None = Field(
+        None,
+        description="Only this text is delivered to the user; required for propose_completion.",
+    )
 
     @model_validator(mode="after")
     def validate_continuation(self) -> Self:

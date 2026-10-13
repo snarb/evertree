@@ -40,6 +40,30 @@ def semantic_world(*, index=None, config=None):
 
 
 def context(world, model, *, role="model", integration_context=None, operation_id="packet"):
+    async def agent(payload, *, tools, tool_handler, stop_when=None, max_tool_calls=40):
+        class Finished(BaseException):
+            def __init__(self, result):
+                self.result = result
+
+        names = {tool.name for tool in tools}
+        calls = 0
+
+        async def call_tool(name, arguments):
+            nonlocal calls
+            assert name in names, f"Undeclared tool: {name}"
+            calls += 1
+            assert calls <= max_tool_calls, "Model exceeded the tool-call limit"
+            result = await tool_handler(name, arguments)
+            if stop_when and stop_when(name, result):
+                raise Finished({"tool": name, "result": result})
+            return result
+
+        try:
+            result = await model(payload, call_tool)
+        except Finished as finished:
+            return finished.result
+        return result or {"text": ""}
+
     async def step(method, payload):
         authorize_operation(method, role)
         if method == "agent.run":
@@ -64,7 +88,7 @@ def context(world, model, *, role="model", integration_context=None, operation_i
         result = await run(context(world, model, role="model"), **arguments)
         return SimpleNamespace(**result)
 
-    return SimpleNamespace(step=step, call=call)
+    return SimpleNamespace(step=step, call=call, agent=agent)
 
 
 def populated_search_world(**kwargs):

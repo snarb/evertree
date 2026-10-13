@@ -16,7 +16,7 @@ from evertree.core.runtime.repository import _git
 from ..core.anchors import AnchorResolver, parse_anchors
 from ..core.programs.layout import process_directory, process_slug, validate_process_layout
 from ..core.programs.lifecycle import ProgramLifecycleRuntime, git
-from ..core.provider import AgentRequest
+from ..core.provider import AgentRequest, ToolDefinition
 from ..core.values import json_value
 
 
@@ -399,6 +399,8 @@ class ProgramsMixin:
 
         async def evaluate(branch, revision):
             async def model_call(payload, context):
+                if payload.get("tools") and not callable(payload.get("_tool_handler")):
+                    raise PermissionError("Evaluation tools require a scoped runtime handler")
                 profile_name = payload.get("profile")
                 if profile_name not in {None, "remember"}:
                     raise ValueError("Unknown model profile")
@@ -411,10 +413,12 @@ class ProgramsMixin:
                         model=profile.model if profile else None,
                         effort=profile.effort if profile else None,
                         instructions=payload.get("instructions", ""),
-                        mode="model",
+                        mode=payload.get("mode", "model"),
+                        tools=tuple(ToolDefinition(**tool) for tool in payload.get("tools", [])),
                         output_schema=payload.get("output_schema"),
                         timeout_seconds=self._remaining_seconds(self.tasks.get(task_id)),
                     ),
+                    tool_handler=payload.get("_tool_handler"),
                 )
 
             experiment = await evaluate_pair(

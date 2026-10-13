@@ -1,5 +1,5 @@
 import asyncio
-import json
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -18,6 +18,7 @@ from evertree.core.graph.types import (
 )
 from evertree.core.semantics.reading import describe, read_property
 from evertree.core.values import ContractError, json_value
+from evertree.processes.semantic_processing.knowledge_integration._exec import _read_for_model
 from tests.support.semantics import EmptyIndex, context, semantic_world
 
 
@@ -106,7 +107,12 @@ def test_describe_discovers_properties_without_computing_and_uses_one_time(monke
     start = datetime(2025, 1, 1, tzinfo=UTC)
     entity = Instance(g.reserve_id(), "Car")
     first = Facet(g.reserve_id(), "Moving", valid_from=start, valid_until=start + timedelta(days=1))
-    second = Facet(g.reserve_id(), "Stopped", valid_from=start + timedelta(days=1))
+    second = Facet(
+        g.reserve_id(),
+        "Stopped",
+        valid_from=start + timedelta(days=1),
+        valid_until=start + timedelta(days=2),
+    )
     speed = Node(g.reserve_id(), "Speed", kind="property")
     estimate = Node(g.reserve_id(), "Estimate", kind="property")
     relative = Node(g.reserve_id(), "Relative speed", kind="property")
@@ -180,6 +186,26 @@ def test_describe_discovers_properties_without_computing_and_uses_one_time(monke
         "$unknown": True
     }
     assert read_property(g, runtime, entity.id, relative.id)["status"] == "needs_parameters"
+
+
+def test_describe_preserves_relation_conditions_in_model_reads():
+    world = semantic_world()
+    g = world.graph
+    entity = Node(g.reserve_id(), "Pump")
+    prop = Node(g.reserve_id(), "Flow", kind="property")
+    conditions = {"load": "high", "valve_open": False}
+    fact = replace(
+        g.new_fact("HAS_NUMERIC_VALUE", {"entity": entity.id, "property": prop.id, "value": 3}),
+        properties={"conditions": conditions},
+    )
+    g.apply(GraphDelta(creates=(entity, prop, fact)), provenance="measurement")
+
+    direct = _read_for_model(describe(g, world.attribution, fact.id))["fact"]
+    neighbor = _read_for_model(describe(g, world.attribution, entity.id))["relations"][0]
+    for reading in (direct, neighbor):
+        assert reading["id"] == fact.id
+        assert reading["args"]["value"] == 3
+        assert reading["properties"]["conditions"] == conditions
 
 
 def test_integration_invalid_proposal_atomic_and_idempotent_sources():
@@ -319,6 +345,10 @@ def test_describe_filters_relations_by_facet_time_and_removed_definitions():
     result = describe(g, world.attribution, instance.id, at=now)
     assert not result["properties"]
     assert {f["id"] for f in result["relations"]} == {links[0].id, links[2].id}
+    assert (
+        next(f for f in result["relations"] if f["id"] == links[2].id)["temporal_status"]
+        == "applicable"
+    )
 
 
 def test_delta_uses_updated_signature_for_new_facts_and_observer_failure_is_postcommit():
@@ -358,8 +388,6 @@ def test_remember_dedup_preserves_conditions_and_checks_updates():
     entity = Node(g.reserve_id(), "Object")
     prop = Node(g.reserve_id(), "Position", kind="property")
     args = {"entity": entity.id, "property": prop.id, "value": 1, "unit": "m"}
-    from dataclasses import replace
-
     fact = replace(
         g.new_fact("HAS_NUMERIC_VALUE", args), properties={"conditions": {"frame": "world"}}
     )
@@ -392,31 +420,12 @@ async def test_integration_can_disambiguate_by_id():
     event = world.memory.record(input_run, "input", output="Ambiguous term")
     refs = [json_value(world.memory.output_ref(event))]
     identity = world.graph.find("Process").id
-    answers = iter(
-        [
-            {"action": "describe", "query": identity},
-            {
-                "action": "commit",
-                "delta_json": "{}",
-                "decisions_json": json.dumps(
-                    [
-                        {
-                            "disposition": "unresolved",
-                            "reason": "Ambiguous meaning",
-                            "source_refs": refs,
-                            "affected_ids": [],
-                            "preservation_ids": [],
-                        }
-                    ]
-                ),
-            },
-        ]
-    )
 
-    async def model(payload):
-        if "reads" in json.loads(payload["prompt"]) and json.loads(payload["prompt"])["reads"]:
-            assert json.loads(payload["prompt"])["reads"][0]["query"] == identity
-        return next(answers)
+    async def model(payload, call):
+        result = await call("describe", {"subject": identity})
+        assert result["subject"]["id"] == identity
+        await call("unresolved", {"reason": "Ambiguous meaning", "sources": refs})
+        await call("finish", {})
 
     result = await run(context(world, model, role="exec"), refs)
     assert result["result"]["complete"]

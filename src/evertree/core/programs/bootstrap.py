@@ -260,6 +260,7 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
             graph.reserve_id(),
             name + "." + role,
             kind="program",
+            description=descriptor["description"],
             properties={
                 "git_path": descriptor["git_path"],
                 "role": role,

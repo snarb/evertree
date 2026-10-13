@@ -10,7 +10,7 @@ from pathlib import Path
 from evertree.core.memory.types import TraceOutputRef
 
 from ..core.programs.lifecycle import git
-from ..core.provider import AgentRequest
+from ..core.provider import AgentRequest, ToolDefinition
 from ..core.values import json_value
 from .prompts import CANDIDATE_INSTRUCTIONS, CODING_INSTRUCTIONS
 
@@ -280,6 +280,10 @@ class ToolsMixin:
             revision = metadata["program"]["revision"]
             return dataclasses.asdict(dataclasses.replace(spec, revision=revision))
         if method == "agent.run":
+            tools = tuple(ToolDefinition(**tool) for tool in payload.get("tools", []))
+            handler = payload.get("_tool_handler")
+            if tools and not callable(handler):
+                raise PermissionError("Program tools require a scoped runtime handler")
             budget_policy = self._pending_programs.get(task_id, {}).get("identity") in {
                 "task_framing",
                 "resource_control",
@@ -304,14 +308,18 @@ class ToolsMixin:
                 payload["prompt"],
                 self._workspace(task_id),
                 instructions=payload.get("instructions", ""),
-                mode="model",
+                mode=payload.get("mode", "model"),
+                tools=tools,
                 output_schema=payload.get("output_schema"),
                 model=profile.model if profile else None,
                 effort=profile.effort if profile else None,
                 timeout_seconds=seconds,
             )
             return await self._invoke(
-                task_id, request, run_ref=self._run_map.get(metadata.get("run_id"))
+                task_id,
+                request,
+                run_ref=self._run_map.get(metadata.get("run_id")),
+                tool_handler=handler,
             )
         if method in {"actions.list", "list_actions"}:
             return await self.actions.list(

@@ -104,6 +104,18 @@ class Context:
         self.task_id = _configuration["task_id"]
         self.run_mode = _configuration["run_mode"]
 
+    async def agent(self, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
+        from evertree.core.runtime.agents import run_agent
+
+        return await run_agent(
+            self,
+            payload,
+            tools=tools,
+            tool_handler=tool_handler,
+            max_tool_calls=max_tool_calls,
+            stop_when=stop_when,
+        )
+
     async def step(self, method: str, payload: dict | None = None):
         """Durable gateway operation, including LLM, graph reads and effects."""
         if not isinstance(method, str) or method.startswith("_"):

@@ -93,28 +93,21 @@ class DemoProvider:
             )
             return
         properties = (request.output_schema or {}).get("properties", {})
-        if {"action", "delta_json", "decisions_json"} <= properties.keys():
+        if {"trace_only", "save_note", "finish"} <= {tool.name for tool in request.tools}:
             material = json.loads(request.prompt)["material"]
             if material["context"].get("preservation_intents"):
                 raise ProviderError("The offline demo does not script mandatory materialization")
-            payload = {
-                "action": "commit",
-                "query": "",
-                "delta_json": "{}",
-                "decisions_json": json.dumps(
-                    [
-                        {
-                            "disposition": "trace_only",
-                            "reason": "Retain demonstration observations in trace; executable skill is already registered by lifecycle",
-                            "source_refs": [item["reference"]],
-                            "affected_ids": [],
-                            "preservation_ids": [],
-                        }
-                        for item in material["experience"]
-                    ]
-                ),
-                "summary": "Demonstration experience reviewed and retained in trace",
-            }
+            for name, arguments in (
+                ("trace_only", {"sources": [item["reference"] for item in material["experience"]]}),
+                ("finish", {}),
+            ):
+                call = {"call_id": name, "name": name, "arguments": arguments}
+                yield AgentEvent("tool_call", call)
+                result = await tool_handler(name, arguments)
+                yield AgentEvent(
+                    "tool_result", {**call, "status": "completed", "result": result, "error": None}
+                )
+            payload = None
         elif "execution_budget" in properties:
             payload = {
                 "objective": "Develop the sorting skill"
@@ -137,6 +130,8 @@ class DemoProvider:
                     "expected_result": "An accepted Program and its checked execution result",
                     "active_time_minutes": 4 if self.stage != "reuse" else 1,
                 }
+            else:
+                payload = {key: value for key, value in payload.items() if key in properties}
         elif "verified" in properties:
             expected = [2, 5, 9] if self.stage == "initial" else [1, 3, 3]
             payload = {

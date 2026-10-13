@@ -6,9 +6,9 @@ import dataclasses
 import unicodedata
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
-from ..values import ContractError, freeze, json_value, restore_value, timestamp, utcnow
+from ..values import ContractError, freeze, json_value, restore_value, timestamp
 
 CANONICAL_KINDS = frozenset({"concept", "prototype", "property", "process", "relation_type"})
 
@@ -71,16 +71,29 @@ class Instance(Node):
 @dataclasses.dataclass(frozen=True)
 class Facet(Node):
     kind: str = "facet"
-    valid_from: datetime = dataclasses.field(default_factory=utcnow)
+    valid_from: datetime | None = None
     valid_until: datetime | None = None
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        object.__setattr__(self, "valid_from", timestamp(self.valid_from))
+        if self.valid_from is not None:
+            object.__setattr__(self, "valid_from", timestamp(self.valid_from))
         if self.valid_until is not None:
             object.__setattr__(self, "valid_until", timestamp(self.valid_until))
-            if self.valid_until <= self.valid_from:
+            if self.valid_from is not None and self.valid_until <= self.valid_from:
                 raise ContractError("facet intervals must be nonempty [from, until)")
+
+    def applicability(self, at: datetime) -> Literal["applicable", "outside", "unknown"]:
+        at = timestamp(at)
+        if self.valid_from is not None and at < self.valid_from:
+            return "outside"
+        if self.valid_until is not None and at >= self.valid_until:
+            return "outside"
+        if self.valid_from is not None and at == self.valid_from:
+            return "applicable"
+        if self.valid_from is None or self.valid_until is None:
+            return "unknown"
+        return "applicable"
 
 
 ARITIES = {"one", "optional", "list0", "list1"}

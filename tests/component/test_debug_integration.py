@@ -4,10 +4,11 @@ import json
 
 import pytest
 
-from evertree.core.provider import AgentEvent
+from evertree.core.provider import AgentEvent, ScriptedProvider
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.index import RedisSearchIndex
-from evertree.debug_integration import DebugSession, load_debug_environment
+from evertree.debug_integration import CONSCIOUS_ANALYSIS, DebugSession, load_debug_environment
+from evertree.processes.semantic_processing.knowledge_integration._exec import run
 
 
 def test_load_local_secrets_preserves_environment_and_accepts_test_redis(tmp_path, monkeypatch):
@@ -48,10 +49,11 @@ async def test_missing_search_configuration_stops_before_model_usage(tmp_path, m
 async def test_model_forwards_program_request_and_returns_provider_output(tmp_path):
     session = DebugSession(tmp_path)
     requests = []
-    provider_output = {"action": "search", "query": "new query from provider"}
+    provider_output = {"query": "new query from provider"}
 
     class RecordingProvider:
-        async def run(self, run_id, request):
+        async def run(self, run_id, request, *, tool_handler=None):
+            assert tool_handler is None
             requests.append(request)
             yield AgentEvent("completed", {"parsed": provider_output})
 
@@ -71,3 +73,89 @@ async def test_model_forwards_program_request_and_returns_provider_output(tmp_pa
     assert request.model == session.config.remember.model
     assert request.effort == session.config.remember.effort
     assert session.calls[0]["result"] == result
+
+
+async def test_debug_integration_forwards_native_tools_and_saves_their_finish_receipt(tmp_path):
+    session = DebugSession(tmp_path)
+    session.record_experience()
+    refs = session.experience_refs
+    session.provider = ScriptedProvider(
+        [
+            [
+                AgentEvent(
+                    "tool_call", {"name": "trace_only", "arguments": {"sources": refs[:-1]}}
+                ),
+                AgentEvent(
+                    "tool_call",
+                    {
+                        "name": "save_note",
+                        "arguments": {
+                            "name": "Retained analysis",
+                            "source": refs[-1],
+                            "sources": [],
+                        },
+                    },
+                ),
+                AgentEvent("tool_call", {"name": "finish", "arguments": {}}),
+                AgentEvent("usage", {"available": True, "total_tokens": 17}),
+                AgentEvent("completed", {"text": ""}),
+            ],
+        ]
+    )
+    try:
+        result = (await run(session, refs))["result"]
+        assert result["complete"]
+        assert session.graph.find("Retained analysis").description == CONSCIOUS_ANALYSIS
+        (request,) = session.provider.requests
+        assert request.mode == "exec" and not request.native_coding
+        assert request.output_schema is None
+        assert {"save_note", "finish"} <= {tool.name for tool in request.tools}
+        (closed,) = [call for call in session.calls if call["method"] == "agent.close"]
+        finish = closed["payload"]["history"][-1]
+        assert finish["name"] == "finish" and finish["result"] == result
+        transcripts = [json.loads(path.read_text()) for path in tmp_path.glob("model-*.json")]
+        (events,) = transcripts
+        assert events[-1]["kind"] == "completed"
+        assert events[-2] == {"kind": "usage", "data": {"available": True, "total_tokens": 17}}
+        assert not session.provider.cancelled
+    finally:
+        await session.agents.close_all()
+        await session.provider.close()
+        await session.index.close()
+
+
+async def test_live_evaluation_native_bridge_records_finish_and_final_usage(tmp_path):
+    from evertree.core.values import json_value
+    from tests.live.test_knowledge_integration import _native_context
+    from tests.support.semantics import semantic_world
+
+    world = semantic_world()
+    source_run = world.memory.start_run("observation", "evaluation", {})
+    event = world.memory.record(source_run, "input", output="Routine measurement")
+    refs = [json_value(world.memory.output_ref(event))]
+    world.memory.finish_run(source_run)
+    provider = ScriptedProvider(
+        [
+            [
+                AgentEvent("tool_call", {"name": "trace_only", "arguments": {"sources": refs}}),
+                AgentEvent("tool_call", {"name": "finish", "arguments": {}}),
+                AgentEvent("usage", {"available": True, "total_tokens": 23}),
+                AgentEvent("completed", {"text": ""}),
+            ],
+        ]
+    )
+    transcript = []
+    try:
+        async with _native_context(world, provider, tmp_path, transcript, {}, "test") as ctx:
+            result = (await run(ctx, refs))["result"]
+        assert result["complete"]
+        (request,) = provider.requests
+        assert request.tools and request.output_schema is None
+        (history,) = [entry["tool_history"] for entry in transcript if "tool_history" in entry]
+        assert history[-1]["name"] == "finish" and history[-1]["result"] == result
+        (events,) = [entry["events"] for entry in transcript if "events" in entry]
+        assert events[-1]["kind"] == "completed"
+        assert events[-2] == {"kind": "usage", "data": {"available": True, "total_tokens": 23}}
+        assert not provider.cancelled
+    finally:
+        await provider.close()

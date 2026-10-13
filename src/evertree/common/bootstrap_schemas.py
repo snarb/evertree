@@ -8,10 +8,6 @@ RESOURCE_CONTROL_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "objective": {"type": "string", "minLength": 1},
-        "success_criteria": {"type": "array", "items": {"type": "string"}},
-        "constraints": {"type": "array", "items": {"type": "string"}},
-        "preferences": {"type": "array", "items": {"type": "string"}},
         "execution_budget": {
             "type": "object",
             "additionalProperties": False,
@@ -22,10 +18,6 @@ RESOURCE_CONTROL_SCHEMA = {
         "budget_reason": {"type": "string", "minLength": 1},
     },
     "required": [
-        "objective",
-        "success_criteria",
-        "constraints",
-        "preferences",
         "execution_budget",
         "self_improvement_budget",
         "budget_reason",
@@ -33,5 +25,15 @@ RESOURCE_CONTROL_SCHEMA = {
 }
 
 TASK_FRAMING_SCHEMA = deepcopy(RESOURCE_CONTROL_SCHEMA)
-TASK_FRAMING_SCHEMA["properties"]["initial_step"] = ConsciousStepSpec.model_json_schema()
-TASK_FRAMING_SCHEMA["required"].append("initial_step")
+TASK_FRAMING_SCHEMA["properties"].update(
+    {
+        "objective": {"type": "string", "minLength": 1},
+        "success_criteria": {"type": "array", "items": {"type": "string"}},
+        "constraints": {"type": "array", "items": {"type": "string"}},
+        "preferences": {"type": "array", "items": {"type": "string"}},
+        "initial_step": ConsciousStepSpec.model_json_schema(),
+    }
+)
+TASK_FRAMING_SCHEMA["required"].extend(
+    ["objective", "success_criteria", "constraints", "preferences", "initial_step"]
+)

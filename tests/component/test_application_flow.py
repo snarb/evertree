@@ -5,7 +5,7 @@ import pytest
 
 from evertree.core.provider import AgentEvent, AgentRequest
 from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
-from tests.support.application import decision, framing, verification
+from tests.support.application import decision, framing, is_integration_request, verification
 
 
 async def until(stream, kind):
@@ -243,7 +243,7 @@ async def test_user_input_exposes_stable_integration_source_across_cycles(app):
             self.contexts = []
 
         async def run(self, request_id, request, **kwargs):
-            if request.mode == "exec":
+            if request.mode == "exec" and not is_integration_request(request):
                 self.contexts.append(json.loads(request.prompt))
             async for event in super().run(request_id, request, **kwargs):
                 yield event

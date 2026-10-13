@@ -9,6 +9,15 @@ from typing import Any
 
 
 def validate(value: Any, schema: Mapping[str, Any], path: str = "$") -> None:
+    if "anyOf" in schema:
+        for alternative in schema["anyOf"]:
+            try:
+                validate(value, alternative, path)
+            except ValueError:
+                continue
+            break
+        else:
+            raise ValueError(f"{path}: no allowed alternative matches")
     kind = schema.get("type")
     kinds = kind if isinstance(kind, list) else [kind]
     matches = {
@@ -41,6 +50,8 @@ def validate(value: Any, schema: Mapping[str, Any], path: str = "$") -> None:
     elif isinstance(value, list):
         if len(value) < schema.get("minItems", 0):
             raise ValueError(f"{path}: too few items")
+        if len(value) > schema.get("maxItems", float("inf")):
+            raise ValueError(f"{path}: too many items")
         for index, child in enumerate(value):
             validate(child, schema.get("items", {}), f"{path}[{index}]")
     elif isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -58,7 +69,7 @@ async def ask(ctx, *, instructions: str, data: dict, schema: dict):
     response = await ctx.step(
         "agent.run",
         {
-            "prompt": json.dumps(data, ensure_ascii=False, allow_nan=False),
+            "prompt": json.dumps(data, ensure_ascii=False, allow_nan=False, indent=2),
             "instructions": instructions,
             "mode": "model",
             "output_schema": schema,

@@ -12,10 +12,10 @@ from evertree.core.runtime.controller import Runtime
 from tests.support.application import (
     IntegrationScriptedProvider,
     budget_review,
-    completed,
     decision,
     framing,
     is_integration_request,
+    tool_events,
     verification,
     wait_for_event,
 )
@@ -29,28 +29,23 @@ class SaveExplanationProvider(IntegrationScriptedProvider):
                 yield event
             return
         self.requests.append(request)
-        refs = [item["reference"] for item in json.loads(request.prompt)["material"]["experience"]]
-        choices = [
-            {
-                "disposition": "materialize" if index == 0 else "trace_only",
-                "reason": "Retain the checked explanation",
-                "source_refs": [reference],
-                "affected_ids": [-1] if index == 0 else [],
-                "preservation_ids": [],
-            }
-            for index, reference in enumerate(refs)
+        experience = json.loads(request.prompt)["material"]["experience"]
+        explanation = next(
+            item["reference"] for item in experience if item["source_kind"] == "analytical_note"
+        )
+        calls = [
+            ("save_note", {"name": "Recovered explanation", "source": explanation, "sources": []}),
+            (
+                "trace_only",
+                {
+                    "sources": [
+                        item["reference"] for item in experience if item["reference"] != explanation
+                    ]
+                },
+            ),
+            ("finish", {}),
         ]
-        for event in completed(
-            {
-                "action": "commit",
-                "query": "",
-                "summary": "Explanation retained",
-                "delta_json": json.dumps(
-                    {"creates": [{"id": -1, "name": "Recovered explanation", "kind": "note"}]}
-                ),
-                "decisions_json": json.dumps(choices),
-            }
-        ):
+        async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
             yield event
 
 
@@ -93,6 +88,7 @@ async def test_restart_replays_committed_integration_before_delivering_saved_com
         assert len(receipt_events) == 1
         receipt_ref = first.memory.output_ref(receipt_events[0])
         note_id = first.graph.find("Recovered explanation").id
+        assert first.graph.get(note_id).description == "Current result: Checked explanation"
         assert first.backups.list()
 
     second_provider = IntegrationScriptedProvider([budget_review(), verification()])

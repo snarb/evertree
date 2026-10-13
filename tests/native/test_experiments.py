@@ -26,10 +26,17 @@ async def run(value, ctx):
     from evertree.common.calculation import calculate
     node = await ctx.step('graph.get', {'id': 1})
     assert node['name'] == 'original'
-    result = await ctx.call('knowledge_integration', {'name': 'changed'})
-    assert result.result['complete']
+    async def handle_tool(name, arguments):
+        result = await ctx.call('knowledge_integration', arguments)
+        assert result.result['complete']
+        return result.result
+    tools = [{'name': 'rename', 'description': 'Apply an isolated correction.',
+        'input_schema': {'type': 'object', 'properties': {'name': {'type': 'string'}},
+                         'required': ['name'], 'additionalProperties': False},
+        'read_only': False}]
     assert await ctx.step('learning.predict', {'state_id': 'known'}) == 0.5
-    answer = await ctx.step('agent.run', {'prompt': str(value), 'mode': 'exec'})
+    answer = await ctx.agent({'prompt': str(value), 'mode': 'exec'},
+                             tools=tools, tool_handler=handle_tool)
     return {'result': calculate(value) + answer['parsed']}
 """
     repo, _, branch, spec, graph, memory, learning = prepare(
@@ -52,7 +59,11 @@ async def run(value, ctx):
     prepared = []
 
     async def model_call(payload, context):
-        assert payload == {"prompt": "3", "mode": "model"}
+        assert payload["prompt"] == "3" and payload["mode"] == "exec"
+        assert [tool["name"] for tool in payload["tools"]] == ["rename"]
+        assert context.graph.get(1).name == "original"
+        receipt = await payload["_tool_handler"]("rename", {"name": "changed"})
+        assert receipt["complete"]
         assert context.graph.get(1).name == "changed"
         assert context.workspace.exists()
         prepared.append(context)

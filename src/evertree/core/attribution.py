@@ -138,9 +138,11 @@ class AttributionRuntime:
         node = self.graph.get(subject)
         subjects = {subject}
         if node.kind == "instance":
-            facets = self.graph.get_facets(subject, valid_at=at)
+            facets = self.graph.get_facets(subject)
             if facets is not UNKNOWN:
-                subjects.update(facet.id for facet in facets)
+                subjects.update(
+                    facet.id for facet in facets if facet.applicability(at) != "outside"
+                )
         domains = set(subjects)
         for fact in self.graph.facts("STATE_IDENTITY"):
             if fact.args["facet"] in subjects:
@@ -258,19 +260,20 @@ class AttributionRuntime:
         except KeyError:
             return UNKNOWN
         if isinstance(node, Facet):
-            if at < node.valid_from or node.valid_until is not None and at >= node.valid_until:
+            if node.applicability(at) != "applicable":
                 return UNKNOWN
         elif node.kind == "instance":
-            facets = self.graph.query_view(
-                "STATE_IDENTITY", "get_facets", instance=subject_id, valid_at=at, known_at=known_at
-            )
+            facets = self.graph.get_facets(subject_id, known_at=known_at)
             if facets is UNKNOWN:
                 return UNKNOWN
-            subjects.extend(match.value for match in facets)
+            subjects.extend(facet.id for facet in facets if facet.applicability(at) != "outside")
         scope_readings = []
         for identity in subjects:
             target = self._scopes.get(self._binding_key(identity, property_id, parameters))
             if target:
+                source = self.graph.get(identity)
+                if isinstance(source, Facet) and source.applicability(at) != "applicable":
+                    return UNKNOWN
                 try:
                     reading = self.beliefs.read(target, valid_at=at, known_at=known_at)
                 except KeyError:
@@ -327,6 +330,8 @@ class AttributionRuntime:
                 subject_id, definition, valid_at=at, known_at=known_at, **parameters
             )
         if not candidates:
+            return UNKNOWN
+        if any(self.graph.fact_applicability(fact, at) != "applicable" for fact, _ in candidates):
             return UNKNOWN
         if definition.selection == "unique" and len(candidates) != 1:
             return UNKNOWN

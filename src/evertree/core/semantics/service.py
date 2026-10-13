@@ -241,8 +241,6 @@ class SemanticService:
 
         types = {n.id: n for n in staged.nodes() if isinstance(n, RelationType)}
         for item in creates:
-            if item.get("kind") == "facet" and not item.get("valid_from"):
-                raise ContractError("Facet requires explicit world-time valid_from")
             item["id"] = ref(item["id"])
             if item.get("kind") == "relation_type":
                 for slot in item.get("signature", []):
@@ -350,8 +348,11 @@ class SemanticService:
             disposition = decision.get("disposition")
             if disposition not in {"materialize", "reuse", "trace_only", "unresolved"}:
                 raise ContractError("Unknown integration disposition")
-            if not isinstance(decision.get("reason"), str) or not decision["reason"].strip():
-                raise ContractError("Every integration decision requires a reason")
+            reason = decision.get("reason")
+            if reason is not None and (not isinstance(reason, str) or not reason.strip()):
+                raise ContractError("An integration reason must be nonempty text")
+            if disposition == "unresolved" and reason is None:
+                raise ContractError("An unresolved decision requires a concrete obstacle")
             refs = tuple(self._reference(ref) for ref in decision.get("source_refs", []))
             if not refs:
                 raise ContractError("Every decision requires source_refs")
@@ -400,7 +401,7 @@ class SemanticService:
             normalized.append(
                 {
                     "disposition": disposition,
-                    "reason": decision["reason"],
+                    **({"reason": reason} if reason is not None else {}),
                     "source_refs": json_value(refs),
                     "affected_ids": ids,
                     "preservation_ids": preservation_ids,
@@ -448,6 +449,23 @@ class SemanticService:
                 "deleted": [] if pending else list(delta.deletes),
                 "revision": self.graph.revision,
             }
+            pending_refs = [
+                self._reference(intent["source_ref"])
+                for intent in material["context"].get("preservation_intents", [])
+                if intent["id"] in pending and intent.get("source_ref")
+            ]
+            obstacles = [
+                decision["reason"]
+                for decision in decisions
+                if decision["disposition"] == "unresolved"
+                and any(
+                    self._contains(ref, pending_ref) or self._contains(pending_ref, ref)
+                    for ref in map(self._reference, decision["source_refs"])
+                    for pending_ref in pending_refs
+                )
+            ]
+            if obstacles:
+                receipt["reason"] = "\n".join(dict.fromkeys(obstacles))
             with self.graph.transaction(), self.memory.transaction():
                 # A blocked packet is retried as a whole. Partial writes would force
                 # a new interpretation of temporary identities during recovery.

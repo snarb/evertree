@@ -80,23 +80,29 @@ uv run python src/evertree/debug_integration.py
 
 Edit `USER_TASK`, `INPUT_TEXT`, and `CONSCIOUS_ANALYSIS` at the top of the script. These are
 the user task, a paragraph describing pump Н-1, and a supplied intermediate analytical Note.
-The integrator's LLM generates all search requests, graph proposals and `decisions` during
-execution. There are no scripted model responses or predetermined graph objects. The example
+The integrator's LLM calls native semantic tools and chooses their sources. Tool handlers
+assign IDs, build the graph delta and derive `decisions` from the performed operations.
+The `finish()` tool validates and commits the draft atomically. There are no scripted
+model responses or predetermined graph objects. The example
 asks to preserve the pump's two observed state intervals; the actual representation is chosen
 by the model and validated by Core.
 
-Useful breakpoints, in execution order:
+Useful breakpoints:
 
 - `DebugSession.record_experience`: source references and the typed Note with `preserve=True`.
-- `knowledge_integration/_exec.py:run`: model proposal, search, schema reads, repair and commit.
-- `DebugSession.model`: actual Codex request and returned structured proposal.
+- `knowledge_integration/_exec.py:handle_tool`: native tool dispatch, search, schema reads and repair.
+- `knowledge_integration/_exec.py:finish`: final validation and atomic commit.
+- `common/integration_actions.py:IntegrationDraft.apply`: ID assignment, structural links and attribution.
+- `DebugSession.model`: actual Codex request, declared tools and provider events.
 - `SemanticService.commit`: decisions, validation and receipt.
 - `CoreOperations.apply_delta`, then `GraphStore.apply`: graph mutation and provenance.
 - `DebugSession.run`, at `return created`: inspect the graph, trace and receipt together.
 
 Each run uses an isolated bootstrap graph and Redis namespace, writing `graph.json`,
 `trace.json`, `receipt.json` and `calls.json` under `tmp/debug-integration/<run>/`, also on
-failure. The path is printed before execution. Ordinary Python breakpoints work because the
+failure. Each model request also has a readable `model-*.md` file with its tool definitions
+and a separate JSON provider transcript.
+The path is printed before execution. Ordinary Python breakpoints work because the
 Program and Core execute in one process. This harness invokes the integrator directly;
 application scheduling, worker admission and durable restart are outside its scope.
 
@@ -105,7 +111,36 @@ application scheduling, worker admission and durable restart are outside its sco
 - Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`, evolving behavior in `processes`, and reusable Program helpers in `common`.
 - Call other Programs through the runtime, including other roles of the same process; do not import their implementations directly.
+- Use `ctx.agent(payload, tools=..., tool_handler=..., max_tool_calls=..., stop_when=...)`
+  when a model needs tools. Handlers run at workflow level and may call `ctx.call` or
+  `ctx.step`; do not wrap the entire tool conversation in a durable step. Recovery
+  replays exchanges and handlers to reconstruct local state before continuing.
 - Align `processes/` with the Self/Process `SUBTYPE_OF` taxonomy; `PART_WHOLE` does not define directory nesting. Preserve stable IDs when changing graph names, paths, and references. Validate structural changes with `uv run python -m evertree.core.programs.layout`.
+
+### Model prompts
+
+- Assign semantic judgment to the model and deterministic work to code. Generate IDs,
+  bookkeeping, transaction payloads and execution reports from actual operations; do not ask
+  the model to reconstruct them. Prefer actions that express intent over storage internals.
+  Keep semantic choices explicit, including which sources support each result. Request a
+  rationale only when a consumer needs it, such as explaining an unresolved obstacle.
+- Provide native tools for model-selected operations. Keep structured response schemas
+  for results such as plans and assessments; do not encode tool calls as action lists
+  in the final response. Tool descriptions, permissions and handlers must agree.
+- Make each invocation self-contained: state its purpose, define necessary domain terms,
+  explain the input and describe the required decision. Assume no access to project docs.
+- Use short sections and explicit field meanings. Specify units, allowed choices, empty
+  values and what to do when evidence is missing. Keep instructions consistent with schemas.
+- Select model inputs explicitly. Include a field only if it can change this decision,
+  identify a usable object/source, or support a required action. Keep hashes, runtime IDs,
+  checkpoints and audit metadata in storage; expose only their decision-relevant meaning.
+- Remove duplicate text and empty bookkeeping. Preserve source content, uncertainty,
+  conditions and usable references; never strip arbitrary domain fields by name.
+- Format instructions and JSON for reading. On retries include the rejected draft and
+  its current error, so the next call can repair it. Do not request unused output fields.
+- Test the constructed input and its consumers together: necessary meaning survives,
+  audit noise stays out, references resolve, and the response can be applied. Use live
+  evaluations for model judgment; scripted tests only establish mechanical contracts.
 
 ## Documentation
 

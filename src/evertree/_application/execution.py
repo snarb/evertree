@@ -63,6 +63,7 @@ class TaskExecutionMixin:
         run_ref=None,
         conversation=False,
         run_name="Consciousness",
+        tool_handler=None,
     ):
         request_id = uuid4().hex
         async with self._state_lock:
@@ -102,6 +103,8 @@ class TaskExecutionMixin:
                 async def handle_tool(name, args):
                     inherited = self._accounting.set(meter)
                     try:
+                        if tool_handler is not None:
+                            return await tool_handler(name, args)
                         return await self._tool(task_id, name, args)
                     finally:
                         self._accounting.reset(inherited)

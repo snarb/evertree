@@ -9,13 +9,33 @@ from evertree.core.provider import AgentEvent, ScriptedProvider
 
 
 def is_integration_request(request):
-    return {"action", "delta_json", "decisions_json"} <= set(
-        (request.output_schema or {}).get("properties", {})
-    )
+    return {"save_note", "finish"} <= {tool.name for tool in request.tools}
+
+
+async def tool_events(request_id, request, handler, calls):
+    """Exercise the provider's native callback boundary with correlated events."""
+    declared = {tool.name for tool in request.tools}
+    yield AgentEvent("session", {"provider": "scripted", "id": request_id})
+    for index, (name, arguments) in enumerate(calls):
+        assert name in declared
+        call = {"call_id": f"{request_id}:{index}", "name": name, "arguments": arguments}
+        yield AgentEvent("tool_call", call)
+        result = await handler(name, arguments)
+        yield AgentEvent(
+            "tool_result",
+            {
+                "call_id": call["call_id"],
+                "name": name,
+                "status": "completed",
+                "result": result,
+                "error": None,
+            },
+        )
+    yield AgentEvent("completed", {"text": ""})
 
 
 class IntegrationScriptedProvider(ScriptedProvider):
-    """Supply trace-only integration decisions while exercising real packet validation."""
+    """Call trace-only tools while exercising real packet validation."""
 
     @property
     def task_requests(self):
@@ -31,26 +51,11 @@ class IntegrationScriptedProvider(ScriptedProvider):
         assert not material["context"].get("preservation_intents"), (
             "Use explicit integration scripts when testing preservation obligations"
         )
-        decisions = [
-            {
-                "disposition": "trace_only",
-                "reason": "This scenario needs no persistent graph structure",
-                "source_refs": [item["reference"]],
-                "affected_ids": [],
-                "preservation_ids": [],
-            }
-            for item in material["experience"]
+        calls = [
+            ("trace_only", {"sources": [item["reference"] for item in material["experience"]]}),
+            ("finish", {}),
         ]
-        yield AgentEvent("session", {"provider": self.name, "id": request_id})
-        for event in completed(
-            {
-                "action": "commit",
-                "query": "",
-                "delta_json": "{}",
-                "decisions_json": json.dumps(decisions),
-                "summary": "Experience reviewed and retained in trace",
-            }
-        ):
+        async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
             yield event
 
 
@@ -79,8 +84,12 @@ def framing(objective="Count r in strawberry", minutes=3, improvement=0):
 
 def budget_review(objective="Count r in strawberry", minutes=3, improvement=0):
     result = framing(objective, minutes, improvement)[0].data["parsed"]
-    del result["initial_step"]
-    return completed(result)
+    return completed(
+        {
+            key: result[key]
+            for key in ("execution_budget", "self_improvement_budget", "budget_reason")
+        }
+    )
 
 
 def decision(answer="3", status="completed"):

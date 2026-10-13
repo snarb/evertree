@@ -51,9 +51,16 @@ class KnowledgeIntegrationMixin:
 
     def _integration_context(self, state):
         def sourced(node):
+            from ..core.graph.types import RelationInstance
+            from ..core.semantics.reading import fact_card
+
             changes = self.graph.changes_of(node.id)
+            readable = {}
+            if isinstance(node, RelationInstance):
+                readable = fact_card(self.graph, node)
             return {
                 **json_value(node),
+                **readable,
                 "provenance": json_value(changes[-1].provenance) if changes else None,
             }
 

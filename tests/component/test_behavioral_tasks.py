@@ -5,6 +5,7 @@ import pytest
 
 from evertree.core.cognition.control import verification_result
 from evertree.core.cognition.tasks import TaskStore
+from evertree.core.memory.types import TraceOutputRef
 from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import completed, decision, verification, wait_for_event
 from tests.support.component import component_app
@@ -69,7 +70,7 @@ async def test_cog_01_requirements_and_sources_reach_verification_before_deliver
             check = json.loads(provider.task_requests[index].prompt)
             assert check["answer"] == candidate
             assert check["specification"]["constraints"] == list(constraints)
-            assert check["specification"]["source_ids"] == ["report-request"]
+            assert "source_ids" not in check["specification"]
         assert rejection in provider.task_requests[3].prompt
         intake = [
             json.loads(line)
@@ -121,13 +122,13 @@ async def test_cog_02_clarification_resumes_same_task_with_both_sources(tmp_path
         assert tuple(task.episode_ids) == original_episode
         assert task.source_ids == ["question", "clarification"]
         continuation = json.loads(provider.task_requests[3].prompt)
-        assert continuation["task_id"] == task.id
-        assert continuation["source_ids"] == ["question", "clarification"]
-        assert continuation["incoming"]["source_id"] == "clarification"
+        reference = continuation["incoming"]["source_ref"]
+        assert app.memory.resolve(TraceOutputRef(**reference))["source_id"] == "clarification"
         assert continuation["incoming"]["content"] == "The letter r"
         assert any(
-            message.get("source_id") == "question"
-            and message["content"] == "Count a letter in strawberry"
+            message["content"] == "Count a letter in strawberry"
+            and app.memory.resolve(TraceOutputRef(**message["source_ref"]))["source_id"]
+            == "question"
             for message in continuation["messages"]
         )
         assert len(provider.task_requests) == 5

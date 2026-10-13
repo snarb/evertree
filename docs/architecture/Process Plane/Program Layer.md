@@ -616,6 +616,26 @@ The material is retained so that different representations can be prepared for s
 
 [[Cognition and Attention#^input-reception|Input reception]] saves data and links it to a Task. A tool result with a known call ID is returned to the calling program or waiting Task. For a new observation, consciousness or an `exec` program may use [[Process Ontology and Semantic Interface#^def-ProcessRouter|ProcessRouter]] to identify the process and a suitable program. If the input is ambiguous, the caller clarifies it or requests conscious analysis. Creating a Task, choosing a Focus, and launching the identified program remain separate decisions.
 
+#### Native Model Tools in Programs
+
+Programs that need an LLM to inspect information or choose operations provide native tools through:
+
+```python
+await ctx.agent(
+    payload,
+    tools=tool_definitions,
+    tool_handler=handle_tool,
+    max_tool_calls=40,
+    stop_when=None,
+)
+```
+
+`payload` contains the model prompt, instructions and call settings. Each tool definition supplies its name, description, input schema and `read_only` status. The async handler receives `(name, arguments)` and returns a JSON-serializable result. `max_tool_calls` bounds calls in this invocation, including calls completed before recovery. An optional `stop_when(name, result)` selects a successful tool result, for example an accepted integration receipt, as the invocation's return value. Runtime then rejects further tool execution and waits for the provider to finish so its final usage is accounted for; its final answer text is ignored. User cancellation still interrupts this wait. Without `stop_when`, the model's final response returns to the Program. Structured final outputs remain appropriate for plans, evaluations and other results; they are not an alternative tool-dispatch protocol.
+
+The provider receives actual tool definitions and returns tool calls. Runtime validates the declared capability and arguments, then yields the call to Program workflow code. The callback runs outside the durable model-exchange step, so it can use `ctx.call` for child Programs and `ctx.step` for gateway operations. Local computations, including mutations of an in-memory draft, run again during recovery; their nested durable operations and child workflows replay their recorded results. This reconstructs Program state without repeating completed effects.
+
+The live provider invocation is transient. Normal tool continuation uses its native call/result exchange. If it is lost on restart, runtime starts a fresh invocation with the original request and completed tool transcript after workflow replay has restored local state. SDK sessions and private reasoning are not recovery state. The caller's budget, cancellation, pinned revision and operation permissions still apply; declaring a tool never grants extra authority. A `model` Program can expose only read-only tools, and isolated evaluation uses the same mechanism with its own stores and effect restrictions.
+
 #### Choosing the Next Episode-Processing Step
 ^next-episode-step
 
@@ -1233,4 +1253,4 @@ get_relations(...) -> list[Relation] # TODO: detail the arguments
 
 `SemanticProcessing` contains `SemanticSearch.model` (retrieval decisions and filtering) and `KnowledgeIntegration.exec` (selection and organization of recorded experience, preservation of analytical results, and structural repair). Call integration through `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)`; task and Self context come from runtime. Both use the ordinary candidate lifecycle and independent evaluation. Core owns identity resolution, indexes, permissions, validation and atomic writes.
 
-LLM steps return structured next actions; Program code executes them. Child Programs use `ctx.call` outside DBOS steps. This keeps the semantic policy learnable without moving authority or credentials out of core. Public contracts are in [[Semantics Plane#Consciousness Interface]].
+KnowledgeIntegration calls `ctx.agent` with semantic tools whose handlers prepare its local draft. The `finish()` tool invokes Core validation and atomic commit; returned prose is not a receipt. Search child Programs use `ctx.call` outside DBOS steps. This keeps the semantic policy learnable without moving authority or credentials out of core. Public contracts are in [[Semantics Plane#Consciousness Interface]].

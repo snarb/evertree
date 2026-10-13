@@ -2,7 +2,7 @@
 
 Run this file in PyCharm using the project interpreter and sign in to Codex.
 Search settings are loaded from repository .env or the environment.
-Only the input experience below is supplied; the model generates all proposals.
+Only the input experience below is supplied; the model chooses all semantic actions.
 """
 
 import asyncio
@@ -24,7 +24,8 @@ from evertree.core.graph.store import GraphStore
 from evertree.core.learning.state import LearningStore
 from evertree.core.memory.store import TraceStore
 from evertree.core.operations import CoreOperations, authorize_operation
-from evertree.core.provider import AgentRequest
+from evertree.core.provider import AgentRequest, ToolDefinition
+from evertree.core.runtime.agents import ProgramAgents, run_agent
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.index import RedisSearchIndex
 from evertree.core.semantics.service import SemanticService
@@ -110,6 +111,8 @@ class DebugSession:
                 "self": [],
             },
         }
+        self.run_id = self.metadata["run_id"]
+        self.agents = ProgramAgents(self._model_gateway)
         self.provider = CodexProvider(state_dir=output_dir / "codex")
         self.calls = []
         self.experience_refs = []
@@ -128,29 +131,63 @@ class DebugSession:
         )
         self.experience_refs.append(note_ref)
 
-    async def model(self, payload):
-        parsed = None
-        async for event in self.provider.run(
-            uuid4().hex,
-            AgentRequest(
-                payload["prompt"],
-                self.output_dir,
-                instructions=payload["instructions"],
-                output_schema=payload["output_schema"],
-                model=self.config.remember.model,
-                effort=self.config.remember.effort,
-                timeout_seconds=120,
-            ),
-        ):
-            if event.kind == "error":
-                raise RuntimeError(event.data)
-            if event.kind == "completed":
-                parsed = event.data.get("parsed")
-        if not isinstance(parsed, dict):
-            raise TypeError("Модель не вернула структурированный результат; см. calls.json")
-        return parsed
+    async def agent(self, payload, **kwargs):
+        return await run_agent(self, payload, **kwargs)
 
-    async def step(self, method, payload, *, role="exec"):
+    async def _model_gateway(self, method, payload):
+        if method != "agent.run":
+            raise ValueError("Unexpected native model gateway operation")
+        payload = dict(payload)
+        handler = payload.pop("_tool_handler")
+        payload.pop("_runtime")
+        return await self.step(method, payload, tool_handler=handler)
+
+    async def model(self, payload, *, tool_handler=None):
+        request_name = f"model-{len(self.calls):03d}"
+        (self.output_dir / f"{request_name}.md").write_text(
+            payload["instructions"]
+            + "\n\n# Current input\n\n```json\n"
+            + payload["prompt"]
+            + "\n```\n\n# Native tools\n\n```json\n"
+            + json.dumps(payload.get("tools", []), ensure_ascii=False, indent=2)
+            + "\n```\n",
+            encoding="utf-8",
+        )
+        events, result = [], None
+        request_id = uuid4().hex
+        try:
+            async for event in self.provider.run(
+                request_id,
+                AgentRequest(
+                    payload["prompt"],
+                    self.output_dir,
+                    instructions=payload["instructions"],
+                    mode=payload.get("mode", "model"),
+                    tools=tuple(ToolDefinition(**tool) for tool in payload.get("tools", [])),
+                    output_schema=payload.get("output_schema"),
+                    model=self.config.remember.model,
+                    effort=self.config.remember.effort,
+                    timeout_seconds=120,
+                ),
+                tool_handler=tool_handler,
+            ):
+                events.append({"kind": event.kind, "data": event.data})
+                if event.kind == "error":
+                    raise RuntimeError(event.data)
+                if event.kind == "completed":
+                    result = event.data
+            if result is None:
+                raise RuntimeError("Provider ended without a result")
+            return result
+        except asyncio.CancelledError:
+            await self.provider.cancel(request_id)
+            raise
+        finally:
+            (self.output_dir / f"{request_name}.json").write_text(
+                json.dumps(events, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+
+    async def step(self, method, payload, *, role="exec", tool_handler=None):
         authorize_operation(method, role)
         call = {"method": method, "payload": json_value(payload)}
         self.calls.append(call)
@@ -161,8 +198,17 @@ class DebugSession:
             "knowledge_integration_authorized": role == "exec",
         }
         try:
-            if method == "agent.run":
-                result = {"parsed": await self.model(payload)}
+            if method == "agent.next":
+                result = await self.agents.next(payload, metadata)
+            elif method == "agent.close":
+                result = await self.agents.close(
+                    payload["invocation_id"],
+                    metadata,
+                    history=payload.get("history"),
+                    drain=payload.get("drain", False),
+                )
+            elif method == "agent.run":
+                result = await self.model(payload, tool_handler=tool_handler)
             elif method.startswith("semantic."):
                 result = await self.service.execute(method, payload, metadata)
             else:
@@ -208,6 +254,7 @@ class DebugSession:
             # Breakpoint here: inspect created, self.receipt, self.graph and self.memory.
             return created
         finally:
+            await self.agents.close_all()
             try:
                 for name, value in {
                     "graph": self.graph.snapshot(),

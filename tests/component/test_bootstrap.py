@@ -42,7 +42,7 @@ def framed(minutes=11, improvement=35):
     }
 
 
-def test_all_installed_seed_programs_are_callable_and_metadata_has_no_model_meta_mix():
+def test_all_installed_seed_programs_are_callable_and_metadata_has_no_model_meta_mix(app):
     repository = Path(__file__).resolve().parents[2]
     entries = bootstrap_catalog()
     assert len({entry["name"] for entry in entries}) == len(entries)
@@ -53,6 +53,8 @@ def test_all_installed_seed_programs_are_callable_and_metadata_has_no_model_meta
         assert callable(function)
         assert "meta" not in entry["roles"] or "exec" in entry["roles"]
         assert inspect.signature(function)
+        program = app.graph.find(entry["name"] + "." + entry["role"])
+        assert program.description == entry["description"]
 
 
 async def test_framing_keeps_task_specific_budget_and_uses_only_provider_gateway():
@@ -89,8 +91,88 @@ async def test_framing_requires_a_bounded_initial_step_and_resource_review_does_
     oversized["initial_step"]["active_time_minutes"] = 12
     with pytest.raises(ValueError, match="cannot exceed"):
         await frame(Context(oversized), "Task")
-    reviewed = await review(Context(missing_step), {"progress": "First hypothesis tested"})
-    assert reviewed["result"]["execution_budget"] == missing_step["execution_budget"]
+    budget = {
+        key: missing_step[key]
+        for key in ("execution_budget", "self_improvement_budget", "budget_reason")
+    }
+    reviewed = await review(Context(budget), {"progress": "First hypothesis tested"})
+    assert reviewed["result"] == budget
+
+
+async def test_task_prompts_keep_requirements_and_budget_evidence_without_runtime_bookkeeping():
+    from evertree.processes.cognitive_control.resource_control._exec import run as review
+
+    state = {
+        "id": "runtime-task-id",
+        "specification": {
+            "objective": "Find the pump fault",
+            "success_criteria": ["Explain the observed stop"],
+            "constraints": ["Keep the pump offline"],
+            "preferences": ["Prefer a simple check"],
+            "revision": 12,
+            "source_ids": ["source-id"],
+        },
+        "inputs": [
+            {"role": "user", "content": "Keep it offline", "source_id": "older-id"},
+            {"role": "user", "content": "Inspect the pump", "source_ref": {"event_ref": 2}},
+        ],
+        "execution_budget": {
+            "resources": {"active_time_minutes": 8},
+            "reason": "A previous estimate",
+        },
+        "spent": {"active_time_minutes": 3},
+        "hard_limits": {"active_time_minutes": 12},
+        "progress": "Power supply checked",
+        "plan": [{"action": "Inspect the control relay"}],
+        "unresolved_questions": ["Did the controller request a stop?"],
+        "deadline": "2026-10-12T12:00:00Z",
+        "step_state": {"pending_integration": {"operation_id": "private-op"}},
+        "budget_history": [{"execution_budget": 99}],
+        "program_run_ids": ["private-run"],
+    }
+    framing = Context(framed())
+    await frame(framing, "Inspect the pump", state)
+    prompt = json.loads(framing.calls[0][1]["prompt"])
+    prepared = prompt["context"]
+    assert prompt["request"] == "Inspect the pump"
+    assert prepared["inputs"] == [{"role": "user", "content": "Keep it offline"}]
+    assert prepared["specification"] == {
+        key: state["specification"][key]
+        for key in ("objective", "success_criteria", "constraints", "preferences")
+    }
+    assert prepared["execution_budget"] == {"active_time_minutes": 8}
+    for field in ("spent", "hard_limits", "progress", "plan", "unresolved_questions", "deadline"):
+        assert prepared[field] == state[field]
+    for field in ("id", "step_state", "budget_history", "program_run_ids"):
+        assert field not in prepared
+
+    budget = {
+        "execution_budget": {"active_time_minutes": 10},
+        "self_improvement_budget": 0,
+        "budget_reason": "Check the relay next",
+    }
+    budgeting = Context(budget)
+    await review(
+        budgeting,
+        state,
+        {
+            "trace": [
+                {
+                    "id": 4,
+                    "program_run": "private-run",
+                    "created_at": "execution-clock",
+                    "operator": "inspect",
+                    "output": {"relay": "unchecked", "supply": "normal"},
+                    "output_type": "builtins.dict",
+                }
+            ]
+        },
+    )
+    payload = budgeting.calls[0][1]
+    assert json.loads(payload["prompt"])["evidence"] == {
+        "trace": [{"operator": "inspect", "output": {"relay": "unchecked", "supply": "normal"}}]
+    }
+    assert set(payload["output_schema"]["properties"]) == set(budget)
 
 
 async def test_next_episode_step_cannot_access_unavailable_sources():

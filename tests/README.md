@@ -145,7 +145,15 @@ Lint, formatting, source/taxonomy validation, and `git diff --check` passed. Nat
 
 ## Semantic interface checks
 
-`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, pagination and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including child calls, invalid-delta repair, replay and an IPC concurrency barrier.
+`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, pagination and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_program_agents` checks the shared native-tool bridge's role restrictions, schema validation and call limits. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including tool repair, child calls, replay and an IPC concurrency barrier.
+
+Program tool tests should call the declared `tool_handler` through the provider interface.
+Recovery checks must verify that durable tool exchanges replay callback computations and
+child operations to reconstruct the local draft without repeating committed effects.
+An interrupted transient SDK invocation may resume with the completed tool transcript;
+normal continuation must use native calls and results. Check the same authority boundary
+in isolated evaluation. A returned final message alone must not count as an integration
+receipt: only the `finish()` tool can request the checked atomic commit.
 
 A separate Redis integration test uses a real Redis 8.4+ Search server and deterministic embeddings (no model charges):
 
@@ -161,7 +169,7 @@ The separate opt-in `tests/live/test_embeddings.py` checks real OpenAI embedding
 
 ## Conscious steps and integration policy
 
-Step-contract and coordinator tests distinguish intermediate analytical Notes from user messages, enforce finite local budgets, retain working state between iterations and gate completion on integration. Semantic component tests exercise explicit preservation obligations, complete decision coverage, source-specific retention, reuse and the restricted write gateway. These tests use supplied model decisions to check contracts; they do not prove autonomous semantic judgment.
+Step-contract and coordinator tests distinguish intermediate analytical Notes from user messages, enforce finite local budgets, retain working state between iterations and gate completion on integration. Semantic component tests exercise explicit preservation obligations, complete decision coverage, source-specific retention, reuse and the restricted write gateway. These tests supply native tool calls to check mechanical contracts; they do not prove autonomous semantic judgment.
 
 `tests/live/test_knowledge_integration.py` evaluates the actual installed KnowledgeIntegration Program with a real Codex model and real in-process semantic stores. Source-backed cases in `knowledge_integration_cases.json` cover a conditional hypothesis whose uncertainty must survive preservation, a routine series that must not explode into per-reading states, and an intermediate experiment plan that must not become a fabricated final result. A fourth case uses the production consciousness instructions and result schema to check that one experiment-planning step returns a bounded continuation rather than pretending to finish the investigation. Hard assertions check accepted receipts, preservation, retained source access, bounded graph growth and absence of unsupported belief targets. Separate model invocations evaluate meaning and step granularity against explicit criteria, with no generator session history; these are fallible semantic evaluations, not deterministic proofs.
 
@@ -170,4 +178,4 @@ Step-contract and coordinator tests distinguish intermediate analytical Notes fr
 EVERTREE_CODEX_INTEGRATION=1 uv run pytest tests/live/test_knowledge_integration.py -q -n 0
 ```
 
-The harness uses deterministic empty non-exact search indexes over an initially empty domain; exact bootstrap lookup and the production semantic search/commit paths remain active. It tests integration policy and single-step model behavior, not embedding quality, worker isolation, durable recovery or full conscious-loop scheduling. Each model call has a 120-second timeout and the production Program bounds its preparation attempts. Failures retain source cases, model exchanges, graph receipts and rubric results in `semantic-policy-evaluation.json` or `conscious-step-evaluation.json` under the pytest case directory. Without the opt-in variable the cases collect and skip without model calls.
+The harness uses deterministic empty non-exact search indexes over an initially empty domain; exact bootstrap lookup and the production semantic search/commit paths remain active. The integration model receives native tools with actual handlers. It tests integration policy and single-step model behavior, not embedding quality, worker isolation, durable recovery or full conscious-loop scheduling. Each model invocation has a 120-second timeout and the production Program bounds its tool calls. Failures retain source cases, model exchanges, graph receipts and rubric results in `semantic-policy-evaluation.json` or `conscious-step-evaluation.json` under the pytest case directory. Without the opt-in variable the cases collect and skip without model calls.
