@@ -91,7 +91,8 @@ Useful breakpoints:
 
 - `DebugSession.record_experience`: source references and the analytical Note with its emphasis in text.
 - `knowledge_integration/_exec.py:handle_tool`: native tool dispatch, search, schema reads and repair.
-- `common/integration_actions.py`: shared operation schemas and graph tool dispatch.
+- `core/semantics/actions.py`: shared tool definitions, validation and operation construction.
+- `common/integration_actions.py`: search/read assistance and graph tool dispatch.
 - `DebugSession.model`: actual Codex request, declared tools and provider events.
 - `SemanticService.write`: operation validation, idempotence and atomic persistence.
 - `CoreOperations.apply_delta`, then `GraphStore.apply`: graph mutation and provenance.
@@ -178,6 +179,6 @@ This does not change the consciousness profile. Graph commits schedule index rec
 
 Consciousness works in bounded iterations: a local objective, related tool or Program calls, and an explicit analytical Note. The result may be an intermediate plan or hypothesis. The latest Note and working plan remain available to the next iteration through task state and trace; only a separately composed `user_message` is delivered to the user.
 
-Between steps, `KnowledgeIntegration` examines recorded experience and independently saves useful facts, connections and insights. Emphasis and requests to remember something belong in ordinary analytical text. References point to already recorded material; callers need not pre-extract every statement or assign review statuses. The runtime supplies task and Self context. Use `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)` when integration is needed earlier. For precise graph editing, consciousness can load `graph_write_tools`, sharing integration’s creation, relation, Note, `update` and `delete` operations. Each operation saves permanent IDs, history and sources immediately; later failures leave previous writes intact. Public raw `graph.apply` is unavailable.
+Between steps, `KnowledgeIntegration` examines recorded experience and independently saves useful facts, connections and insights. Emphasis and requests to remember something belong in ordinary analytical text. References point to already recorded material; callers need not pre-extract every statement or assign review statuses. The runtime supplies task and Self context. Use `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)` when integration is needed earlier. For precise graph editing, consciousness can load `graph_write_tools`, sharing integration’s creation (including `create_claim`), relation, Note, `update` and `delete` operations. Each operation saves permanent IDs, history and sources immediately; later failures leave previous writes intact. Public raw `graph.apply` is unavailable.
 
 The `semantics.remember` configuration above selects the integration model profile. Internal checkpoints bound packet processing, and runtime operation keys prevent repeated writes on recovery. Integration failures enter technical diagnostics without blocking the next step or final delivery; answer verification, input freshness and task constraints still apply. Memory compaction may later reduce intermediate detail while retaining significant reasons and provenance. See [the conscious step contract](docs/architecture/Cognition%20and%20Attention.md#conscious-step-contract) and [knowledge integration](docs/architecture/Semantics%20Plane.md#knowledge-integration).

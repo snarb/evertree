@@ -51,157 +51,239 @@ _SCALAR = {"type": ["string", "number", "boolean", "null"]}
 _VALUE = {"anyOf": [_SCALAR, {"type": "array", "items": _SCALAR}]}
 
 
-def _action(action_name, **fields):
-    return _object({"action": {"type": "string", "enum": [action_name]}, **fields})
-
-
-ACTION_SCHEMAS = {
-    name: _action(name, **fields)
-    for name, fields in {
-        "search": {"query": _TEXT, "next_page": {"type": "boolean"}},
-        "describe": {"subject": {"type": ["integer", "string"]}},
-        "create_concept": _NAMED,
-        "create_prototype": {
-            **_NAMED,
-            "parent": {
-                "type": ["integer", "null"],
-                "description": "ID of a more general class, or null when no parent is justified.",
-            },
-        },
-        "create_instance": {**_NAMED, "prototype": _ID},
-        "create_facet": {
-            **_NAMED,
-            "instance": _ID,
-            "valid_from": _STATE_START,
-            "valid_until": _STATE_END,
-        },
-        "define_relation": {
-            **_NAMED,
-            "roles": {
-                "type": "array",
-                "minItems": 1,
-                "items": _object(
-                    {
-                        "label": {
-                            **_TEXT,
-                            "description": (
-                                "Unique Python identifier; valid_at and known_at are reserved."
-                            ),
-                        },
-                        "value_type": {
-                            "type": "string",
-                            "enum": sorted(VALUE_TYPES),
-                            "description": (
-                                "node/concept accept any graph object's integer ID; prototype "
-                                "accepts class schemas, including processes, relation types and "
-                                "properties; instance/facet require that kind's ID. Other types "
-                                "are literal values; any accepts a scalar, including null."
-                            ),
-                        },
-                        "arity": {
-                            "type": "string",
-                            "enum": sorted(ARITIES),
-                            "description": (
-                                "one: a single value; optional: omit the role or pass null; "
-                                "list0: an array, possibly empty; list1: a nonempty array."
-                            ),
-                        },
-                    }
-                ),
-            },
-        },
-        "relate": {
-            "relation": _ID,
-            "arguments": {
-                "type": "array",
-                "description": (
-                    "One entry per supplied role, using its exact declared label. Only optional "
-                    "roles may be omitted. Node values are returned integer IDs; list roles use "
-                    "one array value, not repeated entries."
-                ),
-                "items": _object({"role": _TEXT, "value": _VALUE}),
-            },
-            "conditions": {
-                "type": "array",
-                "description": "Conditions under which the assertion applies, with unique names.",
-                "items": _object({"parameter": _TEXT, "value": _VALUE}),
-            },
-            "description": _OPTIONAL_TEXT,
-            "sources": _SOURCES,
-        },
-        "save_note": {
-            "name": _TEXT,
-            "source": {
-                **_REFERENCE,
-                "description": "Source to copy; automatically included among this Note's grounds.",
-            },
-            "sources": {
-                "type": "array",
-                "items": _REFERENCE,
-                "description": "Additional grounds, or [] when the copied source is sufficient.",
-            },
-        },
-        "update": {
-            "object": _ID,
-            "changes": {
-                "type": "object",
-                "description": "Fields to replace; omitted fields stay unchanged. Nested values replace the complete field.",
-                "properties": {
-                    "name": _TEXT,
-                    "description": _OPTIONAL_TEXT,
-                    "properties": {"type": "object"},
-                    "valid_from": _STATE_START,
-                    "valid_until": _STATE_END,
-                    "relation_type": _ID,
-                    "args": {"type": "object"},
-                    "signature": {"type": "array", "items": {"type": "object"}},
-                    "views": {"type": "array", "items": {"type": "object"}},
+TOOLS = (
+    {
+        "name": "search",
+        "description": "Find existing objects before choosing an identity or representation.",
+        "parameters": _object({"query": _TEXT, "next_page": {"type": "boolean"}}),
+        "read_only": True,
+    },
+    {
+        "name": "describe",
+        "description": "Read an existing object, its relation schema and known assertions.",
+        "parameters": _object({"subject": {"type": ["integer", "string"]}}),
+        "read_only": True,
+    },
+    {
+        "name": "create_concept",
+        "description": "Save a useful distinction not expressed by an existing concept.",
+        "parameters": _object(_NAMED),
+        "read_only": False,
+    },
+    {
+        "name": "create_prototype",
+        "description": "Save a class, without asserting typical properties.",
+        "parameters": _object(
+            {
+                **_NAMED,
+                "parent": {
+                    "type": ["integer", "null"],
+                    "description": "ID of a more general class, or null when no parent is justified.",
                 },
-                "additionalProperties": False,
-            },
-            "sources": _SOURCES,
-        },
-        "delete": {
-            "objects": {"type": "array", "items": _ID, "minItems": 1},
-            "sources": _SOURCES,
-        },
-    }.items()
-}
+            }
+        ),
+        "read_only": False,
+    },
+    {
+        "name": "create_instance",
+        "description": "Save one identifiable object and its class membership.",
+        "parameters": _object({**_NAMED, "prototype": _ID}),
+        "read_only": False,
+    },
+    {
+        "name": "create_facet",
+        "description": "Save a changing aspect of an object, with known or unknown time bounds.",
+        "parameters": _object(
+            {
+                **_NAMED,
+                "instance": _ID,
+                "valid_from": _STATE_START,
+                "valid_until": _STATE_END,
+            }
+        ),
+        "read_only": False,
+    },
+    {
+        "name": "define_relation",
+        "description": "Save a relation type with meaningful participant roles.",
+        "parameters": _object(
+            {
+                **_NAMED,
+                "roles": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": _object(
+                        {
+                            "label": {
+                                **_TEXT,
+                                "description": (
+                                    "Unique Python identifier; valid_at and known_at are reserved."
+                                ),
+                            },
+                            "value_type": {
+                                "type": "string",
+                                "enum": sorted(VALUE_TYPES),
+                                "description": (
+                                    "node/concept accept any graph object's integer ID; prototype "
+                                    "accepts class schemas, including processes, relation types and "
+                                    "properties; instance/facet require that kind's ID. Other types "
+                                    "are literal values; any accepts a scalar, including null."
+                                ),
+                            },
+                            "arity": {
+                                "type": "string",
+                                "enum": sorted(ARITIES),
+                                "description": (
+                                    "one: a single value; optional: omit the role or pass null; "
+                                    "list0: an array, possibly empty; list1: a nonempty array."
+                                ),
+                            },
+                        }
+                    ),
+                },
+            }
+        ),
+        "read_only": False,
+    },
+    {
+        "name": "relate",
+        "description": "Save an assertion using an existing relation type.",
+        "parameters": _object(
+            {
+                "relation": _ID,
+                "arguments": {
+                    "type": "array",
+                    "description": (
+                        "One entry per supplied role, using its exact declared label. Only optional "
+                        "roles may be omitted. Node values are returned integer IDs; list roles use "
+                        "one array value, not repeated entries."
+                    ),
+                    "items": _object({"role": _TEXT, "value": _VALUE}),
+                },
+                "conditions": {
+                    "type": "array",
+                    "description": "Conditions under which the assertion applies, with unique names.",
+                    "items": _object({"parameter": _TEXT, "value": _VALUE}),
+                },
+                "description": _OPTIONAL_TEXT,
+                "sources": _SOURCES,
+            }
+        ),
+        "read_only": False,
+    },
+    {
+        "name": "create_claim",
+        "description": (
+            "Save an independently checkable assertion when no suitable structured relation "
+            "expresses it. Include its scope and qualifications; a hypothesis remains provisional. "
+            "Saving a Claim does not assess evidence or assign confidence."
+        ),
+        "parameters": _object(
+            {
+                **_NAMED,
+                "description": {
+                    **_TEXT,
+                    "description": (
+                        "Self-contained assertion, including the conditions and uncertainty "
+                        "needed to understand and check it independently of its source text."
+                    ),
+                },
+            }
+        ),
+        "read_only": False,
+    },
+    {
+        "name": "save_note",
+        "description": (
+            "Copy source text worth retrieving as a self-contained whole for its wording or "
+            "reasoning. Use selectively: ordinarily extract reusable graph knowledge. "
+            "Copies analytical text or strings verbatim; other structured sources become JSON."
+        ),
+        "parameters": _object(
+            {
+                "name": _TEXT,
+                "source": {
+                    **_REFERENCE,
+                    "description": "Source to copy; automatically included among this Note's grounds.",
+                },
+                "sources": {
+                    "type": "array",
+                    "items": _REFERENCE,
+                    "description": "Additional grounds, or [] when the copied source is sufficient.",
+                },
+            }
+        ),
+        "read_only": False,
+    },
+    {
+        "name": "update",
+        "description": "Update selected fields of an existing object, preserving history and sources.",
+        "parameters": _object(
+            {
+                "object": _ID,
+                "changes": {
+                    "type": "object",
+                    "description": "Fields to replace; omitted fields stay unchanged. Nested values replace the complete field.",
+                    "properties": {
+                        "name": _TEXT,
+                        "description": _OPTIONAL_TEXT,
+                        "properties": {"type": "object"},
+                        "valid_from": _STATE_START,
+                        "valid_until": _STATE_END,
+                        "relation_type": _ID,
+                        "args": {"type": "object"},
+                        "signature": {"type": "array", "items": {"type": "object"}},
+                        "views": {"type": "array", "items": {"type": "object"}},
+                    },
+                    "additionalProperties": False,
+                },
+                "sources": _SOURCES,
+            }
+        ),
+        "read_only": False,
+    },
+    {
+        "name": "delete",
+        "description": "Remove selected objects from the current graph, preserving history. No cascading deletion.",
+        "parameters": _object(
+            {
+                "objects": {"type": "array", "items": _ID, "minItems": 1},
+                "sources": _SOURCES,
+            }
+        ),
+        "read_only": False,
+    },
+)
 
-_TOOL_DESCRIPTIONS = {
-    "search": "Find existing objects before choosing an identity or representation.",
-    "describe": "Read an existing object, its relation schema and known assertions.",
-    "create_concept": "Save a useful distinction not expressed by an existing concept.",
-    "create_prototype": "Save a class, without asserting typical properties.",
-    "create_instance": "Save one identifiable object and its class membership.",
-    "create_facet": "Save a changing aspect of an object, with known or unknown time bounds.",
-    "define_relation": "Save a relation type with meaningful participant roles.",
-    "relate": "Save an assertion using an existing relation type.",
-    "save_note": "Save the source text as a Note, retaining its qualifications and origin.",
-    "update": "Update selected fields of an existing object, preserving history and sources.",
-    "delete": "Remove selected objects from the current graph, preserving history. No cascading deletion.",
-}
+TOOLS_BY_NAME = {tool["name"]: tool for tool in TOOLS}
 
 INTEGRATION_TOOLS = tuple(
     ToolDefinition(
-        name,
-        _TOOL_DESCRIPTIONS[name],
-        _object({key: value for key, value in schema["properties"].items() if key != "action"}),
-        read_only=name in {"search", "describe"},
+        tool["name"], tool["description"], tool["parameters"], read_only=tool["read_only"]
     )
-    for name, schema in ACTION_SCHEMAS.items()
+    for tool in TOOLS
 )
 
 WRITE_TOOLS = tuple(tool for tool in INTEGRATION_TOOLS if not tool.read_only)
 CREATE_ACTIONS = frozenset(
-    {"create_concept", "create_prototype", "create_instance", "create_facet", "define_relation"}
+    {
+        "create_concept",
+        "create_prototype",
+        "create_instance",
+        "create_facet",
+        "create_claim",
+        "define_relation",
+    }
 )
 
 
 def validate_action(action):
-    if not isinstance(action, dict) or action.get("action") not in ACTION_SCHEMAS:
+    if not isinstance(action, dict) or action.get("action") not in TOOLS_BY_NAME:
         raise ContractError("Unknown semantic action")
-    validate(action, ACTION_SCHEMAS[action["action"]])
+    validate(
+        {key: value for key, value in action.items() if key != "action"},
+        TOOLS_BY_NAME[action["action"]]["parameters"],
+    )
     if action["action"] == "relate":
         for field in ("arguments", "conditions"):
             for item in action[field]:
@@ -267,7 +349,13 @@ def compile_action(graph, action, material):
             if isinstance(node, RelationInstance) and node.belief_target:
                 raise ContractError("Removing assessed evidence requires evidence assessment")
         return GraphDelta(deletes=tuple(ids)), None
-    if name in {"create_concept", "create_prototype", "create_instance", "create_facet"}:
+    if name in {
+        "create_concept",
+        "create_prototype",
+        "create_instance",
+        "create_facet",
+        "create_claim",
+    }:
         kind = name.removeprefix("create_")
         fields = {"name": action["name"], "description": action["description"], "kind": kind}
         if kind == "facet":

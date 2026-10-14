@@ -47,18 +47,18 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
             assert payload["profile"] == "remember"
             assert payload["mode"] == "exec"
             assert "output_schema" not in payload
-            assert "create_concept" in {tool["name"] for tool in payload["tools"]}
+            assert "create_claim" in {tool["name"] for tool in payload["tools"]}
             attempts.append(json.loads(payload["prompt"]))
             call = payload["_tool_handler"]
             await call("search", {"query": "Process", "next_page": False})
             fields = {
-                "name": "Cat",
-                "description": "The category of domestic cats",
+                "name": "Cat classification",
+                "description": "A cat is an animal.",
                 "sources": arguments["experience_refs"],
             }
             tool_results.append(await call("create_prototype", {**fields, "parent": 9999}))
             assert tool_results[-1]["error"]
-            tool_results.append(await call("create_concept", fields))
+            tool_results.append(await call("create_claim", fields))
             return {"text": ""}
         if method.startswith("semantic."):
             return await world.service.execute(method, payload, metadata)
@@ -73,6 +73,7 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
     try:
         result = await runtime.execute("task", parent, arguments, run_id="remember")
         assert len(result.result["writes"]) == 1
+        assert world.graph.find("Cat classification").kind == "claim"
         assert len(attempts) == 1 and tool_results[0]["error"]
         assert len([e for e in traces if e["type"] == "run_started"]) == 3
         revision_before = world.graph.revision

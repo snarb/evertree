@@ -53,15 +53,27 @@ def test_each_write_requires_sources_in_supplied_experience():
     invalid = write_action(world, refs[:1], metadata, note(refs[1]))
     assert invalid["error"]
     assert (world.graph.snapshot(), world.memory.snapshot()) == before
-    missing = {"action": "create_concept", "name": "Ungrounded", "description": None, "sources": []}
-    assert write_action(world, refs, metadata, missing)["error"]
-    assert world.graph.snapshot() == before[0]
+    for action in ("create_concept", "create_claim"):
+        fields = {"action": action, "name": "Ungrounded", "description": "A possible cause"}
+        assert write_action(world, refs, metadata, {**fields, "sources": []})["error"]
+        assert write_action(world, refs[:1], metadata, {**fields, "sources": refs[1:]})["error"]
+        assert world.graph.snapshot() == before[0]
 
 
-def test_write_replay_survives_restart_and_expanded_experience_without_duplicate_effects():
+@pytest.mark.parametrize("kind", ["note", "claim"])
+def test_write_replay_survives_restart_and_expanded_experience_without_duplicate_effects(kind):
     world = semantic_world()
     refs, metadata = recorded_experience(world, "Important", "Correction")
-    action = note(refs[0])
+    action = (
+        note(refs[0])
+        if kind == "note"
+        else {
+            "action": "create_claim",
+            "name": "Possible cause",
+            "description": "Reconnect may cause failure under load.",
+            "sources": refs[:1],
+        }
+    )
     result = write_action(world, refs[:1], metadata, action)
     assert "error" not in result, result
     before = world.graph.snapshot()
@@ -72,8 +84,8 @@ def test_write_replay_survives_restart_and_expanded_experience_without_duplicate
     replay = write_action(world, refs, {**metadata, "run_id": "after-restart"}, action)
     assert replay == result and world.graph.snapshot() == before
     assert restored.snapshot() == before_trace
-    assert len(world.graph.nodes(kind="note")) == 1
-    changed_action = {**action, "source": refs[1]}
+    assert len(world.graph.nodes(kind=kind)) == 1
+    changed_action = {**action, "name": "Different assertion"}
     assert write_action(world, refs, metadata, changed_action)["error"]
     assert write_action(world, refs[1:], metadata, note(refs[1]))["error"]
     assert world.graph.snapshot() == before
@@ -114,10 +126,16 @@ async def test_search_pagination_refreshes_after_a_successful_graph_write():
     assert searches == ["ambiguous", "ambiguous"]
 
 
-def test_identity_creation_requires_complete_fresh_search():
+@pytest.mark.parametrize("action_name", ["create_concept", "create_claim"])
+def test_identity_creation_requires_complete_fresh_search(action_name):
     world = semantic_world()
     refs, metadata = recorded_experience(world, "Object exists")
-    action = {"action": "create_concept", "name": "Object", "description": None, "sources": refs}
+    action = {
+        "action": action_name,
+        "name": "Object",
+        "description": "The object may be a new kind of pump.",
+        "sources": refs,
+    }
     assert (
         "complete current search"
         in write_action(world, refs, metadata, action, searched=False)["error"]
@@ -175,7 +193,8 @@ async def test_fabricated_search_completion_cannot_authorize_creation():
     assert write_action(world, refs, metadata, action, searched=False)["error"]
 
 
-async def test_program_searches_before_creation_and_refreshes_after_intervening_write():
+@pytest.mark.parametrize("action_name", ["create_concept", "create_claim"])
+async def test_program_searches_before_creation_and_refreshes_after_intervening_write(action_name):
     searches = []
 
     class Index(EmptyIndex):
@@ -193,9 +212,11 @@ async def test_program_searches_before_creation_and_refreshes_after_intervening_
         saved = await call("save_note", {"name": "Explanation", "source": refs[0], "sources": []})
         assert world.graph.get(saved["object"]).description == "A useful term"
         created = await call(
-            "create_concept", {"name": "Useful term", "description": None, "sources": refs}
+            action_name,
+            {"name": "Useful term", "description": "A useful conditional meaning", "sources": refs},
         )
         assert created["object"] > 0
+        assert world.graph.get(created["object"]).kind == action_name.removeprefix("create_")
 
     result = await run(
         context(

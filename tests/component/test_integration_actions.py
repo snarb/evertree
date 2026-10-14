@@ -5,9 +5,9 @@ from datetime import timedelta
 
 import pytest
 
-from evertree.common.integration_actions import ACTION_SCHEMAS, validate_action
 from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.memory.types import TraceOutputRef
+from evertree.core.semantics.actions import TOOLS_BY_NAME, validate_action
 from evertree.core.values import UNKNOWN, ContractError
 from tests.support.semantics import recorded_experience, semantic_world, write_action
 
@@ -100,6 +100,40 @@ def test_required_any_role_is_distinct_from_explicit_null():
     result = writer.apply("relate", **fields)
     assert "error" not in result, result
     assert writer.world.graph.get(result["object"]).args["value"] is None
+
+
+def test_claim_preserves_checkable_meaning_and_grounds_without_creating_belief():
+    statement = (
+        "Switching servers may cause reconnect failures only while requests are in flight; "
+        "this is a hypothesis, not an established cause. Test with a controlled switch."
+    )
+    writer = Writer(statement, "Unrelated observation")
+    beliefs = writer.world.operations.beliefs.snapshot()
+    result = writer.apply(
+        "create_claim",
+        name="Server switch may cause reconnect failures",
+        description=statement,
+        sources=writer.refs[:1],
+    )
+    assert "error" not in result, result
+    claim = writer.world.graph.get(result["object"])
+    assert claim.id > 0 and claim.kind == "claim"
+    assert claim.description == statement
+    assert not claim.properties
+    assert writer.world.operations.beliefs.snapshot() == beliefs
+    change = writer.world.graph.changes_of(claim.id)[0]
+    assert claim.id not in change.before and change.after[claim.id] == claim
+    mutation = writer.world.memory.get_event(change.provenance["event_ref"])
+    assert [ref.event_ref for ref in mutation.dependencies] == [writer.refs[0]["event_ref"]]
+
+
+@pytest.mark.parametrize("description", [None, ""])
+def test_claim_requires_full_assertion_not_only_a_title(description):
+    writer = Writer()
+    before = writer.world.graph.snapshot()
+    result = writer.apply("create_claim", name="Possible cause", description=description)
+    assert result["error"]
+    assert writer.world.graph.snapshot() == before
 
 
 @pytest.mark.parametrize("analytical", [False, True])
@@ -320,7 +354,7 @@ def test_conditions_distinguish_equal_arguments_and_constrain_property_reads():
 
 
 def test_action_contract_has_no_status_protocol_or_storage_fields():
-    assert not set(ACTION_SCHEMAS) & {
+    assert not set(TOOLS_BY_NAME) & {
         "finish",
         "reuse",
         "trace_only",

@@ -3,6 +3,8 @@
 import asyncio
 import json
 
+import pytest
+
 from evertree.core.cognition.steps import AnalyticalNote
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.provider import AgentEvent
@@ -15,6 +17,7 @@ from tests.support.application import (
     tool_events,
     verification,
 )
+from tests.support.semantics import EmptyIndex
 
 
 def step(text, *, final=False, plan=None):
@@ -260,13 +263,22 @@ async def test_observation_during_verification_invalidates_pending_completion(ap
     )
 
 
-async def test_consciousness_loads_shared_write_tools_with_visible_sources(app):
+@pytest.mark.parametrize("kind", ["note", "claim"])
+async def test_consciousness_loads_shared_write_tools_with_visible_sources(app, kind):
+    description = "The pump may stop during server switching; the cause is still untested."
+    app.search_index = EmptyIndex()
+
     class WritingProvider(IntegrationScriptedProvider):
         async def run(self, request_id, request, **kwargs):
             if request.mode == "exec" and not is_integration_request(request):
                 context = json.loads(request.prompt)
                 source = context["incoming"]["source_ref"]
                 source = {**source, "output_path": [*source["output_path"], "content"]}
+                arguments = {"name": "Explicitly selected observation"}
+                if kind == "note":
+                    arguments.update(source=source, sources=[])
+                else:
+                    arguments.update(description=description, sources=[source])
                 self.scripts[0][:0] = [
                     AgentEvent(
                         "tool_call",
@@ -275,12 +287,8 @@ async def test_consciousness_loads_shared_write_tools_with_visible_sources(app):
                     AgentEvent(
                         "tool_call",
                         {
-                            "name": "graph.save_note",
-                            "arguments": {
-                                "name": "Explicitly selected observation",
-                                "source": source,
-                                "sources": [],
-                            },
+                            "name": "graph.save_note" if kind == "note" else "graph.create_claim",
+                            "arguments": arguments,
                         },
                     ),
                 ]
@@ -290,11 +298,11 @@ async def test_consciousness_loads_shared_write_tools_with_visible_sources(app):
     app.provider = WritingProvider(
         [framing(), step("Saved the requested source", final=True), verification()]
     )
-    result = await app.run("Remember the precise observation: the pump stopped at 14:00")
+    result = await app.run(description)
     assert result["status"] == "succeeded"
-    note = app.graph.find("Explicitly selected observation")
-    assert note.description == "Remember the precise observation: the pump stopped at 14:00"
-    assert len(app.graph.changes_of(note.id)) == 1
+    saved = app.graph.find("Explicitly selected observation")
+    assert saved.kind == kind and saved.description == description
+    assert len(app.graph.changes_of(saved.id)) == 1
     events = [event for event in app.memory.events if event.operator == "semantic_write"]
     assert len(events) == 1
     assert events[0].arguments["key"][1].startswith("consciousness:")
@@ -341,15 +349,19 @@ async def test_conscious_write_cannot_use_unpresented_sources(app):
     assert "outside supplied experience" in result["error"]
 
 
-async def test_loading_graph_writes_in_model_mode_grants_no_write_authority(app):
-    import pytest
-
+@pytest.mark.parametrize("action_name", ["save_note", "create_claim"])
+async def test_loading_graph_writes_in_model_mode_grants_no_write_authority(app, action_name):
     from evertree._application.prompts import tool_sets
     from evertree.core.provider import AgentRequest, ProviderError, ScriptedProvider
 
     task = app.tasks.create_task("Inspect write-tool availability")
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Inspect")
     source = app._record_analysis(task.id, {"text": "Read-only model input"})
+    arguments = {"name": "Forbidden model mutation"}
+    if action_name == "save_note":
+        arguments.update(source=source, sources=[])
+    else:
+        arguments.update(description="A possible assertion", sources=[source])
     app.provider = ScriptedProvider(
         [
             [
@@ -360,12 +372,8 @@ async def test_loading_graph_writes_in_model_mode_grants_no_write_authority(app)
                 AgentEvent(
                     "tool_call",
                     {
-                        "name": "graph.save_note",
-                        "arguments": {
-                            "name": "Forbidden model mutation",
-                            "source": source,
-                            "sources": [],
-                        },
+                        "name": "graph." + action_name,
+                        "arguments": arguments,
                     },
                 ),
             ]

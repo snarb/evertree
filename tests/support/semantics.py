@@ -9,6 +9,7 @@ from evertree.core.graph.store import GraphStore
 from evertree.core.learning.state import LearningStore
 from evertree.core.memory.store import TraceStore
 from evertree.core.operations import CoreOperations, authorize_operation
+from evertree.core.semantics.actions import CREATE_ACTIONS
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.service import SemanticService
 from evertree.core.values import json_value
@@ -59,13 +60,7 @@ def recorded_experience(world, *contents, run_mode="live", context=None):
 
 def write_action(world, refs, metadata, action, *, key="write", searched=True):
     """Exercise Core validation; Program tests separately exercise the actual search path."""
-    if searched and action["action"] in {
-        "create_concept",
-        "create_prototype",
-        "create_instance",
-        "create_facet",
-        "define_relation",
-    }:
+    if searched and action["action"] in CREATE_ACTIONS:
         world.service.results(action["name"], None, [], [], 20, metadata["task_id"])
     return world.service.write(
         {"experience_refs": refs, "action": action, "operation_key": key}, metadata

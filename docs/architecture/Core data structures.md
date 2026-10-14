@@ -409,14 +409,17 @@ If a computation uses contents that are not yet committed, save an exact snapsho
 > **`Note`** — a free-text record of observations, experience, reasoning, conclusions, or instructions for later use.
 > ^def-Note
 
-A Note may preserve coherent content as a whole: for example, an experience description, a possible explanation, and a proposed next action. It does not have to be broken into a separate claim for every sentence before it can be stored, retrieved, used, or evaluated. This allows relationships and reasoning that are not yet formalized to be retained.
+A graph Note preserves source text when the text itself has independent value as
+a self-contained whole: for example, a short historical speech whose wording
+matters, or a breakthrough argument whose reasoning is useful to revisit intact.
+This is an occasional choice. Usually, organize reusable knowledge as concepts,
+objects and relations, or as a Claim when an assertion has no adequate native
+representation. Routine reasoning and source details can remain in trace.
 
-Materialize a Note when this connected content has independent value for later
-reasoning. Materialize an individual assertion when it needs separate retrieval,
-comparison, checking or revision. The representations may coexist when each has
-that purpose; do not copy every source into the graph or create a second copy of
-each sentence. Material that needs no separate graph representation stays in the
-trace. Unknown dates or uncertain truth do not by themselves require a Note.
+Materialize both a Note and selected assertions only when the whole text and the
+individual assertions each have a separate use. The presence of reasoning,
+difficulty of formalization, unknown dates or uncertain truth do not by themselves
+require a Note. The material need not be broken into a Claim for every sentence.
 
 A Note is linked to relevant concepts, processes, programs, and experience through ordinary semantic relations. [[Memory#^def-ResultProvenance|Provenance]] records which inputs and computations produced it; related memories may explain its origin, confirm its contents, or show their limits. Originating from an experience does not mean that the experience supports the entire Note.
 
@@ -436,13 +439,15 @@ An `AnalyticalNote` in a [[Cognition and Attention#Conscious Step Contract|consc
 
 Claim atomicity is determined by whether it can be independently checked and updated, not by text length or number of concepts. One claim may describe a causal regularity with conditions. If parts need to be confirmed, refuted, or revised independently, define separate targets for them.
 
-A Claim may be expressed in a [[#^def-Note|Note]] and extracted for independent work; the entire Note may also be evaluated as a whole. A hypothesis remains a Claim even when it has not yet been confirmed.
+A Claim may be expressed in a [[#^def-Note|Note]] and extracted for independent work; the entire Note may also be evaluated as a whole. Claim is not a synonym for an unconfirmed hypothesis: a Claim can be proposed, supported or refuted. A hypothesis may already have a precise native representation as a relation and need no separate Claim.
 
 When meaning is already represented precisely enough by ordinary EverTree properties, relations, or transitions, use that representation instead of a duplicate [[#^def-Claim|Claim]].
 
 A Claim may first arise as the result of reasoning or program execution.
 
-If a claim becomes an independent `BeliefTarget` that must be used or updated separately from the source [[Memory#^def-ProgramRun|`ProgramRun`]], pass its recorded result to KnowledgeIntegration for materialization through an ordinary internal `GraphDelta`.
+When an assertion needs independent retrieval, checking or revision, KnowledgeIntegration or consciousness's loaded `graph_write_tools` can materialize it through `create_claim(name, description, sources)`. The description contains the complete assertion, including its conditions and uncertainty; the name is a retrieval label. Both callers use the same checked Core write path. The operation creates an ordinary semantic node with kind `claim`, a permanent ID and source-backed history, not a new base node type. Generic `update` and `delete` apply as for other semantic objects.
+
+Creating a Claim neither confirms it nor creates `BeliefData` or evidence. Numerical assessment uses the separate belief mechanisms; a statement extracted from reasoning does not become an independent observation of its own truth. Materialization does not require an existing `BeliefTarget`.
 
 Here, persistent means:
 
@@ -689,7 +694,7 @@ A write operation is recorded by the corresponding graph-writing [[Memory#^def-T
 
 Direct semantic mutation of persistent objects outside `GraphDelta` is prohibited.
 
-Routine domain knowledge enters through `KnowledgeIntegration`; callers may request early integration through `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)`. For explicit edits, consciousness loads `graph_write_tools`. Both paths share creation, relation, Note, generic `update` and `delete` operations backed by the checked Core `semantic.write` gateway. Public raw `graph.apply` is unavailable. Every successful operation is atomic with its structural links, change history, sources and replay result. Later failures do not roll back earlier writes. Bootstrap, lifecycle and specialized Core mechanisms retain internal delta operations. Integration independently chooses useful representations; consciousness has no per-source status or completion obligation to resolve.
+Routine domain knowledge enters through `KnowledgeIntegration`; callers may request early integration through `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)`. For explicit edits, consciousness loads `graph_write_tools`. Both paths share creation (including Claim), relation, Note, generic `update` and `delete` operations backed by the checked Core `semantic.write` gateway. Public raw `graph.apply` is unavailable. Every successful operation is atomic with its structural links, change history, sources and replay result. Later failures do not roll back earlier writes. Bootstrap, lifecycle and specialized Core mechanisms retain internal delta operations. Integration independently chooses useful representations; consciousness has no per-source status or completion obligation to resolve.
 
 Runtime state that is not persistent semantic knowledge, such as current `activations`, may be changed separately.
 

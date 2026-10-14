@@ -14,9 +14,29 @@
     ],
     "max_created": 16,
     "criteria": {
-      "preserved_meaning": "The saved graph content, possibly one coherent Note, preserves the conditional hypothesis about reuse after server switching and the contrast with load alone.",
+      "preserved_meaning": "The saved graph content expresses the conditional hypothesis about reuse after server switching and the contrast with load alone, using relations or a separately checkable Claim. A Note is justified only if retaining the full source text has independent value.",
       "uncertainty": "Saved content preserves the provisional nature of the explanation and the need for the controlled reconnect check; it does not present causality as established.",
       "grounds": "The materialization cites the recorded analysis or observations and does not count the analytical conclusion as another independent observation."
+    }
+  },
+  {
+    "id": "alternative_explanations",
+    "objective": "Keep the useful alternative explanations for the wet loading bay available for the next investigation; no explanation has been selected yet.",
+    "materials": [
+      {
+        "kind": "observation",
+        "content": "The loading-bay floor was wet at 08:00. Rain fell overnight and the external door was open. A hose was also connected inside, but nobody observed it running. No water-path inspection has been done."
+      },
+      {
+        "kind": "analysis",
+        "content": "Two useful possible sources of the water are rain entering through the open door and leakage from the connected hose. Both need to remain available for investigation; neither is confirmed and a mixed cause is possible. Inspect water tracks and hose fittings before selecting a cause. The goal is to retain these alternative causal interpretations, not the exact wording of this paragraph."
+      }
+    ],
+    "max_created": 18,
+    "criteria": {
+      "alternative_meaning": "The saved content retains the useful rain-entry and hose-leak interpretations as provisional explanations. Precise relations can represent them before selection; Claims are appropriate when their meaning lacks a suitable native representation.",
+      "no_forced_winner": "No interpretation becomes an established cause merely because it is represented in the graph; mixed causation remains possible.",
+      "no_invented_assessment": "No posterior probability, independently verified cause, completed inspection, or mutually exclusive competition scope is invented. The original observations and analytical grounds remain distinguishable."
     }
   },
   {
