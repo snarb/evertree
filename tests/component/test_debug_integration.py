@@ -46,8 +46,11 @@ async def test_missing_search_configuration_stops_before_model_usage(tmp_path, m
     assert (tmp_path / "trace.json").is_file()
 
 
-async def test_model_forwards_program_request_and_returns_provider_output(tmp_path):
-    session = DebugSession(tmp_path)
+@pytest.mark.parametrize("timeout_seconds", [None, 120])
+async def test_model_forwards_program_request_and_returns_provider_output(
+    tmp_path, timeout_seconds
+):
+    session = DebugSession(tmp_path, timeout_seconds=timeout_seconds)
     requests = []
     provider_output = {"query": "new query from provider"}
 
@@ -72,11 +75,13 @@ async def test_model_forwards_program_request_and_returns_provider_output(tmp_pa
     assert request.output_schema == payload["output_schema"]
     assert request.model == session.config.remember.model
     assert request.effort == session.config.remember.effort
+    assert request.timeout_seconds == timeout_seconds
     assert session.calls[0]["result"] == result
 
 
 async def test_debug_integration_forwards_native_tools_and_records_direct_writes(tmp_path):
     session = DebugSession(tmp_path)
+    assert session.timeout_seconds is None
     session.record_experience()
     refs = session.experience_refs
     session.provider = ScriptedProvider(

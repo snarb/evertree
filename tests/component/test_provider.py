@@ -1139,3 +1139,32 @@ async def test_ephemeral_history_keeps_public_tool_results_without_nested_contex
     assert prompt.count("<evertree-history>") == 1
     await provider.close()
     assert not provider._histories
+
+
+@pytest.mark.parametrize("invocation_timeout", [True, False])
+async def test_timeout_diagnostic_distinguishes_deadline_from_sdk_timeout(
+    tmp_path, monkeypatch, invocation_timeout
+):
+    provider = CodexProvider()
+
+    async def catalog(*args):
+        if invocation_timeout:
+            await asyncio.Event().wait()
+        raise TimeoutError
+
+    monkeypatch.setattr(provider, "_computation_catalog", catalog)
+    events = [
+        event
+        async for event in provider.run(
+            "timeout",
+            AgentRequest("test", tmp_path, timeout_seconds=0.01 if invocation_timeout else None),
+        )
+    ]
+    (error,) = [event.data for event in events if event.kind == "error"]
+    assert error["type"] == "TimeoutError"
+    if invocation_timeout:
+        assert "0.01-second wall-clock limit" in error["message"]
+        assert "debugger pauses" in error["message"]
+    else:
+        assert error["message"] == "SDK operation timed out."
+    assert not provider._active

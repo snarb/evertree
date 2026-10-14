@@ -1,0 +1,78 @@
+"""Graph navigation after retrieval uses real structural links and projected reads."""
+
+from evertree.processes.semantic_processing.knowledge_integration._exec import _read_for_model
+from tests.support.pump_search import seed_pump_history
+from tests.support.semantics import context, semantic_world
+
+
+async def test_found_facet_leads_to_identity_class_and_other_states_without_search():
+    world = semantic_world()
+    targets = seed_pump_history(world.graph)
+    ctx = context(world, None, role="model")
+    found = await ctx.call("semantic_search", {"query": "Н-1 выключен"})
+    assert [item["id"] for item in found.result["items"]] == [targets["off"].id]
+    facet = _read_for_model(await ctx.step("graph.describe", {"subject": targets["off"].id}))
+    link = next(fact for fact in facet["relations"] if fact["relation"] == "STATE_IDENTITY")
+    identity = link["args"]["instance"]
+    assert identity["id"] == targets["pump"].id
+    described = _read_for_model(await ctx.step("graph.describe", {"subject": identity["id"]}))
+    class_link = next(
+        fact for fact in described["relations"] if fact["relation"] == "IDENTITY_TYPE"
+    )
+    assert class_link["args"]["type"]["id"] == targets["prototype"].id
+    states = [
+        fact["args"]["facet"]
+        for fact in described["relations"]
+        if fact["relation"] == "STATE_IDENTITY"
+    ]
+    assert [state["id"] for state in states] == [targets["off"].id]
+    assert states[0]["valid_until"] == targets["off"].valid_until.isoformat()
+
+
+async def test_reviewed_creation_reuses_search_and_links_missing_parent():
+    from evertree.common.integration_actions import SemanticTools
+    from tests.support.semantics import EmptyIndex, recorded_experience
+
+    class Neighbors(EmptyIndex):
+        async def vector(self, nodes, query, kind):
+            return [nodes[0]["id"]]
+
+    world = semantic_world(index=Neighbors())
+    refs, _ = recorded_experience(world, "Pump P1 is equipment used to move water.")
+    ctx = context(world, None, role="exec")
+    searches = []
+
+    async def search(query, next_page=False):
+        searches.append(query)
+        return (await ctx.call("semantic_search", {"query": query})).result
+
+    async def describe(subject):
+        return await ctx.step("graph.describe", {"subject": subject})
+
+    async def write(action, operation_key):
+        return await ctx.step(
+            "semantic.write",
+            {"action": action, "operation_key": operation_key, "experience_refs": refs},
+        )
+
+    async def revision():
+        return world.graph.revision
+
+    handler = SemanticTools(search=search, describe=describe, write=write, revision=revision)
+    parent = None
+    for name in ("Equipment", "Pump"):
+        args = {"name": name, "description": None, "parent": parent, "sources": refs}
+        paused = await handler.handle("create_prototype", args)
+        assert "error" in paused and paused["reads"][0]["result"]["items"]
+        before = len(searches)
+        created = await handler.handle("create_prototype", args)
+        assert "error" not in created
+        assert len(searches) == before
+        child = created["object"]
+        if parent is not None:
+            assert any(
+                fact.args == {"type": child, "supertype": parent}
+                for fact in world.graph.facts("SUBTYPE_OF")
+            )
+        parent = child
+    assert searches == ["Equipment", "Pump"]

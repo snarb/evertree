@@ -57,9 +57,12 @@ class SemanticTools:
                 previous = self._searches.get(query)
                 if previous is None or previous[0] != await self._revision():
                     found = await search(action["name"])
-                    if found.get("items") or found.get("status") != "complete":
+                    if found.get("items") and found.get("status") == "complete":
                         raise ValueError(
-                            "Review search candidates; use an existing ID or repeat creation"
+                            "Review search candidates. They are possible matches, not a name "
+                            "conflict. If one represents this object, use its ID. Otherwise "
+                            "repeat this creation with the SAME name to proceed. Changing the "
+                            "name starts another search and review."
                         )
                 if self._searches[query][1].get("status") != "complete":
                     raise ValueError("Search is incomplete; retry later or omit this creation")

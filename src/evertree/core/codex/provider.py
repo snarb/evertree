@@ -338,8 +338,9 @@ class CodexProvider:
                     await queue.put(AgentEvent("usage", _usage({}, None)))
                     usage_seen = True
 
+            deadline = asyncio.timeout(request.timeout_seconds)
             try:
-                async with asyncio.timeout(request.timeout_seconds):
+                async with deadline:
                     catalog, catalog_digest = (
                         (None, None)
                         if request.native_coding
@@ -600,8 +601,16 @@ class CodexProvider:
                 raise
             except Exception as exc:  # noqa: BLE001 -- normalize SDK and transport failures
                 await report_missing_usage()
+                message = str(exc)
+                if isinstance(exc, TimeoutError):
+                    message = (
+                        f"Model invocation exceeded its {request.timeout_seconds:g}-second "
+                        "wall-clock limit (including startup, tool execution and debugger pauses)."
+                        if deadline.expired()
+                        else message or "SDK operation timed out."
+                    )
                 await queue.put(
-                    AgentEvent("error", {"message": str(exc), "type": type(exc).__name__})
+                    AgentEvent("error", {"message": message, "type": type(exc).__name__})
                 )
             finally:
                 callbacks = tuple(invocation.callbacks)

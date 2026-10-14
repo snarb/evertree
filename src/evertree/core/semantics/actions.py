@@ -54,13 +54,35 @@ _VALUE = {"anyOf": [_SCALAR, {"type": "array", "items": _SCALAR}]}
 TOOLS = (
     {
         "name": "search",
-        "description": "Find existing objects before choosing an identity or representation.",
-        "parameters": _object({"query": _TEXT, "next_page": {"type": "boolean"}}),
+        "description": (
+            "Find one object or reusable meaning by name or description. Exact names resolve "
+            "first; otherwise lexical and semantic similarity return candidates, not proven matches."
+        ),
+        "parameters": _object(
+            {
+                "query": {
+                    **_TEXT,
+                    "description": (
+                        "One name or focused phrase, e.g. 'Н-1' or 'pump operating state'. "
+                        "Search different subjects separately. Do not append graph types or "
+                        "field names such as prototype, facet or valid_from as search keywords: "
+                        "they are not filters."
+                    ),
+                },
+                "next_page": {"type": "boolean"},
+            }
+        ),
         "read_only": True,
     },
     {
         "name": "describe",
-        "description": "Read an existing object, its relation schema and known assertions.",
+        "description": (
+            "Read an object, its relation schema and known assertions. Follow returned IDs: "
+            "STATE_IDENTITY connects a Facet to its Instance; IDENTITY_TYPE connects an Instance "
+            "to its Prototype; SUBTYPE_OF connects a class to its broader parent. "
+            "An Instance's description also lists linked Facets. "
+            "relations_truncated means some links were omitted."
+        ),
         "parameters": _object({"subject": {"type": ["integer", "string"]}}),
         "read_only": True,
     },
@@ -72,13 +94,21 @@ TOOLS = (
     },
     {
         "name": "create_prototype",
-        "description": "Save a class, without asserting typical properties.",
+        "description": (
+            "Save a class under its nearest justified broader class. Create a missing parent "
+            "first; only a broad root or an unclassifiable concept uses parent=null. "
+            "Declaring the class does not assert typical properties."
+        ),
         "parameters": _object(
             {
                 **_NAMED,
                 "parent": {
                     "type": ["integer", "null"],
-                    "description": "ID of a more general class, or null when no parent is justified.",
+                    "description": (
+                        "ID of the nearest justified broader class (is-a). Reuse it or create "
+                        "it first. Null is for a broad root or an unjustified classification, "
+                        "not merely because the parent is absent from the graph."
+                    ),
                 },
             }
         ),

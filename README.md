@@ -87,6 +87,11 @@ model responses or predetermined graph objects. The example
 asks to preserve the pump's two observed state intervals; the actual representation is chosen
 by the model and validated by Core.
 
+Interactive debugging has no overall model deadline, so breakpoint pauses do not exhaust an
+invocation time limit. Automated callers can set `DebugSession(output_dir, timeout_seconds=120)`
+to bound the whole invocation, including startup and tools. Network operations retain their own
+timeouts; Stop still cancels the debug run.
+
 Useful breakpoints:
 
 - `DebugSession.record_experience`: source references and the analytical Note with its emphasis in text.

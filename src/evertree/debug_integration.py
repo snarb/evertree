@@ -68,8 +68,10 @@ def load_debug_environment(repository: Path, config: SemanticConfig):
 class DebugSession:
     """Inspect graph, memory, calls, experience_refs and recorded writes in the debugger."""
 
-    def __init__(self, output_dir: Path):
+    def __init__(self, output_dir: Path, *, timeout_seconds: float | None = None):
         self.output_dir = output_dir
+        # Breakpoint pauses count toward wall time, so interactive debugging has no deadline.
+        self.timeout_seconds = timeout_seconds
         self.config = SemanticConfig.load(Path(__file__).resolve().parents[2])
         self.graph, self.memory, beliefs = GraphStore(), TraceStore(), BeliefStore()
         self.graph.bootstrap(provenance="debug-bootstrap")
@@ -167,7 +169,7 @@ class DebugSession:
                     output_schema=payload.get("output_schema"),
                     model=self.config.remember.model,
                     effort=self.config.remember.effort,
-                    timeout_seconds=120,
+                    timeout_seconds=self.timeout_seconds,
                 ),
                 tool_handler=tool_handler,
             ):
