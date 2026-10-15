@@ -648,7 +648,17 @@ class GraphStore:
                 (AccessView("get_sources", ("dependent",), ("source",)),),
             ),
         ]
-        nodes = [Prototype(self.reserve_id(), "Process")]
+        nodes = [
+            Prototype(
+                self.reserve_id(),
+                "Process",
+                description=(
+                    "An activity or unfolding change, such as burning, engine starting or "
+                    "message delivery. Root of the process taxonomy; equipment, stored data "
+                    "and software components are participants, not automatically kinds of process."
+                ),
+            )
+        ]
         nodes.extend(
             RelationType(self.reserve_id(), name, signature=signature, views=views)
             for name, signature, views in definitions

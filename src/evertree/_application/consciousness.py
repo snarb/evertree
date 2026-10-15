@@ -255,7 +255,7 @@ class ConsciousnessMixin:
                                 self._workspace(state.id),
                                 instructions=CONSCIOUSNESS_INSTRUCTIONS,
                                 mode="exec",
-                                output_schema=ConsciousStepResult.model_json_schema(),
+                                output_schema=ConsciousStepResult.response_schema(),
                                 tools=self._tools(),
                                 tool_sets=tool_sets(),
                                 timeout_seconds=seconds,
@@ -304,7 +304,7 @@ class ConsciousnessMixin:
                     finding_refs=note_refs[1:],
                 )
                 state.progress = decision.progress
-                state.plan = decision.plan
+                state.plan = record["plan"]
                 state.unresolved_questions = decision.unresolved_questions
                 await self.backup()
                 await self._integrate_step(state)

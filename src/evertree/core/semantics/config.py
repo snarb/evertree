@@ -21,7 +21,7 @@ class ModelProfile:
 
 @dataclass(frozen=True)
 class SemanticConfig:
-    remember: ModelProfile = field(default_factory=lambda: ModelProfile(effort="medium"))
+    remember: ModelProfile = field(default_factory=lambda: ModelProfile(effort="high"))
     redis_url_env: str = "EVERTREE_REDIS_URL"
     openai_key_env: str = "OPENAI_API_KEY"
     embedding_model: str = "text-embedding-3-large"

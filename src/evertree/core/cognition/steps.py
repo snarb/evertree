@@ -15,6 +15,7 @@ from pydantic import (
 )
 
 from ..memory.types import TraceOutputRef
+from .schema import ResponseSchema
 
 
 def trace_reference(value: Any) -> TraceOutputRef:
@@ -79,6 +80,17 @@ class AnalyticalNote(BaseModel):
         return [trace_reference(item) for item in value]
 
 
+class PlanStep(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    step: Annotated[
+        StrictStr, Field(min_length=1, description="Work to perform or already performed.")
+    ]
+    status: Annotated[
+        StrictStr, Field(min_length=1, description="Current progress of this plan item.")
+    ]
+
+
 class ConsciousStepResult(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -88,7 +100,7 @@ class ConsciousStepResult(BaseModel):
     findings: list[AnalyticalNote] = Field(
         default_factory=list, description="Optional separately selected insights or hypotheses."
     )
-    plan: list[dict[str, Any]] = Field(
+    plan: list[PlanStep] = Field(
         default_factory=list,
         description="Complete updated working plan; use clear descriptions and statuses for steps.",
     )
@@ -104,6 +116,10 @@ class ConsciousStepResult(BaseModel):
         None,
         description="Only this text is delivered to the user; required for propose_completion.",
     )
+
+    @classmethod
+    def response_schema(cls):
+        return cls.model_json_schema(schema_generator=ResponseSchema)
 
     @model_validator(mode="after")
     def validate_continuation(self) -> Self:

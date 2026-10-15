@@ -19,8 +19,28 @@ class SemanticTools:
             revision,
         )
         self._searches = {}
+        self._shown = {}
         self._sequence = 0
         self.writes = []
+
+    @staticmethod
+    def _candidate(node):
+        result = {
+            key: node.get(key)
+            for key in ("id", "name", "kind", "description", "valid_from", "valid_until")
+        }
+        for key in ("valid_from", "valid_until"):
+            value = result[key]
+            if isinstance(value, dict) and set(value) == {"$datetime"}:
+                result[key] = value["$datetime"]
+        return result
+
+    def _remember(self, result):
+        nodes = [*result.get("items", []), *result.get("created", [])]
+        if "subject" in result:
+            nodes.append(result["subject"])
+        for node in nodes:
+            self._shown[node["id"]] = self._candidate(node)
 
     async def handle(self, name, arguments):
         self._sequence += 1
@@ -49,15 +69,26 @@ class SemanticTools:
             action = {**arguments, "action": name}
             validate_action(action)
             if name == "search":
-                return await search(action["query"], action["next_page"])
+                result = await search(action["query"], action["next_page"])
+                self._remember(result)
+                return result
             if name == "describe":
-                return await describe(action["subject"])
+                result = await describe(action["subject"])
+                self._remember(result)
+                return result
             if name in CREATE_ACTIONS:
                 query = action["name"].strip().casefold()
                 previous = self._searches.get(query)
                 if previous is None or previous[0] != await self._revision():
                     found = await search(action["name"])
-                    if found.get("items") and found.get("status") == "complete":
+                    # Refresh retrieval after graph changes, but do not make the model review
+                    # the same unchanged cards again under every proposed new name.
+                    unseen = [
+                        node
+                        for node in found.get("items", [])
+                        if self._shown.get(node["id"]) != self._candidate(node)
+                    ]
+                    if unseen and found.get("status") == "complete":
                         raise ValueError(
                             "Review search candidates. They are possible matches, not a name "
                             "conflict. If one represents this object, use its ID. Otherwise "
@@ -97,6 +128,9 @@ class SemanticTools:
             result = await self._write(action, operation_key)
             if "error" not in result:
                 self.writes.append(result)
+                self._remember(result)
             return result
         except (ValueError, KeyError, TypeError, AttributeError) as exc:
+            for read in reads:
+                self._remember(read["result"])
             return {"error": str(exc), **({"reads": reads} if reads else {})}

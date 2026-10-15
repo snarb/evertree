@@ -2,6 +2,7 @@
 
 import json
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,7 @@ pytestmark = pytest.mark.skipif(
 async def session(tmp_path):
     session = DebugSession(tmp_path, timeout_seconds=120)
     load_debug_environment(Path(__file__).resolve().parents[2], session.config)
+    started = time.perf_counter()
     try:
         yield session
     finally:
@@ -34,6 +36,21 @@ async def session(tmp_path):
             ),
             encoding="utf-8",
         )
+        usage = []
+        for path in tmp_path.glob("model-*.json"):
+            events = json.loads(path.read_text())
+            values = [event["data"] for event in events if event["kind"] == "usage"]
+            if values:
+                usage.append(values[-1])
+        metrics = {
+            "seconds": time.perf_counter() - started,
+            "model_calls": len(usage),
+            "input_tokens": sum(u.get("input_tokens", 0) for u in usage),
+            "output_tokens": sum(u.get("output_tokens", 0) for u in usage),
+            "cached_input_tokens": sum(u.get("cached_input_tokens", 0) for u in usage),
+            "tool_calls": sum(len(batch) for batch in histories),
+        }
+        (tmp_path / "metrics.json").write_text(json.dumps(metrics, indent=2))
         # DebugSession closes its client; reconnect only to remove this test's private indexes.
         from redis.asyncio import Redis
 

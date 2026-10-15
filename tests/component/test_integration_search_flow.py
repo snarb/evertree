@@ -5,6 +5,29 @@ from tests.support.pump_search import seed_pump_history
 from tests.support.semantics import context, semantic_world
 
 
+async def test_class_parents_remain_visible_beyond_the_relation_preview():
+    from evertree.core.graph.types import GraphDelta, Instance, Prototype
+
+    world = semantic_world()
+    graph = world.graph
+    parent = Prototype(graph.reserve_id(), "Equipment")
+    child = Prototype(graph.reserve_id(), "Pump")
+    instances = [Instance(graph.reserve_id(), f"P-{i}") for i in range(21)]
+    facts = [
+        graph.new_fact("IDENTITY_TYPE", {"instance": n.id, "type": child.id}) for n in instances
+    ]
+    graph.apply(GraphDelta(creates=(parent, child, *instances, *facts)), provenance="test")
+    ctx = context(world, None, role="model")
+    unlinked = _read_for_model(await ctx.step("graph.describe", {"subject": child.id}))
+    assert unlinked["parents"] == []
+    link = graph.new_fact("SUBTYPE_OF", {"type": child.id, "supertype": parent.id})
+    graph.apply(GraphDelta(creates=(link,)), provenance="classification")
+    linked = _read_for_model(await ctx.step("graph.describe", {"subject": child.id}))
+    assert linked["relations_truncated"]
+    assert not any(r["relation"] == "SUBTYPE_OF" for r in linked["relations"])
+    assert [n["id"] for n in linked["parents"]] == [parent.id]
+
+
 async def test_found_facet_leads_to_identity_class_and_other_states_without_search():
     world = semantic_world()
     targets = seed_pump_history(world.graph)
@@ -62,12 +85,14 @@ async def test_reviewed_creation_reuses_search_and_links_missing_parent():
     parent = None
     for name in ("Equipment", "Pump"):
         args = {"name": name, "description": None, "parent": parent, "sources": refs}
-        paused = await handler.handle("create_prototype", args)
-        assert "error" in paused and paused["reads"][0]["result"]["items"]
-        before = len(searches)
         created = await handler.handle("create_prototype", args)
+        if parent is None:
+            assert "error" in created and created["reads"][0]["result"]["items"]
+            before = len(searches)
+            created = await handler.handle("create_prototype", args)
+            assert len(searches) == before
+        # The child's fresh search returns the same already exposed Process candidate.
         assert "error" not in created
-        assert len(searches) == before
         child = created["object"]
         if parent is not None:
             assert any(

@@ -349,7 +349,7 @@ async def test_real_model_stops_after_one_intermediate_plan(tmp_path):
                     ensure_ascii=False,
                     indent=2,
                 ),
-                "output_schema": ConsciousStepResult.model_json_schema(),
+                "output_schema": ConsciousStepResult.response_schema(),
             },
             transcript,
         )

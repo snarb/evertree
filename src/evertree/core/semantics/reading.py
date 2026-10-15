@@ -1,6 +1,6 @@
 """Compact named reads shared by consciousness and semantic Programs."""
 
-from ..graph.types import Facet, RelationInstance, RelationType
+from ..graph.types import Facet, Prototype, RelationInstance, RelationType
 from ..values import UNKNOWN, ContractError, json_value, timestamp, utcnow
 
 
@@ -105,6 +105,13 @@ def describe(graph, attribution, subject, focus=None, at=None):
     if isinstance(node, Facet) and at is not None:
         result["subject"]["temporal_status"] = node.applicability(when)
     if focus != "properties":
+        if isinstance(node, Prototype):
+            # Many instances can fill the relation preview before a later parent link.
+            result["parents"] = [
+                card(graph.get(fact.args["supertype"]))
+                for fact in graph.facts("SUBTYPE_OF")
+                if fact.args["type"] == node.id
+            ]
         facts = []
         for fact in graph.facts():
             if node.id not in fact_nodes(graph, fact):

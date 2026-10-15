@@ -115,3 +115,40 @@ def test_step_checkpoint_survives_snapshot_and_is_available_without_graph_materi
     assert context["state"]["step_state"] == task.step_state
     restored.step_state["integration"]["experience_refs"].clear()
     assert task.step_state["integration"]["experience_refs"] == [21, 22]
+
+
+def test_response_schema_is_closed_at_every_object_and_preserves_empty_values():
+    schema = ConsciousStepResult.response_schema()
+
+    def check(value):
+        if isinstance(value, dict):
+            if value.get("type") == "object":
+                assert value["additionalProperties"] is False
+                assert set(value["required"]) == set(value.get("properties", {}))
+            assert "default" not in value
+            for child in value.values():
+                check(child)
+        elif isinstance(value, list):
+            for child in value:
+                check(child)
+
+    check(schema)
+    assert schema["$defs"]["PlanStep"]["required"] == ["step", "status"]
+    result = ConsciousStepResult(
+        analysis=AnalyticalNote(text="Need input"),
+        disposition="waiting",
+        plan=[{"step": "Collect observations", "status": "waiting"}],
+    )
+    payload = result.model_dump(mode="json")
+    assert payload["findings"] == [] and payload["next_step"] is None
+    assert payload["plan"] == [{"step": "Collect observations", "status": "waiting"}]
+    assert ConsciousStepResult.model_validate(payload) == result
+
+
+def test_plan_rejects_undefined_fields_instead_of_silently_dropping_them():
+    with pytest.raises(ValidationError):
+        ConsciousStepResult(
+            analysis=AnalyticalNote(text="Plan"),
+            disposition="waiting",
+            plan=[{"arbitrary": "data"}],
+        )

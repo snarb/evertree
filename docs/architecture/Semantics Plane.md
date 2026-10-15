@@ -38,6 +38,10 @@ Consciousness uses compact semantic tools; separate Programs handle retrieval an
 
 Both reading tools use `subject` and world time `at` (default: now, internally `valid_at`). A description uses one instant. Property discovery and parameter requirements follow [[Attribution Plane#Property Discovery for Consciousness]]. Historical `known_at`, raw graph reads and exact declared-view `graph.query` belong to `low_level_graph_tools`. For explicit graph editing, consciousness loads `graph_write_tools`: the same creation (including Claim), relation, Note, update and delete operations used by integration. Their handlers and Core validation are shared. New analytical sources must first be recorded through `record_analysis`. Public raw `graph.apply` is not exposed.
 
+Prototype descriptions include a `parents` list, including an explicit empty list when no
+parent is recorded. This structural read is independent of the bounded relation preview,
+so many instance links cannot hide an existing parent or force a redundant search.
+
 ### Retrieval Contract
 
 1. **Exact first:** resolve integer ID or normalized name in GraphStore, respecting `kind`. Return all exact alternatives without Redis or embeddings. Canonical names take precedence over same-named facts unless `kind` selects facts.
@@ -45,13 +49,25 @@ Both reading tools use `subject` and world time `at` (default: now, internally `
 3. **Merge and rank:** deduplicate by stable ID and combine the ordered lists with reciprocal rank fusion (constant 60). Preserve the contributing index names on each result. An index failure yields `incomplete`; results from the other index remain available. Search creates no knowledge.
 4. **Pages:** return compact cards, 20 by default, with a cursor over ranked results. Continuation repeats no search. Cursors belong to the Task/query and expire on graph changes, Task completion or restart, preventing stale identities.
 
-Query one named object or focused meaning at a time. Type names and field names embedded in text are search terms, not filters; combining identities, states and schema terminology dilutes retrieval. Start with an exact name when available, then inspect candidates with `describe`. Its `STATE_IDENTITY` and `IDENTITY_TYPE` links let the caller navigate from a Facet to its Instance and from that Instance to its Prototype and other Facets. Search separately for missing meanings. These reads are bounded: `relations_truncated` means the returned neighborhood is incomplete. Similarity candidates are not proof of equivalence or existence; vector retrieval also returns neighbors when nothing is a good match.
+Query one named object or focused meaning at a time. Type names and field names embedded in text are search terms, not filters; combining identities, states and schema terminology dilutes retrieval. Start with an exact name when available, then inspect candidates with `describe`. Its `STATE_IDENTITY` and `IDENTITY_TYPE` links let the caller navigate from a Facet to its Instance and from that Instance to its Prototype and other Facets. Search separately for missing meanings. These reads are bounded: `relations_truncated` means the returned neighborhood is incomplete. The shared write handler refreshes creation searches after graph changes. It asks the model to
+review only candidate cards not yet shown in this invocation or whose identity/description/state
+boundaries have changed. Changing a proposed name does not require reviewing identical cards
+again; it still requires a fresh search for that name. This is local presentation tracking,
+not reuse of a stale search revision. Similarity candidates are not proof of equivalence or existence; vector retrieval also returns neighbors when nothing is a good match.
+
+When integrating a substantial source, build useful connected groups incrementally: classes,
+identities, their states and assertions. Do not spend the entire call constructing an inventory
+or taxonomy and leave its important relationships until last. A prose Claim represents an
+independently checkable assertion, not a shortcut for bundling directly representable identities,
+state intervals and relationships. Preserve source timezones; runtime location cannot fill a
+missing timezone. Unknown boundaries remain unknown. Specific objects participate in their
+own facts; their Prototype IDs describe classes and do not stand in for those objects.
 
 ### Storage and Models
 
 GraphStore remains authoritative; **Redis 8.4+ with Search** is a rebuildable index. Every graph commit, including lifecycle changes, updates it. Content generations prevent restored state from reading a newer index; obsolete unused generations are removed. Index failure cannot undo a graph commit or block exact lookup. BM25 and vector queries remain separate for their 7/12 quotas; fuzzy search is omitted.
 
-Integration uses **`gpt-6-luna / medium`** through Codex SDK. Its model/effort is configurable; consciousness keeps its own profile. Redis and the separate embedding API credentials remain in core. Configuration and local/managed Redis setup are in the repository README.
+Integration uses **`gpt-6-luna / high`** through Codex SDK. Its model/effort is configurable; consciousness keeps its own profile. Redis and the separate embedding API credentials remain in core. Configuration and local/managed Redis setup are in the repository README.
 
 ### Knowledge Integration
 

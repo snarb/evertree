@@ -452,3 +452,80 @@ async def test_normal_model_completion_needs_no_finish_call():
     result = (await run(context(world, model, role="exec"), refs))["result"]
     assert len(result["writes"]) == 1
     assert world.graph.find("Explanation").description == "Useful explanation"
+
+
+def test_character_citations_cannot_ground_graph_writes():
+    world = semantic_world()
+    refs, metadata = recorded_experience(world, "UPS-1 returned to mains at 10:07 UTC")
+    action = {
+        "action": "create_claim",
+        "name": "Power restored",
+        "description": "UPS-1 returned to mains at 10:07 UTC",
+        "sources": [{**refs[0], "output_path": [0]}],
+    }
+    before = world.graph.snapshot(), world.memory.snapshot()
+    result = write_action(world, refs, metadata, action)
+    assert "not text characters" in result["error"]
+    assert (world.graph.snapshot(), world.memory.snapshot()) == before
+    corrected = write_action(world, refs, metadata, {**action, "sources": refs})
+    assert "error" not in corrected
+    world.memory.validate()
+
+
+async def test_creation_refreshes_search_but_reviews_only_new_or_changed_candidates():
+    from evertree.core.graph.types import GraphDelta, Node, NodeUpdate
+
+    searches = []
+
+    class Index(EmptyIndex):
+        async def vector(self, nodes, query, kind):
+            searches.append(query)
+            return [existing.id]
+
+    world = semantic_world(index=Index())
+    existing = Node(world.graph.reserve_id(), "Existing", description="An unrelated meaning")
+    world.graph.apply(GraphDelta(creates=(existing,)), provenance="test")
+    refs, _ = recorded_experience(world, "Three useful new meanings")
+
+    async def model(payload, call):
+        fields = {"description": "A new meaning", "sources": refs}
+        first = await call("create_concept", {**fields, "name": "First"})
+        assert "Review search candidates" in first["error"]
+        # A different proposed name still refreshes search, but the same card was just shown.
+        saved = await call("create_concept", {**fields, "name": "Second"})
+        assert "object" in saved
+        world.graph.apply(
+            GraphDelta(updates=(NodeUpdate(existing.id, {"description": "Changed meaning"}),)),
+            provenance="concurrent correction",
+        )
+        changed = await call("create_concept", {**fields, "name": "Third"})
+        assert "Review search candidates" in changed["error"]
+        assert "object" in await call("create_concept", {**fields, "name": "Third"})
+
+    await run(context(world, model, role="exec"), refs)
+    assert searches == ["First", "Second", "Third"]
+    assert world.graph.find("First") is None
+    assert world.graph.find("Second") is not None
+    assert world.graph.find("Third") is not None
+
+
+async def test_explicit_search_exposes_candidates_before_new_name_preflight():
+    from evertree.core.graph.types import GraphDelta, Node
+
+    class Index(EmptyIndex):
+        async def vector(self, *args):
+            return [existing.id]
+
+    world = semantic_world(index=Index())
+    existing = Node(world.graph.reserve_id(), "Existing", description="Other meaning")
+    world.graph.apply(GraphDelta(creates=(existing,)), provenance="test")
+    refs, _ = recorded_experience(world, "New useful concept")
+
+    async def model(payload, call):
+        await call("search", {"query": "Related meaning", "next_page": False})
+        result = await call(
+            "create_concept", {"name": "New", "description": "Useful", "sources": refs}
+        )
+        assert "object" in result
+
+    await run(context(world, model, role="exec"), refs)

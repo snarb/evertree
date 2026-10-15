@@ -516,7 +516,10 @@ TraceOutputRef {
 }
 ```
 
-`output_path` may point to the whole output or one of its named semantic parts. `TraceOutputRef` is a persisted address under the [[Core data structures#Objects and References|general object and reference rule]].
+`output_path` may point to the whole output or one of its named semantic parts.
+It traverses object fields and nonnegative array indices. Plain text is an atomic value for
+this addressing scheme: a numeric path is not a paragraph number or a character citation.
+Retain the supplied reference for text, or record an explicit structured fragment first. `TraceOutputRef` is a persisted address under the [[Core data structures#Objects and References|general object and reference rule]].
 
 For a `Program` return, paths distinguish `result`, its named parts, and `feedback`. Reading `.result` does not create a new semantic object or independent evidence. If the program returns an existing result, its original identity and producer provenance are retained; a new wrapper records that the value was returned, not that new experience was obtained.
 

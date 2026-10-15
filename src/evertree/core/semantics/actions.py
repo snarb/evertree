@@ -42,7 +42,14 @@ _STATE_END = {
 _REFERENCE = _object(
     {
         "event_ref": {"type": "integer", "minimum": 1},
-        "output_path": {"type": "array", "items": {"type": ["string", "integer"]}},
+        "output_path": {
+            "type": "array",
+            "items": {"type": ["string", "integer"]},
+            "description": (
+                "Use the supplied path unchanged for plain text. Extend only with actual "
+                "object keys or array indices, never paragraph numbers or character positions."
+            ),
+        },
     }
 )
 _SOURCES = {"type": "array", "items": _REFERENCE, "minItems": 1}
@@ -89,7 +96,9 @@ TOOLS = (
     {
         "name": "create_concept",
         "description": "Save a useful distinction not expressed by an existing concept.",
-        "parameters": _object(_NAMED),
+        "parameters": _object(
+            {**_NAMED, "name": {**_TEXT, "description": "Unique canonical name, 1–3 words."}}
+        ),
         "read_only": False,
     },
     {
@@ -102,6 +111,7 @@ TOOLS = (
         "parameters": _object(
             {
                 **_NAMED,
+                "name": {**_TEXT, "description": "Unique canonical class name, 1–3 words."},
                 "parent": {
                     "type": ["integer", "null"],
                     "description": (
@@ -204,8 +214,10 @@ TOOLS = (
     {
         "name": "create_claim",
         "description": (
-            "Save an independently checkable assertion when no suitable structured relation "
-            "expresses it. Include its scope and qualifications; a hypothesis remains provisional. "
+            "Save one independently checkable prose assertion, including its scope and "
+            "qualifications; a hypothesis remains provisional. Do not bundle a source's "
+            "objects, state intervals or simple relationships into a summary Claim. "
+            "A missing relation schema can be defined with define_relation. "
             "Saving a Claim does not assess evidence or assign confidence."
         ),
         "parameters": _object(

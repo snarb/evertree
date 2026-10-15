@@ -190,3 +190,53 @@ EVERTREE_CODEX_INTEGRATION=1 EVERTREE_EMBEDDINGS_INTEGRATION=1 uv run pytest tes
 Compare query meaning, candidate ranks, followed IDs, redundant reads and creation retries alongside the final graph. These small live cases expose retrieval-flow problems but do not establish recall on a large corpus or guarantee a particular model call sequence. `tests/component/test_integration_search_flow.py` deterministically checks that the projected reads expose the Facet → Instance → Prototype/state path without another search.
 
 The same live suite also checks creating an absent parent class, reusing an existing parent, adding the missing parent link to an existing class, classifying a thermometer, correcting a known Facet's interval while preserving its identity/history, and avoiding per-reading graph expansion for a routine series. It checks graph structure and temporal invariants rather than exact class labels or prose. Candidate review must allow repeating creation with the same name; renaming restarts search. The component suite checks this path with nonempty neighbor results and verifies the resulting parent link.
+
+### Large technical graph
+
+`tests/data/datacenter_experience.txt` is a synthetic 2,100-word report about one data
+center. Shared report context (including UTC and the year) accompanies each packet.
+Six connected chapters cover hydraulics, electrical backup, message delivery,
+network/TLS, storage/recovery, and uncertain incident explanations. Stable equipment IDs,
+aliases, two languages, similar terms in different domains, historical intervals and
+cross-subsystem dependencies make it harder than the small pump fixture. The text states
+its fictional scope; its parameters are test data, not operating recommendations.
+
+`tests/live/test_large_graph_search.py` first feeds these chapters to the real integrator.
+No domain nodes are manually seeded. It saves each packet's graph, traces, calls and metrics,
+then freezes a baseline. Each large packet has a 300-second model invocation limit and the
+production tool-call bound; a timeout retains partial writes and fails the build check.
+Size checks require at least 100 total nodes and 50 non-fact nodes,
+so structural edges alone cannot satisfy the large-graph requirement. Failed build packets
+are recorded and remain visible; no successful retries silently replace them.
+The meaning audit also validates every retained source reference, checks the recorded UTC
+intervals and rejects class IDs used as physical components in this fixture. These checks
+are deliberately independent of node count; inspect the actual relations and Claims for
+unsupported assertions and missing useful connections as well.
+Graph metrics separately report domain relations and instances without them: a large
+inventory with only class/state links is not evidence of a well-connected operational model.
+
+The second stage runs 16 fixed search probes on that graph: exact IDs, aliases, paraphrases,
+English queries for Russian material, related objects, ambiguous technical terms and an
+absent subject. `retrieval-summary.json` separates missing representations from retrieval
+misses. Critical-target recall is **not** full semantic recall/precision: relevance of other
+returned neighbors requires reviewing `cards.json` and `retrieval.json` independently.
+
+The third stage forks the same baseline for each of four updates:
+a new interval under an existing alias; correction of a UPS interval; a new sibling pump
+reusing the known class; and alternative explanations of a digital incident. It checks
+identity preservation and records all actual model queries, errors, time and token usage.
+Interval corrections must retain prior history, cite new grounds and leave the other UPS's
+states unchanged. New alias observations must preserve their own date and time interval.
+Each update starts from the same baseline so changes from an earlier scenario cannot
+help a later one. Review hypotheses and generalizations in the resulting graph in addition
+to the structural assertions. This is a substantial opt-in run with real API costs:
+
+```sh
+EVERTREE_LARGE_GRAPH_INTEGRATION=1 uv run pytest tests/live/test_large_graph_search.py -q -n 0 --basetemp=tmp/large-graph-evaluation -o tmp_path_retention_policy=all
+```
+
+To iterate on search without paying for graph construction again, set
+`EVERTREE_LARGE_GRAPH_SNAPSHOT` to an absolute path to the saved `baseline.json` and use a
+**different** `--basetemp`; pytest clears its destination at startup. Select
+`-k search_on_identical` to run only retrieval. Keep the snapshot's source report and metrics
+with it, so improvements to search are not confused with changes to graph construction.

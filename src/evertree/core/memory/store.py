@@ -225,6 +225,14 @@ class TraceStore:
         try:
             value = self._events[reference.event_ref].output
             for part in reference.output_path:
+                # Text indices silently turn a supposed paragraph citation into one character.
+                if not isinstance(value, (Mapping, tuple, list)):
+                    raise ContractError(
+                        "output_path traverses object fields and array items, not text characters; "
+                        "cite the supplied text reference unchanged"
+                    )
+                if isinstance(value, (tuple, list)) and (type(part) is not int or part < 0):
+                    raise ContractError("output_path array indices must be nonnegative integers")
                 value = value[part]
             return value
         except (KeyError, IndexError, TypeError) as exc:

@@ -175,8 +175,12 @@ embedding_dimensions = 3072
 
 [semantics.remember]
 model = "gpt-6-luna"
-effort = "medium"
+effort = "high"
 ```
+
+Integration defaults to high reasoning effort: the technical graph scenarios exposed
+missing class links and prose summaries replacing graph structure at medium effort.
+This increases integration latency and token usage; the profile remains configurable.
 
 This does not change the consciousness profile. Graph commits schedule index reconciliation; query-time generation checks repair missing indexes and prevent reads from a newer restored state. Redis contents are disposable and excluded from state backups.
 

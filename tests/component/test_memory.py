@@ -132,3 +132,25 @@ def test_retrieval_accepts_json_query_and_preserves_marker_shaped_content():
     restored = TraceStore.from_snapshot(json.loads(json.dumps(memory.snapshot())))
     assert restored.resolve(TraceOutputRef(event.id)) == {"$datetime": "literal content"}
     assert len(restored.retrieve({"text": "literal", "program": "program"})) == 1
+
+
+@pytest.mark.parametrize("path", [(0,), (1,), (-1,), (True,)])
+def test_plain_text_reference_cannot_be_narrowed_to_character(path):
+    memory = TraceStore()
+    run = memory.start_run("source", "revision", {})
+    event = memory.record(run, "input", output="UPS-1 returned to mains at 10:07 UTC")
+    assert memory.resolve(memory.output_ref(event)) == event.output
+    with pytest.raises(ContractError, match="not text characters"):
+        memory.resolve(TraceOutputRef(event.id, path))
+
+
+def test_structured_source_paths_preserve_real_sections_but_not_python_index_aliases():
+    memory = TraceStore()
+    run = memory.start_run("source", "revision", {})
+    event = memory.record(run, "input", output={"sections": ["first", "second"]})
+    assert memory.resolve(memory.output_ref(event, ("sections", 1))) == "second"
+    for index in (-1, True):
+        with pytest.raises(ContractError, match="nonnegative integers"):
+            memory.resolve(TraceOutputRef(event.id, ("sections", index)))
+    with pytest.raises(ContractError, match="not text characters"):
+        memory.resolve(TraceOutputRef(event.id, ("sections", 1, 0)))

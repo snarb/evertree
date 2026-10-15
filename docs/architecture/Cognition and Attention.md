@@ -1041,6 +1041,11 @@ next_step            — required proposal when continuing;
 user_message         — optional, separately composed external message.
 ```
 
+The provider response schema declares every field explicitly and closes every object,
+including nested references. Empty lists and nullable fields represent absent optional content;
+`plan` entries contain `step` and `status`. Python-side defaults do not make fields optional
+in the provider schema.
+
 `AnalyticalNote` uses existing Note/Claim semantics: `text`, `source_refs` and `kind` (`note` or `claim`). It records a readable analytical result with the premises, relevant sources, qualifications and next checks needed to understand or challenge it. This is an explicit model output, not access to hidden model reasoning or a claim to record every internal computation. Its contents are appropriate to the step; no fixed list of reasoning sections or final conclusion is required.
 
 The result and its parts are addressable in trace. A new base graph type for reasoning is unnecessary. Importance, insights and requests to remember something are expressed in the text. Integration interprets them as context for its independent selection, not as formal obligations. A provisional hypothesis remains provisional when saved.
