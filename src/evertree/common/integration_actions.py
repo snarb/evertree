@@ -18,11 +18,12 @@ _NODE_VALUE_TYPES = frozenset({"node", "concept", "prototype", "instance", "face
 class SemanticTools:
     """Search/read assistance; write authority and persistent state remain in Core."""
 
-    def __init__(self, *, search, describe, write, revision):
+    def __init__(self, *, search, describe, write, revision, read=None):
         self._search_port = search
         self._describe_port = describe
         self._write_port = write
         self._revision_port = revision
+        self._read_port = read
         # casefolded query -> (graph revision, last search result)
         self._searches = {}
         # object id -> card as last shown to the model
@@ -49,10 +50,12 @@ class SemanticTools:
         A creation is only blocked for candidates not recorded here: once the model was shown
         the possible matches and repeats the creation, that is treated as a deliberate choice.
         """
-        nodes = [*result.get("items", []), *result.get("created", [])]
+        nodes = [*result.get("nodes", []), *result.get("items", []), *result.get("created", [])]
         if "subject" in result:
             nodes.append(result["subject"])
         for node in nodes:
+            if "id" not in node or "kind" not in node:
+                continue
             self._shown_candidates[node["id"]] = self._candidate_card(node)
 
     async def _search(self, query, next_page, reads):
@@ -157,8 +160,14 @@ class SemanticTools:
             validate_action(action)
             if name == "search":
                 result = await self._search(action["query"], action["next_page"], reads)
-            elif name == "describe":
+            elif name == "describe" and not any(
+                arguments.get(k) is not None for k in ("focus", "at")
+            ):
                 result = await self._describe(action["subject"], reads)
+            elif name in {"query", "walk", "read_property", "describe"}:
+                if self._read_port is None:
+                    raise ValueError("This invocation has no graph read port")
+                result = await self._read_port(name, arguments)
             else:
                 result = await self._checked_write(action, operation_key, reads)
         except (ValueError, KeyError, TypeError, AttributeError) as exc:
@@ -167,7 +176,7 @@ class SemanticTools:
             _log.info("LLM %s %r rejected: %s", name, self._subject(action), exc)
             return {"error": str(exc), **({"reads": reads} if reads else {})}
 
-        if name in {"search", "describe"}:
+        if name in {"search", "describe", "query", "walk", "read_property"}:
             self._track_shown_candidates(result)
             _log.debug("LLM %s %r", name, self._subject(action))
         elif "error" in result:

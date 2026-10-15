@@ -293,7 +293,7 @@ async def evaluate_pair(
                 if method in {"learning.learn", "learning.coordinate"}:
                     raise PermissionError("Learning is disabled during ready-model evaluation")
                 authorize_operation(method, metadata["program"]["role"])
-                if method.startswith("semantic."):
+                if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
                     admitted = registry.get("knowledge_integration")
                     metadata["knowledge_integration_authorized"] = bool(
                         admitted is not None

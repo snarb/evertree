@@ -89,6 +89,7 @@ class AgentRequest:
     timeout_seconds: float | None = None
     model: str | None = None
     effort: str | None = None
+    token_encoding: str = "o200k_base"
     tool_sets: tuple = ()
 
     def __post_init__(self):

@@ -165,7 +165,7 @@ async def test_eva02_belief_filtered_views_read_the_same_isolated_initial_belief
     """EVA-02 extension: candidate and baseline must see equivalent initial belief filters."""
     source = """async def run(value, ctx):
     await ctx.step('agent.run', {'prompt': 'start evaluation'})
-    matches = await ctx.step('graph.query', {
+    matches = await ctx.step('graph.view', {
         'relation': 'VERIFIED_LABEL', 'view': 'read', 'inputs': {'subject': value}})
     belief = await ctx.step('belief.read', {'target': 'supported-label'})
     return {'result': {'labels': [match['value'] for match in matches],

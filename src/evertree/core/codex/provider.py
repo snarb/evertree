@@ -14,6 +14,7 @@ from typing import Any
 
 from evertree.core.provider import AgentEvent, AgentRequest, ProviderError, current_tool_call_id
 from evertree.core.sandbox.process import sandbox_backend
+from evertree.core.tokens import count_tokens, current_read_context, tool_text
 
 from .configuration import (
     _COMPUTATION_CAPABILITIES,
@@ -184,6 +185,8 @@ class CodexProvider:
         active_tools = {tool.name: tool for tool in request.tools}
         loaded_sets = set()
         pending_load = False
+        read_context = {"model": model_name}
+        tool_lock = asyncio.Lock()
         if available_sets:
             from ..toolsets import loader_definition
 
@@ -236,12 +239,28 @@ class CodexProvider:
                             else "Already available in this turn.",
                         }
                     else:
+                        if "remaining_tokens" in read_context:
+                            read_context["remaining_tokens"] = max(
+                                0,
+                                read_context["remaining_tokens"]
+                                - count_tokens(arguments, model_name, request.token_encoding)
+                                - 32,
+                            )
                         token = current_tool_call_id.set(call_id)
+                        context_token = current_read_context.set(dict(read_context))
                         try:
                             result = await tool_handler(name, arguments)
                         finally:
+                            current_read_context.reset(context_token)
                             current_tool_call_id.reset(token)
-                    text = json.dumps(result, ensure_ascii=False, allow_nan=False)
+                    text = tool_text(result)
+                    if "remaining_tokens" in read_context:
+                        read_context["remaining_tokens"] = max(
+                            0,
+                            read_context["remaining_tokens"]
+                            - count_tokens(result, model_name, request.token_encoding)
+                            - 32,
+                        )
                     await queue.put(
                         AgentEvent(
                             "tool_result",
@@ -305,6 +324,9 @@ class CodexProvider:
             task = asyncio.current_task()
             invocation.callbacks.add(task)
             try:
+                if method == "item/tool/call":
+                    async with tool_lock:
+                        return await dispatch_server_request(method, params)
                 return await dispatch_server_request(method, params)
             finally:
                 invocation.callbacks.discard(task)
@@ -346,6 +368,16 @@ class CodexProvider:
                         if request.native_coding
                         else await self._computation_catalog(model_name, effort)
                     )
+                    if catalog is not None:
+                        model_metadata = json.loads(catalog.read_text(encoding="utf-8"))["models"][
+                            0
+                        ]
+                        window = model_metadata.get("context_window")
+                        if type(window) is int and window > 0:
+                            percent = model_metadata.get("effective_context_window_percent", 100)
+                            if type(percent) not in {int, float} or not 0 < percent <= 100:
+                                percent = 100
+                            read_context["context_window"] = int(window * percent / 100)
                     client = self._client(request=request, handler=handler, model_catalog=catalog)
                     invocation.client = client
                     process_tree = await _start_owned_client(client)
@@ -402,6 +434,22 @@ class CodexProvider:
                             raise ProviderError("Session history is unavailable in this provider")
                         history = list(self._histories[request.session.id])
                         prompt = _continuation_input(history, request.prompt)
+                    if "context_window" in read_context:
+                        window = read_context["context_window"]
+                        read_context["remaining_tokens"] = max(
+                            0,
+                            window
+                            - window // 10
+                            - count_tokens(
+                                {
+                                    "prompt": prompt,
+                                    "instructions": params["developerInstructions"],
+                                    "tools": params["dynamicTools"],
+                                },
+                                model_name,
+                                request.token_encoding,
+                            ),
+                        )
                     # Ephemeral threads disappear with the client process. Carry public
                     # context locally instead of persisting helper chats in Codex history.
                     history.append(
@@ -515,6 +563,16 @@ class CodexProvider:
                                 for normalized in _native_tool_events(item, completed=True):
                                     await queue.put(normalized)
                         elif method == "thread/tokenUsage/updated":
+                            context_usage = data["tokenUsage"]
+                            window = context_usage.get("modelContextWindow")
+                            if type(window) is int and window > 0:
+                                read_context["context_window"] = window
+                            used = (context_usage.get("last") or {}).get("totalTokens")
+                            if type(used) is int and "context_window" in read_context:
+                                window = read_context["context_window"]
+                                read_context["remaining_tokens"] = max(
+                                    0, window - window // 10 - used
+                                )
                             total = data["tokenUsage"]["total"]
                             usage = _add_usage(carried_usage, _usage(total, baseline))
                             latest_usage = usage
@@ -565,13 +623,30 @@ class CodexProvider:
                                     )
                                 )
                                 usage_seen = False
+                                continuation = _continuation_input(
+                                    history, request.prompt, continued=True
+                                )
+                                if "context_window" in read_context:
+                                    window = read_context["context_window"]
+                                    read_context["remaining_tokens"] = max(
+                                        0,
+                                        window
+                                        - window // 10
+                                        - count_tokens(
+                                            {
+                                                "prompt": continuation,
+                                                "instructions": params["developerInstructions"],
+                                                "tools": params["dynamicTools"],
+                                            },
+                                            model_name,
+                                            request.token_encoding,
+                                        ),
+                                    )
                                 turn = _json(
                                     await asyncio.to_thread(
                                         client.turn_start,
                                         invocation.thread_id,
-                                        _continuation_input(
-                                            history, request.prompt, continued=True
-                                        ),
+                                        continuation,
                                         turn_params,
                                     )
                                 )

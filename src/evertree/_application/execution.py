@@ -66,6 +66,9 @@ class TaskExecutionMixin:
         run_name="Consciousness",
         tool_handler=None,
     ):
+        request = dataclasses.replace(
+            request, token_encoding=self.semantic_config.read.token_encoding
+        )
         request_id = uuid4().hex
         async with self._state_lock:
             self._active_requests[request_id] = task_id

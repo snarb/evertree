@@ -170,6 +170,7 @@ class DebugSession:
                     output_schema=payload.get("output_schema"),
                     model=self.config.remember.model,
                     effort=self.config.remember.effort,
+                    token_encoding=self.config.read.token_encoding,
                     timeout_seconds=self.timeout_seconds,
                 ),
                 tool_handler=tool_handler,
@@ -212,7 +213,7 @@ class DebugSession:
                 )
             elif method == "agent.run":
                 result = await self.model(payload, tool_handler=tool_handler)
-            elif method.startswith("semantic."):
+            elif method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
                 result = await self.service.execute(method, payload, metadata)
             else:
                 result = self.operations.execute(method, payload, metadata=metadata)

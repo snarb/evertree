@@ -4,6 +4,7 @@ import sys
 import pytest
 
 from evertree.core.runtime.controller import ProgramSpec, Runtime
+from evertree.core.tokens import current_read_context
 from tests.support.runtime import commit_programs
 
 
@@ -17,6 +18,8 @@ async def test_native_worker_can_execute_scoped_agent_tools(tmp_path):
             "program.py": """
 async def run(ctx):
     async def handle(name, arguments):
+        from evertree.core.tokens import current_read_context
+        assert current_read_context.get()["context_window"] == 1000
         return await ctx.step("echo", arguments)
     result = await ctx.agent({"prompt": "Echo a value."}, tools=[{
         "name": "echo", "description": "Echo.", "read_only": True,
@@ -32,7 +35,11 @@ async def run(ctx):
         if method == "echo":
             return payload["value"]
         assert method == "agent.run"
-        value = await payload["_tool_handler"]("echo", {"value": 7})
+        token = current_read_context.set({"model": "gpt-5", "context_window": 1000})
+        try:
+            value = await payload["_tool_handler"]("echo", {"value": 7})
+        finally:
+            current_read_context.reset(token)
         return {"text": str(value)}
 
     runtime = Runtime(tmp_path / "runtime", repository, gateway)

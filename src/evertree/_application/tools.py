@@ -193,6 +193,8 @@ class ToolsMixin:
         from ..core.semantics.reading import fact_card, fact_nodes, resolve
         from ..core.values import timestamp
 
+        if name in {"graph.query", "graph.walk"}:
+            return await self._semantics().execute(name, args, {"task_id": task_id})
         if name == "graph.history" and type(args["subject"]) is int:
             return json_value(self.graph.changes_of(args["subject"]))
         if name in {"graph.neighbors", "graph.history"}:
@@ -270,7 +272,7 @@ class ToolsMixin:
                 revision=metadata["program"]["revision"],
                 owner_run=self._run_map.get(metadata.get("run_id")),
             )
-        if method.startswith("semantic."):
+        if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
             if method in {"semantic.sources", "semantic.write"}:
                 metadata = self._semantic_metadata(state, payload, metadata)
             return await self._semantics().execute(method, payload, metadata)

@@ -11,6 +11,8 @@ import dataclasses
 import importlib.util
 import inspect
 import json
+import logging
+import os
 import sys
 import threading
 import traceback
@@ -199,9 +201,13 @@ async def _main(configuration):
     global _configuration, _loop, DBOS, gateway_step, program_workflow
     from dbos import DBOS, SetWorkflowID
 
-    from evertree.common.logging_setup import configure_logging
-
-    configure_logging()
+    # Bootstrap must work before any revision-owned common helpers are attached.
+    logging.basicConfig(
+        level=os.environ.get("EVERTREE_LOG_LEVEL", "INFO").upper(),
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+        stream=sys.stderr,
+    )
     _configuration = configuration
     _loop = asyncio.get_running_loop()
     threading.Thread(target=_reader, daemon=True).start()

@@ -64,7 +64,12 @@ You can also request early automatic selection with graph.integrate using saved 
 references and optional focus. The controller supplies the integrator's task context.
 
 ## Tools and workspace
-Use graph.search to locate objects; use graph.describe before graph.read_property.
+Use graph.search to locate objects and graph.describe for their properties/schema.
+Use graph.query for exact named-slot matches and graph.walk for repeated transitions.
+Both report total and a token-bounded page; count modes avoid loading large lists.
+Continue only when needed with cursor and optional max_items. Recorded qualifications
+and unknown temporal applicability are not established truths. Use graph.read_property
+when a discovered property needs computation or parameters.
 Load specialized tool sets when needed; they expire after this invocation. Additional work
 for future reuse must fit state.self_improvement_remaining; necessary task work uses the
 main allowance. Modify agent state and reusable Programs only through EverTree tools.
@@ -239,7 +244,15 @@ def semantic_tools():
 
     reference = {"type": ["string", "integer"]}
     string = {"type": "string"}
-    return (
+    from dataclasses import replace
+
+    from ..core.semantics.actions import INTEGRATION_TOOLS
+
+    return tuple(
+        replace(tool, name="graph." + tool.name)
+        for tool in INTEGRATION_TOOLS
+        if tool.name in {"query", "walk"}
+    ) + (
         define(
             "graph.search",
             "Find graph objects by name, ID, or similarity of names and descriptions. Exact matches bypass indexes. Use cursor to continue a result.",
@@ -253,7 +266,7 @@ def semantic_tools():
         ),
         define(
             "graph.describe",
-            "Describe an object, known properties and links. focus=properties lists properties without invoking computation. at is world time, defaults to now.",
+            "Describe an object with up to 7 properties and 7 relations. properties_total/relations_total precede truncated lists. focus=properties or relations returns that full list, without invoking computation. Other text filters both lists, with at most 7 relations and all matching properties. Prototype parent is one card or null; children lists up to 7 direct subtype names, preceded by children_total only when shortened. at is world time, defaults to now.",
             {"subject": reference, "focus": string, "at": string},
             ["subject"],
         ),
@@ -349,7 +362,7 @@ def tool_sets():
                     ("id",),
                 ),
                 low(
-                    "graph.query",
+                    "graph.view",
                     "Execute a declared relation view with named slot inputs and optional world/knowledge time.",
                     {
                         "relation": reference,

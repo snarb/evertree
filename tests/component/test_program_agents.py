@@ -14,6 +14,54 @@ TOOL = {
 }
 
 
+async def test_read_context_crosses_callback_boundary_and_replays_without_leaking():
+    from evertree.core.tokens import current_read_context
+
+    budget = {"model": "gpt-5", "context_window": 1000, "remaining_tokens": 700}
+
+    async def gateway(method, args):
+        token = current_read_context.set(budget)
+        try:
+            await args["_tool_handler"]("read", {})
+        finally:
+            current_read_context.reset(token)
+        return {"text": "done"}
+
+    agents = ProgramAgents(gateway)
+    recorded = []
+
+    class Context:
+        run_id = "workflow"
+
+        async def step(self, method, args):
+            if method == "agent.next":
+                event = await agents.next(args, METADATA)
+                recorded.append(event)
+                return event
+            return await agents.close(args["invocation_id"], METADATA, history=args["history"])
+
+    async def handle(name, args):
+        assert current_read_context.get() == budget
+        return {"total": 3}
+
+    try:
+        await run_agent(Context(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
+        assert recorded[0]["read_context"] == budget
+        assert current_read_context.get() is None
+
+        class Replay:
+            run_id = "workflow"
+
+            async def step(self, method, args):
+                if method == "agent.next":
+                    return recorded.pop(0)
+
+        await run_agent(Replay(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
+        assert current_read_context.get() is None
+    finally:
+        await agents.close_all()
+
+
 def payload(**changes):
     return {
         "invocation_id": "one",

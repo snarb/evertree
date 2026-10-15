@@ -31,16 +31,31 @@ Consciousness uses compact semantic tools; separate Programs handle retrieval an
 | Tool | Purpose |
 | --- | --- |
 | `graph.search(query, kind?, limit=20, cursor?)` | Find existing objects by name, ID, or indexed name and description similarity. |
-| `graph.describe(subject, focus?, at?)` | Describe an object, its applicable properties and significant relations; `focus="properties"` returns only properties. |
+| `graph.describe(subject, focus?, at?)` | Describe an object with previews of 7 properties and 7 relations; `focus="properties"` or `focus="relations"` returns the corresponding full list. |
 | `graph.read_property(subject, property, at?, parameters?)` | Read a property through Attribution Runtime, preserving uncertainty and sources. |
+| `graph.query(relation?, subject?, bindings?, where?, select?, result?, fields?, at?, max_items?, cursor?)` | Match recorded facts by named slots; return projections, unique nodes, counts or existence. |
+| `graph.walk(start, relation, from_slot, to_slot, max_depth?, where?, result?, fields?, at?, max_items?, cursor?)` | Follow one relation's node roles breadth-first, preserving full supporting facts. |
 | `graph.integrate(experience_refs, focus?)` | Integrate recorded experience and analytical results through `KnowledgeIntegration.exec`. |
 | `load_tool_set(name)` | Load specialized tools for one logical invocation; see [[Cognition and Attention#Dynamic Tool Sets]]. |
 
-Both reading tools use `subject` and world time `at` (default: now, internally `valid_at`). A description uses one instant. Property discovery and parameter requirements follow [[Attribution Plane#Property Discovery for Consciousness]]. Historical `known_at`, raw graph reads and exact declared-view `graph.query` belong to `low_level_graph_tools`. For explicit graph editing, consciousness loads `graph_write_tools`: the same creation (including Claim), relation, Note, update and delete operations used by integration. Their handlers and Core validation are shared. New analytical sources must first be recorded through `record_analysis`. Public raw `graph.apply` is not exposed.
+Both reading tools use `subject` and world time `at` (default: now, internally `valid_at`). A description uses one instant. Property discovery and parameter requirements follow [[Attribution Plane#Property Discovery for Consciousness]]. Historical `known_at`, raw graph reads and exact declared-view `graph.view` belong to `low_level_graph_tools`. For explicit graph editing, consciousness loads `graph_write_tools`: the same creation (including Claim), relation, Note, update and delete operations used by integration. Their handlers and Core validation are shared. New analytical sources must first be recorded through `record_analysis`. Public raw `graph.apply` is not exposed.
 
-Prototype descriptions include a `parents` list, including an explicit empty list when no
-parent is recorded. This structural read is independent of the bounded relation preview,
+Prototype descriptions include `parent`, a single card or explicit null when no
+parent is recorded. Core enforces at most one `SUBTYPE_OF` parent. This structural read is independent of the bounded relation preview,
 so many instance links cannot hide an existing parent or force a redundant search.
+Alongside `parent`, `children` lists up to 7 immediate `SUBTYPE_OF` child names, as strings
+without descriptions. If there are more, `children_total` precedes the list. A leaf returns
+`children: []`. This structural preview stays limited to 7 even with relation/text focus;
+`focus="properties"` omits it along with the other structural reads. Use `query` or `walk`
+to retrieve more children.
+
+Without focus, `describe` returns at most 7 properties and 7 relations. When a list is shortened,
+its `properties_total` or `relations_total` appears before the list and reports the full count.
+Complete lists omit these count fields. `focus="properties"` returns all properties without
+relations; `focus="relations"` returns all relations without properties. Other focus text filters
+both lists, returning all matching properties and up to 7 matching relations, with the filtered
+relation count when shortened. Focused lists have no token paging; use `query` for bounded relation
+pages when the neighborhood is large. Property discovery never invokes computation.
 
 ### Retrieval Contract
 
@@ -49,7 +64,7 @@ so many instance links cannot hide an existing parent or force a redundant searc
 3. **Merge and rank:** deduplicate by stable ID and combine the ordered lists with reciprocal rank fusion (constant 60). Preserve the contributing index names on each result. An index failure yields `incomplete`; results from the other index remain available. Search creates no knowledge.
 4. **Pages:** return compact cards, 20 by default, with a cursor over ranked results. Continuation repeats no search. Cursors belong to the Task/query and expire on graph changes, Task completion or restart, preventing stale identities.
 
-Query one named object or focused meaning at a time. Type names and field names embedded in text are search terms, not filters; combining identities, states and schema terminology dilutes retrieval. Start with an exact name when available, then inspect candidates with `describe`. Its `STATE_IDENTITY` and `IDENTITY_TYPE` links let the caller navigate from a Facet to its Instance and from that Instance to its Prototype and other Facets. Search separately for missing meanings. These reads are bounded: `relations_truncated` means the returned neighborhood is incomplete. The shared write handler refreshes creation searches after graph changes. It asks the model to
+Query one named object or focused meaning at a time. Type names and field names embedded in text are search terms, not filters; combining identities, states and schema terminology dilutes retrieval. Start with an exact name when available, then inspect candidates with `describe`. Its `STATE_IDENTITY` and `IDENTITY_TYPE` links let the caller navigate from a Facet to its Instance and from that Instance to its Prototype and other Facets. Search separately for missing meanings. Preview counts disclose omitted items. The shared write handler refreshes creation searches after graph changes. It asks the model to
 review only candidate cards not yet shown in this invocation or whose identity/description/state
 boundaries have changed. Changing a proposed name does not require reviewing identical cards
 again; it still requires a fresh search for that name. This is local presentation tracking,
@@ -62,6 +77,65 @@ independently checkable assertion, not a shortcut for bundling directly represen
 state intervals and relationships. Preserve source timezones; runtime location cannot fill a
 missing timezone. Unknown boundaries remain unknown. Specific objects participate in their
 own facts; their Prototype IDs describe classes and do not stand in for those objects.
+
+### Exact Slot Reads and Walks
+
+Integration and consciousness share the same Core selector as declared `AccessView`s.
+`query` accepts any subset of slot bindings without saving a new view or writing a Program.
+Native bindings are `{slot, value}` entries with unique slot names. Bindings compare complete
+values; `where` uses `contains` for list membership. `subject` matches only node-valued roles,
+including lists; an integer in a numeric role is not a node reference. Supply `relation` or
+`subject`; slot bindings, filters and projections require a specified relation.
+
+`where` is an AND of `{field, op, value?}` clauses using the existing predicate operators.
+Fields are `args.<slot>`, `conditions.<parameter>`, `fact.id` and `fact.name`. Filtering a
+recorded condition does not evaluate whether that condition currently holds in the world.
+`select` names returned slots; omitted selects all arguments. `matches` (default) retains
+one result per fact. `nodes` and `count_nodes` require one selected node-valued slot and
+deduplicate node IDs. List slots expand into participants only for those node result modes.
+`count_matches` counts facts; `exists` reports a match, not the truth of the assertion.
+
+`walk` requires node-valued `from_slot` and `to_slot`. For example, `SUBTYPE_OF` from
+`supertype` to `type` finds children; reversing the roles finds parents. `max_depth` defaults
+to 1; explicit null requests all reachable levels. A breadth-first traversal expands each
+(node, applicability) state once and excludes the origin as its own descendant. Distinct
+supporting facts are retained through cycles and multiple paths. Results report minimum depth;
+a later applicable path can establish applicability despite an earlier unknown path.
+Walk result modes are `nodes` (default), `count_nodes` and `exists`.
+
+Without `at`, reads include recorded facts without temporal filtering. With `at`, outside
+facts are excluded and unknown applicability remains explicit. Counts split applicable and
+unknown matches when needed. Existence is null if only unknown matches exist (or an unfinished
+scan has no established match). Declared views retain their existing UNKNOWN/cardinality contract.
+
+Pages start with `total`, `returned`, `has_more`, and `next_cursor` only when needed. They contain
+`items` referencing deduplicated `nodes` and `facts` collections. Fact and projection node
+references are explicit `{node: id}` values, distinguishable from scalar integers. Full fact
+arguments, descriptions and meaningful properties/conditions survive projection. Fact IDs
+retain access to their stored history and provenance. Node cards always contain id/name/kind
+and Facet boundaries; `fields` defaults to `["description"]`, with optional `properties` and
+`schema`. Properties are discovered without running computations; `read_property` performs
+explicit requested computation. Empty optional envelope fields are removed; domain nulls,
+empty values, zero and false are not recursively stripped.
+
+`[semantics.read]` configures `context_fraction=0.6`, `max_items=600` and a local fallback
+`token_encoding="o200k_base"`. Runtime supplies the selected model's effective context window
+and remaining space, reserving 10% of the window for response/framing. A page fits both the
+configured context fraction and remaining space. tiktoken counts the final JSON including
+metadata and support records; it does not count characters or bytes. A registered model encoding
+is preferred; the configured fallback for private names is explicitly a local estimate.
+The SDK does not supply an exact preflight tokenizer. Missing context metadata is an error.
+
+The optional model-facing `max_items` only limits item count. Continuation supplies the cursor
+and optionally max_items; filters and fields are restored from Core. Cursors belong to a task,
+operation and graph revision and expire at task release/restart or graph changes. Each scan
+advances at most 10,000 work units per request; incomplete scans return `total_at_least` and
+an explicit continuation instead of a false exact total. Full scans establish total before
+serializing cards. Facts never split across pages; an oversized first item returns an explicit
+error with its ID. Pagination does not automatically fetch remaining results or guarantee that
+an entire conversation history fits. Count or filter large results before viewing them.
+
+No Python execution interface or external graph representation is introduced.
 
 ### Storage and Models
 

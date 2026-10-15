@@ -176,11 +176,47 @@ embedding_dimensions = 3072
 [semantics.remember]
 model = "gpt-6-luna"
 effort = "high"
+
+[semantics.read]
+context_fraction = 0.6
+max_items = 600
+# Local fallback for model names not registered by tiktoken:
+token_encoding = "o200k_base"
 ```
 
 Integration defaults to high reasoning effort: the technical graph scenarios exposed
 missing class links and prose summaries replacing graph structure at medium effort.
 This increases integration latency and token usage; the profile remains configurable.
+
+Graph `query` and `walk` report total matches before returning a bounded page. `query`
+binds any subset of named relation slots; `walk` follows a chosen slot pair through one
+or all levels. Counts distinguish facts from unique nodes. Node cards include descriptions
+by default and can include properties or relation signatures. Full supporting facts retain
+all participant roles, scalar values and applicability conditions.
+
+`describe` previews up to 7 properties and 7 relations. Shortened lists are preceded by
+`properties_total` or `relations_total`; complete lists omit the count. `focus="properties"`
+or `focus="relations"` returns that full list without the other list. A Prototype has a single
+`parent` card or null, plus up to 7 immediate subtype names in `children`, preceded by
+`children_total` only when shortened. These focused descriptions are not token-paged; use `query` for large
+relation collections.
+
+The read response budget is `floor(context_window * context_fraction)`, additionally bounded
+by the provider's remaining context with a 10% response reserve. `max_items` is a separate,
+optional count ceiling; it never overrides the token budget. The actual serialized JSON,
+including statistics, cards, facts and cursor, is counted with tiktoken. The provider supplies
+the selected model's effective window and latest context usage, rather than cumulative billing
+usage. Unknown windows reject reads instead of guessing. Local counting uses the model's
+registered encoding or the explicit `token_encoding` fallback. For private model names such
+as Luna this is an estimate, not a claim of server-exact tokenization; the SDK does not expose
+an exact preflight counter. Vocabulary loading may download tiktoken's cached encoding on first
+use. Ordinary offline tests use a small in-memory BPE vocabulary without downloads.
+
+Results contain `total`, `returned` and `has_more`; `next_cursor` appears only when needed.
+Continue with the cursor and optionally `max_items`, without repeating the original filters.
+A graph change invalidates continuation. Large scans explicitly report `total_at_least` until
+complete; oversized individual facts are never silently cut. Do not automatically read every
+page into model history: count or narrow a large selection first.
 
 This does not change the consciousness profile. Graph commits schedule index reconciliation; query-time generation checks repair missing indexes and prevent reads from a newer restored state. Redis contents are disposable and excluded from state backups.
 

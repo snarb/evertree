@@ -13,6 +13,7 @@ from evertree.core.provider import (
     ScriptedProvider,
     ToolDefinition,
 )
+from tests.support.tokens import offline_tokenizer  # noqa: F401 -- offline BPE fixture
 
 
 @pytest.fixture(autouse=True)
@@ -144,6 +145,42 @@ class FakeExecutor:
         self.closed = True
 
 
+async def test_tool_read_context_uses_latest_window_not_cumulative_usage(tmp_path):
+    from evertree.core.tokens import current_read_context
+
+    seen = []
+
+    class ContextClient(FakeClient):
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            usage = token_notification(100_000, last=700)
+            usage.payload["tokenUsage"]["modelContextWindow"] = 1000
+            self.events[:0] = [usage, SimpleNamespace(method="test/call", payload={})]
+            return result
+
+        def next_turn_notification(self, turn_id):
+            event = super().next_turn_notification(turn_id)
+            if event.method == "test/call":
+                for _ in range(2):
+                    self.handler("item/tool/call", {"tool": "read", "arguments": {}})
+                return super().next_turn_notification(turn_id)
+            return event
+
+    async def handle(name, arguments):
+        seen.append(dict(current_read_context.get()))
+        return {"ok": True}
+
+    provider = CodexProvider(client_factory=ContextClient)
+    request = AgentRequest(
+        "Read", tmp_path, tools=(ToolDefinition("read", "Read", {}, read_only=True),)
+    )
+    events = [event async for event in provider.run("budget", request, tool_handler=handle)]
+    assert any(event.kind == "completed" for event in events)
+    assert [c["context_window"] for c in seen] == [1000, 1000]
+    assert 0 < seen[1]["remaining_tokens"] < seen[0]["remaining_tokens"] <= 200
+    assert current_read_context.get() is None
+
+
 def token_notification(total, *, last=None):
     def counters(number):
         return {
@@ -268,7 +305,13 @@ async def test_dynamic_tool_request_dispatch(tmp_path):
         return c
 
     async def lookup(name, arguments):
+        from evertree.core.tokens import current_read_context
+
         assert name == "lookup"
+        context = current_read_context.get()
+        assert context["model"] == "gpt-6-luna"
+        assert context["context_window"] == 196000
+        assert 0 < context["remaining_tokens"] < context["context_window"]
         return {"found": arguments["id"]}
 
     request = AgentRequest(

@@ -15,6 +15,7 @@ dependencies = [
     "packaging>=26,<27",
     "pydantic>=2.12,<3",
     "redis>=6.4,<7",
+    "tiktoken>=0.12,<1",
     "websockets>=17,<18",
     "zstandard>=0.25,<1",
 ]

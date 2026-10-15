@@ -33,6 +33,8 @@ MODEL_OPERATIONS = frozenset(
         "graph.read",
         "graph.get",
         "graph.query",
+        "graph.walk",
+        "graph.view",
         "graph.describe",
         "graph.read_property",
         "semantic.lookup",
@@ -226,7 +228,7 @@ class CoreOperations:
             result = read_property(self.graph, self.attribution, **payload)
         elif method in {"graph.read", "graph.get"}:
             result = self.graph.get(payload["id"])
-        elif method == "graph.query":
+        elif method == "graph.view":
             result = self.graph.query_view(
                 payload["relation"],
                 payload["view"],

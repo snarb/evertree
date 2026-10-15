@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from uuid import uuid4
 
 from ..provider import ToolDefinition
+from ..tokens import current_read_context
 from ..values import json_value
 
 
@@ -39,11 +40,14 @@ async def run_agent(ctx, payload, *, tools, tool_handler, max_tool_calls=40, sto
             if len(history) >= max_tool_calls:
                 raise RuntimeError("Agent exhausted its tool-call limit")
             call = event["call"]
+            context_token = current_read_context.set(event.get("read_context"))
             try:
                 result = json_value(await tool_handler(call["name"], call["arguments"]))
                 completed = {**call, "result": result, "error": None}
             except (ValueError, TypeError, PermissionError) as error:
                 completed = {**call, "result": None, "error": f"{type(error).__name__}: {error}"}
+            finally:
+                current_read_context.reset(context_token)
             history.append(completed)
             if completed["error"] is None and stop_when and stop_when(call["name"], result):
                 drain = True
@@ -204,7 +208,10 @@ class ProgramAgents:
             }
             future = asyncio.get_running_loop().create_future()
             invocation.pending[call["call_id"]] = future
-            await invocation.queue.put({"kind": "tool_call", "call": call})
+            event = {"kind": "tool_call", "call": call}
+            if current_read_context.get() is not None:
+                event["read_context"] = dict(current_read_context.get())
+            await invocation.queue.put(event)
             completed = await future
             if completed["error"] is not None:
                 raise RuntimeError(completed["error"])

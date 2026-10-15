@@ -104,7 +104,7 @@ def context(world, model, *, role="model", integration_context=None, operation_i
             "integration_operation_id": operation_id,
             "integration_context": integration_context or {},
         }
-        if method.startswith("semantic."):
+        if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
             return await world.service.execute(method, payload, metadata)
         return world.operations.execute(method, payload, metadata=metadata)
 

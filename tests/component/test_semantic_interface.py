@@ -99,6 +99,39 @@ async def test_parallel_indexes_rank_fusion_and_cached_pages():
         world.service.lookup("other", cursor=first["cursor"], task_id="task")
 
 
+@pytest.mark.parametrize("count", [0, 7, 9])
+def test_describe_previews_totals_and_focused_lists(count):
+    world = semantic_world()
+    graph = world.graph
+    entity = Node(graph.reserve_id(), "Measured object")
+    properties = [Node(graph.reserve_id(), f"Reading {i}", kind="property") for i in range(count)]
+    facts = [
+        graph.new_fact(
+            "HAS_NUMERIC_VALUE",
+            {"entity": entity.id, "property": prop.id, "value": i, "unit": "m"},
+        )
+        for i, prop in enumerate(properties)
+    ]
+    graph.apply(GraphDelta(creates=(entity, *properties, *facts)), provenance="test")
+    for prop in properties:
+        world.attribution.register(PropertyDefinition(prop.id))
+    for project in (lambda value: value, _read_for_model):
+        result = project(describe(graph, world.attribution, entity.id))
+        assert "relations_truncated" not in result
+        for field in ("properties", "relations"):
+            assert len(result.get(field, [])) == min(count, 7)
+            if count > 7:
+                assert result[field + "_total"] == count
+                assert list(result).index(field + "_total") < list(result).index(field)
+            else:
+                assert field + "_total" not in result
+            focused = project(describe(graph, world.attribution, entity.id, focus=field))
+            assert len(focused.get(field, [])) == count
+            assert field + "_total" not in focused
+            other = "relations" if field == "properties" else "properties"
+            assert other not in focused
+
+
 def test_describe_discovers_properties_without_computing_and_uses_one_time(monkeypatch):
     world = semantic_world()
     g, runtime = world.graph, world.attribution

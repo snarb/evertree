@@ -83,7 +83,8 @@ def describe(graph, attribution, subject, focus=None, at=None):
         return node
     when = timestamp(at) if at else utcnow()
     properties = []
-    for definition in attribution.properties_for(node.id, at=when):
+    definitions = () if focus == "relations" else attribution.properties_for(node.id, at=when)
+    for definition in definitions:
         prop = graph.get(definition.id)
         item = {**card(prop), "required_parameters": list(definition.required_parameters)}
         if definition.required_parameters:
@@ -100,18 +101,31 @@ def describe(graph, attribution, subject, focus=None, at=None):
     result = {
         "subject": card(node),
         "at": when.isoformat() if at is not None else None,
-        "properties": properties,
     }
+    if focus not in (None, "", "properties", "relations"):
+        term = focus.casefold()
+        properties = [p for p in properties if term in str(p).casefold()]
+    if focus != "relations":
+        _preview(result, "properties", properties, None if focus else 7)
     if isinstance(node, Facet) and at is not None:
         result["subject"]["temporal_status"] = node.applicability(when)
     if focus != "properties":
         if isinstance(node, Prototype):
             # Many instances can fill the relation preview before a later parent link.
-            result["parents"] = [
-                card(graph.get(fact.args["supertype"]))
+            result["parent"] = next(
+                (
+                    card(graph.get(fact.args["supertype"]))
+                    for fact in graph.facts("SUBTYPE_OF")
+                    if fact.args["type"] == node.id
+                ),
+                None,
+            )
+            children = [
+                graph.get(fact.args["type"]).name
                 for fact in graph.facts("SUBTYPE_OF")
-                if fact.args["type"] == node.id
+                if fact.args["supertype"] == node.id
             ]
+            _preview(result, "children", children, 7)
         facts = []
         for fact in graph.facts():
             if node.id not in fact_nodes(graph, fact):
@@ -123,12 +137,10 @@ def describe(graph, attribution, subject, focus=None, at=None):
                     continue
                 item["temporal_status"] = status
             facts.append(item)
-        if focus:
+        if focus and focus != "relations":
             term = focus.casefold()
             facts = [f for f in facts if term in str(f).casefold()]
-            result["properties"] = [p for p in properties if term in str(p).casefold()]
-        result["relations"] = facts[:20]
-        result["relations_truncated"] = len(facts) > 20
+        _preview(result, "relations", facts, None if focus == "relations" else 7)
         if isinstance(node, RelationType):
             result["schema"] = json_value(node)
         elif isinstance(node, RelationInstance):
@@ -136,3 +148,9 @@ def describe(graph, attribution, subject, focus=None, at=None):
             if at is not None:
                 result["fact"]["temporal_status"] = graph.fact_applicability(node, when)
     return result
+
+
+def _preview(result, name, items, limit):
+    if limit is not None and len(items) > limit:
+        result[name + "_total"] = len(items)
+    result[name] = items if limit is None else items[:limit]

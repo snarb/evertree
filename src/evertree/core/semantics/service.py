@@ -8,6 +8,7 @@ from ..graph.types import RelationInstance, node_from_dict
 from ..memory.types import TraceOutputRef, _references
 from ..values import ContractError, json_value
 from .actions import CREATE_ACTIONS, compile_action, validate_action
+from .queries import GraphQueries
 from .reading import card
 
 
@@ -18,8 +19,10 @@ class SemanticService:
         self._pages = {}
         self._searches = {}
         self._index_reads = {}
+        self.queries = GraphQueries(graph, attribution, config.read)
 
     def release(self, task_id):
+        self.queries.release(task_id)
         self._pages = {key: page for key, page in self._pages.items() if page["task_id"] != task_id}
         self._searches.pop(task_id, None)
         self._index_reads.pop(task_id, None)
@@ -273,6 +276,8 @@ class SemanticService:
 
     async def execute(self, method, payload, metadata):
         task_id = metadata["task_id"]
+        if method in {"graph.query", "graph.walk"}:
+            return self.queries.read(method.removeprefix("graph."), payload, task_id=task_id)
         if method == "semantic.lookup":
             return self.lookup(**payload, task_id=task_id)
         if method == "semantic.revision":

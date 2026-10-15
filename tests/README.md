@@ -253,3 +253,14 @@ To iterate on search without paying for graph construction again, set
 **different** `--basetemp`; pytest clears its destination at startup. Select
 `-k search_on_identical` to run only retrieval. Keep the snapshot's source report and metrics
 with it, so improvements to search are not confused with changes to graph construction.
+
+
+### Exact graph reads and output budgets
+
+`tests/component/test_graph_queries.py` exercises partial slot bindings, typed participants,
+scalar/list roles, conditions, counts, cycles, temporal uncertainty, cursor scope and final JSON
+token budgets. Its local BPE vocabulary needs no downloads. Provider tests check selected-model
+context metadata; Program-agent and semantic-worker tests verify budget transport and durable
+replay. The native Program-agent test also covers bootstrap without revision-owned logging helpers.
+These tests establish mechanics, not semantic model judgment or server-exact token counts for
+private model aliases.

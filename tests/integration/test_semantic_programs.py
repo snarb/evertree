@@ -5,9 +5,11 @@ from dataclasses import asdict
 from pathlib import Path
 
 from evertree.core.runtime.controller import ProgramSpec, Runtime
+from evertree.core.tokens import current_read_context
 from evertree.core.values import json_value
 from tests.support.runtime import TestProcess, commit_programs
 from tests.support.semantics import semantic_world
+from tests.support.tokens import offline_tokenizer  # noqa: F401 -- offline BPE fixture
 
 
 async def test_integration_repairs_action_calls_search_child_and_replays_once(tmp_path):
@@ -59,8 +61,27 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
             tool_results.append(await call("create_prototype", {**fields, "parent": 9999}))
             assert tool_results[-1]["error"]
             tool_results.append(await call("create_claim", fields))
+            token = current_read_context.set({"model": "gpt-5", "context_window": 1000})
+            try:
+                graph_read = await call(
+                    "query", {"relation": "SUBTYPE_OF", "result": "count_matches"}
+                )
+                assert graph_read["total"] == 0 and graph_read["returned"] == 0
+                walked = await call(
+                    "walk",
+                    {
+                        "start": world.graph.find("Process").id,
+                        "relation": "SUBTYPE_OF",
+                        "from_slot": "supertype",
+                        "to_slot": "type",
+                        "result": "count_nodes",
+                    },
+                )
+                assert walked["total"] == 0
+            finally:
+                current_read_context.reset(token)
             return {"text": ""}
-        if method.startswith("semantic."):
+        if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
             return await world.service.execute(method, payload, metadata)
         return world.operations.execute(method, payload, metadata=metadata)
 

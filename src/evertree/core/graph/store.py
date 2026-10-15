@@ -20,10 +20,10 @@ from ..values import (
     timestamp,
     utcnow,
 )
+from .matching import match_fact, validate_clause
 from .types import (
     CANONICAL_KINDS,
     AccessView,
-    Clause,
     Facet,
     GraphChange,
     GraphDelta,
@@ -357,24 +357,7 @@ class GraphStore:
                 slot = slots.get(clause.field)
                 if slot is None:
                     slot = Slot(clause.field, "string" if clause.field == "name" else "number")
-                if clause.op in {"is_null", "not_null"}:
-                    continue
-                if clause.op in {"<", "<=", ">", ">="} and (
-                    slot.value_type not in {"number", "integer", "string"}
-                    or slot.arity.startswith("list")
-                ):
-                    raise ContractError("ordered predicates require a scalar ordered field")
-                if clause.op == "contains":
-                    if not slot.arity.startswith("list") and slot.value_type != "string":
-                        raise ContractError("contains requires a list or string field")
-                    self._validate_scalar(clause.value, slot, nodes)
-                elif clause.op in {"in", "not_in"}:
-                    if not isinstance(clause.value, (tuple, list, frozenset)):
-                        raise ContractError("membership predicate requires a list of values")
-                    for value in clause.value:
-                        self._validate_slot(value, slot, nodes)
-                else:
-                    self._validate_slot(clause.value, slot, nodes)
+                validate_clause(self, slot, clause, nodes)
 
     def fact_applicability(self, fact: RelationInstance, at: datetime) -> str:
         statuses = set()
@@ -421,49 +404,21 @@ class GraphStore:
                 return UNKNOWN
         matches = []
         for fact in self.facts(relation.id):
-            if any(fact.args.get(key) != value for key, value in inputs.items()):
-                continue
-            temporal = (
-                self.fact_applicability(fact, valid_at) if valid_at is not None else "applicable"
+            temporal = match_fact(
+                self,
+                fact,
+                relation,
+                inputs,
+                view.constraints.all if view.constraints else (),
+                valid_at=valid_at,
+                known_at=known_at,
             )
-            if temporal == "outside":
+            if temporal is None:
                 continue
-            accepted = True
-            for clause in view.constraints.all if view.constraints else ():
-                if clause.field in slots:
-                    value = fact.args.get(clause.field)
-                elif clause.field in {"id", "name"}:
-                    value = getattr(fact, clause.field)
-                else:
-                    if self.belief_reader is None or fact.belief_target is None:
-                        return UNKNOWN
-                    try:
-                        belief = self.belief_reader(
-                            fact.belief_target, valid_at=valid_at, known_at=known_at
-                        )
-                    except KeyError:
-                        return UNKNOWN
-                    if belief is UNKNOWN:
-                        return UNKNOWN
-                    profile = getattr(belief, "profile", None)
-                    if clause.field == "strength" and profile is not None:
-                        if relation.name != "CLASSIFIED_AS":
-                            return UNKNOWN
-                        alternative = str(fact.args["class"])
-                        if alternative not in profile:
-                            return UNKNOWN
-                        value = profile[alternative]
-                    else:
-                        value = getattr(getattr(belief, "data", belief), clause.field)
-                if not _compare_clause(value, clause):
-                    accepted = False
-                    break
-            if accepted:
-                # The result set is incomplete when a matching state's time is unknown.
-                if temporal == "unknown":
-                    return UNKNOWN
-                values = tuple(fact.args.get(label) for label in view.outputs)
-                matches.append(ViewMatch(values[0] if len(values) == 1 else values, fact))
+            if temporal == "unknown":
+                return UNKNOWN
+            values = tuple(fact.args.get(label) for label in view.outputs)
+            matches.append(ViewMatch(values[0] if len(values) == 1 else values, fact))
         if (
             view.output_arity == "one"
             and len(matches) != 1
@@ -665,27 +620,3 @@ class GraphStore:
         )
         self.apply(GraphDelta(creates=tuple(nodes)), provenance=provenance)
         return {node.name: node.id for node in nodes}
-
-
-def _compare_clause(value: Any, clause: Clause) -> bool:
-    if clause.op == "is_null":
-        return value is None
-    if clause.op == "not_null":
-        return value is not None
-    if value is None:
-        return False
-    operations = {
-        "==": lambda: value == clause.value,
-        "!=": lambda: value != clause.value,
-        "in": lambda: value in clause.value,
-        "not_in": lambda: value not in clause.value,
-        "<": lambda: value < clause.value,
-        "<=": lambda: value <= clause.value,
-        ">": lambda: value > clause.value,
-        ">=": lambda: value >= clause.value,
-        "contains": lambda: clause.value in value,
-    }
-    try:
-        return operations[clause.op]()
-    except TypeError as exc:
-        raise ContractError("predicate is incompatible with field type") from exc

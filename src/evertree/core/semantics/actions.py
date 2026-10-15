@@ -59,6 +59,60 @@ _SCALAR = {"type": ["string", "number", "boolean", "null"]}
 _VALUE = {"anyOf": [_SCALAR, {"type": "array", "items": _SCALAR}]}
 
 
+def _read_object(properties, required=()):
+    return {**_object(properties), "required": list(required)}
+
+
+_QUERY_COMMON = {
+    "relation": {"type": ["integer", "string", "null"]},
+    "where": {
+        "type": ["array", "null"],
+        "description": "AND filters. Fields: args.<slot>, conditions.<parameter>, fact.id or fact.name. Conditions are recorded qualifications, not verified world conditions.",
+        "items": _read_object(
+            {
+                "field": _TEXT,
+                "op": {
+                    "type": "string",
+                    "enum": [
+                        "==",
+                        "!=",
+                        "in",
+                        "not_in",
+                        "<",
+                        "<=",
+                        ">",
+                        ">=",
+                        "contains",
+                        "is_null",
+                        "not_null",
+                    ],
+                },
+                "value": _VALUE,
+            },
+            ("field", "op"),
+        ),
+    },
+    "fields": {
+        "type": ["array", "null"],
+        "items": {"type": "string", "enum": ["description", "properties", "schema"]},
+        "description": "Extra node-card fields; defaults to description. [] gives id/name/kind and state boundaries. Properties never trigger computation.",
+    },
+    "at": {
+        **_OPTIONAL_TEXT,
+        "description": "World-time ISO timestamp; omit/null for no temporal filter.",
+    },
+    "max_items": {
+        "type": ["integer", "null"],
+        "minimum": 1,
+        "description": "Optional item ceiling, defaults to configured 600. Runtime token budget may return fewer.",
+    },
+    "cursor": {
+        **_OPTIONAL_TEXT,
+        "description": "Returned next_cursor. For continuation pass only cursor and optionally max_items; omit/null all other fields.",
+    },
+}
+
+
 TOOLS = (
     {
         "name": "search",
@@ -89,9 +143,87 @@ TOOLS = (
             "STATE_IDENTITY connects a Facet to its Instance; IDENTITY_TYPE connects an Instance "
             "to its Prototype; SUBTYPE_OF connects a class to its broader parent. "
             "An Instance's description also lists linked Facets. "
-            "relations_truncated means some links were omitted."
+            "Default previews contain up to 7 properties and 7 relations; properties_total/"
+            "relations_total precede truncated lists. focus=properties or relations returns "
+            "that full list. A Prototype's parent is one card or null; children lists up to 7 "
+            "direct subtype names, preceded by children_total only when shortened."
         ),
-        "parameters": _object({"subject": {"type": ["integer", "string"]}}),
+        "parameters": _read_object(
+            {
+                "subject": {"type": ["integer", "string"]},
+                "focus": {
+                    **_OPTIONAL_TEXT,
+                    "description": "properties: all properties only; relations: all relations only. Other text filters both lists, with at most 7 relations and all matching properties.",
+                },
+                "at": _OPTIONAL_TEXT,
+            },
+            ("subject",),
+        ),
+        "read_only": True,
+    },
+    {
+        "name": "query",
+        "description": "Find facts by named slots or all facts involving subject. Bind any subset of roles, select values or unique nodes. Reports total before returning a token-bounded page. Keep source facts and qualifications; a match is not proof. Count/exists modes avoid loading cards.",
+        "parameters": _read_object(
+            {
+                **_QUERY_COMMON,
+                "subject": {
+                    "type": ["integer", "null"],
+                    "description": "Find this node in any node-valued slot, including lists. Supply relation or subject.",
+                },
+                "bindings": {
+                    "type": ["array", "null"],
+                    "items": _object({"slot": _TEXT, "value": _VALUE}),
+                    "description": "Exact values for any subset of declared slots. Use where/contains for list membership.",
+                },
+                "select": {
+                    "type": ["array", "null"],
+                    "items": _TEXT,
+                    "description": "Returned slot labels. Omit for all arguments; nodes/count_nodes require exactly one node-valued slot.",
+                },
+                "result": {
+                    "type": ["string", "null"],
+                    "enum": ["matches", "nodes", "count_matches", "count_nodes", "exists", None],
+                    "description": "Default matches. Node counts deduplicate node IDs; match counts count facts.",
+                },
+            }
+        ),
+        "read_only": True,
+    },
+    {
+        "name": "walk",
+        "description": "Follow one relation from a named node slot to another, breadth-first without cycles. SUBTYPE_OF supertype→type finds descendants; reverse finds ancestors. Returns unique nodes, depth and supporting facts, with total and token-bounded pages.",
+        "parameters": _read_object(
+            {
+                **_QUERY_COMMON,
+                "start": {"type": ["integer", "null"]},
+                "from_slot": _OPTIONAL_TEXT,
+                "to_slot": _OPTIONAL_TEXT,
+                "max_depth": {
+                    "type": ["integer", "null"],
+                    "minimum": 1,
+                    "description": "Default 1; null explicitly requests all reachable levels.",
+                },
+                "result": {
+                    "type": ["string", "null"],
+                    "enum": ["nodes", "count_nodes", "exists", None],
+                },
+            }
+        ),
+        "read_only": True,
+    },
+    {
+        "name": "read_property",
+        "description": "Read a discovered property, including computed/parameterized values. Preserve uncertainty and grounds; missing parameters are reported.",
+        "parameters": _read_object(
+            {
+                "subject": {"type": ["integer", "string"]},
+                "property": {"type": ["integer", "string"]},
+                "at": _OPTIONAL_TEXT,
+                "parameters": {"type": ["object", "null"]},
+            },
+            ("subject", "property"),
+        ),
         "read_only": True,
     },
     {
