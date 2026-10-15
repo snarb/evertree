@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from evertree.common.logging_setup import configure_logging
 from evertree.core.codex.provider import CodexProvider
 from evertree.core.sandbox.diagnostics import check_sandbox
 from evertree.core.values import json_value
@@ -284,6 +285,7 @@ async def dispatch(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    configure_logging()
     try:
         return asyncio.run(dispatch(args))
     except KeyboardInterrupt:

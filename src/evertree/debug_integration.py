@@ -15,6 +15,7 @@ from uuid import uuid4
 
 from dotenv import dotenv_values
 
+from evertree.common.logging_setup import configure_logging
 from evertree.core.attribution import AttributionRuntime
 from evertree.core.beliefs import BeliefStore
 from evertree.core.codex.provider import CodexProvider
@@ -273,6 +274,7 @@ class DebugSession:
 
 
 def main():
+    configure_logging()
     repository = Path(__file__).resolve().parents[2]
     output_dir = repository / "tmp" / "debug-integration" / uuid4().hex[:12]
     session = DebugSession(output_dir)

@@ -199,6 +199,9 @@ async def _main(configuration):
     global _configuration, _loop, DBOS, gateway_step, program_workflow
     from dbos import DBOS, SetWorkflowID
 
+    from evertree.common.logging_setup import configure_logging
+
+    configure_logging()
     _configuration = configuration
     _loop = asyncio.get_running_loop()
     threading.Thread(target=_reader, daemon=True).start()

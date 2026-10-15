@@ -17,6 +17,7 @@ from evertree.core.values import ContractError, json_value
 
 
 def _object(properties):
+    """Strict JSON-schema object: every listed property is required, no extras."""
     return {
         "type": "object",
         "additionalProperties": False,
@@ -329,9 +330,12 @@ CREATE_ACTIONS = frozenset(
         "define_relation",
     }
 )
+# Actions that create one plain node (plus an optional link fact), unlike define_relation.
+_NODE_CREATES = CREATE_ACTIONS - {"define_relation"}
 
 
 def validate_action(action):
+    """Check an action against its tool schema; raises ValueError (ContractError) if invalid."""
     if not isinstance(action, dict) or action.get("action") not in TOOLS_BY_NAME:
         raise ContractError("Unknown semantic action")
     validate(
@@ -339,6 +343,7 @@ def validate_action(action):
         TOOLS_BY_NAME[action["action"]]["parameters"],
     )
     if action["action"] == "relate":
+        # The schema allows any JSON in values; relation values must be scalars or scalar lists.
         for field in ("arguments", "conditions"):
             for item in action[field]:
                 value = item["value"]
@@ -346,19 +351,21 @@ def validate_action(action):
                     validate(part, _SCALAR)
 
 
-def compile_action(graph, action, material):
-    """Allocate permanent identities inside the caller's single-operation transaction."""
-    validate_action(action)
-    name = action["action"]
-    creates = []
+class _DeltaBuilder:
+    """Collects the nodes one action creates, allocating permanent IDs as it goes."""
 
-    def create(**fields):
-        node = node_from_dict({"id": graph.reserve_id(), **fields})
-        creates.append(node)
+    def __init__(self, graph):
+        self.graph = graph
+        self.creates = []
+
+    def node(self, **fields):
+        node = node_from_dict({"id": self.graph.reserve_id(), **fields})
+        self.creates.append(node)
         return node.id
 
-    def fact(relation, args, description=None, conditions=None):
-        return create(
+    def fact(self, relation, args, description=None, conditions=None):
+        """Create a relation instance of the `relation` type."""
+        return self.node(
             name=relation.name,
             kind="relation_instance",
             relation_type=relation.id,
@@ -367,108 +374,147 @@ def compile_action(graph, action, material):
             properties={"conditions": conditions} if conditions else {},
         )
 
-    def schema(subject):
-        node = graph.find(subject) if isinstance(subject, str) else graph.get(subject)
+    def relation_type(self, subject):
+        """Resolve an existing relation type by name or ID."""
+        node = self.graph.find(subject) if isinstance(subject, str) else self.graph.get(subject)
         if node is None or node.kind != "relation_type":
             raise ContractError("Expected an existing relation type")
         return node
 
-    if name == "update":
-        node = graph.get(action["object"])
-        changes = action["changes"]
-        allowed = {field.name for field in dataclasses.fields(node)} - {
-            "id",
-            "kind",
-            "belief_target",
-        }
-        if not changes or changes.keys() - allowed:
-            raise ContractError("Update requires nonempty mutable fields of this object type")
-        # Qualifications also live in descriptions and relation definitions, not just args.
-        if (isinstance(node, RelationInstance) and node.belief_target) or (
-            node.kind == "relation_type"
-            and any(fact.belief_target for fact in graph.facts(node.id))
-        ):
-            raise ContractError("Changing assessed evidence requires evidence assessment")
-        # The typed constructor also validates complete replacement schemas and intervals.
-        updated = node_from_dict({**json_value(node), **changes})
-        return GraphDelta(
-            updates=(NodeUpdate(node.id, {k: getattr(updated, k) for k in changes}),)
-        ), node.id
-    if name == "delete":
-        ids = action["objects"]
-        if len(set(ids)) != len(ids):
-            raise ContractError("Delete identities must be distinct")
-        for identity in ids:
-            node = graph.get(identity)
-            if isinstance(node, RelationInstance) and node.belief_target:
-                raise ContractError("Removing assessed evidence requires evidence assessment")
-        return GraphDelta(deletes=tuple(ids)), None
-    if name in {
-        "create_concept",
-        "create_prototype",
-        "create_instance",
-        "create_facet",
-        "create_claim",
-    }:
-        kind = name.removeprefix("create_")
-        fields = {"name": action["name"], "description": action["description"], "kind": kind}
-        if kind == "facet":
-            fields.update(valid_from=action["valid_from"], valid_until=action["valid_until"])
-        identity = create(**fields)
-        if kind == "instance":
-            fact(schema("IDENTITY_TYPE"), {"instance": identity, "type": action["prototype"]})
-        elif kind == "facet":
-            fact(schema("STATE_IDENTITY"), {"facet": identity, "instance": action["instance"]})
-        elif kind == "prototype" and action["parent"] is not None:
-            fact(schema("SUBTYPE_OF"), {"type": identity, "supertype": action["parent"]})
-    elif name == "define_relation":
-        roles = action["roles"]
-        labels = [role["label"] for role in roles]
-        identity = create(
-            kind="relation_type",
-            name=action["name"],
-            description=action["description"],
-            signature=roles,
-            views=[
-                {
-                    "name": "get_" + label,
-                    "inputs": [other for other in labels if other != label],
-                    "outputs": [label],
-                    "output_arity": "list0",
-                }
-                for label in labels
-            ],
-        )
-    elif name == "relate":
-        arguments = {item["role"]: item["value"] for item in action["arguments"]}
-        conditions = {item["parameter"]: item["value"] for item in action["conditions"]}
-        if len(arguments) != len(action["arguments"]) or len(conditions) != len(
-            action["conditions"]
-        ):
-            raise ContractError("Relation roles and conditions must be distinct")
-        identity = fact(schema(action["relation"]), arguments, action["description"], conditions)
-    elif name == "save_note":
-        ref = action["source"]
-        item = next(item for item in material["experience"] if item["reference"] == ref)
-        value, origin = item["content"], item["origin"]
-        analytical = origin["operator"] == "analytical_note" and origin["output_type"].endswith(
-            ".AnalyticalNote"
-        )
-        fragment = (
-            origin["program"] == "ExperienceFragments"
-            and origin["operator"] == "experience_fragment"
-            and isinstance(value, dict)
-            and value.get("encoding") == "analytical_text"
-        )
-        if not ref.get("output_path") and (analytical or fragment):
-            text = value["text"]
-        else:
-            text = (
-                value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2)
-            )
-        identity = create(
-            kind="note", name=action["name"], description=text, properties={"source_ref": ref}
-        )
-    else:
+    def result(self, identity):
+        return GraphDelta(creates=tuple(self.creates)), identity
+
+
+def _compile_update(graph, action, material):
+    node = graph.get(action["object"])
+    changes = action["changes"]
+    allowed = {field.name for field in dataclasses.fields(node)} - {"id", "kind", "belief_target"}
+    if not changes or changes.keys() - allowed:
+        raise ContractError("Update requires nonempty mutable fields of this object type")
+    # Qualifications also live in descriptions and relation definitions, not just args.
+    if (isinstance(node, RelationInstance) and node.belief_target) or (
+        node.kind == "relation_type" and any(fact.belief_target for fact in graph.facts(node.id))
+    ):
+        raise ContractError("Changing assessed evidence requires evidence assessment")
+    # The typed constructor also validates complete replacement schemas and intervals.
+    updated = node_from_dict({**json_value(node), **changes})
+    update = NodeUpdate(node.id, {key: getattr(updated, key) for key in changes})
+    return GraphDelta(updates=(update,)), node.id
+
+
+def _compile_delete(graph, action, material):
+    ids = action["objects"]
+    if len(set(ids)) != len(ids):
+        raise ContractError("Delete identities must be distinct")
+    for identity in ids:
+        node = graph.get(identity)
+        if isinstance(node, RelationInstance) and node.belief_target:
+            raise ContractError("Removing assessed evidence requires evidence assessment")
+    return GraphDelta(deletes=tuple(ids)), None
+
+
+def _compile_node(graph, action, material):
+    """Concept, prototype, instance, facet or claim; the first three link it to its context."""
+    builder = _DeltaBuilder(graph)
+    kind = action["action"].removeprefix("create_")
+    fields = {"name": action["name"], "description": action["description"], "kind": kind}
+    if kind == "facet":
+        fields.update(valid_from=action["valid_from"], valid_until=action["valid_until"])
+    identity = builder.node(**fields)
+    if kind == "instance":
+        link = builder.relation_type("IDENTITY_TYPE")
+        builder.fact(link, {"instance": identity, "type": action["prototype"]})
+    elif kind == "facet":
+        link = builder.relation_type("STATE_IDENTITY")
+        builder.fact(link, {"facet": identity, "instance": action["instance"]})
+    elif kind == "prototype" and action["parent"] is not None:
+        link = builder.relation_type("SUBTYPE_OF")
+        builder.fact(link, {"type": identity, "supertype": action["parent"]})
+    return builder.result(identity)
+
+
+def _compile_relation_type(graph, action, material):
+    builder = _DeltaBuilder(graph)
+    roles = action["roles"]
+    labels = [role["label"] for role in roles]
+    identity = builder.node(
+        kind="relation_type",
+        name=action["name"],
+        description=action["description"],
+        signature=roles,
+        # One lookup view per role: given every other role, list the values of this one.
+        views=[
+            {
+                "name": "get_" + label,
+                "inputs": [other for other in labels if other != label],
+                "outputs": [label],
+                "output_arity": "list0",
+            }
+            for label in labels
+        ],
+    )
+    return builder.result(identity)
+
+
+def _compile_relate(graph, action, material):
+    builder = _DeltaBuilder(graph)
+    arguments = {item["role"]: item["value"] for item in action["arguments"]}
+    conditions = {item["parameter"]: item["value"] for item in action["conditions"]}
+    if len(arguments) != len(action["arguments"]) or len(conditions) != len(action["conditions"]):
+        raise ContractError("Relation roles and conditions must be distinct")
+    relation = builder.relation_type(action["relation"])
+    identity = builder.fact(relation, arguments, action["description"], conditions)
+    return builder.result(identity)
+
+
+def _note_text(item, ref):
+    """Note body: trusted analytical text verbatim, other strings verbatim, the rest as JSON."""
+    value, origin = item["content"], item["origin"]
+    analytical = origin["operator"] == "analytical_note" and origin["output_type"].endswith(
+        ".AnalyticalNote"
+    )
+    fragment = (
+        origin["program"] == "ExperienceFragments"
+        and origin["operator"] == "experience_fragment"
+        and isinstance(value, dict)
+        and value.get("encoding") == "analytical_text"
+    )
+    # Unwrap {"text": ...} only for a whole trusted output, never for a nested path inside it.
+    if not ref.get("output_path") and (analytical or fragment):
+        return value["text"]
+    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2)
+
+
+def _compile_note(graph, action, material):
+    builder = _DeltaBuilder(graph)
+    ref = action["source"]
+    item = next(item for item in material["experience"] if item["reference"] == ref)
+    identity = builder.node(
+        kind="note",
+        name=action["name"],
+        description=_note_text(item, ref),
+        properties={"source_ref": ref},
+    )
+    return builder.result(identity)
+
+
+_COMPILERS = {
+    "update": _compile_update,
+    "delete": _compile_delete,
+    "define_relation": _compile_relation_type,
+    "relate": _compile_relate,
+    "save_note": _compile_note,
+    **dict.fromkeys(_NODE_CREATES, _compile_node),
+}
+
+
+def compile_action(graph, action, material):
+    """Compile one write action into a GraphDelta and the affected object's ID (None for delete).
+
+    Runs inside the caller's single-operation transaction, so reserved IDs are never leaked.
+    """
+    validate_action(action)
+    compiler = _COMPILERS.get(action["action"])
+    if compiler is None:
         raise ContractError("Expected a graph write action")
-    return GraphDelta(creates=tuple(creates)), identity
+    return compiler(graph, action, material)
