@@ -7,10 +7,7 @@
 - Never assume migration support or backward compatibility is required, or make
   design or implementation decisions to preserve either, unless the user
   explicitly requests it.
-- Add short, clear comments at the relevant code location only to explain
-  motivation, reasons, or logic that are not obvious from the code. A bug fix alone
-  does not justify a comment; a useful comment explains the non-obvious reason
-  behind the fix to help LLMs avoid repeating the mistake.
+- Follow the [comment and docstring conventions](README.md#comments-and-docstrings).
 - Run affected tests after edits; finish with related regressions and
   `uv run pytest -q`. Run integration/native suites when their boundaries change.
 - After structural Program changes, run

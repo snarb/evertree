@@ -2,7 +2,6 @@
 
 A local agent with a semantic graph, memory, and executable Programs that evolve through verified updates. Available through a CLI and asynchronous Python components; designed for a single installation.
 
-
 **Program execution and native coding tools use macOS Seatbelt or Windows AppContainer.** Filesystem access is limited to declared inputs, runtime tools and writable task directories. Outgoing internet access is always allowed. Execution fails if the native sandbox is unavailable.
 
 ```sh
@@ -35,9 +34,7 @@ uv run evertree --home ~/agents/my-tree chat
 
 `doctor` checks authorization, model availability, and actual filesystem sandbox enforcement, and reports the selected backend.
 
-macOS uses the installed Python runtime and a small source environment containing only declared dependencies. Seatbelt restrictions are inherited by subprocesses; cancellation kills the owned process groups. Codex commands register their separate groups with core before execution, so their descendants can also be stopped on completion or cancellation. This is a launch handshake, with no resource monitoring. macOS commands use stdio; interactive PTY requests are rejected to prevent access to unrelated host terminals. macOS does not enforce aggregate memory/process limits or guarantee cleanup after a host crash or when user code creates a new session. Windows retains its Job Object limits and process-tree ownership. Windows AppContainer permits outgoing internet connections but restricts localhost and private-network access.
-
-The macOS launcher uses the built-in `/usr/bin/sandbox-exec`, which Apple marks deprecated; availability and enforcement are checked rather than falling back to unrestricted execution. Both Apple Silicon and Intel use their installed runtime and the SDK's matching native binary.
+macOS commands run under the built-in `/usr/bin/sandbox-exec` (deprecated by Apple; availability and enforcement are checked, with no unrestricted fallback). Subprocesses inherit the restrictions and cancellation kills owned process groups, but macOS enforces no aggregate memory/process limits and does not guarantee cleanup after a host crash or when user code starts a new session. Interactive PTY requests are rejected. Windows uses Job Object limits and process-tree ownership; AppContainer allows outgoing internet but restricts localhost and private networks.
 
 ## Operational contracts
 
@@ -61,55 +58,20 @@ The default suite runs unit and component tests with up to four workers. Integra
 ### Debug experience integration in PyCharm
 
 Open [`src/evertree/debug_integration.py`](src/evertree/debug_integration.py), select the
-project's `.venv` Python interpreter, and choose **Debug**. No command-line parameters are
-needed. The script always calls the real Codex model from `KnowledgeIntegration.exec`.
+project's `.venv` interpreter, and choose **Debug**. The script calls the real Codex model from
+`KnowledgeIntegration.exec`; sign in to Codex first. Edit `USER_TASK`, `INPUT_TEXT` and
+`CONSCIOUS_ANALYSIS` at the top of the script.
 
-Before running, sign in to Codex. The script loads `EVERTREE_REDIS_URL` and `OPENAI_API_KEY`
-from repository-root `.env`; variables already set in PyCharm or the shell
-take precedence. For this isolated harness, `EVERTREE_TEST_REDIS_URL` is also accepted when
-the regular Redis URL is absent. This file is ignored by Git and its values are never
-printed or included in model input. Search uses the production
-`RedisSearchIndex` with Redis 8.4+ Search and OpenAI embeddings; see
-[search configuration](#semantic-search-configuration). Missing variables are reported before
-model calls. Codex and embeddings consume account resources. Optional repository-root
-`evertree.toml` selects the semantic model and search settings just as for an agent home.
+`EVERTREE_REDIS_URL` (or `EVERTREE_TEST_REDIS_URL`) and `OPENAI_API_KEY` are read from the
+Git-ignored repository-root `.env`; variables already set in the environment take precedence.
+Search needs Redis 8.4+ with Search ([configuration](#semantic-search-configuration)); optional
+repository-root `evertree.toml` applies as for an agent home. Each run uses an isolated graph and
+Redis namespace and writes its output under `tmp/debug-integration/<run>/`. Breakpoints and
+timeout options are listed in the script's docstring.
 
 ```sh
 uv run python src/evertree/debug_integration.py
 ```
-
-Edit `USER_TASK`, `INPUT_TEXT`, and `CONSCIOUS_ANALYSIS` at the top of the script. These are
-the user task, a paragraph describing pump Н-1, and a supplied intermediate analytical Note.
-The integrator's LLM calls native semantic tools and chooses their sources. Tool handlers
-assign permanent IDs and immediately save each checked operation with its sources and history.
-Normal model completion ends integration; no write is required for routine material. There are no scripted
-model responses or predetermined graph objects. The example
-asks to preserve the pump's two observed state intervals; the actual representation is chosen
-by the model and validated by Core.
-
-Interactive debugging has no overall model deadline, so breakpoint pauses do not exhaust an
-invocation time limit. Automated callers can set `DebugSession(output_dir, timeout_seconds=120)`
-to bound the whole invocation, including startup and tools. Network operations retain their own
-timeouts; Stop still cancels the debug run.
-
-Useful breakpoints:
-
-- `DebugSession.record_experience`: source references and the analytical Note with its emphasis in text.
-- `knowledge_integration/_exec.py:handle_tool`: native tool dispatch, search, schema reads and repair.
-- `core/semantics/actions.py`: shared tool definitions, validation and operation construction.
-- `common/integration_actions.py`: search/read assistance and graph tool dispatch.
-- `DebugSession.model`: actual Codex request, declared tools and provider events.
-- `SemanticService.write`: operation validation, idempotence and atomic persistence.
-- `CoreOperations.apply_delta`, then `GraphStore.apply`: graph mutation and provenance.
-- `DebugSession.run`, at `return created`: inspect the graph, trace and successful writes together.
-
-Each run uses an isolated bootstrap graph and Redis namespace, writing `graph.json`,
-`trace.json`, `result.json` and `calls.json` under `tmp/debug-integration/<run>/`, also on
-failure. Each model request also has a readable `model-*.md` file with its tool definitions
-and a separate JSON provider transcript.
-The path is printed before execution. Ordinary Python breakpoints work because the
-Program and Core execute in one process. This harness invokes the integrator directly;
-application scheduling, worker admission and durable restart are outside its scope.
 
 ### Code conventions
 
@@ -121,6 +83,20 @@ application scheduling, worker admission and durable restart are outside its sco
   `ctx.step`; do not wrap the entire tool conversation in a durable step. Recovery
   replays exchanges and handlers to reconstruct local state before continuing.
 - Align `processes/` with the Self/Process `SUBTYPE_OF` taxonomy; `PART_WHOLE` does not define directory nesting. Preserve stable IDs when changing graph names, paths, and references. Validate structural changes with `uv run python -m evertree.core.programs.layout`.
+
+### Comments and docstrings
+
+**Comments**: short and clear; explain *why*, not *what*. Add them only where:
+
+- behavior is non-obvious or complex;
+- a bug was caused by misunderstanding the logic — note the pitfall to prevent repeats.
+
+Don't comment trivial code, restate the code, or leave changelog notes. Update or remove
+stale comments when changing code.
+
+**Docstrings**: required for public methods of components. For internal methods, only if
+they are non-trivial and their purpose isn't clear at a glance. Cover purpose, non-obvious
+parameters and non-obvious side effects. Keep them concise.
 
 ### Model prompts
 
@@ -146,11 +122,6 @@ application scheduling, worker admission and durable restart are outside its sco
 - Test the constructed input and its consumers together: necessary meaning survives,
   audit noise stays out, references resolve, and the response can be applied. Use live
   evaluations for model judgment; scripted tests only establish mechanical contracts.
-
-## Documentation
-
-- [Architecture](docs/architecture/Overview.md)
-- [Program lifecycle](docs/architecture/Process%20Plane/Program%20Lifecycle%20and%20Evolution.md)
 
 ## Semantic search configuration
 
@@ -184,50 +155,11 @@ max_items = 600
 token_encoding = "o200k_base"
 ```
 
-Integration defaults to high reasoning effort: the technical graph scenarios exposed
-missing class links and prose summaries replacing graph structure at medium effort.
-This increases integration latency and token usage; the profile remains configurable.
+Graph commits schedule index reconciliation; query-time generation checks repair missing indexes and prevent reads from a newer restored state. Redis contents are disposable and excluded from state backups. Graph reading, paging and token budgets are described in [Semantics Plane](docs/architecture/Semantics%20Plane.md#exact-slot-reads-and-walks).
 
-Search returns at most 20 candidates without pagination. Refine the search query when none fits.
+## Documentation
 
-Graph `query` and `walk` report total matches before returning a bounded page. `query`
-binds any subset of named relation slots; `walk` follows a chosen slot pair through one
-or all levels. Counts distinguish facts from unique nodes. Node cards include descriptions
-by default and can include properties or relation signatures. Full supporting facts retain
-all participant roles, scalar values and applicability conditions.
-
-`describe` previews up to 7 properties and 7 relations. Shortened lists are preceded by
-`properties_total` or `relations_total`; complete lists omit the count. `focus="properties"`
-or `focus="relations"` returns that full list without the other list. A Prototype has a single
-`parent` card or null, plus up to 7 immediate subtype names in `children`, preceded by
-`children_total` only when shortened. These focused descriptions are not token-paged; use `query` for large
-relation collections.
-
-The read response budget is `floor(context_window * context_fraction)`, additionally bounded
-by the provider's remaining context with a 10% response reserve. `max_items` is a separate,
-optional count ceiling; it never overrides the token budget. The actual serialized JSON,
-including statistics, cards, facts and cursor, is counted with tiktoken. The provider supplies
-the selected model's effective window and latest context usage, rather than cumulative billing
-usage. Unknown windows reject reads instead of guessing. Local counting uses the model's
-registered encoding or the explicit `token_encoding` fallback. For private model names such
-as Luna this is an estimate, not a claim of server-exact tokenization; the SDK does not expose
-an exact preflight counter. Vocabulary loading may download tiktoken's cached encoding on first
-use. Ordinary offline tests use a small in-memory BPE vocabulary without downloads.
-
-Results contain `total`, `returned` and `has_more`; cursors are stored privately by Core.
-`next_page=true` continues the latest selection of the same tool in the same task, optionally
-with a different `max_items`. To resume an earlier selection, repeat its original filters/fields
-with `next_page=true`. Omit/false starts fresh; exhausted or missing continuations are errors.
-A graph change invalidates continuation. Large scans explicitly report `total_at_least` until
-complete; oversized individual facts are never silently cut. Do not automatically read every
-page into model history: count or narrow a large selection first.
-
-This does not change the consciousness profile. Graph commits schedule index reconciliation; query-time generation checks repair missing indexes and prevent reads from a newer restored state. Redis contents are disposable and excluded from state backups.
-
-### Conscious steps and experience integration
-
-Consciousness works in bounded iterations: a local objective, related tool or Program calls, and an explicit analytical Note. The result may be an intermediate plan or hypothesis. The latest Note and working plan remain available to the next iteration through task state and trace; only a separately composed `user_message` is delivered to the user.
-
-Between steps, `KnowledgeIntegration` examines recorded experience and independently saves useful facts, connections and insights. Emphasis and requests to remember something belong in ordinary analytical text. References point to already recorded material; callers need not pre-extract every statement or assign review statuses. The runtime supplies task and Self context. Use `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)` when integration is needed earlier. For precise graph editing, consciousness can load `graph_write_tools`, sharing integration’s creation (including `create_claim`), relation, Note, `update` and `delete` operations. Each operation saves permanent IDs, history and sources immediately; later failures leave previous writes intact. Public raw `graph.apply` is unavailable.
-
-The `semantics.remember` configuration above selects the integration model profile. Internal checkpoints bound packet processing, and runtime operation keys prevent repeated writes on recovery. Integration failures enter technical diagnostics without blocking the next step or final delivery; answer verification, input freshness and task constraints still apply. Memory compaction may later reduce intermediate detail while retaining significant reasons and provenance. See [the conscious step contract](docs/architecture/Cognition%20and%20Attention.md#conscious-step-contract) and [knowledge integration](docs/architecture/Semantics%20Plane.md#knowledge-integration).
+- [Architecture](docs/architecture/Overview.md)
+- [Program lifecycle](docs/architecture/Process%20Plane/Program%20Lifecycle%20and%20Evolution.md)
+- [Conscious step contract](docs/architecture/Cognition%20and%20Attention.md#conscious-step-contract)
+- [Knowledge integration](docs/architecture/Semantics%20Plane.md#knowledge-integration)

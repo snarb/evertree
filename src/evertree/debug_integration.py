@@ -3,6 +3,24 @@
 Run this file in PyCharm using the project interpreter and sign in to Codex.
 Search settings are loaded from repository .env or the environment.
 Only the input experience below is supplied; the model chooses all semantic actions.
+
+Interactive runs have no overall model deadline, so breakpoint pauses do not exhaust an
+invocation limit; automated callers can pass `DebugSession(output_dir, timeout_seconds=120)`.
+Network operations keep their own timeouts. Program and Core run in one process, so ordinary
+breakpoints work; application scheduling, worker admission and durable restart are out of scope.
+
+Each run writes graph.json, trace.json, result.json, calls.json and per-request model-*.md
+files under tmp/debug-integration/<run>/, also on failure.
+
+Useful breakpoints:
+- DebugSession.record_experience: source references and the analytical Note.
+- knowledge_integration/_exec.py:handle_tool: native tool dispatch, search, schema reads, repair.
+- core/semantics/actions.py: shared tool definitions, validation and operation construction.
+- common/integration_actions.py: search/read assistance and graph tool dispatch.
+- DebugSession.model: actual Codex request, declared tools and provider events.
+- SemanticService.write: operation validation, idempotence and atomic persistence.
+- CoreOperations.apply_delta, then GraphStore.apply: graph mutation and provenance.
+- DebugSession.run at `return created`: graph, trace and successful writes together.
 """
 
 import asyncio
