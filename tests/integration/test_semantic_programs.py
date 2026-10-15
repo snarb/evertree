@@ -4,6 +4,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.runtime.controller import ProgramSpec, Runtime
 from evertree.core.tokens import current_read_context
 from evertree.core.values import json_value
@@ -26,6 +27,14 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
     parent = ProgramSpec(101, paths[0], revision, role="exec")
     child = ProgramSpec(102, paths[1], revision, role="model")
     world = semantic_world()
+    parts = [Node(world.graph.reserve_id(), name) for name in ("Start", "End")]
+    facts = [
+        world.graph.new_fact(
+            "PART_WHOLE", {"part": node.id, "whole": world.graph.find("Process").id}
+        )
+        for node in parts
+    ]
+    world.graph.apply(GraphDelta(creates=(*parts, *facts)), provenance="test")
     run = world.memory.start_run("input", revision, {})
     event = world.memory.record(run, "input", output="Cat is an animal")
     world.memory.finish_run(run)
@@ -52,7 +61,7 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
             assert "create_claim" in {tool["name"] for tool in payload["tools"]}
             attempts.append(json.loads(payload["prompt"]))
             call = payload["_tool_handler"]
-            await call("search", {"query": "Process", "next_page": False})
+            await call("search", {"query": "Process"})
             fields = {
                 "name": "Cat classification",
                 "description": "A cat is an animal.",
@@ -67,6 +76,14 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
                     "query", {"relation": "SUBTYPE_OF", "result": "count_matches"}
                 )
                 assert graph_read["total"] == 0 and graph_read["returned"] == 0
+                first = await call(
+                    "query", {"relation": "PART_WHOLE", "max_items": 1, "fields": []}
+                )
+                assert first["returned"] == 1 and first["has_more"]
+                assert "next_cursor" not in first
+                second = await call("query", {"next_page": True})
+                assert second["returned"] == 1 and not second["has_more"]
+                assert first["items"][0]["source_fact"] != second["items"][0]["source_fact"]
                 walked = await call(
                     "walk",
                     {

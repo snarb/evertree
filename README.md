@@ -188,6 +188,8 @@ Integration defaults to high reasoning effort: the technical graph scenarios exp
 missing class links and prose summaries replacing graph structure at medium effort.
 This increases integration latency and token usage; the profile remains configurable.
 
+Search returns at most 20 candidates without pagination. Refine the search query when none fits.
+
 Graph `query` and `walk` report total matches before returning a bounded page. `query`
 binds any subset of named relation slots; `walk` follows a chosen slot pair through one
 or all levels. Counts distinguish facts from unique nodes. Node cards include descriptions
@@ -212,8 +214,10 @@ as Luna this is an estimate, not a claim of server-exact tokenization; the SDK d
 an exact preflight counter. Vocabulary loading may download tiktoken's cached encoding on first
 use. Ordinary offline tests use a small in-memory BPE vocabulary without downloads.
 
-Results contain `total`, `returned` and `has_more`; `next_cursor` appears only when needed.
-Continue with the cursor and optionally `max_items`, without repeating the original filters.
+Results contain `total`, `returned` and `has_more`; cursors are stored privately by Core.
+`next_page=true` continues the latest selection of the same tool in the same task, optionally
+with a different `max_items`. To resume an earlier selection, repeat its original filters/fields
+with `next_page=true`. Omit/false starts fresh; exhausted or missing continuations are errors.
 A graph change invalidates continuation. Large scans explicitly report `total_at_least` until
 complete; oversized individual facts are never silently cut. Do not automatically read every
 page into model history: count or narrow a large selection first.

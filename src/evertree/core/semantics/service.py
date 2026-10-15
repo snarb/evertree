@@ -1,8 +1,7 @@
-"""Core semantic gateway: identities, snapshots, pagination and checked writes."""
+"""Core semantic gateway: identities, bounded search and checked writes."""
 
 import hashlib
 import json
-from uuid import uuid4
 
 from ..graph.types import RelationInstance, node_from_dict
 from ..memory.types import TraceOutputRef, _references
@@ -16,32 +15,19 @@ class SemanticService:
     def __init__(self, graph, memory, attribution, config, index, operations):
         self.graph, self.memory, self.attribution = graph, memory, attribution
         self.config, self.index, self.operations = config, index, operations
-        self._pages = {}
         self._searches = {}
         self._index_reads = {}
         self.queries = GraphQueries(graph, attribution, config.read)
 
     def release(self, task_id):
         self.queries.release(task_id)
-        self._pages = {key: page for key, page in self._pages.items() if page["task_id"] != task_id}
         self._searches.pop(task_id, None)
         self._index_reads.pop(task_id, None)
 
-    def lookup(self, query, kind=None, limit=20, cursor=None, *, task_id):
+    def lookup(self, query, kind=None, limit=20, *, task_id):
         kind = kind.strip().casefold() if kind is not None else None
-        if type(limit) is not int or not 1 <= limit <= 100:
-            raise ContractError("limit must be between 1 and 100")
-        if cursor:
-            page = self._pages.get(cursor)
-            if (
-                page is None
-                or page["task_id"] != task_id
-                or page["query"] != query
-                or page["kind"] != kind
-            ):
-                raise ContractError("Invalid search cursor for this task/query")
-            self._check_revision(page["revision"])
-            return self._page(page, limit)
+        if type(limit) is not int or not 1 <= limit <= 20:
+            raise ContractError("limit must be between 1 and 20")
         matches = self.graph.lookup(query, kind=kind)
         if matches or isinstance(query, int):
             return self.results(
@@ -51,41 +37,21 @@ class SemanticService:
             raise ContractError("Search query cannot be empty")
         return None
 
-    def _page(self, page, limit):
-        offset = page.get("offset", 0)
-        items = page["items"][offset : offset + limit]
-        cursor = None
-        if offset + limit < len(page["items"]):
-            cursor = f"{page['page_id']}:{offset + limit}"
-            self._pages[cursor] = {**page, "offset": offset + limit}
-        return {
-            "status": "incomplete" if page["errors"] else "complete",
-            "items": items,
-            "errors": page["errors"],
-            "cursor": cursor,
-            "total": len(page["items"]),
-            "exact": page.get("exact", False),
-        }
-
     def results(self, query, kind, items, errors, limit, task_id, exact=False):
+        if type(limit) is not int or not 1 <= limit <= 20:
+            raise ContractError("limit must be between 1 and 20")
         self._searches.setdefault(task_id, {})[str(query).strip().casefold()] = {
             "revision": self.graph.revision,
             "complete": not errors,
-            "items": items,
+            "items": items[:limit],
         }
-        return self._page(
-            {
-                "query": query,
-                "page_id": uuid4().hex,
-                "revision": self.graph.revision,
-                "kind": kind.strip().casefold() if kind is not None else None,
-                "items": items,
-                "errors": errors,
-                "task_id": task_id,
-                "exact": exact,
-            },
-            limit,
-        )
+        return {
+            "status": "incomplete" if errors else "complete",
+            "items": items[:limit],
+            "errors": errors,
+            "total": len(items),
+            "exact": exact,
+        }
 
     def _check_revision(self, revision):
         if revision != self.graph.revision:

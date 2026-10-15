@@ -67,7 +67,8 @@ references and optional focus. The controller supplies the integrator's task con
 Use graph.search to locate objects and graph.describe for their properties/schema.
 Use graph.query for exact named-slot matches and graph.walk for repeated transitions.
 Both report total and a token-bounded page; count modes avoid loading large lists.
-Continue only when needed with cursor and optional max_items. Recorded qualifications
+Continue only when needed with next_page=true and optional max_items; Core stores cursors.
+This continues the latest selection of that tool; repeat the original filters/fields to continue an earlier one. Recorded qualifications
 and unknown temporal applicability are not established truths. Use graph.read_property
 when a discovered property needs computation or parameters.
 Load specialized tool sets when needed; they expire after this invocation. Additional work
@@ -255,12 +256,11 @@ def semantic_tools():
     ) + (
         define(
             "graph.search",
-            "Find graph objects by name, ID, or similarity of names and descriptions. Exact matches bypass indexes. Use cursor to continue a result.",
+            "Find graph objects by name, ID, or similarity of names and descriptions. Returns up to 20 candidates. Exact matches bypass indexes. Refine the query if none fits; no pagination.",
             {
                 "query": reference,
                 "kind": string,
-                "limit": {"type": "integer", "minimum": 1, "maximum": 100},
-                "cursor": string,
+                "limit": {"type": "integer", "minimum": 1, "maximum": 20},
             },
             ["query"],
         ),

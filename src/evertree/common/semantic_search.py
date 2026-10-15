@@ -3,12 +3,10 @@
 import asyncio
 
 
-async def search(ctx, query, kind=None, limit=20, cursor=None):
+async def search(ctx, query, kind=None, limit=20):
     if kind is not None:
         kind = kind.strip().casefold()
-    exact = await ctx.step(
-        "semantic.lookup", {"query": query, "kind": kind, "limit": limit, "cursor": cursor}
-    )
+    exact = await ctx.step("semantic.lookup", {"query": query, "kind": kind, "limit": limit})
     if exact is not None:
         return {"result": exact, "feedback": None}
 

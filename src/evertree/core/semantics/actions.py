@@ -106,9 +106,9 @@ _QUERY_COMMON = {
         "minimum": 1,
         "description": "Optional item ceiling, defaults to configured 600. Runtime token budget may return fewer.",
     },
-    "cursor": {
-        **_OPTIONAL_TEXT,
-        "description": "Returned next_cursor. For continuation pass only cursor and optionally max_items; omit/null all other fields.",
+    "next_page": {
+        "type": ["boolean", "null"],
+        "description": "True continues this task's latest query/walk of the same tool; optionally change max_items. To continue an earlier selection, repeat its original filters/fields with next_page=true. Omit/false starts a fresh read. Runtime stores cursors privately.",
     },
 }
 
@@ -118,7 +118,7 @@ TOOLS = (
         "name": "search",
         "description": (
             "Find one object or reusable meaning by name or description. Exact names resolve "
-            "first; otherwise lexical and semantic similarity return candidates, not proven matches."
+            "first; otherwise lexical and semantic similarity return up to 20 candidates, not proven matches. Refine the query if none fits; no pagination."
         ),
         "parameters": _object(
             {
@@ -131,7 +131,6 @@ TOOLS = (
                         "they are not filters."
                     ),
                 },
-                "next_page": {"type": "boolean"},
             }
         ),
         "read_only": True,

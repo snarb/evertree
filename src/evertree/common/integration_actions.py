@@ -58,14 +58,10 @@ class SemanticTools:
                 continue
             self._shown_candidates[node["id"]] = self._candidate_card(node)
 
-    async def _search(self, query, next_page, reads):
+    async def _search(self, query, reads):
         revision = await self._revision_port()
         key = query.strip().casefold()
-        previous = self._searches.get(key)
-        # A cursor from an older graph revision is stale: restart from the first page.
-        if previous is not None and previous[0] != revision:
-            next_page = False
-        result = await self._search_port(query, next_page)
+        result = await self._search_port(query)
         self._searches[key] = (revision, result)
         reads.append({"tool": "search", "query": query, "result": result})
         return result
@@ -87,7 +83,7 @@ class SemanticTools:
         key = name.strip().casefold()
         previous = self._searches.get(key)
         if previous is None or previous[0] != await self._revision_port():
-            found = await self._search(name, False, reads)
+            found = await self._search(name, reads)
             # Refresh retrieval after graph changes, but do not make the model review
             # the same unchanged cards again under every proposed new name.
             unseen = [
@@ -159,7 +155,7 @@ class SemanticTools:
             action = {**arguments, "action": name}
             validate_action(action)
             if name == "search":
-                result = await self._search(action["query"], action["next_page"], reads)
+                result = await self._search(action["query"], reads)
             elif name == "describe" and not any(
                 arguments.get(k) is not None for k in ("focus", "at")
             ):

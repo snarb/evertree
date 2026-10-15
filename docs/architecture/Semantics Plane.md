@@ -30,11 +30,11 @@ Consciousness uses compact semantic tools; separate Programs handle retrieval an
 
 | Tool | Purpose |
 | --- | --- |
-| `graph.search(query, kind?, limit=20, cursor?)` | Find existing objects by name, ID, or indexed name and description similarity. |
+| `graph.search(query, kind?, limit=20)` | Find existing objects by name, ID, or indexed name and description similarity. |
 | `graph.describe(subject, focus?, at?)` | Describe an object with previews of 7 properties and 7 relations; `focus="properties"` or `focus="relations"` returns the corresponding full list. |
 | `graph.read_property(subject, property, at?, parameters?)` | Read a property through Attribution Runtime, preserving uncertainty and sources. |
-| `graph.query(relation?, subject?, bindings?, where?, select?, result?, fields?, at?, max_items?, cursor?)` | Match recorded facts by named slots; return projections, unique nodes, counts or existence. |
-| `graph.walk(start, relation, from_slot, to_slot, max_depth?, where?, result?, fields?, at?, max_items?, cursor?)` | Follow one relation's node roles breadth-first, preserving full supporting facts. |
+| `graph.query(relation?, subject?, bindings?, where?, select?, result?, fields?, at?, max_items?, next_page?)` | Match recorded facts by named slots; return projections, unique nodes, counts or existence. |
+| `graph.walk(start, relation, from_slot, to_slot, max_depth?, where?, result?, fields?, at?, max_items?, next_page?)` | Follow one relation's node roles breadth-first, preserving full supporting facts. |
 | `graph.integrate(experience_refs, focus?)` | Integrate recorded experience and analytical results through `KnowledgeIntegration.exec`. |
 | `load_tool_set(name)` | Load specialized tools for one logical invocation; see [[Cognition and Attention#Dynamic Tool Sets]]. |
 
@@ -59,10 +59,10 @@ pages when the neighborhood is large. Property discovery never invokes computati
 
 ### Retrieval Contract
 
-1. **Exact first:** resolve integer ID or normalized name in GraphStore, respecting `kind`. Return all exact alternatives without Redis or embeddings. Canonical names take precedence over same-named facts unless `kind` selects facts.
+1. **Exact first:** resolve integer ID or normalized name in GraphStore, respecting `kind`. Return up to 20 exact alternatives without Redis or embeddings. Canonical names take precedence over same-named facts unless `kind` selects facts.
 2. **Parallel retrieval:** BM25 returns 7 candidates and vector search returns 12. Both indexes use name + description. Embeddings default to `text-embedding-3-large`, 3072 dimensions. Exact-name and BM25 matching normalize Unicode, case and whitespace; embeddings retain the original text because case can carry meaning.
 3. **Merge and rank:** deduplicate by stable ID and combine the ordered lists with reciprocal rank fusion (constant 60). Preserve the contributing index names on each result. An index failure yields `incomplete`; results from the other index remain available. Search creates no knowledge.
-4. **Pages:** return compact cards, 20 by default, with a cursor over ranked results. Continuation repeats no search. Cursors belong to the Task/query and expire on graph changes, Task completion or restart, preventing stale identities.
+4. **Bounded results:** return only the best 20 compact cards, or fewer with an explicit limit of 1–20. No cursor or next-page operation exists for search. Refine the query or kind when the candidates do not fit. Each call performs a fresh search.
 
 Query one named object or focused meaning at a time. Type names and field names embedded in text are search terms, not filters; combining identities, states and schema terminology dilutes retrieval. Start with an exact name when available, then inspect candidates with `describe`. Its `STATE_IDENTITY` and `IDENTITY_TYPE` links let the caller navigate from a Facet to its Instance and from that Instance to its Prototype and other Facets. Search separately for missing meanings. Preview counts disclose omitted items. The shared write handler refreshes creation searches after graph changes. It asks the model to
 review only candidate cards not yet shown in this invocation or whose identity/description/state
@@ -108,7 +108,7 @@ facts are excluded and unknown applicability remains explicit. Counts split appl
 unknown matches when needed. Existence is null if only unknown matches exist (or an unfinished
 scan has no established match). Declared views retain their existing UNKNOWN/cardinality contract.
 
-Pages start with `total`, `returned`, `has_more`, and `next_cursor` only when needed. They contain
+Pages start with `total`, `returned`, `has_more`; cursors stay private to Core. They contain
 `items` referencing deduplicated `nodes` and `facts` collections. Fact and projection node
 references are explicit `{node: id}` values, distinguishable from scalar integers. Full fact
 arguments, descriptions and meaningful properties/conditions survive projection. Fact IDs
@@ -126,8 +126,13 @@ metadata and support records; it does not count characters or bytes. A registere
 is preferred; the configured fallback for private names is explicitly a local estimate.
 The SDK does not supply an exact preflight tokenizer. Missing context metadata is an error.
 
-The optional model-facing `max_items` only limits item count. Continuation supplies the cursor
-and optionally max_items; filters and fields are restored from Core. Cursors belong to a task,
+The optional model-facing `max_items` only limits item count. `next_page=true` with no selection
+arguments continues the latest selection of the same tool in the same task; optionally change
+`max_items`. To continue an earlier interleaved selection, repeat its original filters/fields
+with `next_page=true`. Core keys selections by their arguments, ignoring optional nulls, object
+key order and max_items; explicit `walk.max_depth=null` remains distinct from omitted depth.
+Omitted/false next_page starts fresh. A missing, exhausted or stale continuation
+returns an error, never silently restarts or switches selections. Private cursors belong to a task,
 operation and graph revision and expire at task release/restart or graph changes. Each scan
 advances at most 10,000 work units per request; incomplete scans return `total_at_least` and
 an explicit continuation instead of a false exact total. Full scans establish total before
@@ -160,7 +165,7 @@ The model uses declared tools to search/read, create a concept or class, identif
 
 Each successful tool writes immediately. The shared `update(object, changes, sources)` changes only supplied fields; compound fields replace their previous value without an implicit deep merge. `delete(objects, sources)` removes the listed objects together from the current graph, without cascading; remaining references to a deleted object reject the operation. Deleting current knowledge does not erase its change history or source traces. Core protects identity, executable Programs, assessed evidence and other protected objects, and checks allowed fields, intervals, schemas and references.
 
-Search is an orchestration step before creating identities, not only a prompt suggestion: a nonempty result is shown before creation proceeds; incomplete search cannot authorize creation. Search pagination stays in the Program; `search(query, next_page=True)` exposes further candidates. Required object/schema reads are automatic. After a write, the handler refreshes searches before relying on results from an older graph revision. A failed call returns its error; earlier successful writes remain saved. Core returns permanent object IDs, actual changed object cards and the graph revision.
+Search is an orchestration step before creating identities, not only a prompt suggestion: a nonempty result is shown before creation proceeds; incomplete search cannot authorize creation. `search(query)` returns at most 20 candidates with no pagination; refine the query when none fits. Required object/schema reads are automatic. After a write, the handler refreshes searches before relying on results from an older graph revision. A failed call returns its error; earlier successful writes remain saved. Core returns permanent object IDs, actual changed object cards and the graph revision.
 
 Integration uses the shared [[Process Plane/Program Layer#Native Model Tools in Programs|`ctx.agent` interface]] with native tools and a Program-local handler. Callbacks execute at workflow level, so child Programs and durable gateway operations retain their normal boundaries. Normal model completion ends the invocation, including an invocation with zero writes. Its technical result is `{writes: [...]}`, built in code from successful tool results. There is no model completion tool, per-source decision coverage or integration status for consciousness to resolve.
 

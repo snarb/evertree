@@ -127,21 +127,8 @@ class TaskExecutionMixin:
 
             remember_refs(json.loads(request.prompt))
 
-            pages = {}
-
-            async def search(query, next_page=False):
-                payload = {"query": query}
-                page = pages.get(query)
-                if (
-                    next_page
-                    and page
-                    and page["revision"] == self.graph.revision
-                    and page["cursor"]
-                ):
-                    payload["cursor"] = page["cursor"]
-                result = await self._dispatch_tool(task_id, "graph.search", payload)
-                pages[query] = {"revision": self.graph.revision, "cursor": result.get("cursor")}
-                return result
+            async def search(query):
+                return await self._dispatch_tool(task_id, "graph.search", {"query": query})
 
             async def describe(subject):
                 return await self._graph_tool(task_id, "graph.describe", {"subject": subject})

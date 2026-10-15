@@ -145,7 +145,7 @@ Lint, formatting, source/taxonomy validation, and `git diff --check` passed. Nat
 
 ## Semantic interface checks
 
-`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, pagination and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_program_agents` checks the shared native-tool bridge's role restrictions, schema validation and call limits. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including tool repair, child calls, replay and an IPC concurrency barrier.
+`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, the 20-result search ceiling and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_program_agents` checks the shared native-tool bridge's role restrictions, schema validation and call limits. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including tool repair, child calls, replay and an IPC concurrency barrier.
 
 Program tool tests should call the declared `tool_handler` through the provider interface.
 Recovery checks must verify that durable tool exchanges replay callback computations and
@@ -258,7 +258,8 @@ with it, so improvements to search are not confused with changes to graph constr
 ### Exact graph reads and output budgets
 
 `tests/component/test_graph_queries.py` exercises partial slot bindings, typed participants,
-scalar/list roles, conditions, counts, cycles, temporal uncertainty, cursor scope and final JSON
+scalar/list roles, conditions, counts, cycles, temporal uncertainty, private continuation scope,
+interleaved selections, exhausted pages, and final JSON
 token budgets. Its local BPE vocabulary needs no downloads. Provider tests check selected-model
 context metadata; Program-agent and semantic-worker tests verify budget transport and durable
 replay. The native Program-agent test also covers bootstrap without revision-owned logging helpers.

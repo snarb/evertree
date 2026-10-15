@@ -93,7 +93,7 @@ def test_write_replay_survives_restart_and_expanded_experience_without_duplicate
     assert next_write["object"] != result["object"]
 
 
-async def test_search_pagination_refreshes_after_a_successful_graph_write():
+async def test_search_is_bounded_and_refreshes_after_a_successful_graph_write():
     from evertree.core.graph.types import GraphDelta, Node
 
     searches = []
@@ -109,17 +109,13 @@ async def test_search_pagination_refreshes_after_a_successful_graph_write():
     refs, _ = recorded_experience(world, "An explanation worth retaining")
 
     async def model(payload, call):
-        first = await call("search", {"query": "ambiguous", "next_page": False})
-        assert len(first["items"]) == 20 and first["has_more"]
+        first = await call("search", {"query": "ambiguous"})
+        assert len(first["items"]) == 20 and "has_more" not in first
         saved = await call("save_note", {"name": "Explanation", "source": refs[0], "sources": []})
         assert "error" not in saved, saved
-        refreshed = await call("search", {"query": "ambiguous", "next_page": True})
-        assert refreshed["items"] == first["items"] and refreshed["has_more"]
-        remaining = await call("search", {"query": "ambiguous", "next_page": True})
-        assert len(remaining["items"]) == 5 and not remaining["has_more"]
-        assert {item["id"] for item in refreshed["items"] + remaining["items"]} == {
-            node.id for node in nodes
-        }
+        refreshed = await call("search", {"query": "ambiguous"})
+        assert refreshed["items"] == first["items"]
+        assert "cursor" not in refreshed and "has_more" not in refreshed
 
     result = await run(context(world, model, role="exec"), refs)
     assert len(result["result"]["writes"]) == 1
@@ -208,7 +204,7 @@ async def test_program_searches_before_creation_and_refreshes_after_intervening_
     async def model(payload, call):
         state = json.loads(payload["prompt"])
         assert state["material"]["context"]["task"] == {"objective": "Learn terminology"}
-        await call("search", {"query": "Useful term", "next_page": False})
+        await call("search", {"query": "Useful term"})
         saved = await call("save_note", {"name": "Explanation", "source": refs[0], "sources": []})
         assert world.graph.get(saved["object"]).description == "A useful term"
         created = await call(
@@ -418,7 +414,7 @@ async def test_model_failure_does_not_undo_completed_writes():
     assert world.graph.find("Explanation").description == "Useful explanation"
 
 
-async def test_search_pages_and_relation_schemas_need_no_status_calls():
+async def test_search_ceiling_and_relation_schemas_need_no_status_calls():
     from evertree.core.graph.types import GraphDelta, Node
 
     class Index(EmptyIndex):
@@ -431,10 +427,11 @@ async def test_search_pages_and_relation_schemas_need_no_status_calls():
     refs, _ = recorded_experience(world, "Ambiguous object mention")
 
     async def model(payload, call):
-        first = await call("search", {"query": "ambiguous", "next_page": False})
-        assert first["has_more"] and "cursor" not in first
-        second = await call("search", {"query": "ambiguous", "next_page": True})
-        assert len(second["items"]) == 5 and not second["has_more"]
+        first = await call("search", {"query": "ambiguous"})
+        assert len(first["items"]) == 20
+        assert "has_more" not in first and "cursor" not in first
+        rejected = await call("search", {"query": "ambiguous", "next_page": True})
+        assert "error" in rejected
         schema = (await call("describe", {"subject": "IDENTITY_TYPE"}))["schema"]
         assert schema["signature"] and "views" not in schema
 
@@ -522,7 +519,7 @@ async def test_explicit_search_exposes_candidates_before_new_name_preflight():
     refs, _ = recorded_experience(world, "New useful concept")
 
     async def model(payload, call):
-        await call("search", {"query": "Related meaning", "next_page": False})
+        await call("search", {"query": "Related meaning"})
         result = await call(
             "create_concept", {"name": "New", "description": "Useful", "sources": refs}
         )

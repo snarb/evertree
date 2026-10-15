@@ -1,5 +1,6 @@
 """Slot queries and breadth-first walks over facts, with bounded model output."""
 
+import json
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from uuid import uuid4
@@ -55,10 +56,14 @@ class GraphQueries:
         self.graph, self.attribution, self.config = graph, attribution, config
         self._pages = {}
         self._progress = {}
+        self._continuations = {}
+        self._latest = {}
 
     def release(self, task_id):
         self._pages = {k: v for k, v in self._pages.items() if v[0].task != task_id}
         self._progress = {k: v for k, v in self._progress.items() if k in self._pages}
+        self._continuations = {k: v for k, v in self._continuations.items() if k[0] != task_id}
+        self._latest = {k: v for k, v in self._latest.items() if k[0] != task_id}
 
     def _resolve(self, value, *, relation=False):
         node = resolve(self.graph, value)
@@ -337,6 +342,32 @@ class GraphQueries:
         payload = dict(payload)
         context = payload.pop("_read_context", None) or current_read_context.get()
         validate_action({"action": method, **payload})
+        next_page = payload.pop("next_page", False)
+        selection = {k: v for k, v in payload.items() if k != "max_items" and v is not None}
+        # Explicit null depth means all levels, whereas omitted depth means one.
+        if method == "walk" and selection and "max_depth" in payload:
+            selection["max_depth"] = payload["max_depth"]
+        scope = (task_id, method)
+        key = (*scope, json.dumps(selection, sort_keys=True, ensure_ascii=False))
+        if next_page:
+            if not selection:
+                key = self._latest.get(scope)
+            if key not in self._continuations:
+                raise ContractError("No saved selection for next_page; start the query first")
+            cursor = self._continuations[key]
+            if cursor is None:
+                raise ContractError("No next page; this selection is exhausted")
+            payload = {"cursor": cursor, "max_items": payload.get("max_items")}
+        response = self._read_page(method, payload, task_id=task_id, context=context)
+        response = dict(response)
+        cursor = response.pop("next_cursor", None)
+        if "returned" in response:
+            self._continuations[key] = cursor
+            self._latest[scope] = key
+        return response
+
+    def _read_page(self, method, payload, *, task_id, context):
+        payload = dict(payload)
         budget = read_budget(context, self.config.context_fraction)
         model = context["model"]
         maximum = payload.pop("max_items", None)
@@ -351,7 +382,7 @@ class GraphQueries:
             if query.task != task_id or query.method != method:
                 raise ContractError("Cursor belongs to another task or operation")
             if query.revision != self.graph.revision:
-                raise ContractError("Graph changed; repeat the query without a cursor")
+                raise ContractError("Graph changed; repeat the query with next_page=false")
             if any(value is not None for value in payload.values()):
                 raise ContractError("Continue with cursor and optional max_items only")
             if cursor in self._progress:

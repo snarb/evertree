@@ -43,24 +43,57 @@ def children_query(parent):
     }
 
 
-def test_totals_item_limits_cursor_replay_and_revision_scope():
+def test_totals_item_limits_automatic_continuation_and_revision_scope():
     world, parent, children = parts(605)
     first = read(world, **children_query(parent))
     assert first["total"] == 605 and first["returned"] == 600 and first["has_more"]
-    cursor = first["next_cursor"]
-    following = read(world, cursor=cursor)
+    assert "next_cursor" not in first
+    following = read(world, next_page=True)
     assert following["total"] == 605 and following["returned"] == 5 and not following["has_more"]
-    assert read(world, cursor=cursor) == following
+    with pytest.raises(ContractError, match="exhausted"):
+        read(world, next_page=True)
     assert {i["node"] for i in first["items"] + following["items"]} == {n.id for n in children}
-    with pytest.raises(ContractError, match="another task"):
-        read(world, cursor=cursor, task="other")
-    with pytest.raises(ContractError, match="Continue with cursor"):
-        read(world, cursor=cursor, fields=[])
+    with pytest.raises(ContractError, match="No saved selection"):
+        read(world, next_page=True, task="other")
+    with pytest.raises(ContractError, match="No saved selection"):
+        read(world, next_page=True, fields=[])
+    assert read(world, **children_query(parent)) == first
     world.graph.apply(
         GraphDelta(creates=(Node(world.graph.reserve_id(), "New"),)), provenance="later"
     )
     with pytest.raises(ContractError, match="Graph changed"):
-        read(world, cursor=cursor)
+        read(world, next_page=True)
+
+
+def test_interleaved_queries_and_walks_keep_independent_pages():
+    world, parent, _ = parts(5)
+    children = children_query(parent)
+    subject = {"subject": parent.id}
+    first = read(world, **children, max_items=1)
+    other = read(world, **subject, max_items=1)
+    walk_args = {
+        "start": parent.id,
+        "relation": "PART_WHOLE",
+        "from_slot": "whole",
+        "to_slot": "part",
+    }
+    walked = read(world, "walk", **walk_args, max_items=1)
+    read(world, "walk", **walk_args, max_depth=None, max_items=1)
+    second = read(world, **children, next_page=True, max_items=2)
+    assert second["returned"] == 2
+    assert first["items"][0]["node"] not in {item["node"] for item in second["items"]}
+    third = read(world, next_page=True, max_items=2)
+    assert not third["has_more"]
+    other_second = read(world, **subject, next_page=True, max_items=1)
+    assert other_second["items"][0]["source_fact"] != other["items"][0]["source_fact"]
+    walk_second = read(world, "walk", **walk_args, next_page=True, max_items=1)
+    assert walked["items"][0]["node"] != walk_second["items"][0]["node"]
+    all_second = read(world, "walk", **walk_args, max_depth=None, next_page=True, max_items=1)
+    assert all_second["items"][0]["node"] == walk_second["items"][0]["node"]
+    walk_third = read(world, "walk", next_page=True, max_items=1)
+    assert walk_third["items"][0]["node"] != all_second["items"][0]["node"]
+    with pytest.raises(ValueError, match="unexpected fields"):
+        read(world, cursor="model-must-not-supply-cursors")
 
 
 def test_real_token_budget_counts_metadata_facts_and_unicode_cards():
@@ -69,7 +102,7 @@ def test_real_token_budget_counts_metadata_facts_and_unicode_cards():
     first = read(world, context=small, **children_query(parent))
     assert first["total"] == 15 and 0 < first["returned"] < 15
     assert count_tokens(first, small["model"]) <= 600
-    more = read(world, cursor=first["next_cursor"], context=small)
+    more = read(world, next_page=True, context=small)
     assert count_tokens(more, small["model"]) <= 600
     assert not {i["node"] for i in first["items"]} & {i["node"] for i in more["items"]}
     remaining = read(world, context={**small, "remaining_tokens": 450}, **children_query(parent))
@@ -81,7 +114,7 @@ def test_oversized_item_is_explicit_and_never_loses_qualifications():
     world, parent, _ = parts(1, description="Unabridged important description. " * 500)
     result = read(world, context={**CONTEXT, "context_window": 1000}, **children_query(parent))
     assert result["total"] == 1 and result["returned"] == 0 and result["error"]
-    assert result["has_more"] and result["next_cursor"]
+    assert result["has_more"] and "next_cursor" not in result
     minimal = read(
         world, context={**CONTEXT, "context_window": 1000}, fields=[], **children_query(parent)
     )
@@ -224,9 +257,12 @@ async def test_integration_native_reads_keep_projection_and_do_not_record_writes
     refs, _ = recorded_experience(world, "Inspect children")
 
     async def model(payload, call):
-        result = await call("query", children_query(parent))
-        assert result["total"] == 3 and result["returned"] == 3
+        result = await call("query", {**children_query(parent), "max_items": 1})
+        assert result["total"] == 3 and result["returned"] == 1
+        assert "next_cursor" not in result
         assert any(n.get("description") == "Useful description" for n in result["nodes"])
+        next_result = await call("query", {"next_page": True})
+        assert next_result["returned"] == 2 and not next_result["has_more"]
         walked = await call(
             "walk",
             {"start": parent.id, "relation": "PART_WHOLE", "from_slot": "whole", "to_slot": "part"},
@@ -250,12 +286,12 @@ def test_scan_continuation_reports_lower_bound_and_task_release(monkeypatch):
     assert result["status"] == "scanning" and "total" not in result
     assert result["total_at_least"] == 2 and result["returned"] == 0
     while result.get("status") == "scanning":
-        result = read(world, cursor=result["next_cursor"])
+        result = read(world, next_page=True)
     assert result["total"] == 5 and result["returned"] == 5
-    first = read(world, **children_query(parent), max_items=1)
+    read(world, **children_query(parent), max_items=1)
     world.service.release("task")
-    with pytest.raises(ContractError, match="expired"):
-        read(world, cursor=first["next_cursor"])
+    with pytest.raises(ContractError, match="No saved selection"):
+        read(world, next_page=True)
 
 
 def test_read_config_and_missing_model_budget(tmp_path):

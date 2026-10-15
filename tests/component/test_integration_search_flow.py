@@ -87,7 +87,7 @@ async def test_reviewed_creation_reuses_search_and_links_missing_parent():
     ctx = context(world, None, role="exec")
     searches = []
 
-    async def search(query, next_page=False):
+    async def search(query):
         searches.append(query)
         return (await ctx.call("semantic_search", {"query": query})).result
 

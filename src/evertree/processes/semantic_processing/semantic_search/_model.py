@@ -3,5 +3,5 @@
 from evertree.common.semantic_search import search
 
 
-async def run(ctx, query, kind=None, limit=20, cursor=None):
-    return await search(ctx, query, kind, limit, cursor)
+async def run(ctx, query, kind=None, limit=20):
+    return await search(ctx, query, kind, limit)
