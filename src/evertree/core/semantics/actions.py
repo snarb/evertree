@@ -145,7 +145,11 @@ TOOLS = (
     },
     {
         "name": "define_relation",
-        "description": "Save a relation type with meaningful participant roles.",
+        "description": (
+            "Save a reusable predicate with named roles. Name and definition must agree. "
+            "Generalize across subjects without merging different or opposite assertions; "
+            "use distinct predicates or an explicit distinguishing role where needed."
+        ),
         "parameters": _object(
             {
                 **_NAMED,
@@ -187,7 +191,13 @@ TOOLS = (
     },
     {
         "name": "relate",
-        "description": "Save an assertion using an existing relation type.",
+        "description": (
+            "Save an assertion using an existing relation type whose predicate fits. "
+            "Preserve direction, conditions and meaningful distinctions in roles/values; "
+            "the description must not negate or repair the type's meaning. Reject a type "
+            "combining incompatible meanings without a role distinguishing them; define "
+            "a fitting schema instead."
+        ),
         "parameters": _object(
             {
                 "relation": _ID,
@@ -214,8 +224,10 @@ TOOLS = (
     {
         "name": "create_claim",
         "description": (
-            "Save one independently checkable prose assertion, including its scope and "
-            "qualifications; a hypothesis remains provisional. Do not bundle a source's "
+            "Save one independently revisable prose assertion with its conditions and grounds. "
+            "Assertions that evidence could confirm, reject or correct separately need separate "
+            "representations, including alternative explanations. Keep a hypothesis's necessary "
+            "conditions and supporting argument together; it remains provisional. Do not bundle a source's "
             "objects, state intervals or simple relationships into a summary Claim. "
             "A missing relation schema can be defined with define_relation. "
             "Saving a Claim does not assess evidence or assign confidence."

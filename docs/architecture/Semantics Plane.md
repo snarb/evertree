@@ -77,6 +77,11 @@ Programs call the same mechanism through `ctx.call("knowledge_integration", {"ex
 
 Integration independently selects facts, connections, insights and connected explanations worth organizing. Emphasis and requests such as “remember this” appear in ordinary analytical text and guide that choice; they do not establish a machine-checked preservation obligation. Routine or already represented material can remain in trace without any additional tool call. Usually, reusable knowledge becomes graph elements; a Note is an occasional choice for source text whose wording or complete argument has independent value. Losing an individual insight is not a failure of the enclosing task.
 
+Generalization supplements useful operational knowledge. A component and its configuration may
+be needed for later diagnosis or modification even when the underlying mechanism is familiar.
+Retain the owner, value and unit of such a setting; a general Concept about the mechanism does
+not replace that local assertion. This is a selection criterion, not exhaustive source coverage.
+
 The model uses declared tools to search/read, create a concept or class, identify an instance, describe a state, define or use a relation, create a Claim, save a Note, update an object or delete objects. Each write selects its grounds. Code assigns permanent IDs and constructs mandatory identity links, schemas and the internal `GraphDelta`. Existing objects are used by ID. The model neither prepares transaction payloads nor reconstructs an execution report.
 
 Each successful tool writes immediately. The shared `update(object, changes, sources)` changes only supplied fields; compound fields replace their previous value without an implicit deep merge. `delete(objects, sources)` removes the listed objects together from the current graph, without cascading; remaining references to a deleted object reject the operation. Deleting current knowledge does not erase its change history or source traces. Core protects identity, executable Programs, assessed evidence and other protected objects, and checks allowed fields, intervals, schemas and references.
@@ -88,6 +93,11 @@ Integration uses the shared [[Process Plane/Program Layer#Native Model Tools in 
 `save_note` copies an addressable source without regenerating its text. For a typed analytical Note or a runtime analytical-text fragment, it copies the text; other structured sources are retained as JSON. The copied source is always a ground; `sources` supplies only additional grounds and may be empty. Source references retain fragment origin, and runtime schedules remaining fragments.
 
 `create_claim(name, description, sources)` records a separately checkable assertion when existing properties, relations or transitions do not express its meaning precisely enough. The nonempty description states the complete assertion with its conditions and uncertainty; the name labels it for retrieval. The operation uses the same search, source validation, immediate persistence and replay rules as other creations, and is available to both integration and consciousness. It does not assign confidence or create evidence.
+
+The boundary of a Claim is independent revision: if evidence could confirm, reject or correct one
+assertion while leaving another open, they need separate representations. Each candidate explanation
+therefore retains its own grounds and limits. Necessary conditions and the supporting argument for
+one hypothesis stay together; splitting every clause would lose meaning rather than improve it.
 
 The model receives task requirements, value definitions, meaningful Self facts and source contents with usable references. Full `origin`, revisions, operation keys and other audit metadata stay in Core and trace. Source kind and non-live replay/evaluation mode remain visible because they affect how evidence is interpreted. Relation reads retain their applicability conditions; generated navigation views stay out of model context. Normal continuation uses native tool results without rebuilding a prompt containing the full action history.
 
@@ -137,6 +147,12 @@ Both semantic Programs follow the normal learning and independent evaluation lif
 `RelationType` participates in the abstraction ladder like all other concepts.
 
 Use a small set of basic relations; add domain-specific `RelationType`s under the [[Core data structures#Concept Canonicalization and Semantic Linking|shared rules for reusing and creating concepts]].
+
+A reusable relation preserves one stable predicate across subjects. Its name and definition must
+agree. Different or opposite meanings require separate predicates or an explicit distinguishing
+role; generic association is insufficient when the distinction matters. An assertion's description
+cannot negate or repair its relation type. Core checks structural schema conformance; choosing a
+semantically faithful predicate remains the responsibility of the writer.
 
 ### Signature and Stable Labels
 #topic_details

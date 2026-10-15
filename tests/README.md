@@ -235,6 +235,19 @@ to the structural assertions. This is a substantial opt-in run with real API cos
 EVERTREE_LARGE_GRAPH_INTEGRATION=1 uv run pytest tests/live/test_large_graph_search.py -q -n 0 --basetemp=tmp/large-graph-evaluation -o tmp_path_retention_policy=all
 ```
 
+The semantic regression checks require a distinct CACHE-1, use a separate model rubric to inspect
+its retention setting, hydraulic separation and independently revisable incident hypotheses, then
+correct the cache lifetime while checking identity, unchanged history and unrelated timeout settings.
+`tests/live/test_semantic_distinctions.py` adds machine vision, thermal control and artifact delivery
+cases. They test operational settings, power/control and signing/distribution distinctions, separate
+candidate explanations, and a conditional hypothesis whose joint conditions must stay together.
+The generating model sees the source and ordinary task context, not the evaluation criteria.
+The rubric accepts equivalent representations and records node-specific reasons; it is fallible
+and runs only in tests, with no production validation call or preservation contract.
+Use the same large-graph opt-in and optionally a saved snapshot to test new domains among existing
+knowledge. Each case forks that snapshot independently. Inspect `integration/{history,metrics,snapshot}.json`
+and `review/{input,events,review}.json` under the retained pytest directory.
+
 To iterate on search without paying for graph construction again, set
 `EVERTREE_LARGE_GRAPH_SNAPSHOT` to an absolute path to the saved `baseline.json` and use a
 **different** `--basetemp`; pytest clears its destination at startup. Select

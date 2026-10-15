@@ -12,7 +12,9 @@ import pytest
 from evertree.core.graph.store import GraphStore
 from evertree.core.memory.store import TraceStore
 from evertree.core.semantics.reading import card
+from evertree.core.values import json_value
 from tests.support.large_graph import CORPUS, LargeGraphSession, graph_stats, write_json
+from tests.support.semantic_review import review_graph
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("EVERTREE_LARGE_GRAPH_INTEGRATION") != "1",
@@ -315,3 +317,75 @@ def test_baseline_preserves_source_meaning(corpus_graph):
         problems.append("A described diagnostic procedure became an executable Program")
     write_json(root / "meaning-audit.json", {"problems": problems})
     assert not problems, problems
+
+
+async def test_baseline_preserves_operational_distinctions(corpus_graph):
+    """Catch semantic losses that size, valid intervals and successful writes cannot detect."""
+    root, snapshot, _ = corpus_graph
+    graph = GraphStore.from_snapshot(snapshot["graph"])
+    assert len(named_instances(graph, "CACHE-1")) == 1, "Deduplication cache identity was lost"
+    review = await review_graph(
+        root / "semantic-review",
+        sources=CORPUS.read_text(encoding="utf-8"),
+        nodes=[json_value(n) for n in graph.nodes()],
+        criteria={
+            "cache_setting": (
+                "CACHE-1 is separately addressable and retains its deduplication-key purpose and "
+                "24-hour retention. GW-1's 5-second response timeout is a separate setting. "
+                "A generic concept about cache lifetime cannot replace the local configuration."
+            ),
+            "hydraulic_predicate": (
+                "The HX-1 relation represents hydraulic separation of CC-1 and HC-1, not fluid "
+                "connection. Name, type definition, arguments and fact meaning agree; a predicate "
+                "ambiguously meaning connected-or-separated fails unless an explicit role "
+                "distinguishes them. Heat transfer between separate circuits is compatible."
+            ),
+            "revisable_explanations": (
+                "The final incident analysis preserves filter contamination, valve throttling "
+                "and pressure-sensor bias as independently revisable hypotheses, with relevant "
+                "grounds and limits. Cleaning supports the filter; original valve position is "
+                "unknown; the later 14:00 reference check does not exclude transient morning "
+                "sensor error. A single Claim listing all alternatives is insufficient. "
+                "Separate Claims or precise qualified relation instances are both valid."
+            ),
+        },
+    )
+    assert all(item["passed"] for item in review.values()), review
+
+
+async def test_cache_setting_correction_retains_identity_and_other_settings(corpus_graph):
+    """A real follow-up must address the preserved component, not replace it with an abstraction."""
+    root, snapshot, _ = corpus_graph
+    session = LargeGraphSession(root / "cache-correction", snapshot=snapshot)
+    try:
+        caches = named_instances(session.graph, "CACHE-1")
+        assert len(caches) == 1
+        cache_id, revision = caches[0].id, session.graph.revision
+        source = (
+            "Исправление конфигурации Север: срок хранения ключей дедупликации в CACHE-1 "
+            "был записан неверно. Он равен 12 часам, а не 24. Это исправление документации, "
+            "не новое изменение настроек. Таймаут ответа GW-1 остаётся 5 секунд."
+        )
+        result = await session.packet(root / "cache-correction", source, "Уточни известные знания.")
+        assert result["error"] is None
+        assert [n.id for n in named_instances(session.graph, "CACHE-1")] == [cache_id]
+        history = session.graph.snapshot()["history"]
+        assert history[: len(snapshot["graph"]["history"])] == snapshot["graph"]["history"]
+        assert any(c["seq"] > revision and c["before"] for c in history)
+        session.memory.validate()
+        review = await review_graph(
+            root / "cache-correction-review",
+            sources=CORPUS.read_text(encoding="utf-8") + "\n\nLater correction:\n" + source,
+            nodes=[json_value(n) for n in session.graph.nodes()],
+            criteria={
+                "corrected_setting": (
+                    "Current knowledge associates CACHE-1 retention with 12 hours. No remaining "
+                    "current assertion still gives it 24 hours. GW-1 response timeout remains "
+                    "5 seconds, and its value was not overwritten by the cache correction. "
+                    "Explicitly historical or superseded descriptions are acceptable."
+                )
+            },
+        )
+        assert all(item["passed"] for item in review.values()), review
+    finally:
+        await session.close()
