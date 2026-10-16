@@ -27,7 +27,12 @@ async def test_nested_programs_and_durable_steps(tmp_path, process_factory):
             "src/evertree/processes/calculation/parent/__init__.py": "",
             "src/evertree/processes/calculation/child/__init__.py": "",
             "src/evertree/processes/calculation/child/_exec/__init__.py": "",
-            "src/evertree/processes/calculation/child/_exec/helpers.py": "def bump(value): return value + 1\n",
+            "src/evertree/processes/calculation/child/_exec/helpers.py": """
+def bump(value):
+    return value + 1
+async def count(ctx, value):
+    return await ctx.step('counter', {'value': value})
+""",
             "src/evertree/processes/calculation/parent/_exec.py": """
 async def run(ctx, child):
     # et:op=first_counter
@@ -36,9 +41,10 @@ async def run(ctx, child):
     return {'result': result.result, 'feedback': 'nested complete'}
 """,
             "src/evertree/processes/calculation/child/_exec/implementation.py": """
-from .helpers import bump
+from .helpers import bump, count
 async def run(ctx, value):
-    result = await ctx.step('counter', {'value': bump(value)})
+    # et:op=child_counter
+    result = await count(ctx, bump(value))
     return {'result': result}
 """,
         },
@@ -68,7 +74,11 @@ async def run(ctx, value):
     assert (runtime.state_dir / "journals/durable/dbos/dbos.sqlite").exists()
     assert calls == [1, 2]
     assert len([t for t in traces if t["type"] == "run_started"]) == 2
-    assert next(t for t in traces if t.get("operator") == "counter")["anchor"] == "first_counter"
+    # The child's anchor resolves through its helper frame to the child Program line.
+    assert [t["anchor"] for t in traces if t.get("operator") == "counter"] == [
+        "first_counter",
+        "child_counter",
+    ]
     assert [t["output"] for t in traces if t.get("operator") == "counter"] == [1, 2]
     replayed = await runtime.execute("task", parent, {"child": child.program_id}, run_id="durable")
     assert replayed.result == 2

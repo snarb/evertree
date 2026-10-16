@@ -308,3 +308,18 @@ class ProgramLLMInvocations:
         """Cancel all transient model invocations and their pending tool calls."""
         invocations, self._invocations = self._invocations, {}
         await asyncio.gather(*(self._stop(item) for item in invocations.values()))
+
+
+async def run_llm(
+    ctx, prompt: str, *, instructions: str, output_schema: dict, mode: str = "model"
+) -> dict:
+    """Run one tool-free LLM request as a durable step; the response carries text and parsed."""
+    return await ctx.step(
+        "llm.run",
+        {
+            "prompt": prompt,
+            "instructions": instructions,
+            "mode": mode,
+            "output_schema": output_schema,
+        },
+    )

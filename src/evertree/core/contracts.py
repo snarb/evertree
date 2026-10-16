@@ -47,3 +47,12 @@ class ProgramContext(Protocol):
     async def checkpoint(self) -> Any:
         """Establish a durable boundary for runtime coordination."""
         ...
+
+
+# Core API wrappers call these Programs by slug with exactly these arguments.
+# Layout validation rejects a Program revision whose entrypoint cannot accept them,
+# because candidates cannot change the protected wrappers.
+CALLED_PROGRAMS: dict[str, tuple[str, ...]] = {
+    "credit_assignment": ("target", "observation_ids", "context"),
+    "semantic_search": ("query",),
+}

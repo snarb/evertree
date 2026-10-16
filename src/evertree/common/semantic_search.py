@@ -2,28 +2,28 @@
 
 import asyncio
 
+from evertree.core.semantics import api as semantics
+
 
 async def search(ctx, query, kind=None, limit=20):
     """Try exact graph lookup, then fuse lexical and vector ranks while reporting failed channels."""
     if kind is not None:
         kind = kind.strip().casefold()
-    exact = await ctx.step("semantic.lookup", {"query": query, "kind": kind, "limit": limit})
+    exact = await semantics.lookup(ctx, query, kind=kind, limit=limit)
     if exact is not None:
         return {"result": exact, "feedback": None}
 
-    revision = await ctx.step("semantic.revision", {})
+    revision = await semantics.revision(ctx)
 
-    async def channel(name):
+    async def channel(name, rank):
         try:
-            ids = await ctx.step(
-                "semantic." + name, {"query": query, "kind": kind, "revision": revision}
-            )
+            ids = await rank(ctx, query, kind=kind, revision=revision)
             return list(dict.fromkeys(ids)), None
         except Exception as exc:  # noqa: BLE001 -- preserve the other index and report partial search
             return [], {"channel": name, "error": str(exc)}
 
     (lexical, lexical_error), (vector, vector_error) = await asyncio.gather(
-        channel("bm25"), channel("vector")
+        channel("bm25", semantics.bm25), channel("vector", semantics.vector)
     )
     scores = {}
     channels = {}
@@ -34,15 +34,13 @@ async def search(ctx, query, kind=None, limit=20):
             channels.setdefault(identity, []).append(name)
     ranked = sorted(scores, key=lambda identity: (-scores[identity], identity))
     errors = [error for error in (lexical_error, vector_error) if error is not None]
-    result = await ctx.step(
-        "semantic.results",
-        {
-            "query": query,
-            "kind": kind,
-            "revision": revision,
-            "items": [{"id": identity, "channels": channels[identity]} for identity in ranked],
-            "errors": errors,
-            "limit": limit,
-        },
+    result = await semantics.results(
+        ctx,
+        query,
+        kind=kind,
+        revision=revision,
+        items=[{"id": identity, "channels": channels[identity]} for identity in ranked],
+        errors=errors,
+        limit=limit,
     )
     return {"result": result, "feedback": None}

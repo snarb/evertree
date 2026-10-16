@@ -7,6 +7,7 @@ import re
 from collections.abc import Callable, Iterable
 from pathlib import PurePosixPath
 
+from evertree.core.contracts import CALLED_PROGRAMS
 from evertree.core.graph.store import GraphStore
 
 PREFIX = "src/evertree/processes/"
@@ -35,6 +36,32 @@ def process_directory(graph: GraphStore, identity: int) -> str:
             raise ValueError(f"Invalid process directory name: {item.name}")
         slugs.append(slug)
     return PREFIX + "/".join(reversed(slugs))
+
+
+def accepts_arguments(function: ast.FunctionDef | ast.AsyncFunctionDef, names) -> bool:
+    """Tell whether an entrypoint (ctx first) can be called with exactly these keyword arguments."""
+    arguments = function.args
+    positional = arguments.posonlyargs + arguments.args
+    if not positional:
+        return False
+    defaults = [None] * (len(positional) - len(arguments.defaults)) + arguments.defaults
+    accepted, required = set(), set()
+    for index, (argument, default) in enumerate(zip(positional, defaults, strict=True)):
+        if index == 0:
+            continue
+        if index < len(arguments.posonlyargs):
+            if default is None:
+                return False  # A required positional-only argument cannot be passed by name.
+            continue
+        accepted.add(argument.arg)
+        if default is None:
+            required.add(argument.arg)
+    for argument, default in zip(arguments.kwonlyargs, arguments.kw_defaults, strict=True):
+        accepted.add(argument.arg)
+        if default is None:
+            required.add(argument.arg)
+    names = set(names)
+    return required <= names and (arguments.kwarg is not None or names <= accepted)
 
 
 def validate_process_layout(
@@ -129,11 +156,23 @@ def validate_process_layout(
             raise ValueError(f"Missing committed Program file: {path}")
         tree = ast.parse(read_source(path), filename=path)
         entrypoint = props.get("entrypoint", "run")
-        if not any(
-            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == entrypoint
-            for node in tree.body
-        ):
+        function = next(
+            (
+                node
+                for node in tree.body
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name == entrypoint
+            ),
+            None,
+        )
+        if function is None:
             raise ValueError(f"Missing Program entrypoint {entrypoint}: {path}")
+        # Protected Core API wrappers call these Programs; candidates cannot adapt them.
+        contract = CALLED_PROGRAMS.get(props.get("slug"))
+        if contract is not None and not accepts_arguments(function, contract):
+            raise ValueError(
+                f"Program entrypoint must accept Core API arguments {list(contract)}: {path}"
+            )
         entrypoints[marker] = path
 
     actual_directories = {PREFIX.rstrip("/")}

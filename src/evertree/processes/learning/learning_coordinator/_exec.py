@@ -1,5 +1,7 @@
 """Forward selected evaluated experience to the protected standard learning pipeline."""
 
+from evertree.core.learning.api import learn
+
 
 async def run(
     ctx,
@@ -10,14 +12,12 @@ async def run(
     ambiguous: bool = False,
 ):
     """Submit a learning signal through Core credit assignment, planning and transactional update."""
-    result = await ctx.step(
-        "learning.learn",
-        {
-            "signal": signal,
-            "target": target,
-            "context": context or {},
-            "attribution_weight": attribution_weight,
-            "ambiguous": ambiguous,
-        },
+    result = await learn(
+        ctx,
+        signal,
+        target,
+        context=context,
+        attribution_weight=attribution_weight,
+        ambiguous=ambiguous,
     )
     return {"result": result, "feedback": None}

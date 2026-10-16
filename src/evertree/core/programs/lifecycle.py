@@ -26,11 +26,13 @@ class LifecycleError(RuntimeError):
     pass
 
 
-def validate_program_imports(source: str, path: str) -> None:
-    """Reject direct cross-Program imports while allowing a Program's helpers.
+def validate_program_source(source: str, path: str) -> None:
+    """Reject direct cross-Program imports and raw ctx.step/ctx.call in Program code.
 
-    This is an architectural source check, not an OS security boundary. Arbitrary
-    Python reflection is confined by the worker sandbox and gateway separately.
+    Program and shared helper code reaches Core and contract Programs through the
+    typed evertree.core API. A Program's own helpers stay importable. This is an
+    architectural source check, not an OS security boundary. Arbitrary Python
+    reflection is confined by the worker sandbox and gateway separately.
     """
     parts = path.removeprefix("src/").removesuffix(".py").replace("/", ".").split(".")
     if parts[-1] == "__init__":
@@ -45,6 +47,16 @@ def validate_program_imports(source: str, path: str) -> None:
     except SyntaxError:
         return  # The fixed compile gate reports syntax errors as failed checks.
     for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in {"step", "call"}
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "ctx"
+        ):
+            raise LifecycleError(
+                f"Direct ctx.{node.func.attr} at {path}:{node.lineno}; use the evertree.core API"
+            )
         targets = []
         if isinstance(node, ast.Import):
             targets = [alias.name for alias in node.names]
@@ -392,7 +404,7 @@ class ProgramLifecycleRuntime:
                     source = git(workspace, "show", f"{revision}:{changed}")
                 except LifecycleError:
                     continue  # Deleted files have no imports to inspect.
-                validate_program_imports(source, changed)
+                validate_program_source(source, changed)
         # Acceptance imports only installed core. Shared Program helpers are
         # permitted, but candidate tests cannot replace this gate or its policy.
         if self.validate_layout:

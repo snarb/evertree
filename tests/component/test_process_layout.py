@@ -175,3 +175,25 @@ def test_candidate_subtype_keeps_parent_directory_with_inactive_parent_program(s
     )
     sources[path] = "def run(): return 1"
     validate_process_layout(graph, sources, sources.__getitem__, candidate_program_id=program.id)
+
+
+@pytest.mark.parametrize(
+    "signature, accepted",
+    [
+        ("ctx, target, observation_ids=None, context=None, signal=None", True),
+        ("ctx, *, target, observation_ids, context", True),
+        ("ctx, **arguments", True),
+        ("ctx, target, observation_ids, context, signal", False),
+        ("ctx, target, context=None", False),
+        ("ctx, target, /, observation_ids=None, context=None", False),
+    ],
+)
+def test_core_called_program_must_accept_core_api_arguments(seed_tree, signature, accepted):
+    graph, sources = seed_tree
+    path = graph.find("CreditAssignment.exec").properties["git_path"]
+    sources[path] = f"async def run({signature}):\n    return None\n"
+    if accepted:
+        validate_process_layout(graph, sources, sources.__getitem__)
+    else:
+        with pytest.raises(ValueError, match="Core API arguments"):
+            validate_process_layout(graph, sources, sources.__getitem__)

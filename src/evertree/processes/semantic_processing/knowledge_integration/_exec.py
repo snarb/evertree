@@ -3,6 +3,8 @@
 import json
 
 from evertree.common.integration_actions import INTEGRATION_TOOLS, SemanticTools
+from evertree.core.graph import api as graph
+from evertree.core.semantics import api as semantics
 from evertree.core.tokens import current_read_context
 
 INSTRUCTIONS = """# Purpose and selection
@@ -261,35 +263,27 @@ async def run(ctx, experience_refs, focus=None):
     Successful writes persist immediately with sources. Return their operation records
     when the model finishes; a later failed tool does not roll back earlier writes.
     """
-    material = await ctx.step(
-        "semantic.sources", {"experience_refs": experience_refs, "focus": focus}
-    )
+    material = await semantics.load_sources(ctx, experience_refs, focus=focus)
 
     async def search(query):
-        response = await ctx.call("semantic_search", {"query": query})
-        return response.result
+        return await semantics.call_semantic_search(ctx, query)
 
     async def describe(subject):
-        return await ctx.step("graph.describe", {"subject": subject})
+        return await graph.describe(ctx, subject)
 
     async def write(action, operation_key):
-        return await ctx.step(
-            "semantic.write",
-            {
-                "action": action,
-                "operation_key": operation_key,
-                "experience_refs": experience_refs,
-            },
+        return await semantics.write(
+            ctx, action, operation_key=operation_key, experience_refs=experience_refs
         )
 
     async def revision():
-        return await ctx.step("semantic.revision", {})
+        return await semantics.revision(ctx)
 
     async def read(name, arguments):
         payload = dict(arguments)
         if name in {"query", "walk"} and current_read_context.get() is not None:
             payload["_read_context"] = current_read_context.get()
-        return await ctx.step("graph." + name, payload)
+        return await graph.read(ctx, name, payload)
 
     handler = SemanticTools(
         search=search, describe=describe, write=write, revision=revision, read=read

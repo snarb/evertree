@@ -123,16 +123,21 @@ class Context:
         )
 
     async def step(self, method: str, payload: dict | None = None):
-        """Execute a durable Core operation, retaining its source line for runtime tracing."""
+        """Execute a durable Core operation, retaining its source line for runtime tracing.
+
+        The line is the nearest Program-file frame, so calls made through Core API
+        wrappers and shared helpers still resolve to the Program line that requested them.
+        """
         if not isinstance(method, str) or method.startswith("_"):
             raise ValueError("Invalid gateway method")
+        program_file = str((Path(_configuration["checkout"]) / self.program["git_path"]).resolve())
         frame = inspect.currentframe().f_back
         source_line = None
-        if (
-            Path(frame.f_code.co_filename).resolve()
-            == (Path(_configuration["checkout"]) / self.program["git_path"]).resolve()
-        ):
-            source_line = frame.f_lineno
+        while frame is not None:
+            if str(Path(frame.f_code.co_filename).resolve()) == program_file:
+                source_line = frame.f_lineno
+                break
+            frame = frame.f_back
         del frame
         return await gateway_step(self.run_id, method, payload or {}, source_line)
 

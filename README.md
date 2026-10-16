@@ -78,9 +78,14 @@ uv run python src/evertree/debug_integration.py
 - Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`, evolving behavior in `processes`, and reusable Program helpers in `common`.
 - Call other Programs through the runtime, including other roles of the same process; do not import their implementations directly.
+- Reach Core from `processes` and `common` through the typed `evertree.core.<domain>.api`
+  functions (for example `from evertree.core.memory.api import retrieve`); raw `ctx.step` and
+  `ctx.call` belong only in `core`, and candidate validation rejects them elsewhere. A new
+  gateway method needs a Core wrapper. Child Programs that Core wrappers call are listed in
+  `CALLED_PROGRAMS` (`core/contracts.py`); their entrypoints must keep accepting those arguments.
 - Use `ctx.llm(payload, tools=..., tool_handler=..., max_tool_calls=..., stop_when=...)`
-  when a model needs tools. Handlers run at workflow level and may call `ctx.call` or
-  `ctx.step`; do not wrap the entire tool conversation in a durable step. Recovery
+  when a model needs tools. Handlers run at workflow level and may use Core API functions;
+  do not wrap the entire tool conversation in a durable step. Recovery
   replays exchanges and handlers to reconstruct local state before continuing.
 - Align `processes/` with the Self/Process `SUBTYPE_OF` taxonomy; `PART_WHOLE` does not define directory nesting. Preserve stable IDs when changing graph names, paths, and references. Validate structural changes with `uv run python -m evertree.core.programs.layout`.
 

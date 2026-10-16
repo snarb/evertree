@@ -7,6 +7,8 @@ import math
 from collections.abc import Mapping
 from typing import Any
 
+from evertree.core.runtime.llm import run_llm
+
 
 def validate(value: Any, schema: Mapping[str, Any], path: str = "$") -> None:
     """Validate a model result against the supported JSON Schema subset, reporting its failing path."""
@@ -68,14 +70,11 @@ def validate(value: Any, schema: Mapping[str, Any], path: str = "$") -> None:
 
 async def ask(ctx, *, instructions: str, data: dict, schema: dict):
     """Request a schema-constrained, read-only model result through a durable Program step."""
-    response = await ctx.step(
-        "llm.run",
-        {
-            "prompt": json.dumps(data, ensure_ascii=False, allow_nan=False, indent=2),
-            "instructions": instructions,
-            "mode": "model",
-            "output_schema": schema,
-        },
+    response = await run_llm(
+        ctx,
+        json.dumps(data, ensure_ascii=False, allow_nan=False, indent=2),
+        instructions=instructions,
+        output_schema=schema,
     )
     result = response.get("parsed")
     if result is None:
