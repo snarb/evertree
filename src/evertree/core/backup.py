@@ -83,7 +83,9 @@ def _checksum(path: Path) -> str:
     return digest.hexdigest()
 
 
-def copy_state(source: Path, destination: Path) -> None:
+def copy_state(
+    source: Path, destination: Path, excluded_runs: frozenset[str] = frozenset()
+) -> None:
     """Copy only execution records and SQLite, never worker-created scratch files."""
     source, destination = _extended(source), _extended(destination)
     if source.is_symlink() or source.is_junction():
@@ -95,6 +97,8 @@ def copy_state(source: Path, destination: Path) -> None:
         if run.is_symlink() or run.is_junction():
             raise BackupError("Journal roots may not be symbolic links or junctions")
         if not run.is_dir():
+            continue
+        if run.name in excluded_runs:
             continue
         for name in ("worker.json", "core_runs.json", "stderr.log", "dbos/dbos.sqlite"):
             path = run / name
@@ -147,6 +151,7 @@ class BackupManager:
         snapshot: Callable[[], Mapping[str, Any]],
         *,
         timeout: float = 10,
+        completed_task_ids: set[str] | None = None,
     ) -> Path:
         """Save compressed agent state and execution journals, without working files.
 
@@ -161,6 +166,9 @@ class BackupManager:
             final = self.root / name
             pending.mkdir()
             async with runtime.quiesce(timeout=timeout):
+                obsolete = frozenset(
+                    runtime.obsolete_journals(completed_task_ids) if completed_task_ids else ()
+                )
                 state = snapshot()
                 if inspect.isawaitable(state):
                     state = await state
@@ -168,7 +176,9 @@ class BackupManager:
                 await _restore_io(
                     lambda: (pending / "state.msgpack.zst").write_bytes(encode_snapshot(payload))
                 )
-                await _restore_io(copy_state, runtime.state_dir / "journals", pending / "journals")
+                await _restore_io(
+                    copy_state, runtime.state_dir / "journals", pending / "journals", obsolete
+                )
                 extended_pending = _extended(pending)
                 checksums = {
                     path.relative_to(extended_pending).as_posix(): _checksum(path)
@@ -185,6 +195,13 @@ class BackupManager:
                     json.dumps(manifest, indent=2), encoding="utf-8"
                 )
                 await _restore_io(rename_state, pending, final)
+                # Only the published backup makes omission safe; failures before it retain journals.
+                for run_id in sorted(obsolete):
+                    await _restore_io(
+                        safe_remove_tree,
+                        runtime.state_dir / "journals" / run_id,
+                        runtime.state_dir / "journals",
+                    )
             return final
 
     def list(self) -> list[Path]:

@@ -281,6 +281,28 @@ class TaskStore:
         """Return all registered task states, including terminal tasks."""
         return tuple(self._tasks.values())
 
+    def completed_tree_ids(self) -> set[str]:
+        """Return members of entirely terminal, stopped task trees."""
+        with self._lock:
+            children: dict[str | None, list[TaskState]] = {}
+            for state in self._tasks.values():
+                children.setdefault(state.parent_task_id, []).append(state)
+            completed = set()
+            for root in children.get(None, ()):
+                pending, members = [root], set()
+                eligible = True
+                while pending:
+                    state = pending.pop()
+                    if state.id in members:
+                        eligible = False
+                        continue
+                    members.add(state.id)
+                    eligible &= state.terminal and state.execution_stopped
+                    pending.extend(children.get(state.id, ()))
+                if eligible:
+                    completed.update(members)
+            return completed
+
     def revise_specification(
         self, task_id: str, specification: TaskSpecification, *, provenance: str
     ) -> TaskSpecification:

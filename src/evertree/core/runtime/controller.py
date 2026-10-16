@@ -622,6 +622,34 @@ class Runtime:
             },
         }
 
+    def obsolete_journals(self, completed_task_ids: set[str]) -> set[str]:
+        """Select finalized task journals while the caller holds the backup boundary."""
+        eligible = completed_task_ids & self._final_tasks
+        if self._active:
+            eligible.discard(self._active["task_id"])
+        root = self.state_dir / "journals"
+        obsolete = set()
+        if not root.exists():
+            return obsolete
+        for directory in root.iterdir():
+            if not directory.is_dir() or directory.is_symlink() or directory.is_junction():
+                continue
+            configuration = directory / "worker.json"
+            if configuration.is_symlink() or not configuration.is_file():
+                continue
+            try:
+                data = json.loads(configuration.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if (
+                isinstance(data, dict)
+                and data.get("run_id") == directory.name
+                and isinstance(data.get("task_id"), str)
+                and data["task_id"] in eligible
+            ):
+                obsolete.add(directory.name)
+        return obsolete
+
     def restore(self, snapshot):
         """Restore finalized task admission state while no execution tree is active."""
         if self._active:

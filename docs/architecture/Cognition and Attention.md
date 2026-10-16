@@ -728,6 +728,8 @@ The [SQLite Backup API](https://www.sqlite.org/backup.html) is used to copy the 
 
 During recovery, the entire selected set is loaded before workflows are allowed to resume and new inputs are accepted. A newer working DBOS journal is not combined with older core state. Internal updates after the backup are lost along with their records and may be recomputed from the restored state.
 
+Completed task trees do not retain execution journals indefinitely. When a task, all its ancestors, and all descendants of its root have terminal outcomes and stopped execution, the next backup omits journals belonging to runtime-finalized tasks in that tree. Only after that backup is published does the runtime's journal storage get cleaned up. Failed backup creation leaves the working journals intact; older retained backups keep their own journals for consistent rollback. Task outcomes, semantic traces, and learned state remain subject to their own retention rules.
+
 External actions are not undone by this rollback. After a failure, they may be repeated, as may individual operations whose results DBOS did not save in time. The MVP accepts these repeats and does not require universal protection for every command or automatic determination of every action's outcome. Existing repeat checks in specific operations remain in place.
 
 #### Stopping Execution and Releasing Memory

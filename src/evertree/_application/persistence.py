@@ -240,6 +240,7 @@ class PersistenceMixin:
                 self.runtime,
                 self.snapshot,
                 timeout=10,
+                completed_task_ids=self.tasks.completed_tree_ids(),
             )
             for obsolete in self.backups.list()[2:]:
                 root = self.backups.root.resolve()
