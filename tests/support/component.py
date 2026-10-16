@@ -17,8 +17,8 @@ from uuid import uuid4
 
 from evertree.application import EverTree
 from evertree.core.contracts import ProgramResult
-from evertree.core.runtime.agents import ProgramAgents, run_agent
 from evertree.core.runtime.controller import ProgramSpec, RunResult, Runtime
+from evertree.core.runtime.llm import ProgramLLMInvocations, run_llm_dialogue
 from evertree.core.runtime.repository import ProgramExecutionError
 from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 
@@ -46,7 +46,7 @@ class SourceRuntime(Runtime):
                 "cancelled": False,
                 "known_runs": {},
                 "run_dir": run_dir,
-                "agents": ProgramAgents(self.gateway),
+                "llm": ProgramLLMInvocations(self.gateway),
             }
             work = asyncio.create_task(self._call(program, arguments, run_id))
             self._active["reader_task"] = work
@@ -54,7 +54,7 @@ class SourceRuntime(Runtime):
                 output = await asyncio.wait_for(work, timeout)
                 return RunResult(run_id, output["result"], output.get("feedback"))
             finally:
-                await self._active["agents"].close_all()
+                await self._active["llm"].close_all()
                 self._active = None
 
     async def _call(self, spec, arguments, run_id, parent_run_id=None):
@@ -87,10 +87,10 @@ class SourceRuntime(Runtime):
         if "ctx" in inspect.signature(function).parameters:
             ctx = SimpleNamespace(step=step, call=call, run_id=run_id)
 
-            async def agent(payload, **options):
-                return await run_agent(ctx, payload, **options)
+            async def llm(payload, **options):
+                return await run_llm_dialogue(ctx, payload, **options)
 
-            ctx.agent = agent
+            ctx.llm = llm
             kwargs["ctx"] = ctx
         result = function(**kwargs)
         if inspect.isawaitable(result):

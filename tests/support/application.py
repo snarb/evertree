@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from evertree.core.provider import AgentEvent, ScriptedProvider
+from evertree.core.provider import LLMEvent, ScriptedProvider
 
 
 def is_integration_request(request):
@@ -15,13 +15,13 @@ def is_integration_request(request):
 async def tool_events(request_id, request, handler, calls):
     """Exercise the provider's native callback boundary with correlated events."""
     declared = {tool.name for tool in request.tools}
-    yield AgentEvent("session", {"provider": "scripted", "id": request_id})
+    yield LLMEvent("session", {"provider": "scripted", "id": request_id})
     for index, (name, arguments) in enumerate(calls):
         assert name in declared
         call = {"call_id": f"{request_id}:{index}", "name": name, "arguments": arguments}
-        yield AgentEvent("tool_call", call)
+        yield LLMEvent("tool_call", call)
         result = await handler(name, arguments)
-        yield AgentEvent(
+        yield LLMEvent(
             "tool_result",
             {
                 "call_id": call["call_id"],
@@ -31,7 +31,7 @@ async def tool_events(request_id, request, handler, calls):
                 "error": None,
             },
         )
-    yield AgentEvent("completed", {"text": ""})
+    yield LLMEvent("completed", {"text": ""})
 
 
 class IntegrationScriptedProvider(ScriptedProvider):
@@ -52,7 +52,7 @@ class IntegrationScriptedProvider(ScriptedProvider):
 
 
 def completed(data):
-    return [AgentEvent("completed", {"text": json.dumps(data), "parsed": data})]
+    return [LLMEvent("completed", {"text": json.dumps(data), "parsed": data})]
 
 
 def framing(objective="Count r in strawberry", minutes=3, improvement=0):

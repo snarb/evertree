@@ -27,14 +27,8 @@ async def session(tmp_path):
     try:
         yield session
     finally:
-        histories = [
-            call["payload"]["history"] for call in session.calls if call["method"] == "agent.close"
-        ]
         (tmp_path / "search-flow.json").write_text(
-            json.dumps(
-                [item for batch in histories for item in batch], ensure_ascii=False, indent=2
-            ),
-            encoding="utf-8",
+            json.dumps(session.tool_calls(), ensure_ascii=False, indent=2), encoding="utf-8"
         )
         usage = []
         for path in tmp_path.glob("model-*.json"):
@@ -48,7 +42,7 @@ async def session(tmp_path):
             "input_tokens": sum(u.get("input_tokens", 0) for u in usage),
             "output_tokens": sum(u.get("output_tokens", 0) for u in usage),
             "cached_input_tokens": sum(u.get("cached_input_tokens", 0) for u in usage),
-            "tool_calls": sum(len(batch) for batch in histories),
+            "tool_calls": len(session.tool_calls()),
         }
         (tmp_path / "metrics.json").write_text(json.dumps(metrics, indent=2))
         # DebugSession closes its client; reconnect only to remove this test's private indexes.
@@ -79,12 +73,7 @@ async def test_existing_pump_search_navigation_and_new_state(session, exact_name
         )
     before = {node.id for node in session.graph.nodes()}
     await session.run()
-    history = [
-        item
-        for call in session.calls
-        if call["method"] == "agent.close"
-        for item in call["payload"]["history"]
-    ]
+    history = session.tool_calls()
     created = [node for node in session.graph.nodes() if node.id not in before]
     assert not [node for node in created if node.kind in {"prototype", "instance"}], created
     states = [node for node in created if isinstance(node, Facet)]

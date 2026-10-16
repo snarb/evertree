@@ -12,7 +12,7 @@ from evertree.core.learning.contracts import LearningObjective, LearningSignal
 from evertree.core.learning.coordinator import LearningCoordinator
 from evertree.core.memory.types import MemoryQuery, TraceOutputRef
 
-from ..core.provider import AgentRequest
+from ..core.provider import LLMRequest
 from ..core.values import json_value
 from .prompts import (
     ANSWER_VERIFICATION_INSTRUCTIONS,
@@ -255,7 +255,7 @@ class ConsciousnessMixin:
                     async with asyncio.timeout(seconds):
                         result = await self._invoke(
                             state.id,
-                            AgentRequest(
+                            LLMRequest(
                                 json.dumps(context, ensure_ascii=False, indent=2),
                                 self._workspace(state.id),
                                 instructions=CONSCIOUSNESS_INSTRUCTIONS,
@@ -339,7 +339,7 @@ class ConsciousnessMixin:
                 try:
                     check = await self._invoke(
                         state.id,
-                        AgentRequest(
+                        LLMRequest(
                             json.dumps(
                                 {
                                     "specification": self._prompt_specification(state),

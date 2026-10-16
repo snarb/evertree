@@ -96,7 +96,7 @@ async def test_eva02_ready_model_cannot_change_parameters_in_isolated_state(
 async def test_lrn09_eva02_outcome_is_not_passed_to_model_before_prediction(tmp_path):
     """LRN-09/EVA-02: the real worker and model adapter receive only permitted case input."""
     source = """async def run(prefix, ctx):
-    response = await ctx.step('agent.run', {'prompt': prefix})
+    response = await ctx.step('llm.run', {'prompt': prefix})
     return {'result': response['parsed']}
 """
     repo, _, branch, spec, graph, memory, learning = prepare(tmp_path, source)
@@ -164,7 +164,7 @@ async def test_eva04_program_tests_do_not_replace_independent_evaluation(tmp_pat
 async def test_eva02_belief_filtered_views_read_the_same_isolated_initial_beliefs(tmp_path):
     """EVA-02 extension: candidate and baseline must see equivalent initial belief filters."""
     source = """async def run(value, ctx):
-    await ctx.step('agent.run', {'prompt': 'start evaluation'})
+    await ctx.step('llm.run', {'prompt': 'start evaluation'})
     matches = await ctx.step('graph.view', {
         'relation': 'VERIFIED_LABEL', 'view': 'read', 'inputs': {'subject': value}})
     belief = await ctx.step('belief.read', {'target': 'supported-label'})

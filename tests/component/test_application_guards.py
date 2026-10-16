@@ -11,7 +11,7 @@ from evertree.core.evaluation.scoring import evaluate_prediction
 from evertree.core.graph.types import GraphDelta
 from evertree.core.learning.contracts import LearningCredit, LearningObjective, LearningSignal
 from evertree.core.programs.lifecycle import ProgramBranch
-from evertree.core.provider import AgentEvent, AgentRequest
+from evertree.core.provider import LLMEvent, LLMRequest
 from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import (
     decision,
@@ -207,12 +207,12 @@ async def test_cancel_joins_blocked_sdk_callback_before_publishing_terminal_stat
         [
             framing(),
             [
-                AgentEvent(
+                LLMEvent(
                     "tool_call",
                     {"name": "load_tool_set", "arguments": {"name": "external_action_tools"}},
                 ),
-                AgentEvent("tool_call", {"name": "list_actions", "arguments": {"session": "test"}}),
-                AgentEvent(
+                LLMEvent("tool_call", {"name": "list_actions", "arguments": {"session": "test"}}),
+                LLMEvent(
                     "tool_call",
                     {
                         "name": "take_action",
@@ -352,7 +352,7 @@ async def test_nested_sdk_approval_wait_is_excluded_once_from_both_budget_bucket
     class TimedProvider(ScriptedProvider):
         async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
             self.requests.append(request)
-            yield AgentEvent("session", {"provider": self.name, "id": request_id})
+            yield LLMEvent("session", {"provider": self.name, "id": request_id})
             if request.native_coding:
                 clock.advance(3)
                 # SDK callbacks can originate in an independent reader task.
@@ -371,13 +371,13 @@ async def test_nested_sdk_approval_wait_is_excluded_once_from_both_budget_bucket
                     },
                 )
                 clock.advance(1)
-            yield AgentEvent("completed", {"text": "done", "parsed": None})
+            yield LLMEvent("completed", {"text": "done", "parsed": None})
 
     agent.provider = TimedProvider([])
     agent.approval_handler = approve
     await agent._invoke(
         task.id,
-        AgentRequest("Develop", agent._workspace(task.id), mode="exec", tools=agent._tools()),
+        LLMRequest("Develop", agent._workspace(task.id), mode="exec", tools=agent._tools()),
     )
     assert task.spent["active_time_minutes"] * 60 == pytest.approx(7)
     assert task.self_improvement_spent.get("active_time_minutes", 0) * 60 == pytest.approx(
@@ -434,12 +434,12 @@ async def test_technical_timeout_during_approval_does_not_consume_task_budget(ag
         async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
             clock.advance(3)
             await approval_handler({"operation": "test"})
-            yield AgentEvent("completed", {"text": "unreachable", "parsed": None})
+            yield LLMEvent("completed", {"text": "unreachable", "parsed": None})
 
     agent.provider = TimedOutProvider([])
     agent.approval_handler = timed_out_approval
     with pytest.raises(TimeoutError, match="Technical approval deadline"):
-        await agent._invoke(task.id, AgentRequest("Request permission", agent._workspace(task.id)))
+        await agent._invoke(task.id, LLMRequest("Request permission", agent._workspace(task.id)))
     assert task.spent["active_time_minutes"] * 60 == pytest.approx(3)
     assert not task.budget_exhausted
 

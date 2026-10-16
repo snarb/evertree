@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from evertree.core.operations import authorize_operation
-from evertree.core.runtime.agents import ProgramAgents, run_agent
+from evertree.core.runtime.llm import ProgramLLMInvocations, run_llm_dialogue
 
 METADATA = {"run_id": "workflow", "program": {"role": "model"}}
 TOOL = {
@@ -27,25 +27,25 @@ async def test_read_context_crosses_callback_boundary_and_replays_without_leakin
             current_read_context.reset(token)
         return {"text": "done"}
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     recorded = []
 
     class Context:
         run_id = "workflow"
 
         async def step(self, method, args):
-            if method == "agent.next":
-                event = await agents.next(args, METADATA)
+            if method == "llm.next":
+                event = await invocations.next(args, METADATA)
                 recorded.append(event)
                 return event
-            return await agents.close(args["invocation_id"], METADATA, history=args["history"])
+            return await invocations.close(args["invocation_id"], METADATA, history=args["history"])
 
     async def handle(name, args):
         assert current_read_context.get() == budget
         return {"total": 3}
 
     try:
-        await run_agent(Context(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
+        await run_llm_dialogue(Context(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
         assert recorded[0]["read_context"] == budget
         assert current_read_context.get() is None
 
@@ -53,13 +53,13 @@ async def test_read_context_crosses_callback_boundary_and_replays_without_leakin
             run_id = "workflow"
 
             async def step(self, method, args):
-                if method == "agent.next":
+                if method == "llm.next":
                     return recorded.pop(0)
 
-        await run_agent(Replay(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
+        await run_llm_dialogue(Replay(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
         assert current_read_context.get() is None
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 def payload(**changes):
@@ -81,39 +81,39 @@ async def test_bridge_rejects_forged_reply_and_other_workflow_cannot_close_sessi
         finally:
             stopped.set()
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     try:
-        event = await agents.next(payload(), METADATA)
+        event = await invocations.next(payload(), METADATA)
         forged = {**event["call"], "arguments": {"key": "forged"}, "result": 1, "error": None}
         with pytest.raises(ValueError, match="does not match"):
-            await agents.next(payload(history=[forged]), METADATA)
-        await agents.close("one", {**METADATA, "run_id": "other"})
+            await invocations.next(payload(history=[forged]), METADATA)
+        await invocations.close("one", {**METADATA, "run_id": "other"})
         assert not stopped.is_set()
         completed = {**event["call"], "result": 7, "error": None}
-        result = await agents.next(payload(history=[completed]), METADATA)
+        result = await invocations.next(payload(history=[completed]), METADATA)
         assert result == {"kind": "completed", "result": 7}
-        assert await agents.next(payload(history=[completed]), METADATA) == result
+        assert await invocations.next(payload(history=[completed]), METADATA) == result
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 async def test_model_cannot_expose_effect_tools_or_native_coding():
-    authorize_operation("agent.next", "model")
-    authorize_operation("agent.close", "model")
+    authorize_operation("llm.next", "model")
+    authorize_operation("llm.close", "model")
 
     async def gateway(method, arguments):
         pytest.fail("Unauthorized provider invocation")
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     with pytest.raises(PermissionError, match="action tools"):
-        await agents.next(
+        await invocations.next(
             payload(
                 request={"prompt": "", "mode": "exec", "tools": [{**TOOL, "read_only": False}]}
             ),
             METADATA,
         )
     with pytest.raises(PermissionError, match="declared tools"):
-        await agents.next(payload(request={"prompt": "", "native_coding": True}), METADATA)
+        await invocations.next(payload(request={"prompt": "", "native_coding": True}), METADATA)
 
 
 async def test_bridge_limits_native_tool_calls_even_if_worker_keeps_requesting():
@@ -121,14 +121,14 @@ async def test_bridge_limits_native_tool_calls_even_if_worker_keeps_requesting()
         await arguments["_tool_handler"]("read", {})
         await arguments["_tool_handler"]("read", {})
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     try:
-        event = await agents.next(payload(max_tool_calls=1), METADATA)
+        event = await invocations.next(payload(max_tool_calls=1), METADATA)
         completed = {**event["call"], "result": 7, "error": None}
         with pytest.raises(RuntimeError, match="tool-call limit"):
-            await agents.next(payload(history=[completed], max_tool_calls=1), METADATA)
+            await invocations.next(payload(history=[completed], max_tool_calls=1), METADATA)
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 async def test_tool_schema_rejects_invalid_arguments_before_workflow_dispatch():
@@ -154,18 +154,18 @@ async def test_tool_schema_rejects_invalid_arguments_before_workflow_dispatch():
                 await arguments["_tool_handler"]("read", invalid)
         return await arguments["_tool_handler"]("read", {"values": [1, None]})
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     request = payload(request={"prompt": "Read", "tools": [definition]}, max_tool_calls=4)
     try:
-        event = await agents.next(request, METADATA)
+        event = await invocations.next(request, METADATA)
         assert event["call"]["arguments"] == {"values": [1, None]}
         completed = {**event["call"], "result": "valid", "error": None}
-        assert await agents.next({**request, "history": [completed]}, METADATA) == {
+        assert await invocations.next({**request, "history": [completed]}, METADATA) == {
             "kind": "completed",
             "result": "valid",
         }
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 async def test_callback_transport_failure_propagates_and_closes_inference():
@@ -177,24 +177,26 @@ async def test_callback_transport_failure_propagates_and_closes_inference():
         finally:
             stopped.set()
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
 
     class Context:
         run_id = "workflow"
 
         async def step(self, method, arguments):
-            if method == "agent.next":
-                return await agents.next(arguments, METADATA)
-            assert method == "agent.close"
-            await agents.close(arguments["invocation_id"], METADATA, history=arguments["history"])
+            if method == "llm.next":
+                return await invocations.next(arguments, METADATA)
+            assert method == "llm.close"
+            await invocations.close(
+                arguments["invocation_id"], METADATA, history=arguments["history"]
+            )
 
     async def handle(name, arguments):
         raise RuntimeError("Protected core disconnected")
 
     with pytest.raises(RuntimeError, match="Protected core disconnected"):
-        await run_agent(Context(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
+        await run_llm_dialogue(Context(), {"prompt": "Read"}, tools=[TOOL], tool_handler=handle)
     assert stopped.is_set()
-    assert not agents.running
+    assert not invocations.running
 
 
 async def test_graceful_close_waits_for_final_usage_and_remains_cancellable():
@@ -209,41 +211,45 @@ async def test_graceful_close_waits_for_final_usage_and_remains_cancellable():
         charged.append(17)
         return {"text": "ignored"}
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     try:
-        event = await agents.next(payload(), METADATA)
+        event = await invocations.next(payload(), METADATA)
         history = [{**event["call"], "result": "receipt", "error": None}]
-        closing = asyncio.create_task(agents.close("one", METADATA, history=history, drain=True))
+        closing = asyncio.create_task(
+            invocations.close("one", METADATA, history=history, drain=True)
+        )
         await finishing.wait()
-        assert agents.running and not closing.done() and not charged
+        assert invocations.running and not closing.done() and not charged
         release.set()
         await closing
         assert charged == [17]
 
         release.clear()
         finishing.clear()
-        event = await agents.next(payload(), METADATA)
+        event = await invocations.next(payload(), METADATA)
         history = [{**event["call"], "result": "receipt", "error": None}]
-        closing = asyncio.create_task(agents.close("one", METADATA, history=history, drain=True))
+        closing = asyncio.create_task(
+            invocations.close("one", METADATA, history=history, drain=True)
+        )
         await finishing.wait()
-        await agents.close_all()
+        await invocations.close_all()
         with pytest.raises(RuntimeError, match="Provider invocation was interrupted"):
             await closing
         assert charged == [17]
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 async def test_provider_cancellation_returns_error_instead_of_hanging_next():
     async def gateway(method, arguments):
         raise asyncio.CancelledError("provider interrupted")
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     try:
         with pytest.raises(RuntimeError, match="Provider invocation was interrupted"):
-            await asyncio.wait_for(agents.next(payload(), METADATA), 5)
+            await asyncio.wait_for(invocations.next(payload(), METADATA), 5)
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 async def test_provider_cancellation_during_terminal_drain_returns_error():
@@ -251,14 +257,16 @@ async def test_provider_cancellation_during_terminal_drain_returns_error():
         await arguments["_tool_handler"]("read", {})
         raise asyncio.CancelledError("provider interrupted")
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     try:
-        event = await agents.next(payload(), METADATA)
+        event = await invocations.next(payload(), METADATA)
         history = [{**event["call"], "result": "receipt", "error": None}]
         with pytest.raises(RuntimeError, match="Provider invocation was interrupted"):
-            await asyncio.wait_for(agents.close("one", METADATA, history=history, drain=True), 5)
+            await asyncio.wait_for(
+                invocations.close("one", METADATA, history=history, drain=True), 5
+            )
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 async def test_cancelling_terminal_drain_caller_preserves_cancellation():
@@ -272,19 +280,21 @@ async def test_cancelling_terminal_drain_caller_preserves_cancellation():
         finally:
             stopped.set()
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     try:
-        event = await agents.next(payload(), METADATA)
+        event = await invocations.next(payload(), METADATA)
         history = [{**event["call"], "result": "receipt", "error": None}]
-        closing = asyncio.create_task(agents.close("one", METADATA, history=history, drain=True))
+        closing = asyncio.create_task(
+            invocations.close("one", METADATA, history=history, drain=True)
+        )
         await finishing.wait()
         closing.cancel()
         with pytest.raises(asyncio.CancelledError):
             await closing
         assert stopped.is_set()
-        assert not agents.running
+        assert not invocations.running
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 async def test_terminal_tool_rejects_already_queued_parallel_calls_and_drains_usage():
@@ -304,16 +314,16 @@ async def test_terminal_tool_rejects_already_queued_parallel_calls_and_drains_us
         charged.append(23)
         return {"text": "ignored model answer"}
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
 
     class Context:
         run_id = "workflow"
 
         async def step(self, method, arguments):
-            if method == "agent.next":
-                return await agents.next(arguments, METADATA)
-            assert method == "agent.close"
-            await agents.close(
+            if method == "llm.next":
+                return await invocations.next(arguments, METADATA)
+            assert method == "llm.close"
+            await invocations.close(
                 arguments["invocation_id"],
                 METADATA,
                 history=arguments["history"],
@@ -327,7 +337,7 @@ async def test_terminal_tool_rejects_already_queued_parallel_calls_and_drains_us
 
     try:
         result = await asyncio.wait_for(
-            run_agent(
+            run_llm_dialogue(
                 Context(),
                 {"prompt": "Finish"},
                 tools=[TOOL, {**TOOL, "name": "finish"}],
@@ -340,9 +350,9 @@ async def test_terminal_tool_rejects_already_queued_parallel_calls_and_drains_us
         assert executed == ["finish"]
         assert outcomes == [
             "receipt",
-            {"error": "Agent invocation has finished; end your response now"},
+            {"error": "LLM invocation has finished; end your response now"},
         ]
         assert charged == [23]
-        assert not agents.running
+        assert not invocations.running
     finally:
-        await agents.close_all()
+        await invocations.close_all()

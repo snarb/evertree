@@ -8,7 +8,7 @@ from copy import deepcopy
 
 import pytest
 
-from evertree.core.provider import AgentEvent
+from evertree.core.provider import LLMEvent
 from tests.support.application import (
     IntegrationScriptedProvider,
     decision,
@@ -181,10 +181,8 @@ async def test_interrupted_iteration_keeps_actual_tool_trace_without_fabricated_
         [
             framing(),
             [
-                AgentEvent(
-                    "tool_call", {"name": "graph.describe", "arguments": {"subject": "Self"}}
-                ),
-                AgentEvent("message", {"text": "Still comparing the observations"}),
+                LLMEvent("tool_call", {"name": "graph.describe", "arguments": {"subject": "Self"}}),
+                LLMEvent("message", {"text": "Still comparing the observations"}),
             ],
         ]
     )

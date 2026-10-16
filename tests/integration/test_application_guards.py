@@ -9,7 +9,7 @@ import pytest
 from evertree.application import EverTree
 from evertree.core.datasets import EvaluationCase
 from evertree.core.evaluation.acceptance import AcceptanceCriteria, MetricGuardrail
-from evertree.core.provider import AgentEvent
+from evertree.core.provider import LLMEvent
 from evertree.core.runtime.controller import Runtime
 from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import decision, framing, verification, wait_for_event
@@ -43,7 +43,7 @@ class BlockingModelProvider(ScriptedProvider):
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
         if len(self.task_requests) == self.block_after:
             self.requests.append(request)
-            yield AgentEvent("session", {"provider": self.name, "id": request_id})
+            yield LLMEvent("session", {"provider": self.name, "id": request_id})
             self.entered.set()
             try:
                 await self.release.wait()

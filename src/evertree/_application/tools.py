@@ -10,7 +10,7 @@ from pathlib import Path
 from evertree.core.memory.types import TraceOutputRef
 
 from ..core.programs.lifecycle import git
-from ..core.provider import AgentRequest, ToolDefinition
+from ..core.provider import LLMRequest, ToolDefinition
 from ..core.values import json_value
 from .prompts import CANDIDATE_INSTRUCTIONS, CODING_INSTRUCTIONS
 
@@ -73,7 +73,7 @@ class ToolsMixin:
         if name == "work_on_code":
             return await self._invoke(
                 task_id,
-                AgentRequest(
+                LLMRequest(
                     args["instruction"],
                     self._workspace(task_id),
                     mode="exec",
@@ -125,7 +125,7 @@ class ToolsMixin:
             candidate = self.lifecycle.candidate(args["candidate"])
             result = await self._invoke(
                 task_id,
-                AgentRequest(
+                LLMRequest(
                     json.dumps(
                         {
                             "instruction": args["instruction"],
@@ -284,7 +284,7 @@ class ToolsMixin:
             spec = self._program(payload["program_id"])
             revision = metadata["program"]["revision"]
             return dataclasses.asdict(dataclasses.replace(spec, revision=revision))
-        if method == "agent.run":
+        if method == "llm.run":
             tools = tuple(ToolDefinition(**tool) for tool in payload.get("tools", []))
             handler = payload.get("_tool_handler")
             if tools and not callable(handler):
@@ -309,7 +309,7 @@ class ToolsMixin:
             if profile_name not in {None, "remember"}:
                 raise ValueError("Unknown model profile")
             profile = getattr(self.semantic_config, profile_name) if profile_name else None
-            request = AgentRequest(
+            request = LLMRequest(
                 payload["prompt"],
                 self._workspace(task_id),
                 instructions=payload.get("instructions", ""),

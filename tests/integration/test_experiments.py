@@ -82,7 +82,7 @@ async def run(value, ctx):
                          'required': ['name'], 'additionalProperties': False},
         'read_only': False}]
     assert await ctx.step('learning.predict', {'state_id': 'known'}) == 0.5
-    answer = await ctx.agent({'prompt': str(value), 'mode': 'exec'},
+    answer = await ctx.llm({'prompt': str(value), 'mode': 'exec'},
                              tools=tools, tool_handler=handle_tool)
     return {'result': calculate(value) + answer['parsed']}
 """
@@ -147,7 +147,7 @@ async def run(value, ctx):
     before = await ctx.step('graph.get', {'id': 1})
     result = await ctx.call('knowledge_integration', {'name': 'mutated'})
     assert result.result['writes'][0]['object'] == 1
-    await ctx.step('agent.run', {'prompt': 'input-only'})
+    await ctx.step('llm.run', {'prompt': 'input-only'})
     return {'result': before['name']}
 """
     repo, _, branch, spec, graph, memory, learning = prepare(
@@ -287,7 +287,7 @@ async def test_nested_program_registry_is_frozen_before_either_side_executes(tmp
     child_path = "src/evertree/processes/child.py"
     source = """
 async def run(value, ctx):
-    await ctx.step('agent.run', {'prompt': 'execution has started'})
+    await ctx.step('llm.run', {'prompt': 'execution has started'})
     return await ctx.call('RegisteredChild', {'value': value})
 """
     repo, _, branch, spec, graph, memory, learning = prepare(

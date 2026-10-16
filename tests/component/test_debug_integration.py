@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from evertree.core.provider import AgentEvent, ScriptedProvider
+from evertree.core.provider import LLMEvent, ScriptedProvider
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.index import RedisSearchIndex
 from evertree.debug_integration import CONSCIOUS_ANALYSIS, DebugSession, load_debug_environment
@@ -58,7 +58,7 @@ async def test_model_forwards_program_request_and_returns_provider_output(
         async def run(self, run_id, request, *, tool_handler=None):
             assert tool_handler is None
             requests.append(request)
-            yield AgentEvent("completed", {"parsed": provider_output})
+            yield LLMEvent("completed", {"parsed": provider_output})
 
     session.provider = RecordingProvider()
     payload = {
@@ -66,7 +66,7 @@ async def test_model_forwards_program_request_and_returns_provider_output(
         "instructions": "instructions selected by the Program",
         "output_schema": {"type": "object"},
     }
-    result = await session.step("agent.run", payload)
+    result = await session.step("llm.run", payload)
     assert result["parsed"] is provider_output
     assert len(requests) == 1
     request = requests[0]
@@ -87,7 +87,7 @@ async def test_debug_integration_forwards_native_tools_and_records_direct_writes
     session.provider = ScriptedProvider(
         [
             [
-                AgentEvent(
+                LLMEvent(
                     "tool_call",
                     {
                         "name": "save_note",
@@ -98,8 +98,8 @@ async def test_debug_integration_forwards_native_tools_and_records_direct_writes
                         },
                     },
                 ),
-                AgentEvent("usage", {"available": True, "total_tokens": 17}),
-                AgentEvent("completed", {"text": ""}),
+                LLMEvent("usage", {"available": True, "total_tokens": 17}),
+                LLMEvent("completed", {"text": ""}),
             ],
         ]
     )
@@ -111,16 +111,19 @@ async def test_debug_integration_forwards_native_tools_and_records_direct_writes
         assert request.mode == "exec" and not request.native_coding
         assert request.output_schema is None
         assert {"save_note", "update", "delete"} <= {tool.name for tool in request.tools}
-        (closed,) = [call for call in session.calls if call["method"] == "agent.close"]
-        saved = closed["payload"]["history"][-1]
+        (saved,) = session.tool_calls()
         assert saved["name"] == "save_note" and saved["result"] == result["writes"][0]
+        assert [call["method"] for call in session.calls] == [
+            "semantic.sources",
+            "tool:save_note",
+            "semantic.write",
+        ]
         transcripts = [json.loads(path.read_text()) for path in tmp_path.glob("model-*.json")]
         (events,) = transcripts
         assert events[-1]["kind"] == "completed"
         assert events[-2] == {"kind": "usage", "data": {"available": True, "total_tokens": 17}}
         assert not session.provider.cancelled
     finally:
-        await session.agents.close_all()
         await session.provider.close()
         await session.index.close()
 
@@ -138,8 +141,8 @@ async def test_live_evaluation_native_bridge_accepts_no_writes_and_records_final
     provider = ScriptedProvider(
         [
             [
-                AgentEvent("usage", {"available": True, "total_tokens": 23}),
-                AgentEvent("completed", {"text": ""}),
+                LLMEvent("usage", {"available": True, "total_tokens": 23}),
+                LLMEvent("completed", {"text": ""}),
             ],
         ]
     )

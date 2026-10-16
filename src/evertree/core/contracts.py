@@ -23,7 +23,7 @@ class ProgramContext(Protocol):
         """Run a child Program as a workflow and return its result and feedback."""
         ...
 
-    async def agent(
+    async def llm(
         self, payload: dict, *, tools, tool_handler, max_tool_calls: int = 40, stop_when=None
     ) -> Any:
         """Run a Program's LLM dialogue using only the declared tools.

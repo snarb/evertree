@@ -75,7 +75,7 @@ class SessionRef:
 
 
 @dataclass(frozen=True)
-class AgentRequest:
+class LLMRequest:
     """One invocation; the runtime supplies context and authorizes every capability."""
 
     prompt: str
@@ -107,7 +107,7 @@ class AgentRequest:
 
 
 @dataclass(frozen=True)
-class AgentEvent:
+class LLMEvent:
     """Normalized payloads above; provider_event alone contains SDK-specific data."""
 
     kind: Literal[
@@ -130,17 +130,17 @@ class ProviderError(RuntimeError):
     """Provider could not satisfy the request; never silently changes model."""
 
 
-class AgentProvider(Protocol):
+class LLMProvider(Protocol):
     name: str
 
     def run(
         self,
         request_id: str,
-        request: AgentRequest,
+        request: LLMRequest,
         *,
         tool_handler: ToolHandler | None = None,
         approval_handler: ApprovalHandler | None = None,
-    ) -> AsyncIterator[AgentEvent]:
+    ) -> AsyncIterator[LLMEvent]:
         """Stream normalized events for one invocation with caller-supplied tool and approval handlers."""
         ...
 
@@ -162,9 +162,9 @@ class ScriptedProvider:
 
     name = "scripted"
 
-    def __init__(self, scripts: list[list[AgentEvent]]):
+    def __init__(self, scripts: list[list[LLMEvent]]):
         self.scripts = list(scripts)
-        self.requests: list[AgentRequest] = []
+        self.requests: list[LLMRequest] = []
         self.cancelled: set[str] = set()
 
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
@@ -178,10 +178,10 @@ class ScriptedProvider:
             active["load_tool_set"] = loader_definition(tuple(available.values()))
         if not self.scripts:
             raise ProviderError("Offline provider has no remaining script")
-        yield AgentEvent("session", {"provider": self.name, "id": request_id})
+        yield LLMEvent("session", {"provider": self.name, "id": request_id})
         for index, event in enumerate(self.scripts.pop(0)):
             if request_id in self.cancelled:
-                yield AgentEvent("cancelled")
+                yield LLMEvent("cancelled")
                 return
             if event.kind == "tool_call":
                 if tool_handler is None and event.data["name"] != "load_tool_set":
@@ -195,7 +195,7 @@ class ScriptedProvider:
                     "name": event.data["name"],
                     "arguments": event.data.get("arguments", {}),
                 }
-                yield AgentEvent("tool_call", call)
+                yield LLMEvent("tool_call", call)
                 try:
                     if call["name"] == "load_tool_set":
                         selected = available[call["arguments"]["name"]]
@@ -211,7 +211,7 @@ class ScriptedProvider:
                         finally:
                             current_tool_call_id.reset(token)
                 except Exception as exc:
-                    yield AgentEvent(
+                    yield LLMEvent(
                         "tool_result",
                         {
                             "call_id": call["call_id"],
@@ -222,7 +222,7 @@ class ScriptedProvider:
                         },
                     )
                     raise
-                yield AgentEvent(
+                yield LLMEvent(
                     "tool_result",
                     {
                         "call_id": call["call_id"],
@@ -234,7 +234,7 @@ class ScriptedProvider:
                 )
             elif event.kind == "approval":
                 allowed = bool(approval_handler and await approval_handler(event.data))
-                yield AgentEvent("approval", {**event.data, "approved": allowed})
+                yield LLMEvent("approval", {**event.data, "approved": allowed})
             else:
                 yield event
 

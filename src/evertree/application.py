@@ -31,7 +31,7 @@ from .core.backup import BackupManager
 from .core.cache import prune
 from .core.environment import capture_runtime, require_committed_runtime
 from .core.programs.lifecycle import initialize_seed_repository, resolve_program_remote
-from .core.provider import AgentProvider
+from .core.provider import LLMProvider
 from .core.values import json_value
 
 
@@ -104,7 +104,7 @@ class EverTree(
         self,
         directory: str | Path,
         *,
-        provider: AgentProvider | None = None,
+        provider: LLMProvider | None = None,
         approval_handler=None,
         runtime_factory=Runtime,
         program_remote: str | None = None,

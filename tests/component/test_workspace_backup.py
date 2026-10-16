@@ -3,7 +3,7 @@ import json
 import pytest
 
 from evertree.core.backup import _extended
-from evertree.core.provider import AgentEvent, ScriptedProvider
+from evertree.core.provider import LLMEvent, ScriptedProvider
 
 
 class WorkspaceProvider(ScriptedProvider):
@@ -14,8 +14,8 @@ class WorkspaceProvider(ScriptedProvider):
             target = _extended(request.workspace / relative)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(contents, encoding="utf-8")
-            yield AgentEvent("file_change", {"path": str(target)})
-        yield AgentEvent("completed", {"text": "Workspace files written"})
+            yield LLMEvent("file_change", {"path": str(target)})
+        yield LLMEvent("completed", {"text": "Workspace files written"})
 
 
 def task_for(agent):

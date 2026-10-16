@@ -68,7 +68,7 @@ def write_action(world, refs, metadata, action, *, key="write", searched=True):
 
 
 def context(world, model, *, role="model", integration_context=None, operation_id="packet"):
-    async def agent(payload, *, tools, tool_handler, stop_when=None, max_tool_calls=40):
+    async def llm(payload, *, tools, tool_handler, stop_when=None, max_tool_calls=40):
         class Finished(BaseException):
             def __init__(self, result):
                 self.result = result
@@ -94,7 +94,7 @@ def context(world, model, *, role="model", integration_context=None, operation_i
 
     async def step(method, payload):
         authorize_operation(method, role)
-        if method == "agent.run":
+        if method == "llm.run":
             return {"parsed": await model(payload)}
         metadata = {
             "task_id": "task",
@@ -116,7 +116,7 @@ def context(world, model, *, role="model", integration_context=None, operation_i
         result = await run(context(world, model, role="model"), **arguments)
         return SimpleNamespace(**result)
 
-    return SimpleNamespace(step=step, call=call, agent=agent)
+    return SimpleNamespace(step=step, call=call, llm=llm)
 
 
 def populated_search_world(**kwargs):

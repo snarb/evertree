@@ -17,7 +17,7 @@ from typing import Any, Literal
 from evertree.core.sandbox.process import SandboxLimits, start_process
 
 from ..backup import _extended, _restore_io, safe_remove_tree
-from .agents import ProgramAgents
+from .llm import ProgramLLMInvocations
 from .repository import (
     ProgramExecutionError,
     extract_revision,
@@ -185,7 +185,7 @@ class Runtime:
                     "cancelled": False,
                     "run_dir": run_dir,
                     "source_dir": source_dir,
-                    "agents": ProgramAgents(self.gateway),
+                    "llm": ProgramLLMInvocations(self.gateway),
                 }
                 process = None
                 reader_task = stderr_task = None
@@ -239,7 +239,7 @@ class Runtime:
                         await asyncio.gather(reader_task, return_exceptions=True)
                     if stderr_task:
                         await asyncio.gather(stderr_task, return_exceptions=True)
-                    await self._active["agents"].close_all()
+                    await self._active["llm"].close_all()
                     self._active = None
                     if self._pause_requested:
                         self._paused.set()
@@ -360,6 +360,14 @@ class Runtime:
         )
         if not isinstance(method, str) or method.startswith("_"):
             raise PermissionError("Invalid gateway method")
+        if method == "llm.next":
+            # Each call carries the whole dialogue; trace only what is new.
+            history = trace_arguments.pop("history", None)
+            if isinstance(history, list):
+                trace_arguments["history_length"] = len(history)
+                trace_arguments["completed"] = history[-1] if history else None
+            if history:
+                trace_arguments.pop("request", None)
         metadata = {
             "task_id": active["task_id"],
             "run_id": run_id,
@@ -474,14 +482,14 @@ class Runtime:
                 "respond",
             ):
                 raise PermissionError("Live effects are unavailable in evaluation and simulation")
-            if method == "agent.run" and spec.role == "model":
+            if method == "llm.run" and spec.role == "model":
                 payload["mode"] = "model"
             payload.pop("_execution", None)
             payload["_runtime"] = metadata
-            if method == "agent.next":
-                result = await active["agents"].next(payload, metadata)
-            elif method == "agent.close":
-                result = await active["agents"].close(
+            if method == "llm.next":
+                result = await active["llm"].next(payload, metadata)
+            elif method == "llm.close":
+                result = await active["llm"].close(
                     payload["invocation_id"],
                     metadata,
                     history=payload.get("history"),
@@ -576,8 +584,8 @@ class Runtime:
         If no operation boundary arrives, defer the backup rather than copy a
         journal while core effects may be unrecorded.
         """
-        if self._active and self._active["agents"].running:
-            raise RuntimeError("Native agent invocation has not reached a durable idle boundary")
+        if self._active and self._active["llm"].running:
+            raise RuntimeError("LLM invocation has not reached a durable idle boundary")
         # Concurrent branches can receive responses before every sibling step
         # is journaled. Defer backup until the tree finishes or awaits input.
         if (

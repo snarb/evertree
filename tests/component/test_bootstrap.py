@@ -65,7 +65,7 @@ async def test_framing_keeps_task_specific_budget_and_uses_only_provider_gateway
     assert result["result"]["initial_step"] == framed()["initial_step"]
     assert len(context.calls) == 1
     method, payload = context.calls[0]
-    assert method == "agent.run"
+    assert method == "llm.run"
     assert payload["mode"] == "model"
     assert json.loads(payload["prompt"])["request"] == "Solve the request"
     assert payload["output_schema"]["required"]
@@ -201,4 +201,4 @@ async def test_compaction_preserves_exact_counts_and_only_proposes_retention():
     result = await compact(context, [{"id": 1}, {"id": 2}], {"total": 3, "positive": 2})
     assert result["result"]["observation_counts"] == {"total": 3, "positive": 2}
     assert result["result"]["source_event_ids"] == [1, 2]
-    assert [method for method, _ in context.calls] == ["agent.run"]
+    assert [method for method, _ in context.calls] == ["llm.run"]

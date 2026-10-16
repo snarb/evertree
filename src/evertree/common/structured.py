@@ -69,7 +69,7 @@ def validate(value: Any, schema: Mapping[str, Any], path: str = "$") -> None:
 async def ask(ctx, *, instructions: str, data: dict, schema: dict):
     """Request a schema-constrained, read-only model result through a durable Program step."""
     response = await ctx.step(
-        "agent.run",
+        "llm.run",
         {
             "prompt": json.dumps(data, ensure_ascii=False, allow_nan=False, indent=2),
             "instructions": instructions,

@@ -19,8 +19,8 @@ from evertree.core.cognition.steps import ConsciousStepResult, ConsciousStepSpec
 from evertree.core.cognition.tasks import TaskSpecification
 from evertree.core.graph.types import RelationInstance
 from evertree.core.memory.types import TraceOutputRef
-from evertree.core.provider import AgentRequest, ToolDefinition
-from evertree.core.runtime.agents import ProgramAgents, run_agent
+from evertree.core.provider import LLMRequest, ToolDefinition
+from evertree.core.runtime.llm import ProgramLLMInvocations, run_llm_dialogue
 from evertree.core.semantics.reading import fact_nodes
 from evertree.core.values import json_value
 from evertree.processes.semantic_processing.knowledge_integration._exec import run
@@ -41,7 +41,7 @@ async def _provider_result(provider, directory, payload, transcript, *, tool_han
     try:
         async for event in provider.run(
             request_id,
-            AgentRequest(
+            LLMRequest(
                 payload["prompt"],
                 directory,
                 instructions=payload["instructions"],
@@ -94,23 +94,23 @@ async def _native_context(
     metadata = {"run_id": ctx.run_id, "program": {"role": "exec"}}
 
     async def gateway(method, payload):
-        assert method == "agent.run"
+        assert method == "llm.run"
         request = {key: value for key, value in payload.items() if not key.startswith("_")}
         return await _provider_result(
             provider, directory, request, transcript, tool_handler=payload["_tool_handler"]
         )
 
-    agents = ProgramAgents(gateway)
+    invocations = ProgramLLMInvocations(gateway)
     business_step = ctx.step
 
     async def step(method, payload):
-        if method == "agent.next":
-            return await agents.next(payload, metadata)
-        if method == "agent.close":
+        if method == "llm.next":
+            return await invocations.next(payload, metadata)
+        if method == "llm.close":
             transcript.append(
                 {"invocation_id": payload["invocation_id"], "tool_history": payload["history"]}
             )
-            return await agents.close(
+            return await invocations.close(
                 payload["invocation_id"],
                 metadata,
                 history=payload["history"],
@@ -118,14 +118,14 @@ async def _native_context(
             )
         return await business_step(method, payload)
 
-    async def agent(payload, **options):
-        return await run_agent(ctx, payload, **options)
+    async def llm(payload, **options):
+        return await run_llm_dialogue(ctx, payload, **options)
 
-    ctx.step, ctx.agent = step, agent
+    ctx.step, ctx.llm = step, llm
     try:
         yield ctx
     finally:
-        await agents.close_all()
+        await invocations.close_all()
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case["id"])

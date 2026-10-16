@@ -20,12 +20,12 @@ async def run(ctx, stop=False, twice=False):
         result = await ctx.call("child", arguments)
         values.append(result.result)
         return {"value": result.result}
-    first = await ctx.agent({"prompt": "Calculate two numbers."}, tools=TOOLS,
+    first = await ctx.llm({"prompt": "Calculate two numbers."}, tools=TOOLS,
                             tool_handler=handle,
                             stop_when=(lambda name, result: True) if stop else None)
     second = None
     if twice:
-        second = await ctx.agent({"prompt": "Calculate another number."}, tools=TOOLS,
+        second = await ctx.llm({"prompt": "Calculate another number."}, tools=TOOLS,
                                  tool_handler=handle)
     return {"result": {"values": values, "first": first, "second": second}}
 """
@@ -59,7 +59,7 @@ async def test_native_tools_replay_local_state_and_child_workflow_after_interrup
         if method == "calculate":
             calculations.append(payload["value"])
             return payload["value"] * 2
-        assert method == "agent.run"
+        assert method == "llm.run"
         requests.append(payload)
         if len(requests) == 1:
             assert await payload["_tool_handler"]("calculate", {"value": 1}) == {"value": 2}
@@ -73,13 +73,18 @@ async def test_native_tools_replay_local_state_and_child_workflow_after_interrup
         assert await payload["_tool_handler"]("calculate", {"value": 2}) == {"value": 4}
         return {"text": "done"}
 
-    runtime = Runtime(tmp_path / "runtime", repository, gateway, process_factory=TestProcess)
+    traces = []
+
+    async def trace(event):
+        traces.append(event)
+
+    runtime = Runtime(tmp_path / "runtime", repository, gateway, trace, process_factory=TestProcess)
     try:
         first = asyncio.create_task(
             runtime.execute("task", parent, {}, run_id="resume-tools", timeout=30)
         )
         await asyncio.wait_for(interrupted.wait(), 30)
-        with pytest.raises(RuntimeError, match="Native agent invocation"):
+        with pytest.raises(RuntimeError, match="LLM invocation"):
             async with runtime.quiesce():
                 pytest.fail("An open provider can still update its trace and usage")
         await runtime.cancel("task", finalize=False)
@@ -93,6 +98,13 @@ async def test_native_tools_replay_local_state_and_child_workflow_after_interrup
         assert replay == result
         assert calculations == [1, 2]
         assert len(requests) == 2
+        resumed = [
+            item["arguments"]
+            for item in traces
+            if item.get("operator") == "llm.next" and item["arguments"]["history_length"]
+        ]
+        assert resumed and resumed[0]["completed"]["result"] == {"value": 2}
+        assert all("history" not in item and "request" not in item for item in resumed)
     finally:
         await runtime.close()
 
@@ -107,7 +119,7 @@ async def test_two_native_invocations_in_one_program_have_separate_sessions(tmp_
             return child
         if method == "calculate":
             return payload["value"]
-        assert method == "agent.run"
+        assert method == "llm.run"
         prompts.append(payload["prompt"])
         await payload["_tool_handler"]("calculate", {"value": len(prompts)})
         return {"text": str(len(prompts))}
@@ -132,7 +144,7 @@ async def test_finish_tool_drains_provider_and_keeps_durable_result(tmp_path):
             return child
         if method == "calculate":
             return payload["value"]
-        assert method == "agent.run"
+        assert method == "llm.run"
         try:
             assert await payload["_tool_handler"]("calculate", {"value": 7}) == {"value": 7}
             with pytest.raises(RuntimeError, match="has finished"):
@@ -149,7 +161,10 @@ async def test_finish_tool_drains_provider_and_keeps_durable_result(tmp_path):
         result = await runtime.execute("task", parent, {"stop": True}, timeout=30)
         assert result.result["first"] == {"tool": "calculate", "result": {"value": 7}}
         assert stopped.is_set()
-        closed = next(item for item in traces if item.get("operator") == "agent.close")
+        closed = next(item for item in traces if item.get("operator") == "llm.close")
         assert closed["arguments"]["history"][0]["result"] == {"value": 7}
+        steps = [item["arguments"] for item in traces if item.get("operator") == "llm.next"]
+        assert "request" in steps[0] and steps[0]["history_length"] == 0
+        assert all("history" not in item for item in steps)
     finally:
         await runtime.close()

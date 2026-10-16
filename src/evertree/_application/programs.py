@@ -16,7 +16,7 @@ from evertree.core.runtime.repository import _git
 from ..core.anchors import AnchorResolver, parse_anchors
 from ..core.programs.layout import process_directory, process_slug, validate_process_layout
 from ..core.programs.lifecycle import ProgramLifecycleRuntime, git
-from ..core.provider import AgentRequest, ToolDefinition
+from ..core.provider import LLMRequest, ToolDefinition
 from ..core.values import json_value
 
 
@@ -413,7 +413,7 @@ class ProgramsMixin:
                 profile = getattr(self.semantic_config, profile_name) if profile_name else None
                 return await self._invoke(
                     task_id,
-                    AgentRequest(
+                    LLMRequest(
                         payload["prompt"],
                         context.workspace,
                         model=profile.model if profile else None,

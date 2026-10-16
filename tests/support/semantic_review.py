@@ -5,7 +5,7 @@ import json
 from uuid import uuid4
 
 from evertree.core.codex.provider import CodexProvider
-from evertree.core.provider import AgentRequest
+from evertree.core.provider import LLMRequest
 from tests.support.large_graph import write_json
 
 
@@ -30,7 +30,7 @@ async def review_graph(directory, *, sources, nodes, criteria):
     try:
         async for event in provider.run(
             request_id,
-            AgentRequest(
+            LLMRequest(
                 json.dumps(payload, ensure_ascii=False),
                 directory,
                 instructions="""Evaluate each criterion against the saved graph and original sources.

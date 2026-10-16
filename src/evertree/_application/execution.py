@@ -9,7 +9,7 @@ import time
 from contextlib import contextmanager
 from uuid import uuid4
 
-from ..core.provider import AgentRequest, current_tool_call_id
+from ..core.provider import LLMRequest, current_tool_call_id
 
 
 class TaskExecutionMixin:
@@ -59,7 +59,7 @@ class TaskExecutionMixin:
     async def _invoke(
         self,
         task_id,
-        request: AgentRequest,
+        request: LLMRequest,
         *,
         run_ref=None,
         conversation=False,

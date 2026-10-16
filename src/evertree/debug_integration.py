@@ -9,14 +9,15 @@ invocation limit; automated callers can pass `DebugSession(output_dir, timeout_s
 Network operations keep their own timeouts. Program and Core run in one process, so ordinary
 breakpoints work; application scheduling, worker admission and durable restart are out of scope.
 
-Each run writes graph.json, trace.json, result.json, calls.json and per-request model-*.md
-files under tmp/debug-integration/<run>/, also on failure.
+Each run writes graph.json, trace.json, result.json, calls.json (Core operations and native
+tool calls in order), tools.json (tool calls only) and per-request model-*.md files under tmp/debug-integration/<run>/, also on failure.
 
 Useful breakpoints:
 - DebugSession.record_experience: source references and the analytical Note.
 - knowledge_integration/_exec.py:handle_tool: native tool dispatch, search, schema reads, repair.
 - core/semantics/actions.py: shared tool definitions, validation and operation construction.
 - common/integration_actions.py: search/read assistance and graph tool dispatch.
+- DebugSession.llm: tool dispatch from the provider callback; handlers share its stack.
 - DebugSession.model: actual Codex request, declared tools and provider events.
 - SemanticService.write: operation validation, idempotence and atomic persistence.
 - CoreOperations.apply_delta, then GraphStore.apply: graph mutation and provenance.
@@ -34,6 +35,7 @@ from uuid import uuid4
 from dotenv import dotenv_values
 
 from evertree.common.logging_setup import configure_logging
+from evertree.common.structured import validate
 from evertree.core.attribution import AttributionRuntime
 from evertree.core.beliefs import BeliefStore
 from evertree.core.codex.provider import CodexProvider
@@ -43,8 +45,7 @@ from evertree.core.graph.store import GraphStore
 from evertree.core.learning.state import LearningStore
 from evertree.core.memory.store import TraceStore
 from evertree.core.operations import CoreOperations, authorize_operation
-from evertree.core.provider import AgentRequest, ToolDefinition
-from evertree.core.runtime.agents import ProgramAgents, run_agent
+from evertree.core.provider import LLMRequest, ToolDefinition
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.index import RedisSearchIndex
 from evertree.core.semantics.service import SemanticService
@@ -134,7 +135,6 @@ class DebugSession:
             },
         }
         self.run_id = self.metadata["run_id"]
-        self.agents = ProgramAgents(self._model_gateway)
         self.provider = CodexProvider(state_dir=output_dir / "codex")
         self.calls = []
         self.experience_refs = []
@@ -154,17 +154,57 @@ class DebugSession:
         )
         self.experience_refs.append(note_ref)
 
-    async def agent(self, payload, **kwargs):
-        """Run the Program tool dialogue against this debug session's in-process gateway."""
-        return await run_agent(self, payload, **kwargs)
+    async def llm(self, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
+        """Run the Program's tool dialogue directly on the provider.
 
-    async def _model_gateway(self, method, payload):
-        if method != "agent.run":
-            raise ValueError("Unexpected native model gateway operation")
-        payload = dict(payload)
-        handler = payload.pop("_tool_handler")
-        payload.pop("_runtime")
-        return await self.step(method, payload, tool_handler=handler)
+        Unlike the runtime's durable bridge, handlers run inside the provider callback,
+        so a breakpoint in a handler shows the whole path from the model request.
+        """
+        if stop_when is not None:
+            raise ValueError("The debug harness does not support stop_when")
+        definitions = {tool["name"]: tool for tool in json_value(tools)}
+        used = 0
+        failure = None
+
+        async def call_tool(name, arguments):
+            nonlocal used, failure
+            if name not in definitions:
+                raise PermissionError("Tool was not declared")
+            used += 1
+            if used > max_tool_calls:
+                raise RuntimeError("LLM dialogue exhausted its tool-call limit")
+            call = {"method": f"tool:{name}", "payload": json_value(arguments)}
+            self.calls.append(call)
+            print(f"  ⚙ {name}", flush=True)
+            try:
+                validate(arguments, definitions[name]["input_schema"])
+                call["result"] = json_value(await tool_handler(name, arguments))
+            except Exception as error:
+                call["error"] = f"{type(error).__name__}: {error}"
+                if not isinstance(error, (ValueError, TypeError, PermissionError)):
+                    failure = error
+                raise
+            return call["result"]
+
+        result = await self.model(
+            {**payload, "tools": list(definitions.values())}, tool_handler=call_tool
+        )
+        if failure is not None:
+            raise failure
+        return result
+
+    def tool_calls(self):
+        """Native tool calls in order, with arguments, results and errors."""
+        return [
+            {
+                "name": call["method"].removeprefix("tool:"),
+                "arguments": call["payload"],
+                "result": call.get("result"),
+                "error": call.get("error"),
+            }
+            for call in self.calls
+            if call["method"].startswith("tool:")
+        ]
 
     async def model(self, payload, *, tool_handler=None):
         """Invoke the real model and save readable requests and provider transcripts for debugging."""
@@ -183,7 +223,7 @@ class DebugSession:
         try:
             async for event in self.provider.run(
                 request_id,
-                AgentRequest(
+                LLMRequest(
                     payload["prompt"],
                     self.output_dir,
                     instructions=payload["instructions"],
@@ -213,7 +253,7 @@ class DebugSession:
                 json.dumps(events, ensure_ascii=False, indent=2), encoding="utf-8"
             )
 
-    async def step(self, method, payload, *, role="exec", tool_handler=None):
+    async def step(self, method, payload, *, role="exec"):
         """Execute and log an authorized Core operation inside the isolated debug session."""
         authorize_operation(method, role)
         call = {"method": method, "payload": json_value(payload)}
@@ -225,17 +265,8 @@ class DebugSession:
             "knowledge_integration_authorized": role == "exec",
         }
         try:
-            if method == "agent.next":
-                result = await self.agents.next(payload, metadata)
-            elif method == "agent.close":
-                result = await self.agents.close(
-                    payload["invocation_id"],
-                    metadata,
-                    history=payload.get("history"),
-                    drain=payload.get("drain", False),
-                )
-            elif method == "agent.run":
-                result = await self.model(payload, tool_handler=tool_handler)
+            if method == "llm.run":
+                result = await self.model(payload)
             elif method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
                 result = await self.service.execute(method, payload, metadata)
             else:
@@ -278,13 +309,13 @@ class DebugSession:
             ]
             return created
         finally:
-            await self.agents.close_all()
             try:
                 for name, value in {
                     "graph": self.graph.snapshot(),
                     "trace": self.memory.snapshot(),
                     "result": self.result,
                     "calls": self.calls,
+                    "tools": self.tool_calls(),
                 }.items():
                     (self.output_dir / f"{name}.json").write_text(
                         json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8"

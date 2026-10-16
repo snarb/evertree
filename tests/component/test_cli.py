@@ -9,7 +9,7 @@ import pytest
 from evertree import cli
 from evertree.application import EverTree, EverTreeEvent
 from evertree.core.cognition.tasks import TaskStore
-from evertree.core.provider import AgentEvent, AgentRequest, ScriptedProvider
+from evertree.core.provider import LLMEvent, LLMRequest, ScriptedProvider
 
 
 class TransportAgent:
@@ -179,6 +179,6 @@ def test_cli_exposes_inspection_commands_without_model_calls():
 
 def test_cli_uses_application_and_provider_definitions():
     assert EverTree.__module__ == "evertree.application"
-    assert AgentRequest.__module__ == "evertree.core.provider"
-    assert AgentEvent.__module__ == "evertree.core.provider"
+    assert LLMRequest.__module__ == "evertree.core.provider"
+    assert LLMEvent.__module__ == "evertree.core.provider"
     assert ScriptedProvider.name == "scripted"

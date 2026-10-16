@@ -56,7 +56,7 @@ async def test_reflection_proposal_boundary_does_not_establish_or_rewrite_belief
     class ModelContext:
         async def step(self, method, payload):
             calls.append((method, payload))
-            assert method == "agent.run"
+            assert method == "llm.run"
             assert json.loads(payload["prompt"])["source_ids"] == source_ids
             return {"parsed": proposal}
 

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from evertree.core.provider import AgentEvent, AgentRequest, ProviderError, current_tool_call_id
+from evertree.core.provider import LLMEvent, LLMRequest, ProviderError, current_tool_call_id
 from evertree.core.sandbox.process import sandbox_backend
 from evertree.core.tokens import count_tokens, current_read_context, tool_text
 
@@ -86,7 +86,7 @@ class CodexProvider:
         self._active: dict[str, _Invocation] = {}
         self._histories: dict[str, list] = {}
 
-    def _client(self, *, request: AgentRequest | None = None, handler=None, model_catalog=None):
+    def _client(self, *, request: LLMRequest | None = None, handler=None, model_catalog=None):
         return create_client(
             codex_bin=self.codex_bin,
             client_factory=self._client_factory,
@@ -181,7 +181,7 @@ class CodexProvider:
         if request.mode == "model" and any(not t.read_only for t in request.tools):
             raise ProviderError("Model calls cannot expose action tools")
         loop = asyncio.get_running_loop()
-        queue: asyncio.Queue[AgentEvent | None] = asyncio.Queue()
+        queue: asyncio.Queue[LLMEvent | None] = asyncio.Queue()
         model_name, effort = request.model or MODEL, request.effort or EFFORT
         available_sets = {s.name: s.for_mode(request.mode) for s in request.tool_sets}
         active_tools = {tool.name: tool for tool in request.tools}
@@ -198,7 +198,7 @@ class CodexProvider:
         async def dispatch_server_request(method, params):
             nonlocal pending_load
             params = params or {}
-            await queue.put(AgentEvent("provider_event", {"method": method, "payload": params}))
+            await queue.put(LLMEvent("provider_event", {"method": method, "payload": params}))
             if method == "item/tool/call":
                 name = params.get("tool", "")
                 if params.get("namespace"):
@@ -219,7 +219,7 @@ class CodexProvider:
                         ],
                     }
                 await queue.put(
-                    AgentEvent(
+                    LLMEvent(
                         "tool_call",
                         {"name": name, "arguments": arguments, "call_id": call_id},
                     )
@@ -264,7 +264,7 @@ class CodexProvider:
                             - 32,
                         )
                     await queue.put(
-                        AgentEvent(
+                        LLMEvent(
                             "tool_result",
                             {
                                 "name": name,
@@ -278,7 +278,7 @@ class CodexProvider:
                     return {"success": True, "contentItems": [{"type": "inputText", "text": text}]}
                 except asyncio.CancelledError:
                     await queue.put(
-                        AgentEvent(
+                        LLMEvent(
                             "tool_result",
                             {
                                 "name": name,
@@ -292,7 +292,7 @@ class CodexProvider:
                     raise
                 except Exception as exc:  # noqa: BLE001 -- return tool failures to the agent protocol
                     await queue.put(
-                        AgentEvent(
+                        LLMEvent(
                             "tool_result",
                             {
                                 "name": name,
@@ -314,7 +314,7 @@ class CodexProvider:
                 # Native tools already have their full authorized workspace.
                 # Approval must never turn a candidate command into a host command.
                 await queue.put(
-                    AgentEvent("approval", {"method": method, **params, "approved": False})
+                    LLMEvent("approval", {"method": method, **params, "approved": False})
                 )
                 return {"decision": "decline"}
             # Unknown SDK requests do not inherit the SDK's permissive default.
@@ -359,7 +359,7 @@ class CodexProvider:
             async def report_missing_usage():
                 nonlocal usage_seen
                 if invocation.turn_id and not usage_seen:
-                    await queue.put(AgentEvent("usage", _usage({}, None)))
+                    await queue.put(LLMEvent("usage", _usage({}, None)))
                     usage_seen = True
 
             deadline = asyncio.timeout(request.timeout_seconds)
@@ -473,7 +473,7 @@ class CodexProvider:
                     if started.get("model") != model_name:
                         raise ProviderError("Codex did not select the requested model")
                     await queue.put(
-                        AgentEvent(
+                        LLMEvent(
                             "session",
                             {
                                 "provider": self.name,
@@ -534,13 +534,11 @@ class CodexProvider:
                             data = data["params"]
                         method = event.method
                         await queue.put(
-                            AgentEvent("provider_event", {"method": method, "payload": data})
+                            LLMEvent("provider_event", {"method": method, "payload": data})
                         )
                         if method == "item/agentMessage/delta":
                             await queue.put(
-                                AgentEvent(
-                                    "message", {"text": data.get("delta", ""), "delta": True}
-                                )
+                                LLMEvent("message", {"text": data.get("delta", ""), "delta": True})
                             )
                         elif method == "item/started":
                             item = data.get("item", {})
@@ -581,7 +579,7 @@ class CodexProvider:
                             if not usage["available"]:
                                 baseline = None
                             usage_seen = True
-                            await queue.put(AgentEvent("usage", usage))
+                            await queue.put(LLMEvent("usage", usage))
                         elif method == "model/rerouted" and data.get("toModel") != model_name:
                             raise ProviderError("Codex rerouted the explicitly requested model")
                         elif method == "turn/completed":
@@ -611,7 +609,7 @@ class CodexProvider:
                                     )
                                 invocation.thread_id = resumed["thread"]["id"]
                                 await queue.put(
-                                    AgentEvent(
+                                    LLMEvent(
                                         "session",
                                         {
                                             "provider": self.name,
@@ -665,16 +663,16 @@ class CodexProvider:
                                     validate(parsed, request.output_schema)
                                 self._histories[invocation.thread_id] = list(history)
                                 await queue.put(
-                                    AgentEvent("completed", {"text": final_text, "parsed": parsed})
+                                    LLMEvent("completed", {"text": final_text, "parsed": parsed})
                                 )
                             elif status == "interrupted":
-                                await queue.put(AgentEvent("cancelled"))
+                                await queue.put(LLMEvent("cancelled"))
                             else:
                                 raise ProviderError(str(data["turn"].get("error") or status))
                             break
             except asyncio.CancelledError:
                 await report_missing_usage()
-                await queue.put(AgentEvent("cancelled"))
+                await queue.put(LLMEvent("cancelled"))
                 raise
             except Exception as exc:  # noqa: BLE001 -- normalize SDK and transport failures
                 await report_missing_usage()
@@ -686,9 +684,7 @@ class CodexProvider:
                         if deadline.expired()
                         else message or "SDK operation timed out."
                     )
-                await queue.put(
-                    AgentEvent("error", {"message": message, "type": type(exc).__name__})
-                )
+                await queue.put(LLMEvent("error", {"message": message, "type": type(exc).__name__}))
             finally:
                 callbacks = tuple(invocation.callbacks)
                 for callback in callbacks:

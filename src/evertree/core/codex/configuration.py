@@ -11,7 +11,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from evertree.core.provider import AgentRequest, ProviderError
+from evertree.core.provider import LLMRequest, ProviderError
 
 from .protocol import _request
 
@@ -165,7 +165,7 @@ _COMPUTATION_CAPABILITIES = {
 }
 
 
-def _profile(request: AgentRequest | None) -> tuple[str, dict[str, Any]]:
+def _profile(request: LLMRequest | None) -> tuple[str, dict[str, Any]]:
     profile = "evertree_" + uuid.uuid4().hex
     filesystem = {":root": "deny", ":minimal": "read"}
     if request is not None:
@@ -223,7 +223,7 @@ def create_client(
     *,
     codex_bin,
     client_factory,
-    request: AgentRequest | None = None,
+    request: LLMRequest | None = None,
     handler=None,
     model_catalog=None,
 ):

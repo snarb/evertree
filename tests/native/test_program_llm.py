@@ -9,7 +9,7 @@ from tests.support.runtime import commit_programs
 
 
 @pytest.mark.skipif(os.name != "nt" and sys.platform != "darwin", reason="Native workers")
-async def test_native_worker_can_execute_scoped_agent_tools(tmp_path):
+async def test_native_worker_can_execute_scoped_llm_tools(tmp_path):
     """Verify the transport helper is available inside the restricted Python distribution."""
     repository = tmp_path / "programs"
     revision = commit_programs(
@@ -21,7 +21,7 @@ async def run(ctx):
         from evertree.core.tokens import current_read_context
         assert current_read_context.get()["context_window"] == 1000
         return await ctx.step("echo", arguments)
-    result = await ctx.agent({"prompt": "Echo a value."}, tools=[{
+    result = await ctx.llm({"prompt": "Echo a value."}, tools=[{
         "name": "echo", "description": "Echo.", "read_only": True,
         "input_schema": {"type": "object", "properties": {"value": {"type": "integer"}},
                          "required": ["value"], "additionalProperties": False}
@@ -34,7 +34,7 @@ async def run(ctx):
     async def gateway(method, payload):
         if method == "echo":
             return payload["value"]
-        assert method == "agent.run"
+        assert method == "llm.run"
         token = current_read_context.set({"model": "gpt-5", "context_window": 1000})
         try:
             value = await payload["_tool_handler"]("echo", {"value": 7})

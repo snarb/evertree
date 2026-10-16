@@ -21,7 +21,7 @@ from evertree.core.runtime.controller import Runtime
 
 from .application import EverTree
 from .core.datasets import EvaluationCase
-from .core.provider import AgentEvent, AgentRequest, ProviderError
+from .core.provider import LLMEvent, LLMRequest, ProviderError
 
 
 class DemoProvider:
@@ -35,7 +35,7 @@ class DemoProvider:
         self.stage, self.program_id, self.git_path = stage, program_id, git_path
         self.candidate = candidate
         self.calls: list[dict[str, Any]] = []
-        self.requests: list[AgentRequest] = []
+        self.requests: list[LLMRequest] = []
         self.cancelled: set[str] = set()
         self.last_result: list[int] | None = None
         self.observed_incident: list[int] | None = None
@@ -43,9 +43,9 @@ class DemoProvider:
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
         """Drive the offline skill-development scenario with deterministic model events and real tool callbacks."""
         self.requests.append(request)
-        yield AgentEvent("session", {"provider": self.name, "id": request_id})
+        yield LLMEvent("session", {"provider": self.name, "id": request_id})
         if request_id in self.cancelled:
-            yield AgentEvent("cancelled")
+            yield LLMEvent("cancelled")
             return
         if request.native_coding:
             if (
@@ -84,8 +84,8 @@ class DemoProvider:
                 "                self.assertEqual(program.run(values)['result'], expected)\n",
                 encoding="utf-8",
             )
-            yield AgentEvent("file_change", {"path": str(destination), "kind": "candidate"})
-            yield AgentEvent(
+            yield LLMEvent("file_change", {"path": str(destination), "kind": "candidate"})
+            yield LLMEvent(
                 "completed",
                 {
                     "text": "Implemented candidate; protected evaluation is still required.",
@@ -147,16 +147,16 @@ class DemoProvider:
 
             if self.stage != "reuse":
                 arguments = {"name": "program_development_tools"}
-                yield AgentEvent("tool_call", {"name": "load_tool_set", "arguments": arguments})
+                yield LLMEvent("tool_call", {"name": "load_tool_set", "arguments": arguments})
                 output = await call("load_tool_set", arguments)
-                yield AgentEvent("tool_result", {"name": "load_tool_set", "result": output})
+                yield LLMEvent("tool_result", {"name": "load_tool_set", "result": output})
 
             if self.stage == "improvement":
                 arguments = {"program": self.program_id, "arguments": {"values": [3, 1, 3]}}
-                yield AgentEvent("tool_call", {"name": "run_program", "arguments": arguments})
+                yield LLMEvent("tool_call", {"name": "run_program", "arguments": arguments})
                 incident = await call("run_program", arguments)
                 self.observed_incident = incident["result"]
-                yield AgentEvent("tool_result", {"name": "run_program", "result": incident})
+                yield LLMEvent("tool_result", {"name": "run_program", "result": incident})
                 if self.observed_incident != [1, 3]:
                     raise ProviderError(
                         "The demonstration did not reproduce the expected domain-expansion incident"
@@ -166,9 +166,9 @@ class DemoProvider:
                     "claim": "Removing the set conversion preserves repeated observations without changing order semantics",
                     "candidate_name": "preserve duplicates",
                 }
-                yield AgentEvent("tool_call", {"name": "create_candidate", "arguments": arguments})
+                yield LLMEvent("tool_call", {"name": "create_candidate", "arguments": arguments})
                 self.candidate = await call("create_candidate", arguments)
-                yield AgentEvent(
+                yield LLMEvent(
                     "tool_result", {"name": "create_candidate", "result": self.candidate}
                 )
             if self.stage != "reuse":
@@ -197,17 +197,17 @@ class DemoProvider:
                         },
                     ),
                 ):
-                    yield AgentEvent("tool_call", {"name": name, "arguments": arguments})
+                    yield LLMEvent("tool_call", {"name": name, "arguments": arguments})
                     output = await call(name, arguments)
-                    yield AgentEvent("tool_result", {"name": name, "result": output})
+                    yield LLMEvent("tool_result", {"name": name, "result": output})
                     if name == "evaluate_candidate" and output.get("status") != "evaluated":
                         raise ProviderError("Candidate evaluation remained unresolved")
             values = [9, 2, 5] if self.stage == "initial" else [3, 1, 3]
             arguments = {"program": self.program_id, "arguments": {"values": values}}
-            yield AgentEvent("tool_call", {"name": "run_program", "arguments": arguments})
+            yield LLMEvent("tool_call", {"name": "run_program", "arguments": arguments})
             result = await call("run_program", arguments)
             self.last_result = result["result"]
-            yield AgentEvent("tool_result", {"name": "run_program", "result": result})
+            yield LLMEvent("tool_result", {"name": "run_program", "result": result})
             if self.last_result != sorted(values):
                 raise ProviderError("Actual execution did not satisfy the demonstration objective")
             payload = {
@@ -223,7 +223,7 @@ class DemoProvider:
                 "user_message": json.dumps(self.last_result),
                 "progress": "The accepted Program was executed and its result checked",
             }
-        yield AgentEvent("completed", {"text": json.dumps(payload), "parsed": payload})
+        yield LLMEvent("completed", {"text": json.dumps(payload), "parsed": payload})
 
     async def cancel(self, request_id):
         """Mark a demo request as cancelled before further scripted events are emitted."""

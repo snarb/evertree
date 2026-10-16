@@ -12,7 +12,7 @@ from ..tokens import current_read_context
 from ..values import json_value
 
 
-async def run_agent(ctx, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
+async def run_llm_dialogue(ctx, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
     """Run a Program's LLM dialogue with its declared tools through durable exchanges.
 
     Tool handlers execute in workflow code and run again during recovery to rebuild
@@ -21,8 +21,8 @@ async def run_agent(ctx, payload, *, tools, tool_handler, max_tool_calls=40, sto
     """
     if type(max_tool_calls) is not int or not 1 <= max_tool_calls <= 1000:
         raise ValueError("max_tool_calls must be between 1 and 1000")
-    ctx._agent_sequence = getattr(ctx, "_agent_sequence", 0) + 1
-    identity = f"{ctx.run_id}:agent:{ctx._agent_sequence}"
+    ctx._llm_sequence = getattr(ctx, "_llm_sequence", 0) + 1
+    identity = f"{ctx.run_id}:llm:{ctx._llm_sequence}"
     request = {**payload, "tools": json_value(tools)}
     history = []
     failed = False
@@ -30,7 +30,7 @@ async def run_agent(ctx, payload, *, tools, tool_handler, max_tool_calls=40, sto
     try:
         while True:
             event = await ctx.step(
-                "agent.next",
+                "llm.next",
                 {
                     "invocation_id": identity,
                     "request": request,
@@ -41,9 +41,9 @@ async def run_agent(ctx, payload, *, tools, tool_handler, max_tool_calls=40, sto
             if event["kind"] == "completed":
                 return event["result"]
             if event["kind"] != "tool_call":
-                raise ValueError("Invalid native agent event")
+                raise ValueError("Invalid LLM dialogue event")
             if len(history) >= max_tool_calls:
-                raise RuntimeError("Agent exhausted its tool-call limit")
+                raise RuntimeError("LLM dialogue exhausted its tool-call limit")
             call = event["call"]
             context_token = current_read_context.set(event.get("read_context"))
             try:
@@ -63,7 +63,7 @@ async def run_agent(ctx, payload, *, tools, tool_handler, max_tool_calls=40, sto
     finally:
         try:
             await ctx.step(
-                "agent.close", {"invocation_id": identity, "history": history, "drain": drain}
+                "llm.close", {"invocation_id": identity, "history": history, "drain": drain}
             )
         except BaseException:
             if not failed:
@@ -86,7 +86,7 @@ class _Invocation:
     error: str | None = None
 
 
-class ProgramAgents:
+class ProgramLLMInvocations:
     """Own transient provider invocations; DBOS owns their completed exchanges."""
 
     def __init__(self, gateway):
@@ -101,13 +101,13 @@ class ProgramAgents:
     @staticmethod
     def _key(identity, metadata):
         if not isinstance(identity, str) or not identity or len(identity) > 256:
-            raise ValueError("Invalid agent invocation identity")
+            raise ValueError("Invalid LLM invocation identity")
         return metadata["run_id"], identity
 
     @staticmethod
     def _history(history):
         if not isinstance(history, list):
-            raise TypeError("Agent history must be a list")
+            raise TypeError("LLM history must be a list")
         for item in history:
             if (
                 not isinstance(item, dict)
@@ -149,12 +149,12 @@ class ProgramAgents:
         if not isinstance(request, dict) or any(key.startswith("_") for key in request):
             raise ValueError("Invalid Program model request")
         if not isinstance(request.get("prompt"), str):
-            raise TypeError("Agent prompt must be a string")
+            raise TypeError("LLM prompt must be a string")
         if metadata["program"]["role"] == "model":
             request["mode"] = "model"
         mode = request.get("mode", "model")
         if mode not in {"model", "exec"} or request.get("native_coding"):
-            raise PermissionError("Program agents only expose their declared tools")
+            raise PermissionError("Program LLM calls only expose their declared tools")
         definitions = [ToolDefinition(**item) for item in request.get("tools", [])]
         if any(
             not isinstance(item.name, str)
@@ -163,15 +163,15 @@ class ProgramAgents:
             or type(item.read_only) is not bool
             for item in definitions
         ):
-            raise ValueError("Invalid agent tool definition")
+            raise ValueError("Invalid LLM tool definition")
         names = {item.name for item in definitions}
         if len(names) != len(definitions):
-            raise ValueError("Agent tool names must be unique")
+            raise ValueError("LLM tool names must be unique")
         if mode == "model" and any(not item.read_only for item in definitions):
             raise PermissionError("Model calls cannot expose action tools")
         limit = payload.get("max_tool_calls", 40)
         if type(limit) is not int or not 1 <= limit <= 1000 or len(history) > limit:
-            raise ValueError("Invalid agent tool-call limit")
+            raise ValueError("Invalid LLM tool-call limit")
         invocation = self._invocations.get(key)
         if invocation is None:
             invocation = _Invocation(request, dict(metadata), limit, history, calls=len(history))
@@ -180,9 +180,9 @@ class ProgramAgents:
                 self._produce(invocation, {item.name: item for item in definitions})
             )
         elif request != invocation.request or limit != invocation.limit:
-            raise ValueError("An active agent invocation cannot change its request")
+            raise ValueError("An active LLM invocation cannot change its request")
         if invocation.closing:
-            raise RuntimeError("Agent invocation is closing")
+            raise RuntimeError("LLM invocation is closing")
         async with invocation.lock:
             self._acknowledge(invocation, history)
             if invocation.delivered is None:
@@ -198,12 +198,12 @@ class ProgramAgents:
 
         async def handle_tool(name, arguments):
             if invocation.closing:
-                raise RuntimeError("Agent invocation has finished; end your response now")
+                raise RuntimeError("LLM invocation has finished; end your response now")
             if invocation.calls >= invocation.limit:
                 await invocation.queue.put(
-                    {"kind": "error", "error": "Agent exhausted its tool-call limit"}
+                    {"kind": "error", "error": "LLM dialogue exhausted its tool-call limit"}
                 )
-                raise RuntimeError("Agent exhausted its tool-call limit")
+                raise RuntimeError("LLM dialogue exhausted its tool-call limit")
             invocation.calls += 1
             if name not in definitions:
                 raise PermissionError("Tool was not declared")
@@ -238,7 +238,7 @@ class ProgramAgents:
             )
         try:
             result = await self.gateway(
-                "agent.run",
+                "llm.run",
                 {
                     **request,
                     "_runtime": invocation.metadata,
@@ -272,7 +272,7 @@ class ProgramAgents:
                         future.set_result(
                             {
                                 "result": None,
-                                "error": "Agent invocation has finished; end your response now",
+                                "error": "LLM invocation has finished; end your response now",
                             }
                         )
                 invocation.pending.clear()

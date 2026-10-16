@@ -7,8 +7,8 @@ import pytest
 
 from evertree.core.codex.provider import CodexProvider
 from evertree.core.provider import (
-    AgentEvent,
-    AgentRequest,
+    LLMEvent,
+    LLMRequest,
     ProviderError,
     ScriptedProvider,
     ToolDefinition,
@@ -171,7 +171,7 @@ async def test_tool_read_context_uses_latest_window_not_cumulative_usage(tmp_pat
         return {"ok": True}
 
     provider = CodexProvider(client_factory=ContextClient)
-    request = AgentRequest(
+    request = LLMRequest(
         "Read", tmp_path, tools=(ToolDefinition("read", "Read", {}, read_only=True),)
     )
     events = [event async for event in provider.run("budget", request, tool_handler=handle)]
@@ -210,7 +210,7 @@ async def test_sdk_model_effort_and_no_permissive_default(tmp_path):
     events = [
         event
         async for event in provider.run(
-            "one", AgentRequest("Return ok", tmp_path, output_schema={"type": "object"})
+            "one", LLMRequest("Return ok", tmp_path, output_schema={"type": "object"})
         )
     ]
     assert events[-1].kind == "completed"
@@ -246,14 +246,14 @@ async def test_model_cannot_expose_tools(tmp_path):
         [
             event
             async for event in provider.run(
-                "one", AgentRequest("x", tmp_path, tools=(ToolDefinition("write", "write", {}),))
+                "one", LLMRequest("x", tmp_path, tools=(ToolDefinition("write", "write", {}),))
             )
         ]
 
 
 @pytest.mark.asyncio
 async def test_scripted_tool_requires_declaration(tmp_path):
-    provider = ScriptedProvider([[AgentEvent("tool_call", {"name": "unlisted"})]])
+    provider = ScriptedProvider([[LLMEvent("tool_call", {"name": "unlisted"})]])
 
     async def handle(name, arguments):
         raise AssertionError("Must not execute")
@@ -262,7 +262,7 @@ async def test_scripted_tool_requires_declaration(tmp_path):
         [
             event
             async for event in provider.run(
-                "one", AgentRequest("x", tmp_path, mode="exec"), tool_handler=handle
+                "one", LLMRequest("x", tmp_path, mode="exec"), tool_handler=handle
             )
         ]
 
@@ -284,7 +284,7 @@ async def test_unknown_approval_is_denied(tmp_path):
         return c
 
     provider = CodexProvider(client_factory=factory)
-    [event async for event in provider.run("one", AgentRequest("x", tmp_path, mode="exec"))]
+    [event async for event in provider.run("one", LLMRequest("x", tmp_path, mode="exec"))]
     assert clients[0].decision == {"decision": "decline"}
 
 
@@ -314,7 +314,7 @@ async def test_dynamic_tool_request_dispatch(tmp_path):
         assert 0 < context["remaining_tokens"] < context["context_window"]
         return {"found": arguments["id"]}
 
-    request = AgentRequest(
+    request = LLMRequest(
         "x", tmp_path, mode="exec", tools=(ToolDefinition("lookup", "lookup", {"type": "object"}),)
     )
     events = [
@@ -352,7 +352,7 @@ async def test_native_coding_has_scoped_profile_and_never_escalates(tmp_path):
         event
         async for event in CodexProvider(client_factory=factory, executor_factory=FakeExecutor).run(
             "one",
-            AgentRequest("code", tmp_path, mode="exec", native_coding=True),
+            LLMRequest("code", tmp_path, mode="exec", native_coding=True),
             approval_handler=approve,
         )
     ]
@@ -389,7 +389,7 @@ async def test_missing_permission_profile_fails_before_turn(tmp_path):
     events = [
         event
         async for event in CodexProvider(client_factory=UnsafeClient).run(
-            "one", AgentRequest("x", tmp_path)
+            "one", LLMRequest("x", tmp_path)
         )
     ]
     assert events[-1].kind == "error"
@@ -398,7 +398,7 @@ async def test_missing_permission_profile_fails_before_turn(tmp_path):
 
 def test_model_cannot_enable_native_coding(tmp_path):
     with pytest.raises(ValueError, match="exec"):
-        AgentRequest("x", tmp_path, native_coding=True)
+        LLMRequest("x", tmp_path, native_coding=True)
 
 
 @pytest.mark.asyncio
@@ -415,7 +415,7 @@ async def test_native_coding_requires_isolated_executor(tmp_path):
         event
         async for event in CodexProvider(
             client_factory=UnreadyClient, executor_factory=UnreadyExecutor
-        ).run("one", AgentRequest("x", tmp_path, mode="exec", native_coding=True))
+        ).run("one", LLMRequest("x", tmp_path, mode="exec", native_coding=True))
     ]
     assert events[-1].kind == "error"
     assert "Isolated executor unavailable" in events[-1].data["message"]
@@ -449,7 +449,7 @@ async def test_cancel_waits_for_sdk_callback_to_stop(tmp_path):
             event
             async for event in provider.run(
                 "one",
-                AgentRequest(
+                LLMRequest(
                     "wait", tmp_path, mode="exec", tools=(ToolDefinition("wait", "wait", {}),)
                 ),
                 tool_handler=tool_handler,
@@ -490,13 +490,13 @@ async def test_native_start_and_resume_bind_only_current_executor(tmp_path, resu
 
     provider = CodexProvider(client_factory=client_factory, executor_factory=executor_factory)
     if resume:
-        prior = [e async for e in provider.run("prior", AgentRequest("prior context", tmp_path))]
+        prior = [e async for e in provider.run("prior", LLMRequest("prior context", tmp_path))]
         assert prior[-1].kind == "completed"
     events = [
         event
         async for event in provider.run(
             "one",
-            AgentRequest(
+            LLMRequest(
                 "code",
                 tmp_path,
                 mode="exec",
@@ -551,7 +551,7 @@ async def test_executor_failure_never_retries_with_local_environment(tmp_path, f
         event
         async for event in provider.run(
             "one",
-            AgentRequest("code", tmp_path, mode="exec", native_coding=True),
+            LLMRequest("code", tmp_path, mode="exec", native_coding=True),
         )
     ]
     assert events[-1].kind == "error"
@@ -578,7 +578,7 @@ async def test_computation_catalog_preserves_identity_and_only_restricts_capabil
         return client
 
     provider = CodexProvider(state_dir=tmp_path / "state", client_factory=factory)
-    events = [e async for e in provider.run("catalog", AgentRequest("compute", tmp_path))]
+    events = [e async for e in provider.run("catalog", LLMRequest("compute", tmp_path))]
     assert events[-1].kind == "completed"
     assert model_cache.read_bytes() == source
     override = next(
@@ -630,7 +630,7 @@ async def test_native_catalog_is_unchanged_and_not_required(tmp_path, model_cach
     events = [
         e
         async for e in provider.run(
-            "native", AgentRequest("code", tmp_path, mode="exec", native_coding=True)
+            "native", LLMRequest("code", tmp_path, mode="exec", native_coding=True)
         )
     ]
     assert events[-1].kind == "completed"
@@ -657,7 +657,7 @@ async def test_missing_exact_model_metadata_fails_without_a_turn(tmp_path, model
     events = [
         e
         async for e in CodexProvider(client_factory=forbidden_client).run(
-            "missing", AgentRequest("compute", tmp_path)
+            "missing", LLMRequest("compute", tmp_path)
         )
     ]
     assert events[-1].kind == "error"
@@ -696,7 +696,7 @@ async def test_absent_catalog_bootstrap_is_nonbilled_and_owns_process_tree(
     events = [
         e
         async for e in CodexProvider(client_factory=factory).run(
-            "bootstrap", AgentRequest("compute", tmp_path)
+            "bootstrap", LLMRequest("compute", tmp_path)
         )
     ]
     assert events[-1].kind == "completed"
@@ -725,7 +725,7 @@ async def test_absent_catalog_bootstrap_cannot_silently_fallback(tmp_path, model
     events = [
         e
         async for e in CodexProvider(client_factory=factory).run(
-            "bootstrap", AgentRequest("compute", tmp_path)
+            "bootstrap", LLMRequest("compute", tmp_path)
         )
     ]
     assert events[-1].kind == "error"
@@ -757,7 +757,7 @@ async def test_unknown_session_reports_unavailable_history(tmp_path):
         e
         async for e in CodexProvider(client_factory=factory).run(
             "resume",
-            AgentRequest("compute", tmp_path, session=SessionRef("codex", "previous-exec")),
+            LLMRequest("compute", tmp_path, session=SessionRef("codex", "previous-exec")),
         )
     ]
     assert events[-1].kind == "error"
@@ -791,11 +791,11 @@ async def test_ephemeral_continuation_retains_context_and_counts_fresh_usage(tmp
         return client
 
     provider = CodexProvider(client_factory=factory)
-    first = [e async for e in provider.run("first", AgentRequest("first", tmp_path))]
+    first = [e async for e in provider.run("first", LLMRequest("first", tmp_path))]
     second = [
         e
         async for e in provider.run(
-            "second", AgentRequest("second", tmp_path, session=SessionRef("codex", "thread1"))
+            "second", LLMRequest("second", tmp_path, session=SessionRef("codex", "thread1"))
         )
     ]
     assert [e.data["total_tokens"] for e in first if e.kind == "usage"] == [12, 12, 32]
@@ -825,7 +825,7 @@ async def test_fresh_usage_and_missing_usage_is_explicit(tmp_path, reported):
         e
         async for e in CodexProvider(client_factory=UsageClient).run(
             "unknown",
-            AgentRequest("compute", tmp_path),
+            LLMRequest("compute", tmp_path),
         )
     ]
     usage = [e.data for e in events if e.kind == "usage"]
@@ -894,7 +894,7 @@ async def test_native_and_dynamic_tools_share_event_contract_and_raw_audit(tmp_p
     async def lookup(_name, arguments):
         return {"found": arguments["id"]}
 
-    request = AgentRequest(
+    request = LLMRequest(
         "code",
         tmp_path,
         mode="exec",
@@ -947,7 +947,7 @@ async def test_failed_dynamic_tool_result_keeps_call_identity(tmp_path):
     async def failure(*_):
         raise ValueError("Missing observation")
 
-    request = AgentRequest(
+    request = LLMRequest(
         "call", tmp_path, mode="exec", tools=(ToolDefinition("lookup", "lookup", {}),)
     )
     events = [
@@ -1052,7 +1052,7 @@ async def test_tool_set_continuation_registers_real_schemas_and_resets_next_invo
     events = [
         event
         async for event in provider.run(
-            "one", AgentRequest("read", tmp_path, tool_sets=definitions), tool_handler=read
+            "one", LLMRequest("read", tmp_path, tool_sets=definitions), tool_handler=read
         )
     ]
     if invalid_resume:
@@ -1071,7 +1071,7 @@ async def test_tool_set_continuation_registers_real_schemas_and_resets_next_invo
         event
         async for event in provider.run(
             "two",
-            AgentRequest(
+            LLMRequest(
                 "again", tmp_path, session=SessionRef("codex", "thread1"), tool_sets=definitions
             ),
             tool_handler=read,
@@ -1088,12 +1088,12 @@ async def test_readonly_child_cannot_load_write_authority(tmp_path):
     provider = ScriptedProvider(
         [
             [
-                AgentEvent("tool_call", {"name": "load_tool_set", "arguments": {"name": "low"}}),
-                AgentEvent("tool_call", {"name": "graph.apply", "arguments": {}}),
+                LLMEvent("tool_call", {"name": "load_tool_set", "arguments": {"name": "low"}}),
+                LLMEvent("tool_call", {"name": "graph.apply", "arguments": {}}),
             ]
         ]
     )
-    request = AgentRequest(
+    request = LLMRequest(
         "read",
         tmp_path,
         tool_sets=(ToolSet("low", "Mixed tools", (ToolDefinition("graph.apply", "Write", {}),)),),
@@ -1122,9 +1122,7 @@ async def test_independent_model_effort_profiles(tmp_path, model_cache):
     for effort in ("low", "high"):
         events = [
             event
-            async for event in provider.run(
-                effort, AgentRequest("inspect", tmp_path, effort=effort)
-            )
+            async for event in provider.run(effort, LLMRequest("inspect", tmp_path, effort=effort))
         ]
         assert events[-1].kind == "completed", events
         assert clients[-1].turn_params["effort"] == effort
@@ -1168,7 +1166,7 @@ async def test_ephemeral_history_keeps_public_tool_results_without_nested_contex
             e
             async for e in provider.run(
                 str(ordinal),
-                AgentRequest(
+                LLMRequest(
                     prompt, tmp_path, session=SessionRef("codex", "thread1") if ordinal else None
                 ),
             )
@@ -1200,7 +1198,7 @@ async def test_timeout_diagnostic_distinguishes_deadline_from_sdk_timeout(
         event
         async for event in provider.run(
             "timeout",
-            AgentRequest("test", tmp_path, timeout_seconds=0.01 if invocation_timeout else None),
+            LLMRequest("test", tmp_path, timeout_seconds=0.01 if invocation_timeout else None),
         )
     ]
     (error,) = [event.data for event in events if event.kind == "error"]

@@ -621,7 +621,7 @@ The material is retained so that different representations can be prepared for s
 Programs that need an LLM to inspect information or choose operations provide native tools through:
 
 ```python
-await ctx.agent(
+await ctx.llm(
     payload,
     tools=tool_definitions,
     tool_handler=handle_tool,
@@ -1253,4 +1253,4 @@ get_relations(...) -> list[Relation] # TODO: detail the arguments
 
 `SemanticProcessing` contains `SemanticSearch.model` (retrieval decisions and filtering) and `KnowledgeIntegration.exec` (selection and organization of recorded experience, preservation of analytical results, and structural repair). Call integration through `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)`; task and Self context come from runtime. Both use the ordinary candidate lifecycle and independent evaluation. Core owns identity resolution, indexes, permissions, validation and atomic writes.
 
-KnowledgeIntegration calls `ctx.agent` with the shared graph tools also available to consciousness through `graph_write_tools`. Each successful write immediately saves a checked operation with history and sources. Generic `update` and `delete` use the same Core path as creation and relations. Normal model completion ends integration, including when there are no writes; code returns actual successful write results. Errors retain completed operations and do not create a status-resolution obligation for consciousness. Runtime operation keys make replay idempotent. Search child Programs use `ctx.call` outside DBOS steps. This keeps semantic policy learnable without moving authority or credentials out of Core. Public contracts are in [[Semantics Plane#Consciousness Interface]].
+KnowledgeIntegration calls `ctx.llm` with the shared graph tools also available to consciousness through `graph_write_tools`. Each successful write immediately saves a checked operation with history and sources. Generic `update` and `delete` use the same Core path as creation and relations. Normal model completion ends integration, including when there are no writes; code returns actual successful write results. Errors retain completed operations and do not create a status-resolution obligation for consciousness. Runtime operation keys make replay idempotent. Search child Programs use `ctx.call` outside DBOS steps. This keeps semantic policy learnable without moving authority or credentials out of Core. Public contracts are in [[Semantics Plane#Consciousness Interface]].

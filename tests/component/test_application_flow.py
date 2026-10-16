@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from evertree.core.provider import AgentEvent, AgentRequest
+from evertree.core.provider import LLMEvent, LLMRequest
 from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
 from tests.support.application import decision, framing, is_integration_request, verification
 
@@ -20,7 +20,7 @@ async def until(stream, kind):
 
 async def test_run_does_not_leave_an_unconsumed_copy_of_streaming_events(app):
     """Streaming subscribers must not leave duplicate in-memory event queues after delivery."""
-    streamed = [AgentEvent("message", {"text": str(number)}) for number in range(100)]
+    streamed = [LLMEvent("message", {"text": str(number)}) for number in range(100)]
     app.provider = ScriptedProvider(
         [
             framing(),
@@ -98,7 +98,7 @@ async def test_controller_uses_self_contained_context_without_resuming_session(a
         [
             framing(),
             [
-                AgentEvent(
+                LLMEvent(
                     "tool_call", {"name": "graph.describe", "arguments": {"subject": node.id}}
                 ),
                 *decision("Continue from the retained result", "continue"),
@@ -214,12 +214,12 @@ async def test_unavailable_usage_is_retained_and_cannot_satisfy_an_explicit_toke
     app.provider = ScriptedProvider(
         [
             [
-                AgentEvent("usage", {"available": False, "total_tokens": None}),
-                AgentEvent("completed", {"text": "done", "parsed": None}),
+                LLMEvent("usage", {"available": False, "total_tokens": None}),
+                LLMEvent("completed", {"text": "done", "parsed": None}),
             ]
         ]
     )
-    request = AgentRequest("Observe usage", app._workspace(task.id))
+    request = LLMRequest("Observe usage", app._workspace(task.id))
     if token_limit:
         with pytest.raises(RuntimeError, match="usage is unknown"):
             await app._invoke(task.id, request)

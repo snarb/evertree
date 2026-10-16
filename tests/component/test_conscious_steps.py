@@ -7,7 +7,7 @@ import pytest
 
 from evertree.core.cognition.steps import AnalyticalNote
 from evertree.core.memory.types import TraceOutputRef
-from evertree.core.provider import AgentEvent
+from evertree.core.provider import LLMEvent
 from evertree.core.values import json_value
 from tests.support.application import (
     IntegrationScriptedProvider,
@@ -80,11 +80,9 @@ async def test_plan_experiment_revision_and_final_result_are_separate_iterations
         events = step(text, final=index == 3, plan=plans[index])
         if index == 1:
             events = [
-                AgentEvent("message", {"text": "Internal analytical draft"}),
-                AgentEvent(
-                    "tool_call", {"name": "graph.describe", "arguments": {"subject": "Self"}}
-                ),
-                AgentEvent(
+                LLMEvent("message", {"text": "Internal analytical draft"}),
+                LLMEvent("tool_call", {"name": "graph.describe", "arguments": {"subject": "Self"}}),
+                LLMEvent(
                     "tool_call", {"name": "graph.describe", "arguments": {"subject": "SelfModel"}}
                 ),
                 *events,
@@ -280,11 +278,11 @@ async def test_consciousness_loads_shared_write_tools_with_visible_sources(app, 
                 else:
                     arguments.update(description=description, sources=[source])
                 self.scripts[0][:0] = [
-                    AgentEvent(
+                    LLMEvent(
                         "tool_call",
                         {"name": "load_tool_set", "arguments": {"name": "graph_write_tools"}},
                     ),
-                    AgentEvent(
+                    LLMEvent(
                         "tool_call",
                         {
                             "name": "graph.save_note" if kind == "note" else "graph.create_claim",
@@ -310,7 +308,7 @@ async def test_consciousness_loads_shared_write_tools_with_visible_sources(app, 
 
 async def test_conscious_write_cannot_use_unpresented_sources(app):
     from evertree._application.prompts import tool_sets
-    from evertree.core.provider import AgentRequest, ScriptedProvider
+    from evertree.core.provider import LLMRequest, ScriptedProvider
 
     task = app.tasks.create_task("Write only from the supplied context")
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Write")
@@ -319,7 +317,7 @@ async def test_conscious_write_cannot_use_unpresented_sources(app):
     app.provider = ScriptedProvider(
         [
             [
-                AgentEvent(
+                LLMEvent(
                     "tool_call",
                     {
                         "name": "graph.save_note",
@@ -330,14 +328,14 @@ async def test_conscious_write_cannot_use_unpresented_sources(app):
                         },
                     },
                 ),
-                AgentEvent("completed", {"text": ""}),
+                LLMEvent("completed", {"text": ""}),
             ]
         ]
     )
     writes = next(item for item in tool_sets() if item.name == "graph_write_tools")
     await app._invoke(
         task.id,
-        AgentRequest("{}", app._workspace(task.id), mode="exec", tools=writes.tools),
+        LLMRequest("{}", app._workspace(task.id), mode="exec", tools=writes.tools),
         conversation=True,
     )
     assert app.graph.find("Unsupported selection") is None
@@ -352,7 +350,7 @@ async def test_conscious_write_cannot_use_unpresented_sources(app):
 @pytest.mark.parametrize("action_name", ["save_note", "create_claim"])
 async def test_loading_graph_writes_in_model_mode_grants_no_write_authority(app, action_name):
     from evertree._application.prompts import tool_sets
-    from evertree.core.provider import AgentRequest, ProviderError, ScriptedProvider
+    from evertree.core.provider import LLMRequest, ProviderError, ScriptedProvider
 
     task = app.tasks.create_task("Inspect write-tool availability")
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Inspect")
@@ -365,11 +363,11 @@ async def test_loading_graph_writes_in_model_mode_grants_no_write_authority(app,
     app.provider = ScriptedProvider(
         [
             [
-                AgentEvent(
+                LLMEvent(
                     "tool_call",
                     {"name": "load_tool_set", "arguments": {"name": "graph_write_tools"}},
                 ),
-                AgentEvent(
+                LLMEvent(
                     "tool_call",
                     {
                         "name": "graph." + action_name,
@@ -383,7 +381,7 @@ async def test_loading_graph_writes_in_model_mode_grants_no_write_authority(app,
     with pytest.raises(ProviderError, match="not declared"):
         await app._invoke(
             task.id,
-            AgentRequest(
+            LLMRequest(
                 json.dumps({"source_ref": source}),
                 app._workspace(task.id),
                 mode="model",
@@ -402,7 +400,7 @@ async def test_loading_graph_writes_in_model_mode_grants_no_write_authority(app,
 
 async def test_reference_shaped_context_data_does_not_abort_conscious_writes(app):
     from evertree._application.prompts import tool_sets
-    from evertree.core.provider import AgentRequest, ScriptedProvider
+    from evertree.core.provider import LLMRequest, ScriptedProvider
 
     task = app.tasks.create_task("Save an observation from structured input")
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Save")
@@ -410,7 +408,7 @@ async def test_reference_shaped_context_data_does_not_abort_conscious_writes(app
     app.provider = ScriptedProvider(
         [
             [
-                AgentEvent(
+                LLMEvent(
                     "tool_call",
                     {
                         "name": "graph.save_note",
@@ -421,14 +419,14 @@ async def test_reference_shaped_context_data_does_not_abort_conscious_writes(app
                         },
                     },
                 ),
-                AgentEvent("completed", {"text": "Saved"}),
+                LLMEvent("completed", {"text": "Saved"}),
             ]
         ]
     )
     writes = next(item for item in tool_sets() if item.name == "graph_write_tools")
     await app._invoke(
         task.id,
-        AgentRequest(
+        LLMRequest(
             json.dumps(
                 {
                     "data": [{"event_ref": "external-id"}, {"event_ref": 1, "output_path": None}],
@@ -447,13 +445,13 @@ async def test_reference_shaped_context_data_does_not_abort_conscious_writes(app
 
 async def test_replayed_conscious_call_returns_same_write_and_deleted_history_remains_readable(app):
     from evertree._application.prompts import tool_sets
-    from evertree.core.provider import AgentRequest, ScriptedProvider, current_tool_call_id
+    from evertree.core.provider import LLMRequest, ScriptedProvider, current_tool_call_id
 
     task = app.tasks.create_task("Record and correct one observation")
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Correct")
     source = app._record_analysis(task.id, {"text": "Initial observation, later found redundant"})
     calls = [
-        AgentEvent(
+        LLMEvent(
             "tool_call",
             {
                 "call_id": "same-native-call",
@@ -467,9 +465,9 @@ async def test_replayed_conscious_call_returns_same_write_and_deleted_history_re
         )
         for _ in range(2)
     ]
-    app.provider = ScriptedProvider([[*calls, AgentEvent("completed", {"text": ""})]])
+    app.provider = ScriptedProvider([[*calls, LLMEvent("completed", {"text": ""})]])
     writes = next(item for item in tool_sets() if item.name == "graph_write_tools")
-    request = AgentRequest(
+    request = LLMRequest(
         json.dumps({"source_ref": source}), app._workspace(task.id), mode="exec", tools=writes.tools
     )
     await app._invoke(task.id, request, conversation=True)
@@ -489,7 +487,7 @@ async def test_replayed_conscious_call_returns_same_write_and_deleted_history_re
     app.provider = ScriptedProvider(
         [
             [
-                AgentEvent(
+                LLMEvent(
                     "tool_call",
                     {
                         "call_id": "repeat-deletion",
@@ -497,7 +495,7 @@ async def test_replayed_conscious_call_returns_same_write_and_deleted_history_re
                         "arguments": {"objects": [note.id], "sources": [source]},
                     },
                 ),
-                AgentEvent("completed", {"text": ""}),
+                LLMEvent("completed", {"text": ""}),
             ]
         ]
     )

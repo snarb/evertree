@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from evertree.core.codex.provider import CodexProvider
-from evertree.core.provider import AgentRequest, SessionRef, ToolDefinition
+from evertree.core.provider import LLMRequest, SessionRef, ToolDefinition
 
 
 async def collect(provider, request, **kwargs):
@@ -43,12 +43,12 @@ async def test_live_model_dynamic_tool_and_session_resume(tmp_path):
 
     try:
         _, model = await collect(
-            provider, AgentRequest("Return the integer value 3.", tmp_path, output_schema=schema)
+            provider, LLMRequest("Return the integer value 3.", tmp_path, output_schema=schema)
         )
         assert model["parsed"] == {"value": 3}
         events, result = await collect(
             provider,
-            AgentRequest(
+            LLMRequest(
                 "Call read_test_value exactly once and return its value.",
                 tmp_path,
                 mode="exec",
@@ -70,7 +70,7 @@ async def test_live_model_dynamic_tool_and_session_resume(tmp_path):
         assert session["requested_effort"] == "high"
         _, resumed = await collect(
             provider,
-            AgentRequest(
+            LLMRequest(
                 "Return the value from the previous tool result plus one.",
                 tmp_path,
                 output_schema=schema,
@@ -101,7 +101,7 @@ async def test_live_native_coding_tools(tmp_path):
     try:
         events, result = await collect(
             provider,
-            AgentRequest(
+            LLMRequest(
                 f"Create add.py with add(a,b) and test_add.py using unittest. "
                 "Run tests using the isolated Python interpreter on PATH. "
                 f"Using a shell command, attempt to read and write this sibling canary: {canary}. "
@@ -163,7 +163,7 @@ async def test_live_luna_loads_callable_tool_set(tmp_path):
     try:
         events, result = await collect(
             provider,
-            AgentRequest(
+            LLMRequest(
                 "Load test_values, call graph.test_value, and return its value as JSON.",
                 tmp_path,
                 model="gpt-6-luna",
@@ -189,7 +189,7 @@ async def test_live_luna_loads_callable_tool_set(tmp_path):
         session = next(e.data for e in reversed(events) if e.kind == "session")
         next_events, next_result = await collect(
             provider,
-            AgentRequest(
+            LLMRequest(
                 "Do not load any tool sets. If graph.test_value is currently callable, call it. Otherwise return value=-1. Do not reuse a value from history.",
                 tmp_path,
                 model="gpt-6-luna",

@@ -15,7 +15,7 @@ class AnalyticalContext:
 
     async def step(self, method, payload):
         self.calls.append(method)
-        assert method == "agent.run"
+        assert method == "llm.run"
         return {"parsed": deepcopy(self.output)}
 
 
@@ -49,7 +49,7 @@ async def test_analytical_programs_keep_partial_insights_and_original_trace_sour
     result = await program(context, {"experience_refs": [{"event_ref": 5, "output_path": []}]})
     assert result["result"]["analysis"]["source_refs"] == [reference]
     assert "Keep this" in result["result"]["findings"][0]["text"]
-    assert context.calls == ["agent.run"]
+    assert context.calls == ["llm.run"]
 
 
 async def test_reflection_rejects_invented_source_instead_of_making_it_memory_evidence():

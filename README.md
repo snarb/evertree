@@ -78,7 +78,7 @@ uv run python src/evertree/debug_integration.py
 - Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`, evolving behavior in `processes`, and reusable Program helpers in `common`.
 - Call other Programs through the runtime, including other roles of the same process; do not import their implementations directly.
-- Use `ctx.agent(payload, tools=..., tool_handler=..., max_tool_calls=..., stop_when=...)`
+- Use `ctx.llm(payload, tools=..., tool_handler=..., max_tool_calls=..., stop_when=...)`
   when a model needs tools. Handlers run at workflow level and may call `ctx.call` or
   `ctx.step`; do not wrap the entire tool conversation in a durable step. Recovery
   replays exchanges and handlers to reconstruct local state before continuing.

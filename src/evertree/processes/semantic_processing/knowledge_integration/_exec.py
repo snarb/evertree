@@ -305,7 +305,7 @@ async def run(ctx, experience_refs, focus=None):
             ]
         return result
 
-    await ctx.agent(
+    await ctx.llm(
         {
             "profile": "remember",
             "mode": "exec",

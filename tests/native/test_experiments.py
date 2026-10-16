@@ -35,7 +35,7 @@ async def run(value, ctx):
                          'required': ['name'], 'additionalProperties': False},
         'read_only': False}]
     assert await ctx.step('learning.predict', {'state_id': 'known'}) == 0.5
-    answer = await ctx.agent({'prompt': str(value), 'mode': 'exec'},
+    answer = await ctx.llm({'prompt': str(value), 'mode': 'exec'},
                              tools=tools, tool_handler=handle_tool)
     return {'result': calculate(value) + answer['parsed']}
 """

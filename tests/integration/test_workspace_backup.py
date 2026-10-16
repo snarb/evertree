@@ -9,7 +9,7 @@ import pytest
 
 from evertree.application import EverTree
 from evertree.core.backup import _extended, safe_remove_tree
-from evertree.core.provider import AgentEvent, ScriptedProvider
+from evertree.core.provider import LLMEvent, ScriptedProvider
 from evertree.core.runtime.controller import Runtime
 from tests.support.runtime import TestProcess
 
@@ -22,8 +22,8 @@ class WorkspaceProvider(ScriptedProvider):
             target = _extended(request.workspace / relative)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(contents, encoding="utf-8")
-            yield AgentEvent("file_change", {"path": str(target)})
-        yield AgentEvent("completed", {"text": "Workspace files written"})
+            yield LLMEvent("file_change", {"path": str(target)})
+        yield LLMEvent("completed", {"text": "Workspace files written"})
 
 
 @pytest.fixture

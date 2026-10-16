@@ -27,9 +27,9 @@ from .values import json_value
 MODEL_OPERATIONS = frozenset(
     {
         "resolve_program",
-        "agent.run",
-        "agent.next",
-        "agent.close",
+        "llm.run",
+        "llm.next",
+        "llm.close",
         "graph.read",
         "graph.get",
         "graph.query",

@@ -108,12 +108,7 @@ class LargeGraphSession(DebugSession):
         except Exception as exc:  # noqa: BLE001 -- retain partial graph and report failed packets
             error = {"type": type(exc).__name__, "message": str(exc)}
         finally:
-            history = [
-                entry
-                for c in self.calls
-                if c["method"] == "agent.close"
-                for entry in c["payload"]["history"]
-            ]
+            history = self.tool_calls()
             usage = []
             for path in directory.glob("model-*.json"):
                 values = [e["data"] for e in json.loads(path.read_text()) if e["kind"] == "usage"]
@@ -136,7 +131,6 @@ class LargeGraphSession(DebugSession):
         return metrics
 
     async def close(self):
-        await self.agents.close_all()
         try:
             await self.index.close()
         finally:

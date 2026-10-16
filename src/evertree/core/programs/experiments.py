@@ -319,7 +319,7 @@ async def evaluate_pair(
                 if method == "resolve_program":
                     resolved = registry[payload["program_id"]]
                     return asdict(replace(resolved, revision=context.revision))
-                if method == "agent.run":
+                if method == "llm.run":
                     if model_call is None:
                         raise PermissionError("No isolated model adapter was supplied")
                     payload["mode"] = (

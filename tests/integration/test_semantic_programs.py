@@ -54,7 +54,7 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
         if method == "resolve_program":
             assert payload["program_id"] in {"semantic_search", child.program_id}
             return asdict(child)
-        if method == "agent.run":
+        if method == "llm.run":
             assert payload["profile"] == "remember"
             assert payload["mode"] == "exec"
             assert "output_schema" not in payload
@@ -160,7 +160,7 @@ async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_pat
     async def gateway(method, payload):
         payload = dict(payload)
         metadata = payload.pop("_runtime")
-        if method == "agent.run":
+        if method == "llm.run":
             raise AssertionError("Search must not invoke a model")
         return await world.service.execute(method, payload, metadata)
 
@@ -210,7 +210,7 @@ async def test_interrupted_integration_replays_completed_write_and_continues_sam
             integration_operation_id="interrupted-packet",
             integration_context={},
         )
-        if method == "agent.run":
+        if method == "llm.run":
             calls.append(payload["prompt"])
             call = payload["_tool_handler"]
             if len(calls) == 1:

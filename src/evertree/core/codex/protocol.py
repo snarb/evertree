@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-from evertree.core.provider import AgentEvent, ProviderError
+from evertree.core.provider import LLMEvent, ProviderError
 
 
 class _RawResponse(BaseModel):
@@ -81,9 +81,7 @@ def _native_tool_events(item, *, completed):
     else:
         return ()
     if not completed:
-        return (
-            AgentEvent("tool_call", {"call_id": call_id, "name": name, "arguments": arguments}),
-        )
+        return (LLMEvent("tool_call", {"call_id": call_id, "name": name, "arguments": arguments}),)
     status = item.get("status", "completed")
     status = {"interrupted": "cancelled", "inProgress": "failed"}.get(status, status)
     if status not in {"completed", "failed", "declined", "cancelled"}:
@@ -94,14 +92,14 @@ def _native_tool_events(item, *, completed):
     if status != "completed" and error is None:
         error = f"{name}: {status}"
     events = [
-        AgentEvent(
+        LLMEvent(
             "tool_result",
             {"call_id": call_id, "name": name, "status": status, "result": result, "error": error},
         )
     ]
     if kind == "fileChange":
         events.extend(
-            AgentEvent("file_change", {"call_id": call_id, "status": status, **change})
+            LLMEvent("file_change", {"call_id": call_id, "status": status, **change})
             for change in changes
         )
     return tuple(events)
