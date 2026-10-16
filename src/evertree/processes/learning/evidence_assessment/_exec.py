@@ -13,6 +13,7 @@ async def run(
     backed: bool = False,
     dependency_root: str | None = None,
 ):
+    """Submit source-backed likelihoods for a declared belief target through Core validation."""
     result = await ctx.step(
         "evidence.assess",
         {

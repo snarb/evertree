@@ -11,4 +11,5 @@ INSTRUCTIONS = "Propose goals and priorities from supplied explicit requests, cu
 
 
 async def run(ctx, context: dict):
+    """Propose goals and priorities from the supplied requests, obligations and fixed Values."""
     return await ask(ctx, instructions=INSTRUCTIONS, data=context, schema=SCHEMA)

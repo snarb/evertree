@@ -96,6 +96,7 @@ class SandboxedProcess:
     def _launch(
         self, executable, arguments, workdir, readable, writable, limits, path_entries, profile_dir
     ):
+        """Create an AppContainer process with explicit filesystem grants, inherited pipes and Job ownership."""
         import msvcrt
         from ctypes import wintypes as w
 
@@ -454,6 +455,7 @@ class SandboxedProcess:
                 local_free(internet_sid)
 
     def poll(self) -> int | None:
+        """Return the sandboxed process exit code, or None while it is running."""
         from ctypes import wintypes as w
 
         if not self._process:
@@ -464,6 +466,7 @@ class SandboxedProcess:
         return None if status.value == 259 else status.value
 
     def wait(self, timeout: float | None = None) -> int:
+        """Wait for process exit and return its code; timeout is measured in seconds."""
         if not self._process:
             return 1
         milliseconds = 0xFFFFFFFF if timeout is None else max(0, int(timeout * 1000))
@@ -475,6 +478,7 @@ class SandboxedProcess:
         return self.poll() or 0
 
     def terminate(self) -> None:
+        """Stop the owned sandbox process tree and wait for termination."""
         with self._lock:
             self._terminate()
 
@@ -508,6 +512,7 @@ class SandboxedProcess:
                 time.sleep(0.01)
 
     def close(self) -> None:
+        """Stop owned processes and release sandbox handles, streams and temporary resources."""
         with self._lock:
             if self._closed:
                 return

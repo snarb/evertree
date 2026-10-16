@@ -20,11 +20,13 @@ class SemanticService:
         self.queries = GraphQueries(graph, attribution, config.read)
 
     def release(self, task_id):
+        """Discard a task's query continuations, search reviews and index-read state."""
         self.queries.release(task_id)
         self._searches.pop(task_id, None)
         self._index_reads.pop(task_id, None)
 
     def lookup(self, query, kind=None, limit=20, *, task_id):
+        """Serve exact graph matches, returning None when text needs non-exact search."""
         kind = kind.strip().casefold() if kind is not None else None
         if type(limit) is not int or not 1 <= limit <= 20:
             raise ContractError("limit must be between 1 and 20")
@@ -38,6 +40,7 @@ class SemanticService:
         return None
 
     def results(self, query, kind, items, errors, limit, task_id, exact=False):
+        """Record revision-scoped search results for candidate review and report channel completeness."""
         if type(limit) is not int or not 1 <= limit <= 20:
             raise ContractError("limit must be between 1 and 20")
         self._searches.setdefault(task_id, {})[str(query).strip().casefold()] = {
@@ -86,6 +89,7 @@ class SemanticService:
         return TraceOutputRef(**value)
 
     def sources(self, experience_refs, focus=None, *, metadata):
+        """Authorize integration and resolve retained experience with its producer provenance."""
         self._authorize(metadata)
         if not isinstance(experience_refs, list) or not experience_refs:
             raise ContractError("Integration requires nonempty retained experience_refs")
@@ -137,6 +141,7 @@ class SemanticService:
             )
 
     def write(self, payload, metadata):
+        """Validate and persist one source-backed semantic operation, deduplicating durable callback retries."""
         self._authorize(metadata)
         try:
             action = payload["action"]
@@ -241,6 +246,7 @@ class SemanticService:
             return {"error": str(exc)}
 
     async def execute(self, method, payload, metadata):
+        """Dispatch task-scoped graph reads, index queries and checked semantic writes."""
         task_id = metadata["task_id"]
         if method in {"graph.query", "graph.walk"}:
             return self.queries.read(method.removeprefix("graph."), payload, task_id=task_id)

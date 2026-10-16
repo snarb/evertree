@@ -18,6 +18,7 @@ def _equal(left, right):
 
 
 def node_ids(fact, relation):
+    """Yield participant identities from a fact's declared node-valued slots."""
     for slot in relation.signature:
         if slot.value_type in NODE_TYPES:
             value = fact.args.get(slot.label)
@@ -27,6 +28,7 @@ def node_ids(fact, relation):
 
 
 def compare(value, clause):
+    """Evaluate a scalar or collection predicate with JSON-aware equality and null handling."""
     if clause.op == "is_null":
         return value is None
     if clause.op == "not_null":
@@ -59,6 +61,7 @@ def compare(value, clause):
 
 
 def validate_clause(graph, slot, clause, nodes=None):
+    """Check a query predicate against its slot type and referenced graph nodes."""
     nodes = graph._nodes if nodes is None else nodes
     if clause.op in {"is_null", "not_null"}:
         return
@@ -80,6 +83,7 @@ def validate_clause(graph, slot, clause, nodes=None):
 
 
 def prepare(graph, relation, bindings, where):
+    """Validate relation bindings and compile supported fact, argument and condition predicates."""
     slots = {slot.label: slot for slot in relation.signature}
     for label, value in bindings.items():
         if label not in slots:
@@ -107,6 +111,7 @@ def prepare(graph, relation, bindings, where):
 
 
 def predicate_matches(graph, fact, relation, clauses, *, valid_at=None, known_at=None):
+    """Evaluate fact predicates, preserving UNKNOWN when required belief data is unavailable."""
     unknown = False
     slots = {slot.label for slot in relation.signature}
     for clause in clauses:
@@ -150,6 +155,7 @@ def predicate_matches(graph, fact, relation, clauses, *, valid_at=None, known_at
 
 
 def match_fact(graph, fact, relation, bindings, clauses, *, valid_at=None, known_at=None):
+    """Combine bindings, predicates and Facet applicability into a match status or no match."""
     if any(fact.args.get(key) != value for key, value in bindings.items()):
         return None
     temporal = graph.fact_applicability(fact, valid_at) if valid_at is not None else "applicable"

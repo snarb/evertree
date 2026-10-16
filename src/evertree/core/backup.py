@@ -36,7 +36,7 @@ class VerifiedBackup:
 
 
 def _extended(path: Path) -> Path:
-    """CopyFile2 and directory APIs still need extended paths on some hosts."""
+    """Convert Windows paths for APIs that require extended paths even on long-path-enabled hosts."""
     path = Path(path).absolute()
     text = str(path)
     if os.name == "nt" and not text.startswith("\\\\?\\"):
@@ -62,7 +62,7 @@ def safe_remove_tree(target: Path, root: Path) -> None:
 
 
 def rename_state(source: Path, destination: Path) -> None:
-    """Retry transient Windows sharing/access locks without changing the target."""
+    """Rename saved state, retrying transient Windows sharing or access locks."""
     source, destination = _extended(source), _extended(destination)
     deadline = time.monotonic() + 2
     while True:
@@ -115,6 +115,7 @@ def copy_state(source: Path, destination: Path) -> None:
 
 
 def source_file_uri(path: Path) -> str:
+    """Build a read-only SQLite source URI, normalizing Windows extended paths."""
     text = str(path)
     if text.startswith("\\\\?\\UNC\\"):
         text = "\\\\" + text[8:]
@@ -187,6 +188,7 @@ class BackupManager:
             return final
 
     def list(self) -> list[Path]:
+        """List completed backup entries from newest to oldest, excluding pending writes."""
         return sorted(
             (
                 p
@@ -199,6 +201,7 @@ class BackupManager:
         )
 
     def verify(self, backup: Path | None = None) -> VerifiedBackup:
+        """Verify a completed backup's manifest and file integrity; default to the newest entry."""
         if backup is None:
             available = self.list()
             if not available:
@@ -237,6 +240,7 @@ class BackupManager:
         return VerifiedBackup(backup, state)
 
     def read(self, backup: Path | None = None) -> dict:
+        """Return verified backup state, using the newest completed entry by default."""
         return self.verify(backup).state
 
     async def restore(

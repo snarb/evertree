@@ -14,6 +14,7 @@ CANONICAL_KINDS = frozenset({"concept", "prototype", "property", "process", "rel
 
 
 def normalize_name(name: str) -> str:
+    """Normalize Unicode, whitespace and case for exact graph-name lookup."""
     return " ".join(unicodedata.normalize("NFC", name).split()).casefold()
 
 
@@ -84,6 +85,7 @@ class Facet(Node):
                 raise ContractError("facet intervals must be nonempty [from, until)")
 
     def applicability(self, at: datetime) -> Literal["applicable", "outside", "unknown"]:
+        """Classify time against this state's half-open interval, retaining uncertainty for missing bounds."""
         at = timestamp(at)
         if self.valid_from is not None and at < self.valid_from:
             return "outside"
@@ -259,6 +261,7 @@ class GraphDelta:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> GraphDelta:
+        """Restore typed node creations, updates and deletions from a serialized graph delta."""
         return cls(
             tuple(node_from_dict(item) for item in data.get("creates", ())),
             tuple(

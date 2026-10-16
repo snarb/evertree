@@ -140,13 +140,21 @@ class AgentProvider(Protocol):
         *,
         tool_handler: ToolHandler | None = None,
         approval_handler: ApprovalHandler | None = None,
-    ) -> AsyncIterator[AgentEvent]: ...
+    ) -> AsyncIterator[AgentEvent]:
+        """Stream normalized events for one invocation with caller-supplied tool and approval handlers."""
+        ...
 
-    async def cancel(self, request_id: str) -> None: ...
+    async def cancel(self, request_id: str) -> None:
+        """Interrupt the invocation identified by request_id and release its resources."""
+        ...
 
-    async def doctor(self) -> dict[str, Any]: ...
+    async def doctor(self) -> dict[str, Any]:
+        """Report provider availability and account capabilities without running a user task."""
+        ...
 
-    async def close(self) -> None: ...
+    async def close(self) -> None:
+        """Stop active invocations and release provider resources."""
+        ...
 
 
 class ScriptedProvider:
@@ -160,6 +168,7 @@ class ScriptedProvider:
         self.cancelled: set[str] = set()
 
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
+        """Replay the next scripted response as provider events, invoking declared tool handlers."""
         self.requests.append(request)
         available = {s.name: s.for_mode(request.mode) for s in request.tool_sets}
         active = {t.name: t for t in request.tools}
@@ -230,10 +239,13 @@ class ScriptedProvider:
                 yield event
 
     async def cancel(self, request_id):
+        """Mark a scripted request for cancellation on its next event boundary."""
         self.cancelled.add(request_id)
 
     async def doctor(self):
+        """Report the deterministic scripted provider as available."""
         return {"provider": self.name, "available": True, "offline": True}
 
     async def close(self):
-        pass
+        """Release the scripted provider; no external resources are owned."""
+        pass  # noqa: PIE790

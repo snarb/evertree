@@ -2,6 +2,7 @@
 
 
 def task_context(state: dict) -> dict:
+    """Select task meaning, progress and resource evidence for a Program's model input."""
     fields = (
         "progress",
         "plan",
@@ -33,6 +34,7 @@ def task_context(state: dict) -> dict:
 
 
 def budget_evidence(evidence: dict) -> dict:
+    """Retain budget-review evidence while projecting trace entries to operations and outputs."""
     result = dict(evidence)
     if "trace" in result:
         result["trace"] = [

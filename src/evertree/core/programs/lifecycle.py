@@ -75,6 +75,7 @@ def validate_program_imports(source: str, path: str) -> None:
 
 
 def git(repository: Path, *arguments: str) -> str:
+    """Run a managed repository Git command and return its output or a lifecycle error."""
     try:
         return _git(repository, *arguments).decode("utf-8", errors="replace").strip()
     except ProgramExecutionError as error:
@@ -106,6 +107,7 @@ def remote_git(repository: Path, *arguments: str) -> str:
 
 
 def resolve_program_remote(source: Path, remote: str | None = None) -> str:
+    """Select the explicit Program remote, EVERTREE_PROGRAM_REMOTE or the source repository origin."""
     if remote is None:
         remote = os.environ.get("EVERTREE_PROGRAM_REMOTE")
     if remote is None:
@@ -144,6 +146,7 @@ def publish_programs(repository: Path, remote: str) -> None:
 
 
 def fetch_programs(repository: Path, remote: str, revision: str) -> None:
+    """Fetch retained Program history and require the requested revision to be available."""
     remote_git(
         repository,
         "fetch",
@@ -279,6 +282,7 @@ class ProgramLifecycleRuntime:
     def create_candidate(
         self, program_id: str | int, change_claim: str, *, candidate_name: str | None = None
     ) -> ProgramBranch:
+        """Create an isolated candidate workspace and branch for a testable Program change."""
         if not change_claim.strip():
             raise ValueError("A candidate requires a testable change claim")
         if not str(program_id):
@@ -327,12 +331,14 @@ class ProgramLifecycleRuntime:
         return candidate
 
     def candidate(self, candidate_id: str) -> ProgramBranch:
+        """Read the lifecycle record for a known candidate."""
         try:
             return ProgramBranch(**self._data["branches"][candidate_id])
         except KeyError as exc:
             raise LifecycleError("Unknown candidate") from exc
 
     def retain_candidate(self, candidate_id: str) -> str:
+        """Copy a candidate's committed revision into the managed repository before workspace disposal."""
         candidate = self.candidate(candidate_id)
         workspace = self.state_dir / "candidates" / candidate_id
         revision = git(workspace, "rev-parse", "HEAD")
@@ -361,6 +367,7 @@ class ProgramLifecycleRuntime:
         self._persist()
 
     def _validate_candidate(self, candidate: ProgramBranch) -> str:
+        """Require a changed, clean descendant commit confined to allowed candidate paths and imports."""
         if candidate.status != "active":
             raise LifecycleError("Candidate is no longer active")
         workspace = Path(candidate.workspace)
@@ -397,6 +404,7 @@ class ProgramLifecycleRuntime:
         candidate_id: str,
         evaluator: Callable[[ProgramBranch, str], Awaitable[EvaluationReport]],
     ) -> EvaluationReport:
+        """Evaluate an unchanged committed candidate and persist acceptance evidence under Core policy."""
         async with self._lock:
             candidate = self.candidate(candidate_id)
             criteria = self.criteria(candidate) if callable(self.criteria) else self.criteria
@@ -434,7 +442,7 @@ class ProgramLifecycleRuntime:
         reason: str,
         expected_dataset_revision: str | None = None,
     ) -> str | None:
-        """Explicit EvaluationChoice; only merge_branch performs activation."""
+        """Record an explicit candidate lifecycle choice; only merge_branch activates its code."""
         if decision not in ("merge_branch", "continue_branch", "reject_branch", "archive_branch"):
             raise ValueError("Unsupported EvaluationChoice")
         if not reason.strip():
@@ -527,9 +535,11 @@ class ProgramLifecycleRuntime:
             return revision
 
     def snapshot(self):
+        """Capture candidate branches, evaluation reports and explicit lifecycle choices."""
         return json.loads(json.dumps(self._data))
 
     def restore(self, snapshot):
+        """Replace idle lifecycle state from a snapshot and persist it."""
         if self._lock.locked():
             raise LifecycleError("Cannot restore lifecycle during an operation")
         self._data = json.loads(json.dumps(snapshot))

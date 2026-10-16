@@ -111,12 +111,14 @@ class AttributionRuntime:
         self.historical_loader = historical_loader
 
     def register(self, definition: PropertyDefinition) -> None:
+        """Register a property contract after checking its graph references."""
         self.graph.get(definition.id)
         for identity in definition.applies_to:
             self.graph.get(identity)
         self._properties[definition.id] = definition
 
     def definitions(self) -> dict[int, PropertyDefinition]:
+        """Combine registered property contracts with declarations and numeric facts in the graph."""
         present = {node.id for node in self.graph.nodes()}
         definitions = {i: d for i, d in self._properties.items() if i in present}
         # Numeric facts carry an explicit property slot; ordinary classifications
@@ -185,6 +187,7 @@ class AttributionRuntime:
     def bind_scope(
         self, subject: int, property_id: int, target: str, *, conditions: Mapping | None = None
     ) -> None:
+        """Bind a categorical property reading to compatible exclusive belief alternatives."""
         definition = self.definitions()[property_id]
         contract = self.beliefs.target(target)
         if not contract.alternatives or definition.scale not in {"nominal", "ordinal"}:
@@ -196,6 +199,7 @@ class AttributionRuntime:
         self._scopes[self._binding_key(subject, property_id, conditions)] = target
 
     def register_normalization(self, rule: NormalizationRule) -> None:
+        """Register domain-specific normalization for a declared property."""
         self._properties[rule.property_id]
         self._rules[(rule.property_id, rule.domain)] = rule
 
@@ -222,6 +226,12 @@ class AttributionRuntime:
         _compute: bool = True,
         **parameters: Any,
     ) -> PropertyReading | Any:
+        """Read a property from applicable graph evidence or its declared computation.
+
+        valid_at selects world time; known_at selects retained knowledge time. Missing
+        parameters or unavailable evidence return UNKNOWN. _compute=False suppresses
+        Program-backed computation requests.
+        """
         subject_id = subject.id if isinstance(subject, Node) else subject
         property_id = property.id if isinstance(property, Node) else property
         definition = self.definitions().get(property_id)
@@ -356,6 +366,7 @@ class AttributionRuntime:
     def measure(
         self, subject: int | Node, property: int | Node, **parameters: Any
     ) -> PropertyReading | Any:
+        """Read a property using the same temporal and parameter rules as read_property."""
         return self.read_property(subject, property, **parameters)
 
     def reconstruct_property(
@@ -367,6 +378,7 @@ class AttributionRuntime:
         known_at: datetime,
         **parameters: Any,
     ) -> PropertyReading | Any:
+        """Read a past property value using knowledge retained at known_at, or return UNKNOWN."""
         if self.graph.known_at == timestamp(known_at):
             return self.read_property(
                 subject, property, valid_at=valid_at, known_at=known_at, **parameters
@@ -381,6 +393,7 @@ class AttributionRuntime:
         )
 
     def compare(self, property_id: int, first: Any, second: Any) -> int:
+        """Return -1, 0 or 1 for two values on a property's numeric or ordinal scale."""
         definition = self.definitions()[property_id]
         if definition.scale in {"nominal", "circular"}:
             raise ContractError("this scale has no linear ordering")
@@ -389,6 +402,7 @@ class AttributionRuntime:
         return (first > second) - (first < second)
 
     def distance(self, property_id: int, first: float, second: float) -> float:
+        """Measure numeric separation, using the shortest arc for circular scales."""
         definition = self.definitions()[property_id]
         if definition.scale in {"nominal", "ordinal"}:
             raise ContractError("this scale has no numeric distance")
@@ -407,6 +421,7 @@ class AttributionRuntime:
         valid_at: datetime | None = None,
         known_at: datetime | None = None,
     ) -> PropertyReading | Any:
+        """Apply a domain's class boundaries or standardization rule, or return UNKNOWN."""
         if known_at is not None and self.graph.known_at != timestamp(known_at):
             if self.historical_loader is None:
                 return UNKNOWN
@@ -434,6 +449,7 @@ class AttributionRuntime:
         )
 
     def snapshot(self) -> dict:
+        """Capture property contracts, belief-scope bindings and normalization rules."""
         return {
             "properties": [json_value(value) for value in self._properties.values()],
             "scopes": dict(self._scopes),
@@ -444,6 +460,7 @@ class AttributionRuntime:
     def from_snapshot(
         cls, data: dict, graph: GraphStore | None = None, beliefs: BeliefStore | None = None
     ) -> AttributionRuntime:
+        """Restore attribution contracts against the supplied graph and belief stores."""
         runtime = cls(graph or GraphStore(), beliefs)
         runtime._properties = {
             raw["id"]: PropertyDefinition(**restore_value(raw)) for raw in data["properties"]

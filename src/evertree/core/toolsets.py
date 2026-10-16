@@ -12,6 +12,7 @@ class ToolSet:
     tools: tuple[ToolDefinition, ...]
 
     def for_mode(self, mode):
+        """Restrict a loadable tool set to capabilities permitted by the invocation mode."""
         return ToolSet(
             self.name,
             self.description,
@@ -20,6 +21,7 @@ class ToolSet:
 
 
 def loader_definition(sets):
+    """Describe the native tool for loading one of the available capability sets."""
     return ToolDefinition(
         "load_tool_set",
         "Load tool definitions for this invocation. "

@@ -20,6 +20,7 @@ from .values import json_value, timestamp
 
 
 def prediction_context(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate and normalize the process, subject, episode and conditions used to match predictions."""
     result = dict(value)
     if set(result) - {"process_id", "subject", "episode", "conditions"}:
         raise ValueError("Prediction context contains undeclared fields")
@@ -65,6 +66,7 @@ class PredictionEvaluator:
         self.run_mode = run_mode
 
     def target(self, target: str | int) -> int:
+        """Resolve a prediction target to an existing semantic node identity."""
         node = self.graph.get(target) if isinstance(target, int) else self.graph.find(target)
         if node is None and isinstance(target, str) and target.isdecimal():
             node = self.graph.get(int(target))
@@ -100,6 +102,7 @@ class PredictionEvaluator:
         calibration: Mapping[str, Any] | None = None,
         comparison_key: str | None = None,
     ):
+        """Index a retained forecast before its outcome is known, declaring required parts and horizon."""
         target = self.target(target)
         self.memory.resolve(reference)
         if not parts or len(set(parts)) != len(parts) or any(not part for part in parts):
@@ -256,6 +259,7 @@ class PredictionEvaluator:
         return matches, unmatched
 
     def evaluate_prediction(self, match, metrics):
+        """Score a matched forecast or retain an unresolved result for missing or ambiguous parts."""
         fact, saved, pieces = match["fact"], match["saved"], match["pieces"]
         reference = TraceOutputRef(**saved["reference"])
         grouped = {
@@ -297,6 +301,7 @@ class PredictionEvaluator:
         return self.evaluations.add(result)
 
     def record_decision(self, target, context, *, required: bool, reason: str, revision: str):
+        """Retain an explicit decision about whether a target requires prediction in this context."""
         if not reason or not isinstance(required, bool):
             raise ValueError("A prediction decision needs explicit necessity and a reason")
         value = {
@@ -312,6 +317,7 @@ class PredictionEvaluator:
         return event
 
     def handle_unmatched_observations(self, pieces, context, selected_targets):
+        """Group unmatched outcome parts into review cases, honoring explicit prediction exemptions."""
         context = prediction_context(context)
         selected = {str(self.target(target)) for target in selected_targets}
         decisions = {}
@@ -354,6 +360,7 @@ class PredictionEvaluator:
         return list(grouped.values())
 
     def evaluate(self, observations, context, metrics, *, selected_targets=(), revision="core"):
+        """Match observations, score forecasts and record unresolved review cases with source provenance."""
         matches, unmatched = self.match_predictions(observations, context)
         results = [self.evaluate_prediction(match, metrics) for match in matches]
         cases = self.handle_unmatched_observations(unmatched, context, selected_targets)

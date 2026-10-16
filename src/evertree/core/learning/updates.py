@@ -33,6 +33,7 @@ class CreditAssignmentProgram:
         attribution_weight: float = 1.0,
         resolves: str | None = None,
     ) -> LearningCredit | UnresolvedCredit:
+        """Attribute a learning signal to a target, retaining unresolved credit when evidence is missing or ambiguous."""
         if signal is None:
             # Replaying the same unmatched experience cannot create new credit.
             for existing in self.store._unresolved.values():
@@ -70,6 +71,7 @@ class UpdatePlanner:
         self.store = store
 
     def prepare(self, credit: LearningCredit) -> PreparedUpdate | UpdateBlocked:
+        """Select a compatible learning binding and validate an update without mutating estimator state."""
         if not isinstance(credit, LearningCredit):
             raise TypeError("Unresolved credit cannot be passed to UpdatePlanner")
         candidates = [
@@ -199,6 +201,7 @@ class UpdateTransactionManager:
             raise
 
     def apply(self, update: PreparedUpdate) -> UpdateReceipt:
+        """Atomically apply a prepared contribution and record an idempotent update receipt."""
         if not isinstance(update, PreparedUpdate):
             raise TypeError("Only prepared resolved updates can be applied")
         fingerprint = content_revision({"kind": "apply", **update.to_dict()})
@@ -261,6 +264,7 @@ class UpdateTransactionManager:
             return self._commit(update, new_state, entries, "applied", fingerprint)
 
     def retract(self, retraction: CreditRetraction) -> UpdateReceipt:
+        """Retract credited contributions atomically, recording a skipped receipt if unsupported."""
         if not isinstance(retraction, CreditRetraction):
             raise TypeError("Retraction needs an immutable request")
         fingerprint = content_revision({"kind": "retract", **retraction.to_dict()})

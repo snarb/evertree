@@ -29,6 +29,7 @@ class AttentionRuntime:
         self._lock = RLock()
 
     def request_attention(self, task_id: str, priority: float, *, reason: str = "") -> None:
+        """Queue or reprioritize an open task while retaining its original tie-break order."""
         state = self.tasks.get(task_id)
         if state.terminal:
             raise ValueError("Completed tasks cannot request attention")
@@ -42,6 +43,7 @@ class AttentionRuntime:
                 self._queue[task_id] = (priority, old[1] if old else self._sequence)
 
     def next_task(self) -> str | None:
+        """Select the highest-priority queued open task without admitting it."""
         with self._lock:
             live = [
                 (identity, item)
@@ -57,6 +59,7 @@ class AttentionRuntime:
         conscious: bool = True,
         stop_current: Callable[[str], bool] | None = None,
     ) -> TaskState:
+        """Grant task execution ownership after budget checks and confirmed stopping of any prior task."""
         with self._lock:
             state = self.tasks.get(task_id)
             if state.terminal:
@@ -81,6 +84,7 @@ class AttentionRuntime:
             return state
 
     def release(self, task_id: str, *, execution_stopped: bool, status: str = "suspended") -> None:
+        """Release task execution ownership only after actual stop, without declaring a final outcome."""
         with self._lock:
             if not execution_stopped:
                 raise RuntimeError("Cannot release execution ownership before actual stop")
@@ -96,6 +100,7 @@ class AttentionRuntime:
                 self.focus = None
 
     def snapshot(self) -> dict[str, Any]:
+        """Capture conscious focus, execution ownership and queued task priorities."""
         return {
             "focus": self.focus,
             "running_task": self.running_task,
@@ -105,6 +110,7 @@ class AttentionRuntime:
 
     @classmethod
     def from_snapshot(cls, data: Mapping[str, Any], tasks: TaskStore) -> AttentionRuntime:
+        """Restore attention state against existing nonterminal tasks and validate ownership."""
         runtime = cls(tasks)
         runtime.focus = data.get("focus")
         runtime.running_task = data.get("running_task")
@@ -138,6 +144,7 @@ class PreparedContext:
         object.__setattr__(self, "state", freeze_json(thaw_json(self.state)))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the prepared task input, selected history and working state."""
         return {
             "id": self.id,
             "task_id": self.task_id,

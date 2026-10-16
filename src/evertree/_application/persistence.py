@@ -113,6 +113,7 @@ class PersistenceMixin:
             os.fsync(stream.fileno())
 
     def _recover_inputs(self):
+        """Replay durable intake records, tolerating only an incomplete final journal write."""
         path = self.state_dir / "intake.jsonl"
         if not path.exists():
             return
@@ -143,6 +144,7 @@ class PersistenceMixin:
             state.execution_stopped = True
 
     def snapshot(self):
+        """Capture Core and application state required to restore this agent."""
         return {
             "format": 1,
             "environment": json.loads(json.dumps(self._environment)),
@@ -172,6 +174,7 @@ class PersistenceMixin:
         }
 
     def _restore_core(self, data):
+        """Rebuild Core stores and application bookkeeping from saved state before recovery."""
         if data.get("format") != 1:
             raise ValueError("Unsupported EverTree backup")
         git(self.repository, "reset", "--hard", data["program_revision"])
@@ -220,6 +223,10 @@ class PersistenceMixin:
         self.attention.running_task = self.attention.focus = None
 
     async def backup(self):
+        """Publish retained Program revisions and save an idle agent backup, keeping the latest two.
+
+        Return None when the runtime is unavailable or Core operations are still active.
+        """
         if self.runtime is None:
             return None
         async with self._state_lock:
@@ -242,6 +249,7 @@ class PersistenceMixin:
             return path
 
     async def restore(self, backup=None):
+        """Restore an idle agent from a verified backup after checking code and dependency identity."""
         async with self._state_lock:
             if (
                 self._active_requests

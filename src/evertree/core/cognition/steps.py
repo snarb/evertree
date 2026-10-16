@@ -74,6 +74,7 @@ class AnalyticalNote(BaseModel):
     @field_validator("source_refs", mode="before")
     @classmethod
     def validate_source_refs(cls, value: Any) -> list[TraceOutputRef]:
+        """Validate source identities before Pydantic can coerce trace reference fields."""
         if not isinstance(value, (list, tuple)):
             # Pydantic wraps ValueError as a validation error, but lets TypeError escape.
             raise ValueError("source_refs must be a sequence of trace references")  # noqa: TRY004
@@ -119,10 +120,12 @@ class ConsciousStepResult(BaseModel):
 
     @classmethod
     def response_schema(cls):
+        """Build the provider-facing schema for a bounded conscious step result."""
         return cls.model_json_schema(schema_generator=ResponseSchema)
 
     @model_validator(mode="after")
     def validate_continuation(self) -> Self:
+        """Require a next step for continuation and a separate user message for proposed completion."""
         if self.disposition == "continue" and self.next_step is None:
             raise ValueError("Continuing requires a next_step with a local goal and budget")
         if self.disposition == "propose_completion" and self.user_message is None:

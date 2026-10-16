@@ -5,6 +5,7 @@ from ..values import UNKNOWN, ContractError, json_value, timestamp, utcnow
 
 
 def card(node):
+    """Project a graph node into a compact semantic search or read result."""
     result = {"id": node.id, "name": node.name, "kind": node.kind, "description": node.description}
     if isinstance(node, Facet):
         result.update(
@@ -15,6 +16,7 @@ def card(node):
 
 
 def resolve(graph, subject):
+    """Resolve a single graph subject, returning explicit ambiguity or absence when necessary."""
     matches = graph.lookup(subject)
     if len(matches) != 1:
         return {
@@ -25,6 +27,7 @@ def resolve(graph, subject):
 
 
 def fact_nodes(graph, fact):
+    """Collect graph identities from the node-valued slots of a relation instance."""
     relation = graph.get(fact.relation_type)
     result = set()
     for slot in relation.signature:
@@ -37,6 +40,7 @@ def fact_nodes(graph, fact):
 
 
 def fact_card(graph, fact):
+    """Expand a relation instance with participant cards and its latest producer provenance."""
     relation = graph.get(fact.relation_type)
     args = dict(fact.args)
     for slot in relation.signature:
@@ -59,6 +63,7 @@ def fact_card(graph, fact):
 
 
 def read_property(graph, attribution, subject, property, at=None, parameters=None):
+    """Resolve semantic names and read a property, reporting missing parameters explicitly."""
     node, prop = resolve(graph, subject), resolve(graph, property)
     if isinstance(node, dict):
         return node
@@ -78,6 +83,7 @@ def read_property(graph, attribution, subject, property, at=None, parameters=Non
 
 
 def describe(graph, attribution, subject, focus=None, at=None):
+    """Describe a subject's available properties and relation neighborhood without running bound Programs."""
     node = resolve(graph, subject)
     if isinstance(node, dict):
         return node

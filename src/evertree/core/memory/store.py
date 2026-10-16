@@ -78,16 +78,20 @@ class TraceStore:
 
     @property
     def runs(self) -> tuple[ProgramRun, ...]:
+        """Return retained ProgramRun headers, including unfinished runs."""
         return tuple(self._runs.values())
 
     @property
     def events(self) -> tuple[TraceEvent, ...]:
+        """Return stored trace events, including those awaiting final deletion."""
         return tuple(self._events.values())
 
     def get_run(self, run_id: int) -> ProgramRun:
+        """Return a retained ProgramRun by identity."""
         return self._runs[run_id]
 
     def get_event(self, event_id: int) -> TraceEvent:
+        """Return a stored trace event by identity."""
         return self._events[event_id]
 
     def start_run(
@@ -100,6 +104,7 @@ class TraceStore:
         caller_event: int | TraceEvent | None = None,
         at: datetime | None = None,
     ) -> ProgramRun:
+        """Open a ProgramRun with pinned code and input provenance, protecting required dependencies."""
         if run_mode not in {"live", "replay", "simulation", "evaluation", "test"}:
             raise ContractError("unknown ProgramRun mode")
         if not commit_sha:
@@ -141,6 +146,7 @@ class TraceStore:
         at: datetime | None = None,
         dependencies: tuple[TraceOutputRef, ...] = (),
     ) -> TraceEvent:
+        """Append an immutable operation event after validating its output and dependency references."""
         run_id = run_id.id if isinstance(run_id, ProgramRun) else run_id
         if status not in {"completed", "failed", "interrupted"}:
             raise ContractError("trace events record a completed, failed, or interrupted step")
@@ -177,6 +183,7 @@ class TraceStore:
     def finish_run(
         self, run_id: int | ProgramRun, *, status: str = "completed", at: datetime | None = None
     ) -> ProgramRun:
+        """Finalize a ProgramRun without rewriting an already recorded outcome."""
         run_id = run_id.id if isinstance(run_id, ProgramRun) else run_id
         if status not in {"completed", "failed", "interrupted"}:
             raise ContractError("invalid final ProgramRun status")
@@ -198,6 +205,7 @@ class TraceStore:
             return updated
 
     def record_revision(self, run_id: int, commit_sha: str) -> ProgramRun:
+        """Record a committed code revision change within a running ProgramRun."""
         with self._lock:
             run = self.get_run(run_id)
             if run.status != "running" or not commit_sha:
@@ -211,11 +219,13 @@ class TraceStore:
             return updated
 
     def semantic_trace(self, run_id: int) -> SemanticTrace:
+        """Return the ordered event membership currently retained for a ProgramRun."""
         return SemanticTrace(run_id, tuple(self._traces[run_id]))
 
     def output_ref(
         self, event: int | TraceEvent, path: tuple[str | int, ...] = ()
     ) -> TraceOutputRef:
+        """Address an event output or nested value, following forwarded references to its producer."""
         reference = TraceOutputRef(event.id if isinstance(event, TraceEvent) else event, path)
         value = self._raw_resolve(reference)
         inherited = _ref(value)
@@ -239,6 +249,7 @@ class TraceStore:
             raise ContractError("dangling TraceOutputRef") from exc
 
     def resolve(self, reference: TraceOutputRef) -> Any:
+        """Read an addressed output value through forwarded references, rejecting cycles."""
         seen = set()
         while reference:
             if reference in seen:
@@ -251,6 +262,7 @@ class TraceStore:
             reference = forwarded
 
     def producer_of(self, reference: TraceOutputRef) -> TraceOutputRef:
+        """Find the original output address behind a chain of forwarded references."""
         seen = set()
         while reference not in seen:
             seen.add(reference)
@@ -262,6 +274,7 @@ class TraceStore:
         raise ContractError("cyclic producer references")
 
     def consumers_of(self, reference: TraceOutputRef) -> tuple[TraceEvent, ...]:
+        """Find retained events that directly depend on the same original output."""
         producer = self.producer_of(reference)
         return tuple(
             event
@@ -272,16 +285,19 @@ class TraceStore:
     def provenance_of(
         self, reference: TraceOutputRef, max_depth: int | None = None
     ) -> tuple[TraceEvent, ...]:
+        """Walk upstream event dependencies, optionally limiting traversal depth."""
         return self._walk(reference.event_ref, downstream=False, max_depth=max_depth)
 
     def dependents_of(
         self, reference: TraceOutputRef, max_depth: int | None = None
     ) -> tuple[TraceEvent, ...]:
+        """Walk downstream event dependencies, optionally limiting traversal depth."""
         return self._walk(reference.event_ref, downstream=True, max_depth=max_depth)
 
     def _walk(
         self, identity: int, *, downstream: bool, max_depth: int | None = None
     ) -> tuple[TraceEvent, ...]:
+        """Traverse event provenance in either direction without revisiting dependencies or exceeding max_depth."""
         seen: set[int] = set()
         queue = [(identity, 0)]
         while queue:
@@ -318,6 +334,7 @@ class TraceStore:
     def retrieve(
         self, query: MemoryQuery | str | Mapping, limit: int = 10
     ) -> tuple[MemoryCandidateGroup, ...]:
+        """Rank matching experience by reference and text overlap, grouping only identical content."""
         if limit < 0:
             raise ContractError("retrieval limit must not be negative")
         if isinstance(query, str):
@@ -381,6 +398,7 @@ class TraceStore:
         return tuple(results[:limit])
 
     def retain(self, reference: TraceOutputRef | int, reason: str) -> None:
+        """Protect an output and its provenance from compaction or deletion for a named reason."""
         if not reason.strip():
             raise ContractError("retention requires a reason")
         identity = reference.event_ref if isinstance(reference, TraceOutputRef) else reference
@@ -393,10 +411,12 @@ class TraceStore:
             self._restore_provenance(identity)
 
     def release(self, reference: TraceOutputRef | int, reason: str) -> None:
+        """Remove one retention reason without deleting the referenced experience."""
         identity = reference.event_ref if isinstance(reference, TraceOutputRef) else reference
         self._protections.get(identity, set()).discard(reason)
 
     def retain_run(self, run_id: int, reason: str) -> None:
+        """Protect a run's events, inputs and caller provenance for a named obligation."""
         if not reason.strip():
             raise ContractError("retention requires a reason")
         with self._lock:
@@ -411,9 +431,11 @@ class TraceStore:
                 self._restore_provenance(run.caller_event)
 
     def release_run(self, run_id: int, reason: str) -> None:
+        """Remove one run retention obligation without changing its trace."""
         self._run_protections.get(run_id, set()).discard(reason)
 
     def retention_closure(self) -> frozenset[int]:
+        """Compute events required by explicit protections and unfinished ProgramRuns."""
         roots = {identity for identity, reasons in self._protections.items() if reasons}
         for run in self._runs.values():
             if run.status == "running" or self._run_protections.get(run.id):
@@ -434,6 +456,7 @@ class TraceStore:
         return event.occurred_at + offset
 
     def request_review(self, event_id: int, reason: str, *, at: datetime | None = None) -> None:
+        """Schedule an early retention review with an explicit reason."""
         self.get_event(event_id)
         if not reason:
             raise ContractError("early review needs a reason")
@@ -442,6 +465,7 @@ class TraceStore:
     def review_batch(
         self, *, at: datetime | None = None, limit: int = 100
     ) -> tuple[TraceEvent, ...]:
+        """Queue due retention reviews and return a bounded batch of available events."""
         now = timestamp(at or utcnow())
         for event in self._events.values():
             early = self._early_reviews.get(event.id)
@@ -458,6 +482,7 @@ class TraceStore:
         )
 
     def complete_review(self, event_id: int, *, at: datetime | None = None) -> None:
+        """Advance an event's review schedule and clear its pending or early review request."""
         now = timestamp(at or utcnow())
         event = self.get_event(event_id)
         index = self._reviews.get(event_id, 0)
@@ -470,6 +495,10 @@ class TraceStore:
     def compact(
         self, run_id: int, keep_events: tuple[int, ...], *, at: datetime | None = None
     ) -> SemanticTrace:
+        """Reduce a run's trace membership while preserving recent and protected experience.
+
+        Removed events remain stored until the separate deletion process permits removal.
+        """
         with self._lock:
             current = set(self._traces[run_id])
             keep = set(keep_events)
@@ -491,6 +520,7 @@ class TraceStore:
             return self.semantic_trace(run_id)
 
     def delete(self, event_id: int, *, at: datetime | None = None) -> None:
+        """Mark an eligible event for deferred deletion and remove its trace membership."""
         with self._lock:
             event = self.get_event(event_id)
             now = timestamp(at or utcnow())
@@ -503,6 +533,7 @@ class TraceStore:
                 self._traces[event.program_run].remove(event_id)
 
     def restore_deleted(self, event_id: int) -> None:
+        """Cancel deferred deletion and restore the event's ordered trace membership."""
         event = self.get_event(event_id)
         self._deleted.pop(event_id, None)
         if event_id not in self._traces[event.program_run]:
@@ -510,6 +541,7 @@ class TraceStore:
             self._traces[event.program_run].sort(key=lambda identity: self._events[identity].seq)
 
     def finalize_deletions(self, *, at: datetime | None = None) -> tuple[int, ...]:
+        """Permanently remove expired deletions only when no surviving provenance requires them."""
         with self._lock:
             now = timestamp(at or utcnow())
             eligible = {
@@ -559,6 +591,7 @@ class TraceStore:
             return tuple(sorted(deleted))
 
     def validate(self) -> None:
+        """Check run, event and retention references for missing or inconsistent provenance."""
         for run in self._runs.values():
             if run.caller_event is not None and run.caller_event not in self._events:
                 raise ContractError("run caller provenance is missing")
@@ -582,6 +615,7 @@ class TraceStore:
                 raise ContractError("SemanticTrace must preserve the active retention closure")
 
     def snapshot(self) -> dict:
+        """Capture trace contents, retention obligations, review schedules and deferred deletions."""
         with self._lock:
             return {
                 "runs": [json_value(run) for run in self._runs.values()],
@@ -613,6 +647,7 @@ class TraceStore:
 
     @classmethod
     def from_snapshot(cls, data: dict) -> TraceStore:
+        """Restore trace storage and retention state, validating all retained references."""
         policy = data["policy"]
         store = cls(
             policy=RetentionPolicy(

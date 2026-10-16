@@ -10,11 +10,13 @@ current_read_context = ContextVar("read_context", default=None)
 
 
 def tool_text(value):
+    """Serialize a tool result using the JSON representation counted against model context."""
     return json.dumps(value, ensure_ascii=False, allow_nan=False)
 
 
 @lru_cache(maxsize=16)
 def encoding(model, fallback="o200k_base"):
+    """Select the model's tokenizer or the configured estimate for an unregistered model name."""
     import tiktoken
 
     try:
@@ -26,10 +28,12 @@ def encoding(model, fallback="o200k_base"):
 
 
 def count_tokens(value, model, fallback="o200k_base"):
+    """Estimate the token cost of a serialized tool result with the selected model tokenizer."""
     return len(encoding(model, fallback).encode_ordinary(tool_text(value)))
 
 
 def read_budget(context, fraction):
+    """Limit graph-result tokens to a context fraction and any known remaining capacity."""
     if (
         not context
         or type(context.get("context_window")) is not int

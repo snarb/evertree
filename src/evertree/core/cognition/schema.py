@@ -5,6 +5,7 @@ from pydantic.json_schema import GenerateJsonSchema
 
 class ResponseSchema(GenerateJsonSchema):
     def generate(self, schema, mode="validation"):
+        """Build closed response objects with every declared field required and no Python defaults."""
         result = super().generate(schema, mode=mode)
 
         def close(value):

@@ -11,4 +11,5 @@ INSTRUCTIONS = "Prepare arguments for the supplied semantic Program interface us
 
 
 async def run(ctx, context: dict):
+    """Ask the model to prepare Program arguments from the supplied task context."""
     return await ask(ctx, instructions=INSTRUCTIONS, data=context, schema=SCHEMA)

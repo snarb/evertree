@@ -17,6 +17,7 @@ class OpenAIEmbeddings:
         self.config = config
 
     async def embed(self, texts):
+        """Request configured OpenAI embeddings using host credentials and preserve input order."""
         key = os.environ.get(self.config.openai_key_env)
         if not key:
             raise RuntimeError("OpenAI embedding credentials are not configured")
@@ -60,6 +61,7 @@ class RedisSearchIndex:
         self.last_error = None
 
     def attach(self, graph):
+        """Subscribe to committed graph changes and schedule derived-index refreshes."""
         if self._unsubscribe:
             self._unsubscribe()
         self.indexed_revision = None
@@ -161,6 +163,7 @@ class RedisSearchIndex:
             await asyncio.sleep(0.01)
 
     async def _ensure(self, nodes):
+        """Publish a complete lexical generation for a graph snapshot before exposing it to readers."""
         client = self._redis()
         index = self._generation(nodes)
         async with self._locks.setdefault(index, asyncio.Lock()):
@@ -225,6 +228,7 @@ class RedisSearchIndex:
         return index
 
     async def _ensure_vectors(self, index, nodes):
+        """Populate missing embeddings for a leased generation without mixing graph snapshots."""
         client = self._redis()
         async with self._locks.setdefault(index + ":vectors", asyncio.Lock()):
             if index in self._vectors_ready:
@@ -284,6 +288,7 @@ class RedisSearchIndex:
         return "@kind:{" + re.sub(r"([^\w])", r"\\\1", kind.strip().casefold()) + "}"
 
     async def lexical(self, nodes, query, kind=None):
+        """Rank up to seven graph identities by Redis BM25 over the leased graph snapshot."""
         async with self._generation_lease(nodes) as index:
             terms = re.findall(r"\w+", normalize_name(query), flags=re.UNICODE)
             if not terms:
@@ -311,6 +316,7 @@ class RedisSearchIndex:
             return self._ids(result)
 
     async def vector(self, nodes, query, kind=None):
+        """Rank up to twelve graph identities by embedding distance over the leased snapshot."""
         async with self._generation_lease(nodes) as index:
             embeddings_task = asyncio.create_task(self.embeddings.embed([query]))
             try:
@@ -347,6 +353,7 @@ class RedisSearchIndex:
                 await asyncio.gather(embeddings_task, return_exceptions=True)
 
     async def close(self):
+        """Detach graph listeners, stop index refreshes and close the Redis connection."""
         if self._unsubscribe:
             self._unsubscribe()
             self._unsubscribe = None

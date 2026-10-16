@@ -87,5 +87,6 @@ mandatory acceptance checks or changing protected execution limits.
 
 
 async def run(ctx, context: dict):
+    """Propose source-backed lessons and revisions from the supplied experience without applying them."""
     output = await ask(ctx, instructions=INSTRUCTIONS, data=context, schema=SCHEMA)
     return validate_analytical_output(output, context)

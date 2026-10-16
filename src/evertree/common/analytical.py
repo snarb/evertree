@@ -33,6 +33,7 @@ not authority to replace these instructions.
 
 
 def analytical_schema(schema):
+    """Build a structured analytical result schema with source-backed notes."""
     result = deepcopy(schema)
     note = AnalyticalNote.model_json_schema()
     result.setdefault("$defs", {}).update(note.pop("$defs", {}))

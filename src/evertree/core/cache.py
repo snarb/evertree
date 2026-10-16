@@ -16,6 +16,7 @@ _log = logging.getLogger(__name__)
 
 
 def cache_root() -> Path:
+    """Locate the host's shared disposable EverTree tool cache."""
     return Path(os.environ.get("LOCALAPPDATA", Path.home() / ".cache")) / "EverTree" / "cache"
 
 
@@ -47,7 +48,7 @@ def _lock(path: Path, *, wait: bool = True):
 
 
 def _collect(root: Path) -> None:
-    """Called under the cache lock; never follows a link or deletes a live lease."""
+    """Remove stale cache entries while holding the cache lock, preserving links and live leases."""
     for group in root.iterdir():
         if (
             group.name.startswith(".")
@@ -77,6 +78,7 @@ def _collect(root: Path) -> None:
 
 
 def prune(directory: Path | None = None) -> None:
+    """Collect unleased cache versions and optionally expire agent scratch directories."""
     root = cache_root()
     with _lock(root / ".lock"):
         _collect(root)
@@ -120,7 +122,10 @@ def prune_scratch(directory: Path) -> None:
 
 @contextmanager
 def acquire(kind: str, key: str, build, *, temporary: bool = False):
-    """Publish once; retain the latest version and every version in active use."""
+    """Lease a versioned tool directory, building and publishing it once if absent.
+
+    The lease protects the version from collection; temporary entries expire on release.
+    """
     root = cache_root()
     group = root / kind
     target = group / key
@@ -158,4 +163,5 @@ def acquire(kind: str, key: str, build, *, temporary: bool = False):
 
 
 def temporary_directory():
+    """Lease a private temporary cache directory and remove it when the lease ends."""
     return acquire("temporary", uuid4().hex, lambda path: None, temporary=True)

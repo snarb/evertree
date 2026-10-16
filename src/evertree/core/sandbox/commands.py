@@ -55,6 +55,7 @@ class MacCommandGroups:
         self._thread.start()
 
     def wrap(self, process_id: str, argv: list[str], arg0) -> list[str]:
+        """Wrap a command in the ownership handshake before it can create descendants."""
         nonce = uuid4().hex
         with self._lock:
             if self._closed.is_set():
@@ -106,6 +107,7 @@ class MacCommandGroups:
                     continue
 
     def release(self, process_id: str):
+        """Stop and forget all command groups belonging to a remote process identity."""
         with self._lock:
             for nonce, identity in list(self._commands.items()):
                 if identity == process_id:
@@ -115,6 +117,7 @@ class MacCommandGroups:
                     del self._commands[nonce]
 
     def close(self):
+        """Stop all owned command groups and release the handshake server and private directory."""
         with self._lock:
             if self._closed.is_set():
                 return

@@ -31,6 +31,7 @@ class LearningStore:
         self.dispatcher = UpdateDispatcher()
 
     def create_state(self, kind: str, *, state_id: str | None = None, **settings: Any) -> str:
+        """Allocate estimator state with validated kind-specific settings and initial parameters."""
         identity = state_id or str(uuid4())
         if kind == "beta_bernoulli":
             settings = {"alpha": settings.get("alpha", 1.0), "beta": settings.get("beta", 1.0)}
@@ -79,16 +80,19 @@ class LearningStore:
         return identity
 
     def state(self, state_id: str) -> dict[str, Any]:
+        """Return an independent copy of estimator state rather than exposing mutable storage."""
         with self._lock:
             return thaw_json(freeze_json(self._states[state_id]))
 
     def register_binding(self, binding: LearningBinding) -> None:
+        """Declare how a learning target may update an existing estimator state."""
         if binding.state not in self._states:
             raise ValueError("Learning binding addresses unknown state")
         if binding not in self._bindings:
             self._bindings.append(binding)
 
     def predict(self, state_id: str, inputs: Any = None) -> Any:
+        """Compute the selected estimator's current prediction without changing its state."""
         state = self.state(state_id)
         params, settings = state["parameters"], state["settings"]
         if state["kind"] == "beta_bernoulli":
@@ -116,6 +120,7 @@ class LearningStore:
         raise ValueError("Unsupported estimator")
 
     def statistics(self, state_id: str) -> dict[str, Any]:
+        """Report observation counts and empirical statistics separately from prior-backed predictions."""
         state = self.state(state_id)
         params = state["parameters"]
         result: dict[str, Any] = {
@@ -147,6 +152,7 @@ class LearningStore:
         return result
 
     def snapshot(self) -> dict[str, Any]:
+        """Capture estimator states, bindings, credits, contribution ledger and update receipts."""
         with self._lock:
             return {
                 "states": thaw_json(freeze_json(self._states)),
@@ -160,6 +166,7 @@ class LearningStore:
 
     @classmethod
     def from_snapshot(cls, data: Mapping[str, Any]) -> LearningStore:
+        """Restore estimator state and the records needed to deduplicate or retract learning."""
         store = cls()
         store._states = thaw_json(freeze_json(data.get("states", {})))
         for binding in data.get("bindings", ()):

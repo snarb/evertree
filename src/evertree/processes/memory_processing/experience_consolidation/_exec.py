@@ -72,5 +72,6 @@ synthesis. Unsupported but useful hypotheses may remain scoped claims requiring 
 
 
 async def run(ctx, context: dict):
+    """Propose source-backed generalizations across experience without applying graph changes."""
     output = await ask(ctx, instructions=INSTRUCTIONS, data=context, schema=SCHEMA)
     return validate_analytical_output(output, context)

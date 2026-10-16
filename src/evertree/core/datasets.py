@@ -28,6 +28,7 @@ def freeze_json(value: Any) -> Any:
 
 
 def thaw_json(value: Any) -> Any:
+    """Convert frozen dataset values into independent mutable JSON containers."""
     if isinstance(value, Mapping):
         return {key: thaw_json(child) for key, child in value.items()}
     if isinstance(value, (tuple, list)):
@@ -36,6 +37,7 @@ def thaw_json(value: Any) -> Any:
 
 
 def content_revision(value: Any) -> str:
+    """Hash canonical JSON content to identify an immutable dataset or evaluation artifact."""
     encoded = json.dumps(
         thaw_json(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
     ).encode("utf-8")
@@ -72,10 +74,12 @@ class EvaluationCase:
 
     @property
     def revision(self) -> str:
+        """Return the content hash of this evaluation case, including protected outcomes."""
         return content_revision(self.to_dict())
 
     @property
     def independence_keys(self) -> frozenset[str]:
+        """Identify shared sources, trace events and groups that compromise holdout independence."""
         keys = {"source:" + source for source in self.source_ids}
         keys.update("trace:" + str(ref.event_ref) for ref in self.source_refs)
         if self.independence_group:
@@ -83,10 +87,11 @@ class EvaluationCase:
         return frozenset(keys)
 
     def program_inputs(self) -> dict[str, Any]:
-        """Only these arguments are delivered to the program under evaluation."""
+        """Return only candidate-visible inputs, excluding reference outcomes and evaluation rules."""
         return thaw_json(self.inputs)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize an evaluation case with protected outcomes and independence sources."""
         result = {
             "id": self.id,
             "inputs": thaw_json(self.inputs),
@@ -106,6 +111,7 @@ class EvaluationCase:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> EvaluationCase:
+        """Restore an evaluation case, including structured trace source references."""
         values = dict(data)
         values["source_refs"] = tuple(
             TraceOutputRef(**ref) for ref in values.get("source_refs", ())
@@ -134,9 +140,11 @@ class DatasetRevision:
 
     @property
     def revision(self) -> str:
+        """Return the content hash pinning this dataset and its evaluation policy."""
         return content_revision(self.to_dict())
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize a pinned dataset with its cases and aggregation policy."""
         return {
             "dataset_id": self.dataset_id,
             "name": self.name,
@@ -149,6 +157,7 @@ class DatasetRevision:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> DatasetRevision:
+        """Restore a dataset revision and require the supported weighted-mean policy."""
         values = dict(data)
         if values.pop("aggregation_policy", "weighted_mean") != "weighted_mean":
             raise ValueError("Dataset aggregation must be weighted_mean")
@@ -157,6 +166,7 @@ class DatasetRevision:
 
 
 def validate_holdout(dataset: DatasetRevision) -> None:
+    """Require a nonempty evaluation dataset without source references into agent memory."""
     if dataset.purpose != "evaluation":
         raise ValueError("A holdout must be an evaluation dataset")
     if not dataset.cases:
@@ -181,6 +191,7 @@ class DatasetStore:
         self._exposures: dict[str, set[str]] = {}
 
     def add(self, dataset: DatasetRevision) -> str:
+        """Store an immutable dataset revision and make it the latest version of its dataset."""
         revision = dataset.revision
         self._versions[revision] = dataset
         self._latest[dataset.dataset_id] = revision
@@ -196,6 +207,7 @@ class DatasetStore:
         target_metrics: tuple[str, ...] = (),
         description: str | None = None,
     ) -> DatasetRevision:
+        """Construct and register a dataset revision from evaluation or training cases."""
         dataset = DatasetRevision(
             dataset_id or str(uuid4()),
             name,
@@ -208,12 +220,15 @@ class DatasetStore:
         return dataset
 
     def get(self, revision: str) -> DatasetRevision:
+        """Read a dataset by its exact content revision."""
         return self._versions[revision]
 
     def latest(self, dataset_id: str) -> DatasetRevision:
+        """Read the most recently registered revision of a dataset identity."""
         return self.get(self._latest[dataset_id])
 
     def mark_exposed(self, candidate_lineage: str, revision: str) -> None:
+        """Record case independence keys as material already exposed to a candidate lineage."""
         if not candidate_lineage:
             raise ValueError("Exposure requires a stable candidate lineage")
         exposed = self._exposures.setdefault(candidate_lineage, set())
@@ -221,6 +236,7 @@ class DatasetStore:
             exposed.update(case.independence_keys)
 
     def mark_training(self, candidate_lineage: str, revision: str) -> None:
+        """Mark an explicitly designated training dataset as exposed to a candidate lineage."""
         if self.get(revision).purpose != "training":
             raise ValueError("Training requires an explicitly designated training dataset")
         self.mark_exposed(candidate_lineage, revision)
@@ -228,12 +244,14 @@ class DatasetStore:
     def independent_cases(
         self, candidate_lineage: str, revision: str
     ) -> tuple[EvaluationCase, ...]:
+        """Select cases whose sources do not overlap the lineage's exposed material."""
         exposed = self._exposures.get(candidate_lineage, set())
         return tuple(
             case for case in self.get(revision).cases if not (case.independence_keys & exposed)
         )
 
     def require_holdout(self, candidate_lineage: str, revision: str) -> DatasetRevision:
+        """Require a nonempty holdout whose sources do not overlap the candidate lineage's exposure."""
         dataset = self.get(revision)
         validate_holdout(dataset)
         if len(self.independent_cases(candidate_lineage, revision)) != len(dataset.cases):
@@ -241,11 +259,13 @@ class DatasetStore:
         return dataset
 
     def inherit_exposure(self, source_lineage: str, candidate_lineage: str) -> None:
+        """Carry source exposure from an ancestor candidate into a descendant lineage."""
         self._exposures.setdefault(candidate_lineage, set()).update(
             self._exposures.get(source_lineage, set())
         )
 
     def snapshot(self) -> dict[str, Any]:
+        """Capture immutable dataset versions, latest pointers and lineage exposure records."""
         return {
             "versions": {key: value.to_dict() for key, value in self._versions.items()},
             "latest": dict(self._latest),
@@ -254,6 +274,7 @@ class DatasetStore:
 
     @classmethod
     def from_snapshot(cls, data: Mapping[str, Any]) -> DatasetStore:
+        """Restore dataset versions, checking their content hashes and latest pointers."""
         store = cls()
         for revision, values in data.get("versions", {}).items():
             dataset = DatasetRevision.from_dict(values)

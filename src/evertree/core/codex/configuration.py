@@ -227,6 +227,7 @@ def create_client(
     handler=None,
     model_catalog=None,
 ):
+    """Configure a Codex client with only the capabilities authorized for this invocation."""
     from codex_cli_bin import bundled_codex_path
     from openai_codex.client import CodexClient, CodexConfig
 
@@ -283,6 +284,10 @@ def create_client(
 
 
 async def computation_catalog(state_dir: Path, create_client, model_name=MODEL, effort=EFFORT):
+    """Write a pinned single-model capability catalog and return its path and digest.
+
+    Refresh missing SDK metadata without starting a model turn.
+    """
     cache = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")) / "models_cache.json"
     if not cache.is_file():
         # model/list refreshes public metadata without starting/billing a turn.
@@ -327,6 +332,7 @@ async def computation_catalog(state_dir: Path, create_client, model_name=MODEL, 
 
 
 def thread_config(client, workspace: Path, command_environment=None) -> dict[str, Any]:
+    """Build thread settings that disable inherited MCP servers and replace inherited shell values."""
     # Empty maps merge with inherited TOML maps; they do not remove entries.
     # Inspect names only and explicitly disable every effective MCP server.
     effective = _request(client, "config/read", {"cwd": str(workspace), "includeLayers": False})[

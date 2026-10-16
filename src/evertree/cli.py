@@ -25,6 +25,7 @@ def _positive(value: str) -> int:
 
 
 def parser() -> argparse.ArgumentParser:
+    """Define EverTree command-line operations and their transport and agent-home options."""
     root = argparse.ArgumentParser(prog="evertree", description="Local EverTree agent")
     root.add_argument(
         "--home", type=Path, default=Path.cwd(), help="Agent directory (default: current directory)"
@@ -79,11 +80,12 @@ def parser() -> argparse.ArgumentParser:
 
 
 def emit(value: Any) -> None:
+    """Write a command result as indented JSON to stdout."""
     print(json.dumps(json_value(value), ensure_ascii=False, indent=2, allow_nan=False), flush=True)
 
 
 async def approve(request: dict[str, Any]) -> bool:
-    """No assumed consent: unattended invocation denies boundary expansion."""
+    """Ask for explicit boundary-expansion consent, denying unattended requests."""
     if not sys.stdin.isatty():
         return False
     print("EverTree requests approval for:", file=sys.stderr)
@@ -93,6 +95,7 @@ async def approve(request: dict[str, Any]) -> bool:
 
 
 async def doctor(home: Path) -> tuple[dict[str, Any], int]:
+    """Check provider and native sandbox readiness, returning a diagnostic result and exit status."""
     provider = CodexProvider(state_dir=home / ".state" / "codex-runtime")
     try:
         provider_status = await provider.doctor()
@@ -122,6 +125,7 @@ async def doctor(home: Path) -> tuple[dict[str, Any], int]:
 
 
 async def consume(agent: EverTree, task_id: str, *, as_json: bool) -> tuple[dict[str, Any], int]:
+    """Deliver task answers to stdout and acknowledge them before reporting the task outcome."""
     answer = ""
     async for event in agent.events():
         if event.task_id != task_id:
@@ -194,6 +198,7 @@ async def _chat(agent: EverTree, *, as_json: bool) -> int:
 
 
 async def dispatch(args: argparse.Namespace) -> int:
+    """Execute the selected CLI operation and return its process exit status."""
     home = args.home.expanduser().resolve()
     if args.command == "doctor":
         result, code = await doctor(home)
@@ -284,6 +289,7 @@ async def dispatch(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Parse CLI arguments and run the selected asynchronous agent operation."""
     args = parser().parse_args(argv)
     configure_logging()
     try:

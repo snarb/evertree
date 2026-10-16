@@ -20,6 +20,7 @@ def process_slug(name: str) -> str:
 
 
 def process_directory(graph: GraphStore, identity: int) -> str:
+    """Derive a process's Program directory from its SUBTYPE_OF ancestry."""
     root = graph.find("SelfProcess")
     node = graph.get(identity)
     lineage = (node, *graph.ancestors(identity))

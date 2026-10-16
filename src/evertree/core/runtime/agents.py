@@ -13,7 +13,12 @@ from ..values import json_value
 
 
 async def run_agent(ctx, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
-    """Replay each callback in workflow code, including its local computations."""
+    """Run a Program's LLM dialogue with its declared tools through durable exchanges.
+
+    Tool handlers execute in workflow code and run again during recovery to rebuild
+    local state; their durable operations replay recorded results. A successful tool
+    matching stop_when ends the dialogue early and returns its name and result.
+    """
     if type(max_tool_calls) is not int or not 1 <= max_tool_calls <= 1000:
         raise ValueError("max_tool_calls must be between 1 and 1000")
     ctx._agent_sequence = getattr(ctx, "_agent_sequence", 0) + 1
@@ -90,6 +95,7 @@ class ProgramAgents:
 
     @property
     def running(self):
+        """Whether any transient Program model invocation is still active."""
         return any(not item.task.done() for item in self._invocations.values())
 
     @staticmethod
@@ -116,6 +122,7 @@ class ProgramAgents:
 
     @staticmethod
     def _acknowledge(invocation, history):
+        """Resolve a pending provider callback only when workflow history matches the delivered call."""
         if history == invocation.history:
             return
         event = invocation.delivered
@@ -135,6 +142,7 @@ class ProgramAgents:
         invocation.delivered = None
 
     async def next(self, payload, metadata):
+        """Acknowledge prior tool results and return the next tool call or model completion."""
         key = self._key(payload["invocation_id"], metadata)
         history = self._history(payload.get("history", []))
         request = json.loads(json.dumps(payload["request"], allow_nan=False))
@@ -185,6 +193,7 @@ class ProgramAgents:
             return event
 
     async def _produce(self, invocation, definitions):
+        """Bridge provider tool callbacks to workflow events, restoring the transcript after restart."""
         from evertree.common.structured import validate
 
         async def handle_tool(name, arguments):
@@ -246,6 +255,7 @@ class ProgramAgents:
             await invocation.queue.put({"kind": "error", "error": invocation.error})
 
     async def close(self, identity, metadata, *, history=None, drain=False):
+        """Finish an invocation, optionally draining final provider events after a terminal tool."""
         key = self._key(identity, metadata)
         invocation = self._invocations.get(key)
         if invocation is None:
@@ -290,5 +300,6 @@ class ProgramAgents:
         await asyncio.gather(invocation.task, return_exceptions=True)
 
     async def close_all(self):
+        """Cancel all transient model invocations and their pending tool calls."""
         invocations, self._invocations = self._invocations, {}
         await asyncio.gather(*(self._stop(item) for item in invocations.values()))

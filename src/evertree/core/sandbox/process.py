@@ -22,6 +22,7 @@ class SandboxLimits:
 
 
 def sandbox_backend() -> str:
+    """Select the native isolation backend supported by this operating system."""
     if os.name == "nt":
         return "app_container"
     if sys.platform == "darwin":
@@ -38,10 +39,22 @@ class SandboxedProcess(Protocol):
     stderr: BinaryIO
     command_environment: dict[str, str]
 
-    def poll(self) -> int | None: ...
-    def wait(self, timeout: float | None = None) -> int: ...
-    def terminate(self) -> None: ...
-    def close(self) -> None: ...
+    def poll(self) -> int | None:
+        """Return the sandboxed process exit code, or None while it is running."""
+        ...
+
+    def wait(self, timeout: float | None = None) -> int:
+        """Wait for process exit and return its code; timeout is measured in seconds."""
+        ...
+
+    def terminate(self) -> None:
+        """Stop the owned sandbox process tree and wait for termination."""
+        ...
+
+    def close(self) -> None:
+        """Stop owned processes and release sandbox handles, streams and temporary resources."""
+        ...
+
     def __enter__(self) -> Self: ...
     def __exit__(self, *args) -> None: ...
 
@@ -58,6 +71,7 @@ def start_process(
     profile_dir: Path | None = None,
     include_core: bool = True,
 ) -> SandboxedProcess:
+    """Launch a process under native isolation with explicit readable and writable paths."""
     if sandbox_backend() == "app_container":
         from .appcontainer import SandboxedProcess as implementation
     else:

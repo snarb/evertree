@@ -22,6 +22,7 @@ TASK_STATUSES = TERMINAL_STATUSES | {"queued", "running", "waiting", "suspended"
 
 
 def utc_now() -> str:
+    """Return the current UTC timestamp for task lifecycle records."""
     return datetime.now(UTC).isoformat()
 
 
@@ -63,6 +64,7 @@ class TaskSpecification:
             object.__setattr__(self, name, tuple(values))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the task objective, success criteria and specification revision."""
         return {
             "objective": self.objective,
             "success_criteria": list(self.success_criteria),
@@ -74,6 +76,7 @@ class TaskSpecification:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> TaskSpecification:
+        """Restore a validated task specification from its serialized fields."""
         return cls(**dict(data))
 
 
@@ -91,6 +94,7 @@ class ExecutionBudget:
         object.__setattr__(self, "resources", freeze_json(values))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize resource allocations and their justification."""
         return {"resources": dict(self.resources), "reason": self.reason}
 
 
@@ -154,17 +158,24 @@ class TaskState:
 
     @property
     def task_id(self) -> str:
+        """Return the stable task identity used by runtime and attention."""
         return self.id
 
     @property
     def objective(self) -> str:
+        """Return the objective from the task's current specification."""
         return self.specification.objective
 
     @property
     def terminal(self) -> bool:
+        """Whether the task has a final success, failure or cancellation outcome."""
         return self.status in TERMINAL_STATUSES
 
     def remaining(self, resource: str, *, self_improvement: bool = False) -> float | None:
+        """Return the remaining resource allowance, or None without an allocated limit.
+
+        self_improvement also applies the task's percentage subbudget.
+        """
         if self.execution_budget is None or resource not in self.execution_budget.resources:
             return None
         limit = self.execution_budget.resources[resource]
@@ -182,6 +193,7 @@ class TaskState:
 
     @property
     def budget_exhausted(self) -> bool:
+        """Whether any allocated execution resource has reached its limit."""
         return self.execution_budget is not None and any(
             self.spent.get(key, 0) >= limit
             for key, limit in self.execution_budget.resources.items()
@@ -189,9 +201,11 @@ class TaskState:
 
     @property
     def hard_limit_reached(self) -> bool:
+        """Whether usage has reached any explicit user resource limit."""
         return any(self.spent.get(key, 0) >= limit for key, limit in self.hard_limits.items())
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize task lifecycle state with its specification and resource allocations."""
         values = {
             name: thaw_json(value)
             for name, value in self.__dict__.items()
@@ -205,6 +219,7 @@ class TaskState:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> TaskState:
+        """Restore task lifecycle state with typed specification and execution budget."""
         values = thaw_json(freeze_json(dict(data)))
         values["specification"] = TaskSpecification.from_dict(values["specification"])
         if values.get("execution_budget") is not None:
@@ -232,6 +247,7 @@ class TaskStore:
         hard_limits: Mapping[str, float] | None = None,
         deadline: str | None = None,
     ) -> TaskState:
+        """Register an open task with its initial specification, source identities and hard limits."""
         source_ids = tuple(source_ids)
         spec = (
             objective
@@ -258,14 +274,17 @@ class TaskStore:
         return state
 
     def get(self, task_id: str) -> TaskState:
+        """Return the mutable lifecycle state of a task by identity."""
         return self._tasks[task_id]
 
     def all(self) -> tuple[TaskState, ...]:
+        """Return all registered task states, including terminal tasks."""
         return tuple(self._tasks.values())
 
     def revise_specification(
         self, task_id: str, specification: TaskSpecification, *, provenance: str
     ) -> TaskSpecification:
+        """Advance an open task's specification by one revision with mandatory provenance."""
         state = self.get(task_id)
         if state.terminal or not provenance:
             raise ValueError("A specification revision needs an open task and provenance")
@@ -292,6 +311,7 @@ class TaskStore:
         *,
         reason: str,
     ) -> None:
+        """Allocate execution resources and a self-improvement percentage to an open task."""
         state = self.get(task_id)
         if state.terminal:
             raise ValueError("Cannot assign budget to a completed task")
@@ -331,6 +351,7 @@ class TaskStore:
         operation_id: str,
         self_improvement: bool = False,
     ) -> None:
+        """Charge resource usage once per operation_id, including any self-improvement allocation."""
         amount = _finite_nonnegative(amount, resource)
         record = {
             "task_id": task_id,
@@ -365,6 +386,7 @@ class TaskStore:
     def set_waiting(
         self, task_id: str, *, waiting_for: Iterable[str], reason: str, execution_stopped: bool
     ) -> None:
+        """Record a return condition only after the task's execution has actually stopped."""
         state = self.get(task_id)
         if state.terminal or not execution_stopped:
             raise ValueError("Waiting task must be open and its execution stopped")
@@ -383,6 +405,7 @@ class TaskStore:
         verification: VerificationResult | None = None,
         completed_at: str | None = None,
     ) -> None:
+        """Record a stopped task's terminal outcome; success requires completed verification."""
         state = self.get(task_id)
         if status not in TERMINAL_STATUSES or state.terminal:
             raise ValueError("Task must move from an open state to a terminal outcome")
@@ -409,6 +432,7 @@ class TaskStore:
         )
 
     def snapshot(self) -> dict[str, Any]:
+        """Capture task states, specification history and idempotent resource-usage records."""
         with self._lock:
             return {
                 "tasks": [state.to_dict() for state in self._tasks.values()],
@@ -422,6 +446,7 @@ class TaskStore:
 
     @classmethod
     def from_snapshot(cls, data: Mapping[str, Any]) -> TaskStore:
+        """Restore tasks while validating specification history and lifecycle consistency."""
         store = cls()
         for raw in data.get("tasks", ()):
             state = TaskState.from_dict(raw)

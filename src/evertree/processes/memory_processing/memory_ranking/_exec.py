@@ -25,6 +25,7 @@ SCHEMA = {
 
 
 async def run(ctx, objective: str, candidates: list[dict]):
+    """Rank only supplied memory groups by objective relevance, without treating retrieval as truth."""
     result = await ask(
         ctx,
         instructions=(

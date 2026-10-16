@@ -50,6 +50,8 @@ class KnowledgeIntegrationMixin:
         return ref
 
     def _integration_context(self, state):
+        """Collect task constraints and source-backed Self context for the integration decision."""
+
         def sourced(node):
             from ..core.graph.types import RelationInstance
             from ..core.semantics.reading import fact_card
@@ -89,6 +91,7 @@ class KnowledgeIntegrationMixin:
         }
 
     def _semantic_metadata(self, state, payload, metadata):
+        """Derive integration authority and stable write scope from the actual running Program."""
         metadata = dict(metadata)
         program = metadata.get("program", {})
         process = self.graph.find("KnowledgeIntegration")
@@ -209,7 +212,7 @@ class KnowledgeIntegrationMixin:
         return refs
 
     def _bounded_experience(self, state, refs):
-        """Large registered values have stable, addressable fragments and an explicit tail."""
+        """Split large retained values into addressable fragments with an explicit unprocessed tail."""
         fragments = state.step_state.setdefault("fragments", {})
         result = []
         for ref in refs:

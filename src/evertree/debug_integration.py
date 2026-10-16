@@ -72,6 +72,7 @@ CONSCIOUS_ANALYSIS = (
 
 
 def load_debug_environment(repository: Path, config: SemanticConfig):
+    """Load repository debug settings without overriding existing environment credentials."""
     names = (config.redis_url_env, config.openai_key_env, "EVERTREE_TEST_REDIS_URL")
     path = repository / ".env"
     if path.is_file():
@@ -140,6 +141,7 @@ class DebugSession:
         self.result = None
 
     def record_experience(self):
+        """Record debug input and the analytical Note as addressable integration sources."""
         run = self.memory.start_run("DebugUserInput", "debug", {}, run_mode="evaluation")
         for text in (USER_TASK, INPUT_TEXT):
             event = self.memory.record(run, "user_input", output=text)
@@ -153,6 +155,7 @@ class DebugSession:
         self.experience_refs.append(note_ref)
 
     async def agent(self, payload, **kwargs):
+        """Run the Program tool dialogue against this debug session's in-process gateway."""
         return await run_agent(self, payload, **kwargs)
 
     async def _model_gateway(self, method, payload):
@@ -164,6 +167,7 @@ class DebugSession:
         return await self.step(method, payload, tool_handler=handler)
 
     async def model(self, payload, *, tool_handler=None):
+        """Invoke the real model and save readable requests and provider transcripts for debugging."""
         request_name = f"model-{len(self.calls):03d}"
         (self.output_dir / f"{request_name}.md").write_text(
             payload["instructions"]
@@ -210,6 +214,7 @@ class DebugSession:
             )
 
     async def step(self, method, payload, *, role="exec", tool_handler=None):
+        """Execute and log an authorized Core operation inside the isolated debug session."""
         authorize_operation(method, role)
         call = {"method": method, "payload": json_value(payload)}
         self.calls.append(call)
@@ -242,6 +247,7 @@ class DebugSession:
             raise
 
     async def call(self, program, arguments):
+        """Run SemanticSearch in process with model-mode gateway authority."""
         if program != "semantic_search":
             raise ValueError(f"Unsupported debug child: {program}")
 
@@ -251,6 +257,7 @@ class DebugSession:
         return SimpleNamespace(**await search(SimpleNamespace(step=read), **arguments))
 
     async def run(self):
+        """Run isolated knowledge integration and save graph, trace and call artifacts even on failure."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
         try:
             missing = [
@@ -264,14 +271,11 @@ class DebugSession:
                 )
             self.index.attach(self.graph)
             self.record_experience()
-            outcome = await integrate(
-                self, self.experience_refs
-            )  # Start stepping into the Program here.
+            outcome = await integrate(self, self.experience_refs)
             self.result = outcome["result"]
             created = [
                 json_value(node) for node in self.graph.nodes() if node.id not in self.seed_ids
             ]
-            # Breakpoint here: inspect created, self.result, self.graph and self.memory.
             return created
         finally:
             await self.agents.close_all()
@@ -293,6 +297,7 @@ class DebugSession:
 
 
 def main():
+    """Run the configured integration debug case and print the artifact directory."""
     configure_logging()
     repository = Path(__file__).resolve().parents[2]
     output_dir = repository / "tmp" / "debug-integration" / uuid4().hex[:12]

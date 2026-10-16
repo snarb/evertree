@@ -116,6 +116,7 @@ class CodexProvider:
             raise
 
     async def doctor(self) -> dict[str, Any]:
+        """Check Codex account, model and isolated native-tool availability without running a user task."""
         client = self._client()
         process_tree = None
         executor = None
@@ -172,6 +173,7 @@ class CodexProvider:
                     await asyncio.to_thread(client.close)
 
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
+        """Stream one authorized Codex invocation, handling tools and retaining public continuation context."""
         if request_id in self._active:
             raise ProviderError("Request is already running")
         if request.session and request.session.provider != self.name:
@@ -717,6 +719,7 @@ class CodexProvider:
             self._active.pop(request_id, None)
 
     async def cancel(self, request_id):
+        """Interrupt a Codex turn and await teardown of its owned invocation resources."""
         invocation = self._active.get(request_id)
         if invocation is None:
             return
@@ -736,6 +739,7 @@ class CodexProvider:
             await asyncio.gather(invocation.task, return_exceptions=True)
 
     async def close(self):
+        """Cancel active Codex invocations and discard retained public continuation history."""
         for request_id in list(self._active):
             await self.cancel(request_id)
         self._histories.clear()

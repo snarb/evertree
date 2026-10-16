@@ -28,6 +28,7 @@ class MacProcessGroup:
         self._lock = threading.RLock()
 
     def close(self):
+        """Kill the owned macOS process group, including descendants."""
         with self._lock:
             if self._closed:
                 return
@@ -39,6 +40,7 @@ class MacProcessGroup:
 
 
 def own_process_tree(pid: int):
+    """Acquire platform process-tree ownership so cancellation also stops descendants."""
     if os.name == "nt":
         return WindowsProcessTree(pid)
     if sys.platform == "darwin":
@@ -117,6 +119,7 @@ class WindowsProcessTree:
                 self._kernel.CloseHandle(process)
 
     def close(self):
+        """Terminate the Windows Job Object tree, await its exit and release ownership handles."""
         if not self._job:
             return
         from ctypes import wintypes as w

@@ -8,6 +8,7 @@ async def run(
     metrics: list[str],
     selected_targets: list[str | int] | None = None,
 ):
+    """Evaluate retained observations and route unmatched prediction cases to credit assignment and review."""
     batch = await ctx.step(
         "evaluation.match",
         {

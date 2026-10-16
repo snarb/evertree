@@ -46,14 +46,17 @@ class BeliefData:
 
     @property
     def Strength(self) -> float:
+        """Return the estimated probability carried by this belief."""
         return self.strength
 
     @property
     def Support(self) -> float:
+        """Return the support attributed to this belief's evidence."""
         return self.support
 
     @property
     def PriorSupport(self) -> float:
+        """Return the support attributed to this belief's prior."""
         return self.prior_support
 
 
@@ -73,17 +76,21 @@ class BeliefReading:
 
     @property
     def strength(self) -> float:
+        """Return the probability from the resolved belief data."""
         return self.data.strength
 
     @property
     def support(self) -> float:
+        """Return the evidence support from the resolved belief data."""
         return self.data.support
 
     @property
     def prior_support(self) -> float:
+        """Return the prior support from the resolved belief data."""
         return self.data.prior_support
 
     def for_alternative(self, alternative: str) -> BeliefData:
+        """Project a categorical reading onto one alternative while preserving support."""
         if self.profile is None:
             raise ContractError("binary belief has no categorical alternatives")
         return dataclasses.replace(self.data, strength=self.profile[alternative])
@@ -134,6 +141,7 @@ class BeliefStore:
     def register_binary(
         self, target: str, prior: float = 0.5, *, prior_backed: bool = False
     ) -> BeliefTarget:
+        """Declare a revisable binary target; prior_backed marks its prior as supported."""
         if not math.isfinite(prior) or not 0 < prior < 1:
             raise ContractError("revisable binary prior must be strictly between zero and one")
         return self._register(BeliefTarget(str(target), (), (float(prior),), prior_backed))
@@ -146,6 +154,7 @@ class BeliefStore:
         *,
         prior_backed: bool = False,
     ) -> BeliefTarget:
+        """Declare exhaustive competing alternatives with a positive normalized prior."""
         alternatives = tuple(alternatives)
         if len(alternatives) < 2 or len(set(alternatives)) != len(alternatives):
             raise ContractError(
@@ -175,9 +184,11 @@ class BeliefStore:
             return target
 
     def target(self, target: str) -> BeliefTarget:
+        """Return the declared contract for a belief target."""
         return self._targets[str(target)]
 
     def set_prior_source(self, target: str, upstream: str, *, applicability: float = 1.0) -> None:
+        """Transfer a compatible upstream prior with applicability weighting, rejecting cycles."""
         with self._lock:
             current, source = self.target(target), self.target(upstream)
             if current.alternatives != source.alternatives or not 0 <= applicability <= 1:
@@ -229,6 +240,11 @@ class BeliefStore:
         observed_scope: Any = None,
         created_by: Any = None,
     ) -> EvidenceAssignment:
+        """Assign or replace one source's evidence contribution to a belief target.
+
+        Contributions are log evidence coordinates. dependency_root groups dependent
+        sources so repeated derivations cannot accumulate independent support.
+        """
         with self._lock:
             contract = self.target(target)
             values = self._contribution(contract, contribution)
@@ -258,11 +274,13 @@ class BeliefStore:
     def revise(
         self, target: str, source_ref: Any, contribution: Any, **kwargs: Any
     ) -> EvidenceAssignment:
+        """Replace the contribution of a previously assigned evidence source."""
         if _source_key(source_ref) not in self._current[str(target)]:
             raise ContractError("cannot revise evidence that was never assigned")
         return self.assign(target, source_ref, contribution, **kwargs)
 
     def retract(self, target: str, source_ref: Any) -> None:
+        """Remove a source's active contribution while preserving assignment history."""
         with self._lock:
             key = _source_key(source_ref)
             if key not in self._current[target]:
@@ -320,6 +338,7 @@ class BeliefStore:
         return assignment
 
     def active_assignments(self, target: str) -> tuple[EvidenceAssignment, ...]:
+        """Return the assignments currently contributing evidence to a target."""
         return tuple(
             self._assignments[identity]
             for identity in sorted(
@@ -338,6 +357,7 @@ class BeliefStore:
     def consolidate(
         self, target: str, sources: Sequence[Any] | None = None, *, created_by: Any = None
     ) -> EvidenceAssignment:
+        """Combine active evidence while preserving per-source contributions for exact retraction."""
         with self._lock:
             requested = {_source_key(source) for source in sources} if sources is not None else None
             components = tuple(
@@ -381,6 +401,10 @@ class BeliefStore:
     def read(
         self, target: str, *, valid_at: datetime | None = None, known_at: datetime | None = None
     ) -> BeliefReading | Any:
+        """Resolve a target's belief with dependency filtering and unsupported-influence caps.
+
+        Return UNKNOWN when the requested knowledge time predates the available state.
+        """
         with self._lock:
             if (
                 known_at is not None
@@ -514,6 +538,7 @@ class BeliefStore:
         return self.assign(target, source_ref, contribution, **kwargs)
 
     def snapshot(self) -> dict:
+        """Capture belief targets, assignment history and current source contributions."""
         with self._lock:
             return {
                 "targets": [json_value(target) for target in self._targets.values()],
@@ -527,6 +552,7 @@ class BeliefStore:
 
     @classmethod
     def from_snapshot(cls, data: dict) -> BeliefStore:
+        """Restore belief contracts and their active evidence from a snapshot."""
         store = cls()
         store._targets = {
             item["id"]: BeliefTarget(**restore_value(item)) for item in data["targets"]

@@ -9,6 +9,7 @@ async def run(
     attribution_weight: float = 1.0,
     ambiguous: bool = False,
 ):
+    """Submit a learning signal through Core credit assignment, planning and transactional update."""
     result = await ctx.step(
         "learning.learn",
         {

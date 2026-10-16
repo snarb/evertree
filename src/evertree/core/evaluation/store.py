@@ -24,6 +24,7 @@ class EvaluationStore:
         self._results: dict[str, EvaluationResult] = {}
 
     def add(self, result: EvaluationResult) -> EvaluationResult:
+        """Register an immutable evaluation result, allowing identical retries by identity."""
         old = self._results.get(result.id)
         if old is not None and old.to_dict() != result.to_dict():
             raise ValueError("An evaluation result is immutable")
@@ -31,9 +32,11 @@ class EvaluationStore:
         return result
 
     def get(self, identity: str) -> EvaluationResult:
+        """Return an evaluation result by its stable identity."""
         return self._results[identity]
 
     def all(self) -> tuple[EvaluationResult, ...]:
+        """Return all retained evaluation results, including unresolved cases."""
         return tuple(self._results.values())
 
     def get_tension_reduction(
@@ -44,6 +47,11 @@ class EvaluationStore:
         *,
         descendants: Mapping[str, Iterable[str]] | None = None,
     ) -> dict[str, Any]:
+        """Compare calibrated prediction unexpectedness across comparable process periods.
+
+        Without baseline_period, use the immediately preceding interval of equal length.
+        Exclude processes lacking evidence or a shared calibration and selection basis.
+        """
         start, end = map(_time, period)
         if start >= end:
             raise ValueError("Period must be a nonempty half-open interval")
@@ -116,10 +124,12 @@ class EvaluationStore:
         }
 
     def snapshot(self) -> dict[str, Any]:
+        """Capture retained evaluation results and their source provenance."""
         return {"results": [result.to_dict() for result in self._results.values()]}
 
     @classmethod
     def from_snapshot(cls, data: Mapping[str, Any]) -> EvaluationStore:
+        """Restore evaluation result variants and enforce immutable identities."""
         store = cls()
         for result in data.get("results", ()):
             store.add(EvaluationResult.from_dict(result))

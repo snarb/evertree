@@ -11,4 +11,5 @@ INSTRUCTIONS = "Construct a task-local plan for the supplied objective, constrai
 
 
 async def run(ctx, context: dict):
+    """Propose task-local steps, known Program calls and unresolved questions without executing them."""
     return await ask(ctx, instructions=INSTRUCTIONS, data=context, schema=SCHEMA)

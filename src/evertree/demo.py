@@ -41,6 +41,7 @@ class DemoProvider:
         self.observed_incident: list[int] | None = None
 
     async def run(self, request_id, request, *, tool_handler=None, approval_handler=None):
+        """Drive the offline skill-development scenario with deterministic model events and real tool callbacks."""
         self.requests.append(request)
         yield AgentEvent("session", {"provider": self.name, "id": request_id})
         if request_id in self.cancelled:
@@ -225,13 +226,16 @@ class DemoProvider:
         yield AgentEvent("completed", {"text": json.dumps(payload), "parsed": payload})
 
     async def cancel(self, request_id):
+        """Mark a demo request as cancelled before further scripted events are emitted."""
         self.cancelled.add(request_id)
 
     async def doctor(self):
+        """Report the offline demo provider as available."""
         return {"provider": self.name, "available": True, "offline": True}
 
     async def close(self):
-        pass
+        """Close the demo provider; no external provider resources are owned."""
+        pass  # noqa: PIE790
 
 
 def _dataset(agent: EverTree, *, repeated: bool):
@@ -381,6 +385,7 @@ async def run_demo(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the offline lifecycle demonstration selected by CLI arguments."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--home", type=Path, default=Path(".state/demo"))
     parser.add_argument(

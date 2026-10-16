@@ -29,6 +29,7 @@ class _Query:
     ordered: list = field(default_factory=list)
 
     def advance(self):
+        """Consume a bounded traversal batch, merging duplicate nodes before ordering completed results."""
         for _ in range(_WORK_LIMIT):
             try:
                 entry = next(self.iterator)
@@ -60,6 +61,7 @@ class GraphQueries:
         self._latest = {}
 
     def release(self, task_id):
+        """Discard all private pagination and traversal state owned by a task."""
         self._pages = {k: v for k, v in self._pages.items() if v[0].task != task_id}
         self._progress = {k: v for k, v in self._progress.items() if k in self._pages}
         self._continuations = {k: v for k, v in self._continuations.items() if k[0] != task_id}
@@ -74,6 +76,7 @@ class GraphQueries:
         return node
 
     def _prepare(self, method, arguments, task_id):
+        """Validate query or walk selections and construct their incremental traversal iterator."""
         args = {key: value for key, value in arguments.items() if value is not None}
         fields = args.setdefault("fields", ["description"])
         if not isinstance(fields, list) or any(f not in _FIELDS for f in fields):
@@ -144,6 +147,7 @@ class GraphQueries:
         return _Query(task_id, self.graph.revision, method, args, iterator, node_result)
 
     def _query(self, args, relation, bindings, clauses, nodes):
+        """Yield matching facts or selected participants, including scan markers for bounded work accounting."""
         for fact in self.graph.facts(relation.id if relation else None):
             schema = relation or self.graph.get(fact.relation_type)
             status = match_fact(self.graph, fact, schema, bindings, clauses, valid_at=args["at"])
@@ -167,6 +171,7 @@ class GraphQueries:
                 yield {"id": fact.id, "status": status, "facts": {fact.id: None}}
 
     def _walk(self, args, relation, clauses):
+        """Traverse relation neighbors with depth and temporal applicability tracking."""
         adjacency = defaultdict(list)
         for fact in self.graph.facts(relation.id):
             status = match_fact(self.graph, fact, relation, {}, clauses, valid_at=args["at"])
@@ -270,6 +275,7 @@ class GraphQueries:
         return values
 
     def _render(self, query, entries, next_cursor):
+        """Project selected graph results into model-facing node and fact records."""
         unknown = sum(item["status"] == "unknown" for item in query.items.values())
         response = {
             "total" if query.complete else "total_at_least": len(query.items),
@@ -339,6 +345,7 @@ class GraphQueries:
         return response
 
     def read(self, method, payload, *, task_id):
+        """Execute or continue an exact graph query within task scope and model output budgets."""
         payload = dict(payload)
         context = payload.pop("_read_context", None) or current_read_context.get()
         validate_action({"action": method, **payload})
@@ -367,6 +374,7 @@ class GraphQueries:
         return response
 
     def _read_page(self, method, payload, *, task_id, context):
+        """Pack a continuation page within both item and serialized model-token limits."""
         payload = dict(payload)
         budget = read_budget(context, self.config.context_fraction)
         model = context["model"]

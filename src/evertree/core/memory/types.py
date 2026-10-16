@@ -100,6 +100,7 @@ class RetentionPolicy:
 
     @property
     def initial_full_retention_period(self) -> timedelta:
+        """Return the interval during which original experience must remain available in full."""
         return self.memory_compaction_ladder[0]
 
 

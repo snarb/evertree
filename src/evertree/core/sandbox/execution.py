@@ -20,7 +20,7 @@ from .python import _key, prepare_python
 
 
 def start_exec_server(state_dir: Path, workspace: Path) -> SandboxedProcess:
-    """Share immutable tools; only this workspace and a temporary profile are writable."""
+    """Start the isolated tool executor with a writable workspace and private temporary profile."""
     from codex_cli_bin import bundled_codex_path
 
     state_dir, workspace = Path(state_dir).resolve(), Path(workspace).resolve()

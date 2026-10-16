@@ -15,6 +15,7 @@ SCHEMA = {
 
 
 async def run(ctx, candidates: list[dict], objective: str, remaining_budget: dict):
+    """Select existing experience for budgeted replay without creating evidence or executing external actions."""
     result = await ask(
         ctx,
         instructions=(

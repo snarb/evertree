@@ -142,6 +142,7 @@ def _fields(value, names):
 
 
 def _node(node):
+    """Project graph objects into semantic model input without runtime and audit bookkeeping."""
     result = _fields(
         node,
         (
@@ -165,7 +166,7 @@ def _node(node):
 
 
 def _material_for_model(material):
-    """Audit metadata stays in Core; the Program selects what helps semantic decisions."""
+    """Prepare integration input from retained source content and decision-relevant task context."""
     context = material["context"]
     task = context.get("task", {})
     result = {
@@ -229,6 +230,7 @@ def _material_for_model(material):
 
 
 def _read_for_model(result):
+    """Project search and describe results to semantic fields; leave paginated graph reads intact."""
     if "returned" in result:
         return result
     if "items" in result:
@@ -253,6 +255,12 @@ def _read_for_model(result):
 
 
 async def run(ctx, experience_refs, focus=None):
+    """Run the knowledge-integration LLM over retained experience using checked semantic tools.
+
+    experience_refs address original trace outputs; focus optionally narrows attention.
+    Successful writes persist immediately with sources. Return their operation records
+    when the model finishes; a later failed tool does not roll back earlier writes.
+    """
     material = await ctx.step(
         "semantic.sources", {"experience_refs": experience_refs, "focus": focus}
     )

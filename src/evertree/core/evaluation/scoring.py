@@ -74,6 +74,7 @@ def evaluate_prediction(
     comparison_key: str | None = None,
     applicable: bool = True,
 ) -> EvaluatedResult | NotApplicableResult | UnresolvedEvaluationResult:
+    """Score a forecast against retained outcomes, reporting unavailable metrics or unresolved evidence."""
     if not applicable:
         return NotApplicableResult(
             reason="Prediction conditions did not apply",

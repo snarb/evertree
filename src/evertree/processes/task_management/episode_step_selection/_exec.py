@@ -27,6 +27,7 @@ SCHEMA = {
 
 
 async def run(ctx, objective: str, sources: list[dict], progress: dict | None = None):
+    """Select the next source spans using half-open Python character offsets and retained progress."""
     output = await ask(
         ctx,
         instructions=(

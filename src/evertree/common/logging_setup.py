@@ -6,6 +6,7 @@ import sys
 
 
 def configure_logging():
+    """Configure stderr logging using EVERTREE_LOG_LEVEL so stdout remains available for protocols."""
     logging.basicConfig(
         level=os.environ.get("EVERTREE_LOG_LEVEL", "INFO").upper(),
         format="%(asctime)s %(levelname)s %(message)s",

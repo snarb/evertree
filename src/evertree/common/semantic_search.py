@@ -4,6 +4,7 @@ import asyncio
 
 
 async def search(ctx, query, kind=None, limit=20):
+    """Try exact graph lookup, then fuse lexical and vector ranks while reporting failed channels."""
     if kind is not None:
         kind = kind.strip().casefold()
     exact = await ctx.step("semantic.lookup", {"query": query, "kind": kind, "limit": limit})

@@ -19,6 +19,7 @@ class ToolsMixin:
     """Internal EverTree method group; state is owned and initialized by EverTree."""
 
     async def _tool(self, task_id, name, args, *, semantic_tools=None):
+        """Apply task and self-improvement resource limits to a tracked conscious tool callback."""
         args = dict(args)
         purpose = args.pop("purpose", "task")
         if purpose not in {"task", "self_improvement"}:
@@ -55,6 +56,7 @@ class ToolsMixin:
             self._improvement.reset(token)
 
     async def _dispatch_tool(self, task_id, name, args, *, semantic_tools=None):
+        """Execute a conscious agent tool within its task and trace authority."""
         from ..common.integration_actions import WRITE_TOOLS
 
         state = self.tasks.get(task_id)
@@ -190,6 +192,7 @@ class ToolsMixin:
         return self._semantic_service
 
     async def _graph_tool(self, task_id, name, args):
+        """Route shared semantic tools through task-scoped reads and checked writes."""
         from ..core.semantics.reading import fact_card, fact_nodes, resolve
         from ..core.values import timestamp
 
@@ -253,6 +256,7 @@ class ToolsMixin:
         )
 
     async def _gateway(self, method, payload):
+        """Service Program gateway requests with task-scoped model, action and Core capabilities."""
         from ..core.operations import authorize_operation
 
         payload = dict(payload)

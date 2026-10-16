@@ -62,6 +62,7 @@ class CodexExecutor:
 
     @property
     def environment(self) -> dict[str, Any]:
+        """Describe the isolated workspace advertised to Codex remote tools."""
         return {
             "environmentId": self.environment_id,
             "cwd": str(self.workspace),
@@ -70,11 +71,13 @@ class CodexExecutor:
 
     @property
     def command_environment(self) -> dict[str, str]:
+        """Return the running executor's restricted shell environment."""
         if self._process is None:
             raise RuntimeError("Executor is not running")
         return dict(self._process.command_environment)
 
     async def start(self) -> dict[str, Any]:
+        """Start and own the isolated exec server, then expose its authenticated bridge to Codex."""
         if self._started or self._closed:
             raise RuntimeError("Executor may be started only once")
         self._started = True
@@ -146,6 +149,7 @@ class CodexExecutor:
             return
 
     async def _receive(self, connection, process):
+        """Handle remote tool messages while enforcing command ownership and isolated shell execution."""
         async for value in connection:
             frame = _frame(value)
             message = json.loads(frame)
@@ -229,6 +233,7 @@ class CodexExecutor:
         stream.flush()
 
     async def _send(self, connection, process):
+        """Relay bounded executor replies, releasing exited command groups before descendant pipes can block."""
         while True:
             line = await asyncio.to_thread(process.stdout.readline, _MAX_FRAME + 1)
             if not line:
@@ -266,6 +271,7 @@ class CodexExecutor:
     async def _handle(self, connection: ServerConnection):
         # Recheck after the handshake so simultaneous authorized upgrades cannot
         # both obtain the sole executor stream.
+        """Own the single executor connection and tear down both relays and processes on disconnect."""
         if self._connection is not None or self._closing or self._process is None:
             await connection.close(code=1008, reason="Executor unavailable")
             return
@@ -299,6 +305,7 @@ class CodexExecutor:
                 await asyncio.to_thread(process.close)
 
     async def close(self):
+        """Stop the executor process tree and wait for bridge and stderr cleanup."""
         async with self._close_lock:
             if self._closed:
                 return

@@ -115,6 +115,8 @@ CANDIDATE_INSTRUCTIONS = (
 
 
 def _all_tools():
+    """Assemble the conscious agent's capability catalog before selecting direct and loadable tools."""
+
     def tool(name, description, properties, required=()):
         if name in {
             "run_program",
@@ -230,6 +232,8 @@ def _all_tools():
 
 
 def semantic_tools():
+    """Return direct graph-read, knowledge-integration and analytical-note tools for consciousness."""
+
     def define(name, description, properties, required, read_only=True):
         return ToolDefinition(
             name,
@@ -317,6 +321,7 @@ def semantic_tools():
 
 
 def tool_sets():
+    """Group available tools for on-demand loading by the conscious agent."""
     from dataclasses import replace
 
     from ..common.integration_actions import WRITE_TOOLS
@@ -413,6 +418,7 @@ def tool_sets():
 
 
 def consciousness_tools():
+    """Return the tools exposed directly to each conscious decision step."""
     from ..core.toolsets import loader_definition
 
     grouped = {t.name for s in tool_sets() for t in s.tools}

@@ -23,6 +23,7 @@ class CommitmentDecision:
 def verification_result(
     required_checks: Iterable[str], results: Mapping[str, bool | None]
 ) -> VerificationResult:
+    """Summarize mandatory checks, distinguishing explicit failure from missing evidence."""
     mandatory = tuple(required_checks)
     failed = tuple(name for name in mandatory if results.get(name) is False)
     missing = tuple(
@@ -42,6 +43,7 @@ def commitment_control(
     uncertainty: bool = False,
     high_impact: bool = False,
 ) -> CommitmentDecision:
+    """Choose automatic commitment or conscious selection from verification and decision risk."""
     if verified is not None and not verified.verified:
         return CommitmentDecision(
             "consciousness_selection", "Mandatory verification is incomplete or failed"
@@ -60,6 +62,7 @@ def get_task_outcome_stats(
     *,
     descendants: Mapping[str, Iterable[str]] | None = None,
 ) -> dict[str, Any]:
+    """Aggregate task outcomes for selected processes and descendants within a time interval."""
     from evertree.core.evaluation.store import _time
 
     start, end = map(_time, period)

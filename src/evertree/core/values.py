@@ -26,10 +26,12 @@ UNKNOWN = _Unknown()
 
 
 def utcnow() -> datetime:
+    """Return the current timezone-aware UTC time for semantic records."""
     return datetime.now(UTC)
 
 
 def timestamp(value: datetime | str) -> datetime:
+    """Parse or normalize a timezone-aware timestamp to UTC; reject naive values."""
     result = datetime.fromisoformat(value) if isinstance(value, str) else value
     if not isinstance(result, datetime) or result.tzinfo is None:
         raise ContractError("timestamps must include a timezone")
@@ -88,6 +90,7 @@ def json_value(value: Any) -> Any:
 
 
 def restore_value(value: Any) -> Any:
+    """Decode safe snapshot markers into immutable semantic values without importing arbitrary classes."""
     if isinstance(value, dict):
         if set(value) == {"$mapping"}:
             return {key: restore_value(item) for key, item in value["$mapping"]}

@@ -52,6 +52,7 @@ PROCESS_GROUPS = {
 
 
 def bootstrap_catalog() -> tuple[dict, ...]:
+    """Describe the seed Program names, roles and source paths used by agent bootstrap."""
     entries = (
         (
             "SemanticSearch",

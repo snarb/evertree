@@ -28,6 +28,7 @@ class SupervisorFeedback:
         object.__setattr__(self, "value", float(self.value))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize numeric supervisor feedback separately from its explanatory comment."""
         return {"value": self.value, "comment": self.comment}
 
 
@@ -43,6 +44,7 @@ class MetricSample:
         object.__setattr__(self, "value", freeze_json(thaw_json(self.value)))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize a metric value and its optional evaluation channel."""
         return {"metric": self.metric, "value": thaw_json(self.value), "channel": self.channel}
 
 
@@ -78,9 +80,11 @@ class EvaluationResult:
             )
 
     def metrics(self) -> dict[str, Any]:
+        """Project metric samples into a name-to-value mapping for result consumers."""
         return {sample.metric: thaw_json(sample.value) for sample in self.metric_samples}
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize evaluation status, metric evidence and recoverable source provenance."""
         return {
             "status": self.status,
             "metric_samples": [sample.to_dict() for sample in self.metric_samples],
@@ -98,6 +102,7 @@ class EvaluationResult:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> EvaluationResult:
+        """Restore the evaluated, unresolved or not-applicable result variant from its status."""
         values = dict(data)
         values["metric_samples"] = tuple(
             MetricSample(**sample) for sample in values.get("metric_samples", ())

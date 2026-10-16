@@ -16,17 +16,22 @@ def _number(value: Any) -> float:
 class EstimatorUpdater(Protocol):
     def apply(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any]:
+        """Return estimator parameters with the prepared contribution applied."""
+        ...
 
     def retract(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
-    ) -> dict[str, Any] | None: ...
+    ) -> dict[str, Any] | None:
+        """Return parameters with a contribution removed, or None if retraction is unsupported."""
+        ...
 
 
 class BetaBernoulliUpdater:
     def apply(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Accumulate weighted binary outcomes without mutating the supplied parameters."""
         result = dict(parameters)
         for sample in data["samples"]:
             outcome = sample["value"]
@@ -42,6 +47,7 @@ class BetaBernoulliUpdater:
     def retract(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Subtract retained binary contributions from sufficient statistics."""
         result = dict(parameters)
         for sample in data["samples"]:
             key = "positive" if sample["value"] else "negative"
@@ -54,6 +60,7 @@ class CategoricalUpdater:
     def apply(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Accumulate weighted outcomes within the estimator's declared category set."""
         result = {
             "counts": dict(parameters["counts"]),
             "observed_count": parameters["observed_count"],
@@ -72,6 +79,7 @@ class CategoricalUpdater:
     def retract(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Subtract retained category contributions from sufficient statistics."""
         result = {
             "counts": dict(parameters["counts"]),
             "observed_count": parameters["observed_count"],
@@ -87,6 +95,7 @@ class MeanUpdater:
     def apply(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Accumulate weighted numeric moments for mean and variance estimates."""
         result = dict(parameters)
         for sample in data["samples"]:
             value, weight = _number(sample["value"]), _number(sample["weight"])
@@ -101,6 +110,7 @@ class MeanUpdater:
     def retract(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Subtract numeric moments, resetting residual statistics after the last observation."""
         result = dict(parameters)
         for sample in data["samples"]:
             value, weight = sample["value"], sample["weight"]
@@ -117,6 +127,7 @@ class LinearRegressionUpdater:
     def apply(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Take weighted gradient steps for the declared feature dimension."""
         result = {
             "weights": list(parameters["weights"]),
             "bias": parameters["bias"],
@@ -142,7 +153,8 @@ class LinearRegressionUpdater:
     def retract(
         self, parameters: dict[str, Any], data: Mapping[str, Any], settings: Mapping[str, Any]
     ) -> None:
-        return None
+        """Return None because gradient contributions cannot be independently retracted."""
+        return None  # noqa: RET501
 
 
 class UpdateDispatcher:
@@ -155,8 +167,9 @@ class UpdateDispatcher:
         }
 
     def get(self, kind: str) -> EstimatorUpdater:
+        """Return the updater registered for an estimator kind."""
         return self._updaters[kind]
 
     def register(self, kind: str, updater: EstimatorUpdater) -> None:
-        """Developer extension point; never exposed as an agent tool."""
+        """Register a trusted estimator updater extension; unavailable to agent tools."""
         self._updaters[kind] = updater

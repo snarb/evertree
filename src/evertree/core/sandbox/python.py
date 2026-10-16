@@ -56,6 +56,7 @@ def _macos_runtime_paths() -> tuple[Path, ...]:
 
 @contextmanager
 def _prepare_macos(include_core):
+    """Assemble a private macOS worker interpreter with only declared dependency paths."""
     from importlib import metadata
 
     from ..environment import _installed_packages
@@ -127,7 +128,7 @@ def _prepare_macos(include_core):
 
 @contextmanager
 def prepare_python(*, include_core: bool = True):
-    """Private source environments with only declared worker dependencies."""
+    """Prepare a private worker Python environment with only declared dependencies."""
     from importlib import metadata
 
     from ..environment import _installed_packages

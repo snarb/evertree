@@ -24,6 +24,7 @@ class LearningObjective:
             raise ValueError("Learning objective needs metrics and an improvement direction")
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the learning metrics, optimization direction and source."""
         return {"metrics": list(self.metrics), "direction": self.direction, "source": self.source}
 
 
@@ -49,6 +50,7 @@ class LearningSignal:
 
     @property
     def metric_samples(self) -> tuple[MetricSample, ...]:
+        """Select evaluation samples named by this signal's learning objective."""
         return tuple(
             sample
             for sample in self.evaluation.metric_samples
@@ -56,6 +58,7 @@ class LearningSignal:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize evaluation evidence, learning objective and observed outcomes."""
         return {
             "evaluation": self.evaluation.to_dict(),
             "objective": self.objective.to_dict(),
@@ -64,6 +67,7 @@ class LearningSignal:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> LearningSignal:
+        """Restore a learning signal with typed evaluation evidence and objective."""
         values = dict(data)
         values["evaluation"] = EvaluationResult.from_dict(values["evaluation"])
         values["objective"] = LearningObjective(**values["objective"])
@@ -85,6 +89,7 @@ class LearningCredit:
         object.__setattr__(self, "context", freeze_json(thaw_json(self.context)))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize resolved credit with its target, signal and attribution weight."""
         return {
             "id": self.id,
             "target": self.target,
@@ -96,6 +101,7 @@ class LearningCredit:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> LearningCredit:
+        """Restore resolved learning credit and its nested signal."""
         values = dict(data)
         values["signal"] = LearningSignal.from_dict(values["signal"])
         return cls(**values)
@@ -121,6 +127,7 @@ class UnresolvedCredit:
         object.__setattr__(self, "context", freeze_json(thaw_json(self.context)))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize unresolved credit with missing requirements and retained observations."""
         return {
             "id": self.id,
             "target": self.target,
@@ -149,6 +156,7 @@ class LearningBinding:
             raise ValueError("Unknown objective direction")
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the target-to-estimator contract and permitted metrics."""
         return {
             "target": self.target,
             "state": self.state,
@@ -172,6 +180,7 @@ class PreparedUpdate:
         object.__setattr__(self, "updater_input", freeze_json(thaw_json(self.updater_input)))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize a prepared estimator update with its source credit."""
         return {
             "id": self.id,
             "source_credit": self.source_credit.to_dict(),
@@ -193,6 +202,7 @@ class CreditRetraction:
     id: str = field(default_factory=lambda: str(uuid4()))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize a credit retraction request with its stable operation identity."""
         return {"id": self.id, "credit": self.credit.to_dict(), "state": self.state}
 
 
@@ -209,4 +219,5 @@ class UpdateReceipt:
             raise ValueError("Unknown update receipt status")
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the recorded outcome of an estimator update transaction."""
         return dict(self.__dict__)

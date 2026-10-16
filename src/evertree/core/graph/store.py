@@ -92,24 +92,29 @@ class GraphStore:
                         logging.getLogger(__name__).exception("Graph change observer failed")
 
     def reserve_id(self) -> int:
+        """Reserve the next graph identity without creating a node."""
         with self._lock:
             identity = self._next_id
             self._next_id += 1
             return identity
 
     def get(self, identity: int) -> Node:
+        """Return the node with this identity, raising KeyError if absent."""
         return self._nodes[identity]
 
     def nodes(self, *, kind: str | None = None) -> tuple[Node, ...]:
+        """Return the current nodes, optionally restricted to one graph kind."""
         return tuple(node for node in self._nodes.values() if kind is None or node.kind == kind)
 
     def find(self, name: str) -> Node | None:
+        """Find one exact normalized name, rejecting ambiguous matches."""
         matches = self.lookup(name)
         if len(matches) > 1:
             raise ContractError("ambiguous graph name; use an identity or kind")
         return matches[0] if matches else None
 
     def lookup(self, query: str | int, *, kind: str | None = None) -> tuple[Node, ...]:
+        """Resolve an identity or normalized exact name, preferring canonical kinds for names."""
         if isinstance(query, bool) or not isinstance(query, (str, int)):
             raise ContractError("graph lookup requires a name or integer identity")
         if isinstance(query, int):
@@ -122,9 +127,11 @@ class GraphStore:
 
     @property
     def revision(self) -> int:
+        """Return the committed change count used to invalidate derived graph reads."""
         return len(self._history)
 
     def facts(self, relation_type: int | str | None = None) -> tuple[RelationInstance, ...]:
+        """Return relation instances, optionally restricted to a relation type."""
         if isinstance(relation_type, str):
             relation = self.find(relation_type)
             if relation is None:
@@ -138,6 +145,7 @@ class GraphStore:
         )
 
     def relation(self, relation_type: int | str) -> _BoundRelation:
+        """Bind a declared relation type for named access-view calls."""
         relation = (
             self.find(relation_type) if isinstance(relation_type, str) else self.get(relation_type)
         )
@@ -153,6 +161,7 @@ class GraphStore:
         name: str | None = None,
         belief_target: str | None = None,
     ) -> RelationInstance:
+        """Allocate and construct a relation instance without applying it to the graph."""
         relation = (
             self.find(relation_type) if isinstance(relation_type, str) else self.get(relation_type)
         )
@@ -169,6 +178,7 @@ class GraphStore:
     def apply(
         self, delta: GraphDelta, *, provenance: Any, at: datetime | None = None
     ) -> GraphChange:
+        """Validate and atomically apply a graph delta with mandatory producer provenance."""
         if self.read_only:
             raise ContractError("historical graph is read-only")
         if provenance is None:
@@ -265,6 +275,7 @@ class GraphStore:
             self._validate_scalar(value, slot, nodes)
 
     def _validate(self, nodes: dict[int, Node]) -> None:
+        """Check relation contracts, references and subtype structure before committing staged nodes."""
         names = set()
         for node in nodes.values():
             if node.kind in CANONICAL_KINDS:
@@ -360,6 +371,7 @@ class GraphStore:
                 validate_clause(self, slot, clause, nodes)
 
     def fact_applicability(self, fact: RelationInstance, at: datetime) -> str:
+        """Determine a fact's temporal applicability from its participating Facets."""
         statuses = set()
         for slot in self.get(fact.relation_type).signature:
             if slot.value_type not in {"node", "concept", "facet"}:
@@ -382,6 +394,7 @@ class GraphStore:
         known_at: datetime | None = None,
         **inputs: Any,
     ) -> Any:
+        """Read a declared relation access view with named bindings and temporal filtering."""
         relation = (
             self.find(relation_type) if isinstance(relation_type, str) else self.get(relation_type)
         )
@@ -433,6 +446,7 @@ class GraphStore:
         return matches
 
     def ancestors(self, identity: int) -> tuple[Node, ...]:
+        """Follow the SUBTYPE_OF chain from the immediate parent to the root."""
         result = []
         parents = {fact.args["type"]: fact.args["supertype"] for fact in self.facts("SUBTYPE_OF")}
         while identity in parents:
@@ -441,6 +455,7 @@ class GraphStore:
         return tuple(result)
 
     def descendants(self, identity: int) -> tuple[Node, ...]:
+        """Return nodes whose SUBTYPE_OF ancestry includes the given identity."""
         return tuple(
             node
             for node in self._nodes.values()
@@ -448,12 +463,14 @@ class GraphStore:
         )
 
     def common_ancestor(self, first: int, second: int) -> Node | None:
+        """Find the nearest shared subtype ancestor, including either node itself."""
         others = {second, *(node.id for node in self.ancestors(second))}
         return next(
             (node for node in (self.get(first), *self.ancestors(first)) if node.id in others), None
         )
 
     def close_facet_state(self, identity: int, valid_until: datetime) -> GraphDelta:
+        """Build a delta closing a Facet interval without applying it."""
         if not isinstance(self.get(identity), Facet):
             raise ContractError("only Facet state can be closed")
         return GraphDelta(updates=(NodeUpdate(identity, {"valid_until": timestamp(valid_until)}),))
@@ -465,6 +482,7 @@ class GraphStore:
         valid_at: datetime | None = None,
         known_at: datetime | None = None,
     ) -> tuple[Facet, ...] | Any:
+        """Read an Instance's state Facets through STATE_IDENTITY with optional temporal filters."""
         matches = self.query_view(
             "STATE_IDENTITY", "get_facets", instance=instance, valid_at=valid_at, known_at=known_at
         )
@@ -473,6 +491,7 @@ class GraphStore:
         return tuple(self.get(match.value) for match in matches)
 
     def changes_of(self, identity: int) -> tuple[GraphChange, ...]:
+        """Return retained changes that created, updated or deleted this identity."""
         return tuple(
             change
             for change in self._history
@@ -480,21 +499,26 @@ class GraphStore:
         )
 
     def created_at(self, identity: int) -> datetime:
+        """Return the recorded time of the identity's first graph change."""
         return self.changes_of(identity)[0].at
 
     def last_changed_at(self, identity: int) -> datetime:
+        """Return the recorded time of the identity's latest graph change."""
         return self.changes_of(identity)[-1].at
 
     def provenance_of(self, identity: int) -> Any:
+        """Return the producer provenance of the identity's creation."""
         return self.changes_of(identity)[0].provenance
 
     def activate(self, identity: int, axis: str, value: float) -> None:
+        """Set a finite activation value on a named axis without a semantic graph delta."""
         self.get(identity)
         if not math.isfinite(value):
             raise ContractError("activation must be finite")
         self._activations.setdefault(identity, {})[axis] = value
 
     def snapshot(self) -> dict:
+        """Capture graph nodes, change history, activations and identity allocation state."""
         with self._lock:
             return {
                 "next_id": self._next_id,
@@ -515,6 +539,7 @@ class GraphStore:
 
     @classmethod
     def from_snapshot(cls, data: dict) -> GraphStore:
+        """Restore graph contents and retained history, including historical read-only state."""
         store = cls()
         store._nodes = {node.id: node for node in map(_node_from_data, data["nodes"])}
         store._next_id = data["next_id"]
@@ -538,6 +563,7 @@ class GraphStore:
         return store
 
     def bootstrap(self, *, provenance: Any) -> dict[str, int]:
+        """Install the foundational relation schema in an empty graph and return named IDs."""
         if self._nodes:
             return {
                 node.name: node.id

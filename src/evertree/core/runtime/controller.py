@@ -94,6 +94,7 @@ class Runtime:
         safe_remove_tree(self.state_dir / "runs", self.state_dir)
 
     def is_running(self, task_id: str | None = None) -> bool:
+        """Whether the runtime owns an execution tree, optionally for a specific task."""
         active = self._active
         return bool(active and (task_id is None or active["task_id"] == task_id))
 
@@ -111,6 +112,11 @@ class Runtime:
         run_mode: Literal["live", "evaluation", "simulation"] = "live",
         run_id: str | None = None,
     ) -> RunResult:
+        """Run a pinned Program in an isolated worker and return its recorded outcome.
+
+        Only one task tree is admitted at a time. run_id identifies an existing workflow
+        when recovering; timeout bounds execution, including worker startup.
+        """
         if self._closed or task_id in self._final_tasks:
             raise ProgramExecutionError("Task is finalized or runtime is closed")
         if timeout <= 0 or run_mode not in ("live", "evaluation", "simulation"):
@@ -253,6 +259,7 @@ class Runtime:
                 output.flush()
 
     async def _read_protocol(self, process):
+        """Route worker requests and trace notifications while retaining ownership of pending replies."""
         pending = set()
         write_lock = asyncio.Lock()
 
@@ -319,6 +326,7 @@ class Runtime:
                     task.cancel()
 
     async def _dispatch(self, request):
+        """Authorize and service worker requests against Core, tracing durable results and child runs."""
         if self._pause_requested:
             self._paused.set()
         await self._gate.wait()
@@ -514,6 +522,7 @@ class Runtime:
             self._gateway_active -= 1
 
     async def deliver(self, run_id: str, observation: Any, *, observation_id: str | None = None):
+        """Send an observation to an admitted workflow; observation_id deduplicates delivery."""
         await self._gate.wait()
         active = self._active
         if active is None or run_id not in {active["run_id"], *active["known_runs"]}:
@@ -532,6 +541,10 @@ class Runtime:
             client.destroy()
 
     async def cancel(self, task_id: str, *, finalize: bool = True) -> None:
+        """Stop a task execution tree and await release of its admission slot.
+
+        With finalize=False the task remains eligible for later recovery.
+        """
         if finalize:
             self._final_tasks.add(task_id)
         active = self._active
@@ -551,6 +564,7 @@ class Runtime:
         await self._trace({"type": "task_stopped", "task_id": task_id, "run_id": active["run_id"]})
 
     async def finish_task(self, task_id: str):
+        """Stop a task execution tree and permanently close its runtime admission."""
         await self.cancel(task_id, finalize=True)
 
     @asynccontextmanager
@@ -588,6 +602,7 @@ class Runtime:
             self._paused.clear()
 
     def snapshot(self):
+        """Capture finalized task IDs and the active workflow configuration reference."""
         return {
             "final_tasks": sorted(self._final_tasks),
             "active": None
@@ -600,11 +615,13 @@ class Runtime:
         }
 
     def restore(self, snapshot):
+        """Restore finalized task admission state while no execution tree is active."""
         if self._active:
             raise RuntimeError("Cannot restore a running runtime")
         self._final_tasks = set(snapshot.get("final_tasks", ()))
 
     async def close(self):
+        """Close runtime admission and stop the active tree without finalizing its task."""
         self._closed = True
         if self._active:
             await self.cancel(self._active["task_id"], finalize=False)

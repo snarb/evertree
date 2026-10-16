@@ -9,6 +9,7 @@ async def run(
     observation_ids: list[str] | None = None,
     context: dict | None = None,
 ):
+    """Request Core credit assignment, retaining unresolved observations when no signal is available."""
     result = await ctx.step(
         "learning.credit",
         {

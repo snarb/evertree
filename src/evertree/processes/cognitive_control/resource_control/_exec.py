@@ -31,6 +31,7 @@ Return the JSON object required by the response schema.
 
 
 async def run(ctx, task_state: dict, evidence: dict | None = None):
+    """Ask the model to reassess task resource allocations from current progress and evidence."""
     return await ask(
         ctx,
         instructions=INSTRUCTIONS,

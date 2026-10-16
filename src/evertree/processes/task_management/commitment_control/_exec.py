@@ -10,6 +10,7 @@ def run(
     uncertainty: bool = False,
     high_impact: bool = False,
 ):
+    """Choose automatic execution or conscious selection from verification, familiarity and risk."""
     check = VerificationResult(**verification) if verification else None
     decision = commitment_control(
         verified=check, familiar=familiar, uncertainty=uncertainty, high_impact=high_impact

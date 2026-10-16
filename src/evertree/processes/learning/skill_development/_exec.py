@@ -11,4 +11,5 @@ INSTRUCTIONS = "Plan development of a reusable skill within the Task's allocated
 
 
 async def run(ctx, context: dict):
+    """Propose a bounded skill-development plan with verification and independent evaluation."""
     return await ask(ctx, instructions=INSTRUCTIONS, data=context, schema=SCHEMA)

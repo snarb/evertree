@@ -37,6 +37,7 @@ class LearningCoordinator:
         attribution_weight: float = 1.0,
         ambiguous: bool = False,
     ) -> UpdateReceipt | UpdateBlocked | UnresolvedCredit:
+        """Assign credit, prepare a compatible update and apply it, or return the blocking result."""
         credit = self.credit_assignment.assign(
             target,
             signal,
@@ -58,6 +59,7 @@ class LearningCoordinator:
         *,
         context: Mapping[str, Any] | None = None,
     ) -> UnresolvedCredit:
+        """Retain unresolved credit for observations lacking an attributable prediction."""
         result = self.credit_assignment.assign(
             target, observation_ids=observation_ids, context=context
         )

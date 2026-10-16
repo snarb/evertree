@@ -58,6 +58,7 @@ MODEL_OPERATIONS = frozenset(
 
 
 def authorize_operation(method: str, role: str) -> None:
+    """Reject gateway operations outside the calling Program role's authority."""
     if role not in {"model", "exec"}:
         raise PermissionError("Unknown Program role")
     if role == "model" and method not in MODEL_OPERATIONS:
@@ -76,6 +77,7 @@ class CoreOperations:
     protected_nodes: set[int] | frozenset[int] = field(default_factory=frozenset)
 
     def predictions(self, run_mode="live") -> PredictionEvaluator:
+        """Build a prediction evaluator using this gateway's stores and observation authority."""
         return PredictionEvaluator(
             self.graph,
             self.memory,
@@ -94,6 +96,7 @@ class CoreOperations:
         source_refs=(),
         integration_operation_id=None,
     ):
+        """Apply a provenance-backed semantic delta while protecting lifecycle and prediction records."""
         protect_prediction_delta(self.graph, delta)
         binding = self.graph.find("PROGRAM_FOR_PROCESS")
         if binding is not None:
@@ -169,6 +172,7 @@ class CoreOperations:
         return signal
 
     def review(self, payload, *, task_id, revision, run_mode):
+        """Queue original unmatched prediction cases for conscious review without duplicating prior reviews."""
         originals = {
             case["id"]: json_value(case)
             for event in self.memory.events
@@ -207,6 +211,7 @@ class CoreOperations:
         return {"queued": sorted(case_ids), "review_ref": json_value(self.memory.output_ref(event))}
 
     def execute(self, method: str, payload: dict, *, metadata: dict):
+        """Authorize and dispatch a Program operation to the appropriate Core subsystem."""
         authorize_operation(method, metadata["program"]["role"])
         payload = dict(payload)
         task_id = metadata["task_id"]

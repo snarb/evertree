@@ -75,6 +75,7 @@ class ProgramsMixin:
         )
 
     def _program(self, identity: int | str, *, allow_inactive=False) -> ProgramSpec:
+        """Resolve a Program or active process role into a spec pinned to the current repository revision."""
         node = self.graph.get(identity) if isinstance(identity, int) else self.graph.find(identity)
         if node is None and isinstance(identity, str):
             node = next(
@@ -105,6 +106,7 @@ class ProgramsMixin:
         )
 
     def programs(self):
+        """List graph-registered Programs as serializable records."""
         return [json_value(node) for node in self.graph.nodes(kind="program")]
 
     def propose_program(
@@ -201,6 +203,7 @@ class ProgramsMixin:
         return {"program": json_value(program), "candidate": dataclasses.asdict(candidate)}
 
     async def _run_program(self, task_id, identity, arguments, *, timeout=None):
+        """Execute or recover the task's pinned pending ProgramRun while metering resource use."""
         spec = self._program(identity)
         async with self._state_lock:
             pending = self._pending_programs.get(task_id)
@@ -230,6 +233,7 @@ class ProgramsMixin:
             self._operations -= 1
 
     async def _runtime_trace(self, event):
+        """Translate worker lifecycle notifications into semantic runs, outputs and task provenance."""
         kind, identity = event["type"], event.get("run_id")
         if kind == "run_started":
             if identity not in self._run_map:
@@ -311,6 +315,7 @@ class ProgramsMixin:
                             )
 
     def _activated(self, branch, revision):
+        """Record accepted Program activation and update the process role binding with provenance."""
         self._validate_program_layout(branch, revision)
         node = self.graph.get(int(branch.program_id))
         run = self.memory.start_run("EvaluationChoice", revision, {"candidate": branch.id})
@@ -385,6 +390,7 @@ class ProgramsMixin:
         }
 
     async def evaluate_candidate(self, candidate_id: str, *, task_id: str):
+        """Compare a candidate with its baseline using the Program's protected independent dataset."""
         from ..core.programs.experiments import evaluate_pair
 
         candidate = self.lifecycle.candidate(candidate_id)

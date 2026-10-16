@@ -72,9 +72,11 @@ class EventSubscription:
         self.close()
 
     async def aclose(self):
+        """Close this event subscription and wake any waiting consumer."""
         self.close()
 
     def close(self):
+        """Unsubscribe from agent events and end iteration for waiting consumers."""
         if not self._closed:
             self._closed = True
             self._owner._subscribers.discard(self)
@@ -153,6 +155,7 @@ class EverTree(
         await self.close()
 
     async def start(self):
+        """Acquire agent ownership, initialize Core and recover persisted task state."""
         if self._started:
             return self
         self.state_dir.mkdir(parents=True, exist_ok=True)
@@ -242,6 +245,7 @@ class EverTree(
         return ref
 
     def prediction_evaluator(self):
+        """Build an evaluator bound to this agent's graph, trace and trusted observations."""
         from .core.predictions import PredictionEvaluator
 
         return PredictionEvaluator(
@@ -311,6 +315,7 @@ class EverTree(
         source_id: str | None = None,
         hard_limits: dict | None = None,
     ):
+        """Record user input and queue a new or open task; source_id deduplicates intake."""
         await self.start()
         if self._closed or not text.strip():
             raise ValueError("A nonempty input and an open agent are required")
@@ -348,6 +353,7 @@ class EverTree(
         return state
 
     async def resume(self, task_id: str, text: str | None = None, *, hard_limits=None):
+        """Requeue an unfinished task for budget review, optionally adding input or replacing hard limits."""
         await self.start()
         state = self.tasks.get(task_id)
         if state.terminal:
@@ -434,6 +440,7 @@ class EverTree(
         return path
 
     async def close(self):
+        """Stop active work, attempt a final backup and release provider, index and agent ownership."""
         if self._closed:
             return
         self._closed = True

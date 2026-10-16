@@ -19,8 +19,13 @@ class ActionOption:
 
 
 class ActionAdapter(Protocol):
-    async def list_actions(self) -> list[ActionOption]: ...
-    async def execute(self, command: Any) -> ActionStatus: ...
+    async def list_actions(self) -> list[ActionOption]:
+        """Offer the external commands currently available through this adapter."""
+        ...
+
+    async def execute(self, command: Any) -> ActionStatus:
+        """Send an offered command and report acceptance, rejection or an unknown outcome."""
+        ...
 
 
 def _key(command):
@@ -60,6 +65,7 @@ class ActionGateway:
             raise
 
     def _overlay_journal(self):
+        """Recover complete journal records without downgrading already resolved action outcomes."""
         if self._journal is None or not self._journal.exists():
             return
         records: dict[str, dict] = {}
@@ -127,6 +133,7 @@ class ActionGateway:
             raise ValueError("Conflicting resolved external-action outcomes")
 
     def bind(self, session: str, adapter: ActionAdapter, *, task_id: str, commit: str):
+        """Bind an adapter session to one task and exact adapter revision."""
         if not session or not task_id or not commit:
             raise ValueError("Action binding requires session, task and exact adapter revision")
         existing = self._sessions.get(session)
@@ -136,6 +143,7 @@ class ActionGateway:
         self._sessions.setdefault(session, {"task_id": task_id, "commit": commit, "issued": {}})
 
     async def list(self, session: str, *, task_id: str, run_mode="live"):
+        """Refresh the commands issued for an authorized live adapter session."""
         self._check(session, task_id, run_mode)
         options = await self._adapters[session].list_actions()
         issued = {
@@ -159,6 +167,11 @@ class ActionGateway:
     async def take(
         self, session, command, *, task_id, operation_id, run_mode="live", approved=False
     ):
+        """Execute an approved, unchanged command issued to this task session.
+
+        operation_id deduplicates retries. An unknown outcome is retained rather than
+        resent, because an interrupted request may already have changed the external system.
+        """
         self._check(session, task_id, run_mode)
         if not operation_id:
             raise ValueError("External operations require stable identities")
@@ -199,6 +212,7 @@ class ActionGateway:
             return result
 
     def reconcile(self, operation_id: str, status: ActionStatus, *, evidence: str):
+        """Resolve an unknown external action outcome using host-supplied evidence."""
         if status not in {"accepted", "rejected"} or not evidence:
             raise ValueError("Reconciliation needs a resolved status and source evidence")
         record = self._operations[operation_id]
@@ -209,6 +223,7 @@ class ActionGateway:
         self._operations[operation_id] = resolved
 
     def pending(self, task_id: str) -> list[dict]:
+        """List a task's external actions whose outcomes still require reconciliation."""
         return [
             {"operation_id": identity, "session": record["session"], "status": "unknown"}
             for identity, record in self._operations.items()
@@ -217,10 +232,12 @@ class ActionGateway:
         ]
 
     def snapshot(self):
+        """Capture action sessions and operation outcomes without live adapter objects."""
         return json.loads(_key({"sessions": self._sessions, "operations": self._operations}))
 
     @classmethod
     def from_snapshot(cls, data, *, journal: Path | None = None):
+        """Restore action records and overlay a durable journal; adapters must be rebound."""
         store = cls()
         store._sessions = json.loads(_key(data.get("sessions", {})))
         store._operations = json.loads(_key(data.get("operations", {})))

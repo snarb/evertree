@@ -20,6 +20,8 @@ _SANDBOX = Path("/usr/bin/sandbox-exec")
 
 
 def _profile(readable: tuple[Path, ...], writable: tuple[Path, ...]) -> str:
+    """Build a deny-by-default Seatbelt policy with only the requested filesystem and runtime access."""
+
     def paths(operation, values):
         rules = []
         for path in dict.fromkeys(Path(value).resolve() for value in values):
@@ -144,12 +146,15 @@ class SandboxedProcess:
             raise
 
     def poll(self) -> int | None:
+        """Return the sandboxed process exit code, or None while it is running."""
         return self._process.poll()
 
     def wait(self, timeout: float | None = None) -> int:
+        """Wait for process exit and return its code; timeout is measured in seconds."""
         return self._process.wait(timeout=timeout)
 
     def terminate(self) -> None:
+        """Stop the owned sandbox process tree and wait for termination."""
         with self._lock:
             if self._process:
                 self._process.poll()
@@ -159,6 +164,7 @@ class SandboxedProcess:
                 self._process.wait(timeout=10)
 
     def close(self) -> None:
+        """Stop owned processes and release sandbox handles, streams and temporary resources."""
         with self._lock:
             if self._closed:
                 return

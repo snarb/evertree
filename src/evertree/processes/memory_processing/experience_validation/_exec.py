@@ -11,4 +11,5 @@ INSTRUCTIONS = "Check supplied experience and its retained sources against the c
 
 
 async def run(ctx, context: dict):
+    """Assess supplied experience for validity, conflicts and limitations using a structured model result."""
     return await ask(ctx, instructions=INSTRUCTIONS, data=context, schema=SCHEMA)

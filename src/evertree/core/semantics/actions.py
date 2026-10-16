@@ -461,7 +461,6 @@ CREATE_ACTIONS = frozenset(
         "define_relation",
     }
 )
-# Actions that create one plain node (plus an optional link fact), unlike define_relation.
 _NODE_CREATES = CREATE_ACTIONS - {"define_relation"}
 
 
@@ -490,6 +489,7 @@ class _DeltaBuilder:
         self.creates = []
 
     def node(self, **fields):
+        """Allocate a node in the pending delta and return its ID without applying the delta."""
         node = node_from_dict({"id": self.graph.reserve_id(), **fields})
         self.creates.append(node)
         return node.id
@@ -513,6 +513,7 @@ class _DeltaBuilder:
         return node
 
     def result(self, identity):
+        """Package the pending graph delta with the operation's returned semantic identity."""
         return GraphDelta(creates=tuple(self.creates)), identity
 
 

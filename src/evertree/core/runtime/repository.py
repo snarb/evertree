@@ -62,8 +62,8 @@ def _validate_git_metadata(repository: Path, *, initializing: bool = False) -> P
 
 
 def _git(repository: Path, *arguments: str) -> bytes:
-    # Candidate repositories contain untrusted .git/config and hooks. Git is
-    # used as an object reader here, never as a way to execute their commands.
+    """Run a local Program-repository Git command with executable extensions disabled."""
+    # Candidate config can name executable hooks and filters; Core must not run them.
     if arguments and arguments[0] == "diff":
         arguments = ("diff", "--no-ext-diff", "--no-textconv", *arguments[1:])
     repository = Path(repository).absolute()
@@ -154,6 +154,7 @@ def _git(repository: Path, *arguments: str) -> bytes:
 
 
 def extract_revision(repository: Path, revision: str, destination: Path) -> None:
+    """Extract an exact committed tree, rejecting unsafe repository metadata, paths and symlinks."""
     destination = _extended(destination)
     resolved = _git(repository, "rev-parse", "--verify", revision + "^{commit}").decode().strip()
     if resolved != revision:

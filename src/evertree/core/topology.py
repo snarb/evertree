@@ -23,6 +23,7 @@ class TopologySignals:
 
 
 def adjacency(graph: GraphStore) -> dict[int, set[int]]:
+    """Build the graph's structural neighbor map from relation participants."""
     edges: dict[int, set[int]] = defaultdict(set)
     for fact in graph.facts():
         relation = graph.get(fact.relation_type)
@@ -44,6 +45,7 @@ def adjacency(graph: GraphStore) -> dict[int, set[int]]:
 def inspect_topology(
     graph: GraphStore, *, hub_degree: int = 4, max_cycles: int = 100
 ) -> TopologySignals:
+    """Report bounded cycle signals, high-degree hubs and structural bridges in the active graph."""
     if hub_degree < 1 or max_cycles < 0:
         raise ContractError("topology limits must be nonnegative")
     directed = adjacency(graph)

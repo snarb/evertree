@@ -24,13 +24,17 @@ class CodeAnchor:
 
     @property
     def concept_name(self) -> str:
+        """Return the graph operator name scoped to this code node and local anchor."""
         return f"op:{self.code_node_id}:{self.op_id}"
 
 
 def parse_anchors(
     source: str, *, code_node_id: int, git_path: str, commit_sha: str
 ) -> tuple[CodeAnchor, ...]:
-    """Only comment tokens bind operators; text inside strings is not an anchor."""
+    """Parse operator anchors for one committed source file.
+
+    Only comment tokens bind operators; matching text inside strings is ignored.
+    """
     ast.parse(source, filename=git_path)
     if not re.fullmatch(r"[0-9a-f]{40,64}", commit_sha):
         raise ContractError("Anchors require an exact Git commit")
@@ -59,6 +63,7 @@ class AnchorResolver:
         self.graph = graph
 
     def install(self, anchors: tuple[CodeAnchor, ...], *, provenance) -> None:
+        """Create missing operator nodes for parsed code anchors with producer provenance."""
         creates = []
         for anchor in anchors:
             if self.graph.find(anchor.concept_name) is None:
@@ -74,6 +79,7 @@ class AnchorResolver:
             self.graph.apply(GraphDelta(creates=tuple(creates)), provenance=provenance)
 
     def resolve_operator(self, code_node_id: int, op_id: str) -> Node:
+        """Resolve a code-local anchor to its installed semantic operator node."""
         node = self.graph.find(f"op:{code_node_id}:{op_id}")
         if node is None or node.kind != "operator":
             raise KeyError(f"Unknown Code Anchor: {code_node_id}:{op_id}")

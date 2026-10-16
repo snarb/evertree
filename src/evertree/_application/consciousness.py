@@ -26,6 +26,7 @@ class ConsciousnessMixin:
     """Internal EverTree method group; state is owned and initialized by EverTree."""
 
     async def _run_queue(self):
+        """Admit queued tasks, recover interrupted work and release execution ownership after each task."""
         while not self._closed and (identity := self.attention.next_task()) is not None:
             state = self.tasks.get(identity)
             self._current_task = identity
@@ -107,6 +108,7 @@ class ConsciousnessMixin:
                     await self._publish("maintenance_error", identity, {"message": str(exc)})
 
     async def _ensure_budget(self, state):
+        """Reassess stale task allocations or wait for a user limit change before execution."""
         if state.hard_limit_reached:
             self.tasks.set_waiting(
                 state.id,
@@ -131,6 +133,7 @@ class ConsciousnessMixin:
         return True
 
     async def _frame(self, state):
+        """Run or recover task framing or resource review under the remaining hard time limit."""
         source_ids = tuple(state.source_ids)
         context = {**state.to_dict(), "inputs": list(self._inputs[state.id])}
         hard_remaining = state.hard_limits.get(
@@ -165,6 +168,7 @@ class ConsciousnessMixin:
         )
 
     def _accept_frame(self, state, result, *, revise=True, source_ids=None):
+        """Apply Program-proposed allocations and any revised task specification or initial step."""
         data = result["result"]
         self.tasks.assign_budget(
             state.id,
@@ -199,6 +203,7 @@ class ConsciousnessMixin:
         await self.backup()
 
     async def _execute_task(self, state):
+        """Advance bounded conscious steps through integration, verification and answer delivery."""
         while not state.terminal:
             if not await self._ensure_budget(state):
                 return
@@ -425,6 +430,7 @@ class ConsciousnessMixin:
             return
 
     async def _stop_task(self, state, status, reason, verification=None):
+        """Finalize a stopped task and record its outcome, evaluation and learning signals."""
         await self.runtime.cancel(state.id)
         self._pending_programs.pop(state.id, None)
         if self._semantic_service is not None:
@@ -511,6 +517,7 @@ class ConsciousnessMixin:
         return result
 
     def _prompt_excluded_runs(self):
+        """Exclude service runs and their descendants from conscious decision evidence."""
         service_programs = {
             node.id
             for node in self.graph.nodes(kind="program")
@@ -538,6 +545,7 @@ class ConsciousnessMixin:
         return excluded
 
     def _prompt_results(self, state):
+        """Select substantive task outputs without duplicating Notes, integration or provider bookkeeping."""
         excluded = self._prompt_excluded_runs()
         results = []
         for event in self._recent_trace(state.id, limit=None):
@@ -560,6 +568,7 @@ class ConsciousnessMixin:
         return results[-40:]
 
     def _conscious_context(self, state, admitted_step):
+        """Build decision context from retained task progress and substantive operation results."""
         work = state.step_state
         inputs = [
             {key: item[key] for key in ("role", "content", "source_ref") if key in item}
@@ -649,6 +658,7 @@ class ConsciousnessMixin:
         return result
 
     def _recent_trace(self, task_id, *, limit=40):
+        """Select task operation evidence while leaving high-volume provider telemetry in storage."""
         runs = {
             self._run_map[identity]
             for identity in self.tasks.get(task_id).program_run_ids

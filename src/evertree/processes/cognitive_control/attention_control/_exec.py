@@ -4,6 +4,7 @@ import math
 
 
 def run(queue: list[dict], current_task: str | None = None):
+    """Select the highest-priority ready task and propose whether to keep or switch focus."""
     ready = []
     for position, task in enumerate(queue):
         priority = task["attention_priority"]

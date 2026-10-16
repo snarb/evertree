@@ -9,6 +9,7 @@ from typing import Any
 
 
 def validate(value: Any, schema: Mapping[str, Any], path: str = "$") -> None:
+    """Validate a model result against the supported JSON Schema subset, reporting its failing path."""
     if "anyOf" in schema:
         for alternative in schema["anyOf"]:
             try:
@@ -66,6 +67,7 @@ def validate(value: Any, schema: Mapping[str, Any], path: str = "$") -> None:
 
 
 async def ask(ctx, *, instructions: str, data: dict, schema: dict):
+    """Request a schema-constrained, read-only model result through a durable Program step."""
     response = await ctx.step(
         "agent.run",
         {

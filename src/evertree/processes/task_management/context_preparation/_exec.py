@@ -11,6 +11,7 @@ def run(
     messages: list[dict] | None = None,
     source_ids: list[str] | None = None,
 ):
+    """Build task context preserving the current input and caller-selected prior sources."""
     context = prepare_context(
         TaskState.from_dict(task_state),
         episode_id,

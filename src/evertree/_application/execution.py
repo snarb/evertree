@@ -66,6 +66,7 @@ class TaskExecutionMixin:
         run_name="Consciousness",
         tool_handler=None,
     ):
+        """Stream a provider invocation into task usage, tool execution and semantic provenance."""
         request = dataclasses.replace(
             request, token_encoding=self.semantic_config.read.token_encoding
         )
@@ -291,11 +292,13 @@ class TaskExecutionMixin:
             self._delivery.pop(identity, None)
 
     async def acknowledge_delivery(self, delivery_id, *, delivered=True):
+        """Resolve a pending answer delivery with the transport's success or failure."""
         _, future = self._delivery[delivery_id]
         if not future.done():
             future.set_result(delivered)
 
     async def cancel(self, task_id):
+        """Cancel a task's provider calls and execution tree, then record its terminal outcome."""
         self._cancel_requested.add(task_id)
         for request_id, owner in list(self._active_requests.items()):
             if owner == task_id:

@@ -32,6 +32,7 @@ _programs: dict[tuple[str, str], object] = {}
 
 
 def json_value(value):
+    """Convert Program output to the JSON values accepted by worker IPC."""
     if hasattr(value, "model_dump"):
         return value.model_dump(mode="json")
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
@@ -49,6 +50,7 @@ def json_value(value):
 
 
 def send(message):
+    """Send a serialized worker protocol message without interleaving concurrent writes."""
     with _send_lock:
         # Isolated Windows pipe streams can use a legacy code page. ASCII JSON
         # escapes preserve Unicode without relying on the process locale.
@@ -93,6 +95,7 @@ def _disconnect():
 
 
 async def rpc(method, payload):
+    """Send a Core operation request and await its correlated reply."""
     request_id = uuid.uuid4().hex
     future = asyncio.get_running_loop().create_future()
     _pending[request_id] = future
@@ -107,6 +110,11 @@ class Context:
         self.run_mode = _configuration["run_mode"]
 
     async def agent(self, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
+        """Run a Program's LLM dialogue using only the declared tools.
+
+        Handlers run at workflow level and replay during recovery. stop_when ends the
+        dialogue after a matching successful tool and returns its name and result.
+        """
         from evertree.core.runtime.agents import run_agent
 
         return await run_agent(
@@ -119,7 +127,7 @@ class Context:
         )
 
     async def step(self, method: str, payload: dict | None = None):
-        """Durable gateway operation, including LLM, graph reads and effects."""
+        """Execute a durable Core operation, retaining its source line for runtime tracing."""
         if not isinstance(method, str) or method.startswith("_"):
             raise ValueError("Invalid gateway method")
         frame = inspect.currentframe().f_back
@@ -133,7 +141,7 @@ class Context:
         return await gateway_step(self.run_id, method, payload or {}, source_line)
 
     async def call(self, program, arguments: dict | None = None):
-        """A child workflow, deliberately called outside a DBOS step."""
+        """Run a child Program at the pinned revision and return its result and feedback."""
         spec = json_value(program)
         if isinstance(spec, (str, int)) and not isinstance(spec, bool):
             spec = await self.step("resolve_program", {"program_id": spec})
@@ -149,6 +157,7 @@ class Context:
         return ProgramResult(result["result"], result.get("feedback"))
 
     async def next_observation(self, timeout_seconds: float = 60):
+        """Wait for an exec Program observation, exposing the idle boundary to Core."""
         if self.program["role"] != "exec":
             raise PermissionError("A model Program cannot receive observations")
         send({"type": "boundary", "state": "waiting", "run_id": self.run_id})
@@ -158,16 +167,19 @@ class Context:
             send({"type": "boundary", "state": "running", "run_id": self.run_id})
 
     async def emit(self, operator: str, *, arguments=None, output=None):
+        """Append a Program operation and its output to the semantic trace."""
         return await self.step(
             "trace",
             {"operator": operator, "arguments": arguments or {}, "output": json_value(output)},
         )
 
     async def checkpoint(self):
+        """Yield a durable coordination boundary to Core."""
         return await self.step("checkpoint", {})
 
 
 def load_program(spec):
+    """Load a Program module only from its pinned committed checkout."""
     root = Path(_configuration["checkout"]).resolve()
     path = (root / spec["git_path"]).resolve()
     if not path.is_relative_to(root) or not path.is_file() or path.suffix != ".py":
@@ -198,6 +210,7 @@ def load_program(spec):
 
 
 async def _main(configuration):
+    """Configure the isolated worker and dispatch its root workflow under DBOS."""
     global _configuration, _loop, DBOS, gateway_step, program_workflow
     from dbos import DBOS, SetWorkflowID
 

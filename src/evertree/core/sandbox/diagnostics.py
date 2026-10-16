@@ -20,6 +20,7 @@ def check_sandbox() -> dict[str, bool | str]:
 
 
 def _check_sandbox(probe: Path) -> dict[str, bool | str]:
+    """Probe actual filesystem isolation in a disposable native sandbox and collect its results."""
     scratch = probe / "scratch"
     scratch.mkdir(parents=True)
     protected = probe / "protected.txt"

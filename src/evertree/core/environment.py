@@ -51,6 +51,7 @@ def _installed_packages(roots=("evertree",)) -> dict[str, str]:
 
 
 def capture_runtime(source_root: Path) -> dict:
+    """Fingerprint trusted runtime sources, Git revision, Python and installed dependencies."""
     source_root = Path(source_root).resolve()
     sources = {}
     for path in sorted(source_root.rglob("*.py")):
@@ -99,6 +100,7 @@ def _git_source(source: Path, *arguments: str) -> str:
 
 
 def require_committed_runtime(source: Path) -> None:
+    """Require clean runtime sources at a revision reachable from the fetched origin refs."""
     repository = Path(_git_source(source, "rev-parse", "--show-toplevel"))
     if _git_source(
         source,

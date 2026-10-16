@@ -21,9 +21,11 @@ class VerificationResult:
 
     @property
     def verified(self) -> bool:
+        """Whether all mandatory verification requirements have been satisfied."""
         return self.status == "verified"
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize verification status, reasons and outstanding checks."""
         return {
             "status": self.status,
             "reasons": list(self.reasons),
@@ -79,11 +81,10 @@ def assess_candidate(
     independent: bool = False,
     uncertainty: Mapping[str, tuple[float, float]] | None = None,
 ) -> VerificationResult:
-    """A fixed veto procedure; passing never itself accepts or activates a candidate.
+    """Assess a candidate against fixed acceptance vetoes without activating it.
 
-    When supplied, uncertainty intervals describe *candidate minus baseline*.
-    A lower bound on practically relevant improvement must pass, not just its
-    optimistic point estimate. The evaluator owns the statistical assumptions.
+    Uncertainty intervals describe candidate minus baseline. Their lower bound must
+    establish practically relevant improvement under the evaluator's assumptions.
     """
     failures: list[str] = []
     missing: list[str] = []

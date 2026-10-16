@@ -43,6 +43,7 @@ Return the JSON object required by the response schema.
 
 
 async def run(ctx, request: str, context: dict | None = None):
+    """Turn a user request into a validated task specification, resource budget and bounded initial step."""
     prepared = task_context(context or {})
     inputs = prepared.get("inputs", [])
     if inputs and inputs[-1] == {"role": "user", "content": request}:

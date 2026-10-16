@@ -15,6 +15,7 @@ SCHEMA = {
 
 
 async def run(ctx, events: list[dict], observation_counts: dict | None = None):
+    """Propose a faithful trace summary and retained events without deleting stored experience."""
     result = await ask(
         ctx,
         instructions=(

@@ -54,6 +54,7 @@ class SemanticConfig:
 
     @classmethod
     def load(cls, home: Path):
+        """Load semantic model, search and read-budget settings from an optional agent configuration file."""
         path = home / "evertree.toml"
         if not path.exists():
             return cls()
