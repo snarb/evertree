@@ -618,19 +618,21 @@ The material is retained so that different representations can be prepared for s
 
 #### Typed Core API
 
-Programs and shared helpers reach Core and the outside world through typed functions: `evertree.core.<domain>.api` (`semantics`, `graph`, `memory`, `learning`, `evaluation`) for Core operations, and `evertree.core.runtime.api` for boundaries: `llm`, `llm_with_tools`, `next_observation`, `list_actions`, `take_action`, `emit` and `checkpoint`. Each function takes the `ProgramContext` first. Program code only passes `ctx` on; candidate validation rejects any `ctx` method call in `processes` and `common`.
+Programs and shared helpers reach Core and the outside world through typed functions: `evertree.core.<domain>.api` (`semantics`, `graph`, `memory`, `learning`, `evaluation`) for Core operations, and `evertree.core.runtime.api` for boundaries: `call_program`, `llm`, `llm_with_tools`, `next_observation`, `list_actions`, `take_action`, `emit` and `checkpoint`. Each function takes the `ProgramContext` first. Program code only passes `ctx` on; candidate validation rejects any `ctx` method call in `processes` and `common`.
 
-The durability contract for Program authors: **write ordinary async Python.** Results of Core operations, LLM calls, external actions, observation waits and child Program calls are saved; after a worker restart they are returned from the journal and local computation runs again. Code must therefore reach the same calls in the same order from the same inputs: do not branch on wall-clock time, randomness or other unsaved external state. `take_action` derives its idempotency key from the action's order in the run unless one is given. Long pure computation is not checkpointed by time; `checkpoint` only yields a coordination boundary to Core.
+The durability contract for Program authors: **write ordinary async Python.** Results of Core operations, LLM calls, external actions, observation waits and child Program calls are saved; after a worker restart they are returned from the journal and local computation runs again. Code must therefore reach the same calls in the same order from the same inputs: do not branch on wall-clock time, randomness or other unsaved external state. `take_action` derives its idempotency key from the action's order in the run unless one is given. Long pure computation is not checkpointed by time; `checkpoint` only gives Core a point to pause for backup or stop a cancelled run.
 
-The wrappers are protected code, so the child Programs they call (`CALLED_PROGRAMS`) are a fixed contract: layout validation rejects a revision whose entrypoint cannot accept the wrapper's arguments.
+Any Program is called with `call_program`. Typed wrappers such as `call_credit_assignment` are protected code, so the child Programs they call (`CALLED_PROGRAMS`) are a fixed contract: layout validation rejects a revision whose entrypoint cannot accept the wrapper's arguments.
 
 #### Native Model Tools in Programs
 
 Programs that need an LLM to inspect information or choose operations provide native tools through:
 
 ```python
-await ctx.llm(
-    payload,
+await llm_with_tools(
+    ctx,
+    prompt,
+    instructions=instructions,
     tools=tool_definitions,
     tool_handler=handle_tool,
     max_tool_calls=40,
@@ -638,7 +640,7 @@ await ctx.llm(
 )
 ```
 
-`payload` contains the model prompt, instructions and call settings. Each tool definition supplies its name, description, input schema and `read_only` status. The async handler receives `(name, arguments)` and returns a JSON-serializable result. `max_tool_calls` bounds calls in this invocation, including calls completed before recovery. An optional `stop_when(name, result)` selects a successful tool result as the invocation's return value. Runtime then rejects further tool execution and waits for the provider to finish so its final usage is accounted for; its final answer text is ignored. User cancellation still interrupts this wait. Without `stop_when`, the model's final response returns to the Program. Structured final outputs remain appropriate for plans, evaluations and other results; they are not an alternative tool-dispatch protocol.
+`prompt` and `instructions` define the model task; an optional `profile` selects a configured model profile. Each tool definition supplies its name, description, input schema and `read_only` status. The async handler receives `(name, arguments)` and returns a JSON-serializable result. `max_tool_calls` bounds calls in this invocation, including calls completed before recovery. An optional `stop_when(name, result)` selects a successful tool result as the invocation's return value. Runtime then rejects further tool execution and waits for the provider to finish so its final usage is accounted for; its final answer text is ignored. User cancellation still interrupts this wait. Without `stop_when`, the model's final response returns to the Program. Structured final outputs remain appropriate for plans, evaluations and other results; they are not an alternative tool-dispatch protocol.
 
 The provider receives actual tool definitions and returns tool calls. Runtime validates the declared capability and arguments, then yields the call to Program workflow code. The callback runs outside the durable model-exchange step, so it can use any Core API function, including child Program calls. Local handler computations run again during recovery; their nested durable operations and child workflows replay their recorded results. This reconstructs Program state without repeating completed effects.
 
@@ -1260,6 +1262,6 @@ get_relations(...) -> list[Relation] # TODO: detail the arguments
 
 ## Semantic Processing Programs
 
-`SemanticProcessing` contains `SemanticSearch.model` (retrieval decisions and filtering) and `KnowledgeIntegration.exec` (selection and organization of recorded experience, preservation of analytical results, and structural repair). Call integration through `graph.integrate(experience_refs, focus=None)` or `ctx.call("knowledge_integration", ...)`; task and Self context come from runtime. Both use the ordinary candidate lifecycle and independent evaluation. Core owns identity resolution, indexes, permissions, validation and atomic writes.
+`SemanticProcessing` contains `SemanticSearch.model` (retrieval decisions and filtering) and `KnowledgeIntegration.exec` (selection and organization of recorded experience, preservation of analytical results, and structural repair). Call integration through `graph.integrate(experience_refs, focus=None)` or `call_program(ctx, "knowledge_integration", ...)`; task and Self context come from runtime. Both use the ordinary candidate lifecycle and independent evaluation. Core owns identity resolution, indexes, permissions, validation and atomic writes.
 
-KnowledgeIntegration calls `ctx.llm` with the shared graph tools also available to consciousness through `graph_write_tools`. Each successful write immediately saves a checked operation with history and sources. Generic `update` and `delete` use the same Core path as creation and relations. Normal model completion ends integration, including when there are no writes; code returns actual successful write results. Errors retain completed operations and do not create a status-resolution obligation for consciousness. Runtime operation keys make replay idempotent. Search child Programs are called outside DBOS steps. This keeps semantic policy learnable without moving authority or credentials out of Core. Public contracts are in [[Semantics Plane#Consciousness Interface]].
+KnowledgeIntegration calls `llm_with_tools` with the shared graph tools also available to consciousness through `graph_write_tools`. Each successful write immediately saves a checked operation with history and sources. Generic `update` and `delete` use the same Core path as creation and relations. Normal model completion ends integration, including when there are no writes; code returns actual successful write results. Errors retain completed operations and do not create a status-resolution obligation for consciousness. Runtime operation keys make replay idempotent. Search child Programs are called outside DBOS steps. This keeps semantic policy learnable without moving authority or credentials out of Core. Public contracts are in [[Semantics Plane#Consciousness Interface]].

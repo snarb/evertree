@@ -148,7 +148,7 @@ async def test_actions_get_stable_operation_ids_in_run_order():
     ]
 
 
-async def test_waiting_and_dialogue_boundaries_delegate_without_an_extra_step():
+async def test_calls_waits_and_dialogues_delegate_without_an_extra_step():
     ctx = RecordingContext()
 
     async def handler(name, arguments):
@@ -160,10 +160,14 @@ async def test_waiting_and_dialogue_boundaries_delegate_without_an_extra_step():
         )
         == "final"
     )
+    assert await runtime.call_program(ctx, "planning", {"x": 1}) == ProgramResult(
+        {"called": "planning"}
+    )
     await runtime.next_observation(ctx, timeout_seconds=5)
     await runtime.emit(ctx, "op", output=1)
     await runtime.checkpoint(ctx)
     assert ctx.steps == []
+    assert ctx.calls == [("planning", {"x": 1})]
     assert ctx.boundaries == [
         (
             "llm",

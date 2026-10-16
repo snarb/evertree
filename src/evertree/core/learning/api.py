@@ -66,8 +66,8 @@ async def assess_evidence(
 ) -> Any:
     """Submit source likelihoods for a declared belief target.
 
-    likelihoods are keyed by scope alternatives or binary false/true. Core always
-    treats them as unsupported influence, since the source does not validate them.
+    likelihoods are keyed by scope alternatives or binary false/true. Core caps their
+    influence as unsupported, since a stored source does not validate the likelihood model.
     """
     return await ctx.step(
         "evidence.assess",

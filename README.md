@@ -77,7 +77,7 @@ uv run python src/evertree/debug_integration.py
 
 - Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`, evolving behavior in `processes`, and reusable Program helpers in `common`.
-- Call other Programs through the runtime, including other roles of the same process; do not import their implementations directly.
+- Call other Programs with `call_program`, including other roles of the same process; do not import their implementations directly.
 - Write Programs as ordinary async Python. Reach Core and the outside world only through the
   typed `evertree.core.<domain>.api` and `evertree.core.runtime.api` functions (for example
   `from evertree.core.memory.api import retrieve`, `from evertree.core.runtime.api import llm`);

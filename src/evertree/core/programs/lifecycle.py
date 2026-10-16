@@ -81,7 +81,7 @@ def validate_program_source(source: str, path: str) -> None:
                 target == "evertree.processes" or target.startswith("evertree.processes.")
             ) and not (own and (target == own or target.startswith(own + "."))):
                 raise LifecycleError(
-                    f"Direct cross-Program import at {path}:{node.lineno}; use ctx.call"
+                    f"Direct cross-Program import at {path}:{node.lineno}; use call_program"
                 )
 
 

@@ -1,4 +1,4 @@
-"""Typed Program boundaries with the outside world: LLM, observations, actions and trace.
+"""Typed Program boundaries: child Programs, LLM, observations, actions and trace.
 
 Program code is ordinary async Python. Only these boundaries, Core operations and
 child Program calls survive a worker restart; local computation reruns on recovery.
@@ -9,19 +9,27 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from ..contracts import ProgramContext
+from ..contracts import ProgramContext, ProgramResult
 
 
-async def llm(
-    ctx: ProgramContext, prompt: str, *, instructions: str, output_schema: dict, mode: str = "model"
-) -> dict:
+async def call_program(
+    ctx: ProgramContext, program: str | int, arguments: dict | None = None
+) -> ProgramResult:
+    """Run another Program by name, slug or id as a child workflow at the same revision.
+
+    A model Program can only call model Programs.
+    """
+    return await ctx.call(program, arguments)
+
+
+async def llm(ctx: ProgramContext, prompt: str, *, instructions: str, output_schema: dict) -> dict:
     """Run one tool-free LLM request; the response carries text and, when valid, parsed."""
     return await ctx.step(
         "llm.run",
         {
             "prompt": prompt,
             "instructions": instructions,
-            "mode": mode,
+            "mode": "model",
             "output_schema": output_schema,
         },
     )
@@ -34,7 +42,6 @@ async def llm_with_tools(
     instructions: str,
     tools,
     tool_handler: Callable[[str, dict], Awaitable[Any]],
-    mode: str = "exec",
     profile: str | None = None,
     max_tool_calls: int = 40,
     stop_when: Callable[[str, Any], bool] | None = None,
@@ -44,9 +51,11 @@ async def llm_with_tools(
     Returns the final response, or {"tool", "result"} once stop_when accepts a successful
     tool result. ValueError, TypeError and PermissionError from the handler are reported
     to the model; other errors fail the call. The handler may use any Core API function.
+    Core limits a model Program to read-only tools. profile selects a configured model
+    profile ("remember").
     """
     # Not one step: each model exchange is saved separately so handler operations replay.
-    payload = {"mode": mode, "instructions": instructions, "prompt": prompt}
+    payload = {"mode": "exec", "instructions": instructions, "prompt": prompt}
     if profile is not None:
         payload["profile"] = profile
     return await ctx.llm(
@@ -94,5 +103,8 @@ async def emit(ctx: ProgramContext, operator: str, *, arguments=None, output=Non
 
 
 async def checkpoint(ctx: ProgramContext) -> Any:
-    """Yield a durable coordination boundary to Core, for example between long work chunks."""
+    """Give Core a point to pause for backup or stop a cancelled run, e.g. in long local work.
+
+    It saves no local state: recovery still reruns the local computation.
+    """
     return await ctx.checkpoint()

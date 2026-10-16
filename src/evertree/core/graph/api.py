@@ -13,8 +13,5 @@ async def describe(ctx: ProgramContext, subject: str | int) -> Any:
 
 
 async def read(ctx: ProgramContext, name: str, arguments: dict) -> Any:
-    """Run the graph read tool name (for example query or walk) with its tool arguments.
-
-    Core validates arguments against the same schema it publishes as the LLM tool.
-    """
+    """Run a graph read tool (for example query, walk or read_property) by name with its arguments."""
     return await ctx.step("graph." + name, arguments)
