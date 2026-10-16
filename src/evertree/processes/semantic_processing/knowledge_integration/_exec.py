@@ -157,12 +157,12 @@ def _node(node):
             "valid_from",
             "valid_until",
             "temporal_status",
-            "relation_type",
             "relation",
             "args",
             "signature",
         ),
     )
+    # Unknown interval boundaries are meaningful, unlike empty optional metadata.
     if node.get("kind") == "facet":
         result.update(valid_from=node.get("valid_from"), valid_until=node.get("valid_until"))
     return result
@@ -232,27 +232,31 @@ def _material_for_model(material):
     return result
 
 
-def _read_for_model(result):
-    """Project search and describe results to semantic fields; leave paginated graph reads intact."""
-    if "returned" in result:
-        return result
-    if "items" in result:
-        return {
-            **_fields(result, ("status", "errors")),
-            "items": [_node(item) for item in result["items"]],
-        }
-    projected = _fields(result, ("status", "candidates", "at", "properties_total", "properties"))
-    for key in ("subject", "schema", "fact"):
+def _search_for_model(result):
+    return {
+        **_fields(result, ("status", "errors")),
+        "items": [_node(item) for item in result["items"]],
+    }
+
+
+def _describe_for_model(result):
+    """Keep semantic reads and explicit empty results, excluding audit and view metadata."""
+    # Counts precede their lists so a bounded preview cannot imply completeness.
+    fields = (
+        "status",
+        "candidates",
+        "at",
+        "properties_total",
+        "properties",
+        "children_total",
+        "children",
+        "relations_total",
+    )
+    projected = {key: result[key] for key in fields if key in result}
+    for key in ("subject", "schema", "fact", "parent"):
         if key in result:
-            projected[key] = _node(result[key])
-    if "parent" in result:
-        projected["parent"] = _node(result["parent"]) if result["parent"] is not None else None
-    for key in ("children_total", "children"):
-        if key in result:
-            projected[key] = result[key]
-    if "relations_total" in result:
-        projected["relations_total"] = result["relations_total"]
-    if result.get("relations"):
+            projected[key] = _node(result[key]) if result[key] is not None else None
+    if "relations" in result:
         projected["relations"] = [_node(fact) for fact in result["relations"]]
     return projected
 
@@ -290,13 +294,16 @@ async def run(ctx, experience_refs, focus=None):
         search=search, describe=describe, write=write, revision=revision, read=read
     )
 
+    projections = {"search": _search_for_model, "describe": _describe_for_model}
+
     async def handle_tool(name, arguments):
         result = await handler.handle(name, arguments)
-        if name in {"search", "describe"} and "error" not in result:
-            return _read_for_model(result)
+        if name in projections and "error" not in result:
+            return projections[name](result)
         if "reads" in result:
             result["reads"] = [
-                {**item, "result": _read_for_model(item["result"])} for item in result["reads"]
+                {**item, "result": projections[item["tool"]](item["result"])}
+                for item in result["reads"]
             ]
         return result
 

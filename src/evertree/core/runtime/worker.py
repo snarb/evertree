@@ -122,7 +122,7 @@ class Context:
             stop_when=stop_when,
         )
 
-    async def step(self, method: str, payload: dict | None = None):
+    async def step(self, method: str, payload: dict | None = None, *, journal: bool = True):
         """Execute a durable Core operation, retaining its source line for runtime tracing.
 
         The line is the nearest Program-file frame, so calls made through Core API
@@ -139,6 +139,8 @@ class Context:
                 break
             frame = frame.f_back
         del frame
+        if not journal:
+            return await gateway_read(self.run_id, method, payload or {}, source_line)
         return await gateway_step(self.run_id, method, payload or {}, source_line)
 
     async def call(self, program, arguments: dict | None = None):
@@ -176,7 +178,7 @@ class Context:
 
     async def checkpoint(self):
         """Yield a durable coordination boundary to Core."""
-        return await self.step("checkpoint", {})
+        return await self.step("checkpoint", {}, journal=False)
 
 
 def load_program(spec):
@@ -212,7 +214,7 @@ def load_program(spec):
 
 async def _main(configuration):
     """Configure the isolated worker and dispatch its root workflow under DBOS."""
-    global _configuration, _loop, DBOS, gateway_step, program_workflow
+    global _configuration, _loop, DBOS, gateway_step, gateway_read, program_workflow
     from dbos import DBOS, SetWorkflowID
 
     # Bootstrap must work before any revision-owned common helpers are attached.
@@ -234,14 +236,21 @@ async def _main(configuration):
     # Common helpers, like Programs, must come from this exact Git revision.
     evertree.__path__.insert(0, str(Path(configuration["checkout"]) / "src" / "evertree"))
 
-    @DBOS.step()
-    async def gateway_step(run_id, method, payload, source_line=None, *, program=None):
-        request = {
+    def gateway_request(run_id, method, payload, source_line):
+        return {
             "run_id": run_id,
             "method": method,
             "payload": json_value(payload),
             "source_line": source_line,
         }
+
+    async def gateway_read(run_id, method, payload, source_line=None):
+        """Call Core without a journal entry; recovery repeats the call."""
+        return await rpc("gateway", gateway_request(run_id, method, payload, source_line))
+
+    @DBOS.step()
+    async def gateway_step(run_id, method, payload, source_line=None, *, program=None):
+        request = gateway_request(run_id, method, payload, source_line)
         if program is not None:
             request["program"] = program
         return await rpc("gateway", request)

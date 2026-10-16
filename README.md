@@ -83,7 +83,8 @@ uv run python src/evertree/debug_integration.py
   `from evertree.core.memory.api import retrieve`, `from evertree.core.runtime.api import llm`);
   they own durability. Program code only passes `ctx` on: candidate validation rejects `ctx`
   method calls outside `core`. Recovery returns saved boundary results and reruns local code,
-  so do not branch on wall-clock time or randomness. A new gateway method needs a Core wrapper.
+  so do not branch on wall-clock time or randomness. Wrappers for cheap repeatable reads
+  call `ctx.step(..., journal=False)` to keep the journal small; recovery repeats them. A new gateway method needs a Core wrapper.
   Child Programs that Core wrappers call are listed in `CALLED_PROGRAMS` (`core/contracts.py`);
   their entrypoints must keep accepting those arguments.
 - Use `llm_with_tools(ctx, prompt, instructions=..., tools=..., tool_handler=...)` when a model

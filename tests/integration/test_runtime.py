@@ -258,6 +258,7 @@ async def test_waiting_run_backup_and_recovery_preserve_observation_identity(tmp
             "program.py": """
 async def run(ctx):
     await ctx.step('started')
+    await ctx.step('peek', journal=False)
     observation = await ctx.next_observation(timeout_seconds=120)
     return {'result': observation}
 """
@@ -293,5 +294,6 @@ async def run(ctx):
     )
     result = await asyncio.wait_for(second, 30)
     assert result.result == {"id": "observation-one", "value": 7}
-    assert starts == ["started"]
+    # Recovery replays the journaled step but repeats the unjournaled read.
+    assert starts == ["started", "peek", "peek"]
     await runtime.close()

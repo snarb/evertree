@@ -103,7 +103,7 @@ async def _native_context(
     invocations = ProgramLLMInvocations(gateway)
     business_step = ctx.step
 
-    async def step(method, payload):
+    async def step(method, payload, *, journal=True):
         if method == "llm.next":
             return await invocations.next(payload, metadata)
         if method == "llm.close":

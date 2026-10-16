@@ -92,7 +92,7 @@ def context(world, model, *, role="model", integration_context=None, operation_i
             return finished.result
         return result or {"text": ""}
 
-    async def step(method, payload):
+    async def step(method, payload, *, journal=True):
         authorize_operation(method, role)
         if method == "llm.run":
             return {"parsed": await model(payload)}

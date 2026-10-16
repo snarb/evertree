@@ -15,8 +15,12 @@ class ProgramContext(Protocol):
     run_id: str
     run_mode: str
 
-    async def step(self, method: str, payload: dict | None = None) -> Any:
-        """Perform a durable Core operation whose recorded result is reused during recovery."""
+    async def step(self, method: str, payload: dict | None = None, *, journal: bool = True) -> Any:
+        """Perform a Core operation; with journal its recorded result is reused during recovery.
+
+        Use journal=False only for a cheap read that is safe to repeat: recovery runs it
+        again, and the Core trace records it again.
+        """
         ...
 
     async def call(self, program: str | int, arguments: dict | None = None) -> ProgramResult:

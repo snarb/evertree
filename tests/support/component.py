@@ -58,7 +58,7 @@ class SourceRuntime(Runtime):
                 self._active = None
 
     async def _call(self, spec, arguments, run_id, parent_run_id=None):
-        async def step(method, payload=None):
+        async def step(method, payload=None, *, journal=True):
             return await self._dispatch(
                 {"run_id": run_id, "method": method, "payload": payload or {}}
             )

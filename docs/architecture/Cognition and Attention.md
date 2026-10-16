@@ -697,7 +697,7 @@ For this to work, the same inputs and saved results must lead to the same order 
 
 #### Which Operations Become Steps
 
-- LLM calls, reads of mutable graph state, external requests, actions, and reads of time or random values run through steps or DBOS operations that already save their results.
+- LLM calls, Core writes, external requests, actions, and reads of time or random values run through steps or DBOS operations that already save their results. Cheap repeatable reads of Core state are not saved: recovery repeats them.
 - Computations that repeat with the same inputs may remain ordinary functions. An expensive calculation may be made a step so its result is saved.
 - Calls to other `Program` instances run in workflow code. They cannot be placed inside a step: DBOS does not allow a workflow to be called from a step.
 

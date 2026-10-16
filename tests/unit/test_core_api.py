@@ -15,7 +15,7 @@ class RecordingContext:
 
     def __init__(self, results=None):
         self.results = results or {}
-        self.steps, self.calls, self.boundaries = [], [], []
+        self.steps, self.calls, self.boundaries, self.unjournaled = [], [], [], []
 
     async def llm(self, payload, **options):
         self.boundaries.append(("llm", payload, options))
@@ -24,14 +24,13 @@ class RecordingContext:
     async def next_observation(self, timeout_seconds=60):
         self.boundaries.append(("next_observation", timeout_seconds))
 
-    async def emit(self, operator, *, arguments=None, output=None):
-        self.boundaries.append(("emit", operator, arguments, output))
-
     async def checkpoint(self):
         self.boundaries.append(("checkpoint",))
 
-    async def step(self, method, payload=None):
+    async def step(self, method, payload=None, *, journal=True):
         self.steps.append((method, payload))
+        if not journal:
+            self.unjournaled.append(method)
         return self.results.get(method)
 
     async def call(self, program, arguments=None):
@@ -99,6 +98,34 @@ async def test_wrappers_send_core_methods_and_payload_keys():
     ]
 
 
+async def test_only_repeatable_reads_skip_the_journal():
+    ctx = RecordingContext()
+    await semantics.revision(ctx)
+    await semantics.lookup(ctx, "q", kind=None, limit=1)
+    await semantics.bm25(ctx, "q", kind=None, revision=1)
+    await semantics.vector(ctx, "q", kind=None, revision=1)
+    await semantics.results(ctx, "q", kind=None, revision=1, items=[], errors=[], limit=1)
+    await graph.describe(ctx, 1)
+    await graph.read(ctx, "query", {})
+    await memory.retrieve(ctx, "q")
+    await learning.prepare(ctx, {})
+    repeatable = list(ctx.unjournaled)
+    assert repeatable == [method for method, _ in ctx.steps]
+
+    ctx = RecordingContext()
+    await semantics.load_sources(ctx, ["ref"])
+    await semantics.write(ctx, {}, operation_key="k", experience_refs=["ref"])
+    await learning.credit(ctx, "t")
+    await learning.learn(ctx, {}, "t")
+    await learning.assess_evidence(ctx, "t", {}, {})
+    await evaluation.match(ctx, [], context={}, metrics=[])
+    await evaluation.review(ctx, cases=[], credits=[])
+    await runtime.llm(ctx, "p", instructions="i", output_schema={})
+    await runtime.list_actions(ctx, "s")
+    await runtime.take_action(ctx, "s", {})
+    assert ctx.unjournaled == []
+
+
 async def test_program_calls_follow_declared_contracts():
     ctx = RecordingContext()
     assert await semantics.call_semantic_search(ctx, "q") == {"called": "semantic_search"}
@@ -164,7 +191,6 @@ async def test_calls_waits_and_dialogues_delegate_without_an_extra_step():
         {"called": "planning"}
     )
     await runtime.next_observation(ctx, timeout_seconds=5)
-    await runtime.emit(ctx, "op", output=1)
     await runtime.checkpoint(ctx)
     assert ctx.steps == []
     assert ctx.calls == [("planning", {"x": 1})]
@@ -175,6 +201,5 @@ async def test_calls_waits_and_dialogues_delegate_without_an_extra_step():
             {"tools": [], "tool_handler": handler, "max_tool_calls": 40, "stop_when": None},
         ),
         ("next_observation", 5),
-        ("emit", "op", None, 1),
         ("checkpoint",),
     ]

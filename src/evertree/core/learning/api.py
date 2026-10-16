@@ -31,7 +31,7 @@ async def credit(
 
 async def prepare(ctx: ProgramContext, credit: dict) -> Any:
     """Plan a compatible estimator update for resolved credit without applying it."""
-    return await ctx.step("learning.prepare", {"credit": credit})
+    return await ctx.step("learning.prepare", {"credit": credit}, journal=False)
 
 
 async def learn(

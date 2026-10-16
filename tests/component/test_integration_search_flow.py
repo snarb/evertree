@@ -1,6 +1,6 @@
 """Graph navigation after retrieval uses real structural links and projected reads."""
 
-from evertree.processes.semantic_processing.knowledge_integration._exec import _read_for_model
+from evertree.processes.semantic_processing.knowledge_integration._exec import _describe_for_model
 from tests.support.pump_search import seed_pump_history
 from tests.support.semantics import context, semantic_world
 
@@ -18,11 +18,11 @@ async def test_class_parent_remains_visible_beyond_the_relation_preview():
     ]
     graph.apply(GraphDelta(creates=(parent, child, *instances, *facts)), provenance="test")
     ctx = context(world, None, role="model")
-    unlinked = _read_for_model(await ctx.step("graph.describe", {"subject": child.id}))
+    unlinked = _describe_for_model(await ctx.step("graph.describe", {"subject": child.id}))
     assert unlinked["parent"] is None
     link = graph.new_fact("SUBTYPE_OF", {"type": child.id, "supertype": parent.id})
     graph.apply(GraphDelta(creates=(link,)), provenance="classification")
-    linked = _read_for_model(await ctx.step("graph.describe", {"subject": child.id}))
+    linked = _describe_for_model(await ctx.step("graph.describe", {"subject": child.id}))
     assert linked["relations_total"] == 22
     assert len(linked["relations"]) == 7
     assert not any(r["relation"] == "SUBTYPE_OF" for r in linked["relations"])
@@ -41,11 +41,11 @@ async def test_class_parent_remains_visible_beyond_the_relation_preview():
     graph.apply(GraphDelta(creates=(*descendants, *links)), provenance="classification")
     for focus in (None, "relations"):
         raw = await ctx.step("graph.describe", {"subject": child.id, "focus": focus})
-        for result in (raw, _read_for_model(raw)):
+        for result in (raw, _describe_for_model(raw)):
             assert result["children_total"] == 9
             assert result["children"] == [node.name for node in descendants[:7]]
             assert list(result).index("children_total") < list(result).index("children")
-    parent_result = _read_for_model(await ctx.step("graph.describe", {"subject": parent.id}))
+    parent_result = _describe_for_model(await ctx.step("graph.describe", {"subject": parent.id}))
     assert parent_result["children"] == [child.name]
     assert "children_total" not in parent_result
 
@@ -56,11 +56,11 @@ async def test_found_facet_leads_to_identity_class_and_other_states_without_sear
     ctx = context(world, None, role="model")
     found = await ctx.call("semantic_search", {"query": "Н-1 выключен"})
     assert [item["id"] for item in found.result["items"]] == [targets["off"].id]
-    facet = _read_for_model(await ctx.step("graph.describe", {"subject": targets["off"].id}))
+    facet = _describe_for_model(await ctx.step("graph.describe", {"subject": targets["off"].id}))
     link = next(fact for fact in facet["relations"] if fact["relation"] == "STATE_IDENTITY")
     identity = link["args"]["instance"]
     assert identity["id"] == targets["pump"].id
-    described = _read_for_model(await ctx.step("graph.describe", {"subject": identity["id"]}))
+    described = _describe_for_model(await ctx.step("graph.describe", {"subject": identity["id"]}))
     class_link = next(
         fact for fact in described["relations"] if fact["relation"] == "IDENTITY_TYPE"
     )

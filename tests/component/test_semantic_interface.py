@@ -16,7 +16,7 @@ from evertree.core.graph.types import (
 )
 from evertree.core.semantics.reading import describe, read_property
 from evertree.core.values import ContractError, json_value
-from evertree.processes.semantic_processing.knowledge_integration._exec import _read_for_model
+from evertree.processes.semantic_processing.knowledge_integration._exec import _describe_for_model
 from tests.support.semantics import EmptyIndex, context, semantic_world
 
 
@@ -108,7 +108,7 @@ def test_describe_previews_totals_and_focused_lists(count):
     graph.apply(GraphDelta(creates=(entity, *properties, *facts)), provenance="test")
     for prop in properties:
         world.attribution.register(PropertyDefinition(prop.id))
-    for project in (lambda value: value, _read_for_model):
+    for project in (lambda value: value, _describe_for_model):
         result = project(describe(graph, world.attribution, entity.id))
         assert "relations_truncated" not in result
         for field in ("properties", "relations"):
@@ -224,8 +224,8 @@ def test_describe_preserves_relation_conditions_in_model_reads():
     )
     g.apply(GraphDelta(creates=(entity, prop, fact)), provenance="measurement")
 
-    direct = _read_for_model(describe(g, world.attribution, fact.id))["fact"]
-    neighbor = _read_for_model(describe(g, world.attribution, entity.id))["relations"][0]
+    direct = _describe_for_model(describe(g, world.attribution, fact.id))["fact"]
+    neighbor = _describe_for_model(describe(g, world.attribution, entity.id))["relations"][0]
     for reading in (direct, neighbor):
         assert reading["id"] == fact.id
         assert reading["args"]["value"] == 3

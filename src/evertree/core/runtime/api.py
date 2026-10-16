@@ -1,4 +1,4 @@
-"""Typed Program boundaries: child Programs, LLM, observations, actions and trace.
+"""Typed Program boundaries: child Programs, LLM, observations, actions and checkpoints.
 
 Program code is ordinary async Python. Only these boundaries, Core operations and
 child Program calls survive a worker restart; local computation reruns on recovery.
@@ -95,11 +95,6 @@ async def take_action(
     return await ctx.step(
         "actions.take", {"session": session, "command": command, "operation_id": operation_id}
     )
-
-
-async def emit(ctx: ProgramContext, operator: str, *, arguments=None, output=None) -> Any:
-    """Record a semantic trace event for an operation performed by this Program."""
-    return await ctx.emit(operator, arguments=arguments, output=output)
 
 
 async def checkpoint(ctx: ProgramContext) -> Any:

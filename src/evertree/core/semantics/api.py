@@ -25,22 +25,28 @@ async def load_sources(
 
 async def revision(ctx: ProgramContext) -> Any:
     """Return the current semantic index revision that search results are pinned to."""
-    return await ctx.step("semantic.revision", {})
+    return await ctx.step("semantic.revision", {}, journal=False)
 
 
 async def lookup(ctx: ProgramContext, query: str, *, kind: str | None, limit: int) -> Any:
     """Return exact graph matches for query, or None when no exact identity matches."""
-    return await ctx.step("semantic.lookup", {"query": query, "kind": kind, "limit": limit})
+    return await ctx.step(
+        "semantic.lookup", {"query": query, "kind": kind, "limit": limit}, journal=False
+    )
 
 
 async def bm25(ctx: ProgramContext, query: str, *, kind: str | None, revision: Any) -> list:
     """Rank object ids by the lexical index at revision."""
-    return await ctx.step("semantic.bm25", {"query": query, "kind": kind, "revision": revision})
+    return await ctx.step(
+        "semantic.bm25", {"query": query, "kind": kind, "revision": revision}, journal=False
+    )
 
 
 async def vector(ctx: ProgramContext, query: str, *, kind: str | None, revision: Any) -> list:
     """Rank object ids by the vector index at revision."""
-    return await ctx.step("semantic.vector", {"query": query, "kind": kind, "revision": revision})
+    return await ctx.step(
+        "semantic.vector", {"query": query, "kind": kind, "revision": revision}, journal=False
+    )
 
 
 async def results(
@@ -67,6 +73,7 @@ async def results(
             "errors": errors,
             "limit": limit,
         },
+        journal=False,
     )
 
 

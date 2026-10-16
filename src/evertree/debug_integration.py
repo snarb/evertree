@@ -255,7 +255,7 @@ class DebugSession:
                 json.dumps(events, ensure_ascii=False, indent=2), encoding="utf-8"
             )
 
-    async def step(self, method, payload, *, role="exec"):
+    async def step(self, method, payload, *, role="exec", journal=True):
         """Execute and log an authorized Core operation inside the isolated debug session."""
         authorize_operation(method, role)
         call = {"method": method, "payload": json_value(payload)}
