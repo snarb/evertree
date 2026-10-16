@@ -169,7 +169,12 @@ async def test_llm_dialogue_fails_like_runtime_on_handler_bug_or_limit(tmp_path,
     session = DebugSession(tmp_path)
     call = LLMEvent("tool_call", {"name": "read", "arguments": {}})
     session.provider = ScriptedProvider([[call, call, LLMEvent("completed", {"text": ""})]])
-    tool = {"name": "read", "description": "Read.", "input_schema": {"type": "object"}, "read_only": True}
+    tool = {
+        "name": "read",
+        "description": "Read.",
+        "input_schema": {"type": "object"},
+        "read_only": True,
+    }
 
     async def handler(name, arguments):
         if failure:
