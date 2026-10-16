@@ -438,6 +438,44 @@ async def test_search_ceiling_and_relation_schemas_need_no_status_calls():
     assert (await run(context(world, model, role="exec"), refs))["result"] == {"writes": []}
 
 
+async def test_tool_projection_preserves_empty_reads_and_nested_review_results():
+    from evertree.core.graph.types import GraphDelta, Prototype
+
+    world = semantic_world()
+    root = Prototype(world.graph.reserve_id(), "Equipment")
+    world.graph.apply(GraphDelta(creates=(root,)), provenance="test")
+    refs, _ = recorded_experience(world, "Equipment is useful")
+
+    async def model(payload, call):
+        # Creation's automatic search must expose the same candidates as direct search.
+        rejected = await call(
+            "create_prototype",
+            {"name": root.name, "description": None, "parent": None, "sources": refs},
+        )
+        assert rejected["error"]
+        nested = rejected["reads"][0]
+        assert nested["tool"] == "search"
+        found = await call("search", {"query": root.name})
+        assert nested["result"] == found
+        assert found == {
+            "status": "complete",
+            "items": [{"id": root.id, "name": root.name, "kind": "prototype"}],
+        }
+
+        described = await call("describe", {"subject": root.id})
+        assert described["parent"] is None
+        assert described["children"] == described["properties"] == described["relations"] == []
+        focused = await call("describe", {"subject": root.id, "focus": "properties"})
+        assert focused["properties"] == []
+        assert "relations" not in focused and "parent" not in focused
+
+        missing = await call("describe", {"subject": "Absent object"})
+        assert missing["error"]
+        assert missing["reads"][0]["result"] == {"status": "not_found", "candidates": []}
+
+    assert (await run(context(world, model, role="exec"), refs))["result"] == {"writes": []}
+
+
 async def test_normal_model_completion_needs_no_finish_call():
     world = semantic_world()
     refs, _ = recorded_experience(world, "Useful explanation")

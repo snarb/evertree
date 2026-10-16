@@ -237,5 +237,6 @@ def test_self_context_retains_fact_conditions_while_resolving_participant_names(
     projected = next(node for node in model_context["self"] if node["id"] == fact.id)
     assert projected["properties"] == dict(fact.properties)
     assert projected["relation"] == "PART_WHOLE"
+    assert "relation_type" not in projected
     assert projected["args"]["part"]["name"] == "SelfModel"
     assert "provenance" not in projected

@@ -243,16 +243,15 @@ def _describe_for_model(result):
     """Keep semantic reads and explicit empty results, excluding audit and view metadata."""
     # Counts precede their lists so a bounded preview cannot imply completeness.
     fields = (
-        "status",
         "candidates",
-        "at",
         "properties_total",
         "properties",
         "children_total",
         "children",
         "relations_total",
     )
-    projected = {key: result[key] for key in fields if key in result}
+    projected = _fields(result, ("status", "at"))
+    projected.update({key: result[key] for key in fields if key in result})
     for key in ("subject", "schema", "fact", "parent"):
         if key in result:
             projected[key] = _node(result[key]) if result[key] is not None else None
