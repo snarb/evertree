@@ -161,3 +161,30 @@ async def test_live_evaluation_native_bridge_accepts_no_writes_and_records_final
         assert not provider.cancelled
     finally:
         await provider.close()
+
+
+@pytest.mark.parametrize("failure", [KeyError("bug"), None])
+async def test_llm_dialogue_fails_like_runtime_on_handler_bug_or_limit(tmp_path, failure):
+    """Only ValueError, TypeError and PermissionError reach the model; other failures end the run."""
+    session = DebugSession(tmp_path)
+    call = LLMEvent("tool_call", {"name": "read", "arguments": {}})
+    session.provider = ScriptedProvider([[call, call, LLMEvent("completed", {"text": ""})]])
+    tool = {"name": "read", "description": "Read.", "input_schema": {"type": "object"}, "read_only": True}
+
+    async def handler(name, arguments):
+        if failure:
+            raise failure
+        return {}
+
+    try:
+        with pytest.raises(Exception, match="bug" if failure else "tool-call limit"):
+            await session.llm(
+                {"prompt": "x", "instructions": ""},
+                tools=[tool],
+                tool_handler=handler,
+                max_tool_calls=1,
+            )
+        assert session.tool_calls()[0]["name"] == "read"
+    finally:
+        await session.provider.close()
+        await session.index.close()

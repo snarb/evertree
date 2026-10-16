@@ -172,7 +172,8 @@ class DebugSession:
                 raise PermissionError("Tool was not declared")
             used += 1
             if used > max_tool_calls:
-                raise RuntimeError("LLM dialogue exhausted its tool-call limit")
+                failure = RuntimeError("LLM dialogue exhausted its tool-call limit")
+                raise failure
             call = {"method": f"tool:{name}", "payload": json_value(arguments)}
             self.calls.append(call)
             print(f"  ⚙ {name}", flush=True)
