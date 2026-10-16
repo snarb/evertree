@@ -26,10 +26,13 @@ class ProgramContext(Protocol):
     async def llm(
         self, payload: dict, *, tools, tool_handler, max_tool_calls: int = 40, stop_when=None
     ) -> Any:
-        """Run a Program's LLM dialogue using only the declared tools.
+        """Have the LLM work on payload["prompt"], letting it call the declared tools.
 
-        Handlers run at workflow level and replay during recovery. stop_when ends the
-        dialogue after a matching successful tool and returns its name and result.
+        Each tool call the model makes runs tool_handler(name, arguments) in Program
+        code, and its result goes back to the model. Returns the model's final
+        response, or {"tool", "result"} if stop_when accepts a successful tool result,
+        which ends the call early. ValueError, TypeError and PermissionError from the
+        handler are reported to the model; other errors fail the call.
         """
         ...
 

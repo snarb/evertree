@@ -1,4 +1,4 @@
-"""Native model tools exchanged at durable Program workflow boundaries."""
+"""Lets Program workflow code serve the tool calls of an LLM session that runs in Core."""
 
 from __future__ import annotations
 
@@ -13,11 +13,12 @@ from ..values import json_value
 
 
 async def run_llm_dialogue(ctx, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
-    """Run a Program's LLM dialogue with its declared tools through durable exchanges.
+    """Implement ProgramContext.llm: the model runs in Core, tool handlers run in the workflow.
 
-    Tool handlers execute in workflow code and run again during recovery to rebuild
-    local state; their durable operations replay recorded results. A successful tool
-    matching stop_when ends the dialogue early and returns its name and result.
+    Each llm.next step returns the model's next tool call or its final response. The
+    handler's result is sent back with the following llm.next, so the step results are
+    durable and the handler's own durable operations replay on recovery. Handlers run
+    again during recovery to rebuild local state.
     """
     if type(max_tool_calls) is not int or not 1 <= max_tool_calls <= 1000:
         raise ValueError("max_tool_calls must be between 1 and 1000")
@@ -87,7 +88,11 @@ class _Invocation:
 
 
 class ProgramLLMInvocations:
-    """Own transient provider invocations; DBOS owns their completed exchanges."""
+    """Core-side LLM sessions behind llm.next and llm.close.
+
+    A session exists only in memory; after a restart it is recreated from the
+    completed tool calls that DBOS recorded.
+    """
 
     def __init__(self, gateway):
         self.gateway = gateway
@@ -95,7 +100,7 @@ class ProgramLLMInvocations:
 
     @property
     def running(self):
-        """Whether any transient Program model invocation is still active."""
+        """Whether any LLM session is still running."""
         return any(not item.task.done() for item in self._invocations.values())
 
     @staticmethod
@@ -142,7 +147,7 @@ class ProgramLLMInvocations:
         invocation.delivered = None
 
     async def next(self, payload, metadata):
-        """Acknowledge prior tool results and return the next tool call or model completion."""
+        """Accept the result of the previous tool call; return the model's next tool call or final response."""
         key = self._key(payload["invocation_id"], metadata)
         history = self._history(payload.get("history", []))
         request = json.loads(json.dumps(payload["request"], allow_nan=False))

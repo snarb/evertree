@@ -155,10 +155,11 @@ class DebugSession:
         self.experience_refs.append(note_ref)
 
     async def llm(self, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
-        """Run the Program's tool dialogue directly on the provider.
+        """Implement ProgramContext.llm for debugging: tool_handler runs inside the provider callback.
 
-        Unlike the runtime's durable bridge, handlers run inside the provider callback,
-        so a breakpoint in a handler shows the whole path from the model request.
+        The runtime instead has the workflow pull tool calls through llm.next, so there a
+        breakpoint in a handler does not show the model request. Here it does. Tool calls
+        are logged in self.calls as "tool:<name>".
         """
         if stop_when is not None:
             raise ValueError("The debug harness does not support stop_when")
@@ -195,7 +196,7 @@ class DebugSession:
         return result
 
     def tool_calls(self):
-        """Native tool calls in order, with arguments, results and errors."""
+        """Tool calls the model made, in order, with arguments, result and error."""
         return [
             {
                 "name": call["method"].removeprefix("tool:"),

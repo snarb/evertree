@@ -110,11 +110,7 @@ class Context:
         self.run_mode = _configuration["run_mode"]
 
     async def llm(self, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
-        """Run a Program's LLM dialogue using only the declared tools.
-
-        Handlers run at workflow level and replay during recovery. stop_when ends the
-        dialogue after a matching successful tool and returns its name and result.
-        """
+        """See ProgramContext.llm."""
         from evertree.core.runtime.llm import run_llm_dialogue
 
         return await run_llm_dialogue(
