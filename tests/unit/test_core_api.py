@@ -6,13 +6,29 @@ from evertree.core.evaluation import api as evaluation
 from evertree.core.graph import api as graph
 from evertree.core.learning import api as learning
 from evertree.core.memory import api as memory
+from evertree.core.runtime import api as runtime
 from evertree.core.semantics import api as semantics
 
 
 class RecordingContext:
+    run_id = "run"
+
     def __init__(self, results=None):
         self.results = results or {}
-        self.steps, self.calls = [], []
+        self.steps, self.calls, self.boundaries = [], [], []
+
+    async def llm(self, payload, **options):
+        self.boundaries.append(("llm", payload, options))
+        return "final"
+
+    async def next_observation(self, timeout_seconds=60):
+        self.boundaries.append(("next_observation", timeout_seconds))
+
+    async def emit(self, operator, *, arguments=None, output=None):
+        self.boundaries.append(("emit", operator, arguments, output))
+
+    async def checkpoint(self):
+        self.boundaries.append(("checkpoint",))
 
     async def step(self, method, payload=None):
         self.steps.append((method, payload))
@@ -116,3 +132,45 @@ async def test_shared_helpers_use_typed_semantic_and_llm_steps():
     assert result == {"result": {"ok": True}, "feedback": None}
     assert ctx.steps[-1][0] == "llm.run"
     assert ctx.steps[-1][1]["output_schema"] == schema and ctx.steps[-1][1]["mode"] == "model"
+
+
+async def test_actions_get_stable_operation_ids_in_run_order():
+    ctx = RecordingContext()
+    await runtime.list_actions(ctx, "s")
+    await runtime.take_action(ctx, "s", {"press": 1})
+    await runtime.take_action(ctx, "s", {"press": 2}, operation_id="explicit")
+    await runtime.take_action(ctx, "s", {"press": 3})
+    assert ctx.steps == [
+        ("actions.list", {"session": "s"}),
+        ("actions.take", {"session": "s", "command": {"press": 1}, "operation_id": "run:action:1"}),
+        ("actions.take", {"session": "s", "command": {"press": 2}, "operation_id": "explicit"}),
+        ("actions.take", {"session": "s", "command": {"press": 3}, "operation_id": "run:action:2"}),
+    ]
+
+
+async def test_waiting_and_dialogue_boundaries_delegate_without_an_extra_step():
+    ctx = RecordingContext()
+
+    async def handler(name, arguments):
+        return None
+
+    assert (
+        await runtime.llm_with_tools(
+            ctx, "p", instructions="i", tools=[], tool_handler=handler, profile="remember"
+        )
+        == "final"
+    )
+    await runtime.next_observation(ctx, timeout_seconds=5)
+    await runtime.emit(ctx, "op", output=1)
+    await runtime.checkpoint(ctx)
+    assert ctx.steps == []
+    assert ctx.boundaries == [
+        (
+            "llm",
+            {"mode": "exec", "instructions": "i", "prompt": "p", "profile": "remember"},
+            {"tools": [], "tool_handler": handler, "max_tool_calls": 40, "stop_when": None},
+        ),
+        ("next_observation", 5),
+        ("emit", "op", None, 1),
+        ("checkpoint",),
+    ]

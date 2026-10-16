@@ -27,10 +27,10 @@ class LifecycleError(RuntimeError):
 
 
 def validate_program_source(source: str, path: str) -> None:
-    """Reject direct cross-Program imports and raw ctx.step/ctx.call in Program code.
+    """Reject direct cross-Program imports and raw ctx method calls in Program code.
 
-    Program and shared helper code reaches Core and contract Programs through the
-    typed evertree.core API. A Program's own helpers stay importable. This is an
+    Program and shared helper code only passes ctx to the typed evertree.core API,
+    which owns durability. A Program's own helpers stay importable. This is an
     architectural source check, not an OS security boundary. Arbitrary Python
     reflection is confined by the worker sandbox and gateway separately.
     """
@@ -50,7 +50,6 @@ def validate_program_source(source: str, path: str) -> None:
         if (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
-            and node.func.attr in {"step", "call"}
             and isinstance(node.func.value, ast.Name)
             and node.func.value.id == "ctx"
         ):

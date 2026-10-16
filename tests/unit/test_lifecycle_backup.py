@@ -26,7 +26,7 @@ def test_cross_program_imports_require_runtime_but_own_helpers_are_allowed():
             validate_program_source(source, path)
 
 
-@pytest.mark.parametrize("method", ["step", "call"])
+@pytest.mark.parametrize("method", ["step", "call", "llm", "next_observation", "emit"])
 def test_program_code_reaches_core_through_typed_api(method):
     path = "src/evertree/common/helper.py"
     validate_program_source("await memory.retrieve(ctx, 'query')", path)

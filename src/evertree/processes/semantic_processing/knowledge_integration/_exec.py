@@ -4,6 +4,7 @@ import json
 
 from evertree.common.integration_actions import INTEGRATION_TOOLS, SemanticTools
 from evertree.core.graph import api as graph
+from evertree.core.runtime.api import llm_with_tools
 from evertree.core.semantics import api as semantics
 from evertree.core.tokens import current_read_context
 
@@ -299,15 +300,11 @@ async def run(ctx, experience_refs, focus=None):
             ]
         return result
 
-    await ctx.llm(
-        {
-            "profile": "remember",
-            "mode": "exec",
-            "instructions": INSTRUCTIONS,
-            "prompt": json.dumps(
-                {"material": _material_for_model(material)}, ensure_ascii=False, indent=2
-            ),
-        },
+    await llm_with_tools(
+        ctx,
+        json.dumps({"material": _material_for_model(material)}, ensure_ascii=False, indent=2),
+        instructions=INSTRUCTIONS,
+        profile="remember",
         tools=INTEGRATION_TOOLS,
         tool_handler=handle_tool,
         max_tool_calls=80,
