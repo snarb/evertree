@@ -14,7 +14,7 @@ import math
 from collections.abc import Mapping
 from typing import Any
 
-from .beliefs import BeliefStore, element_target
+from .beliefs import OTHER, BeliefStore, element_target
 from .graph.store import GraphStore
 from .graph.types import RelationInstance
 from .memory.store import TraceStore
@@ -28,6 +28,9 @@ ASSESSABLE_KINDS = frozenset(
 TEXT_LIMIT = 2000
 MAX_EXPANSION_DEPTH = 4
 PRIOR_BOUNDS = (0.05, 0.95)
+ORIGIN_LIMIT = 30
+# Change in an origin's reliability that makes contributions judged under it stale.
+STALE_RELIABILITY = 0.02
 
 
 def _reference(value: Any) -> TraceOutputRef | None:
@@ -39,6 +42,11 @@ def _reference(value: Any) -> TraceOutputRef | None:
         except (KeyError, ContractError):
             return None
     return None
+
+
+def _alternative(label: str) -> int | str:
+    """Show a scope alternative as its element id, or "other"."""
+    return OTHER if label == OTHER else int(label.removeprefix("graph:"))
 
 
 def _key(reference: TraceOutputRef) -> str:
@@ -54,6 +62,11 @@ def _text(value: Any) -> str:
     if not isinstance(value, str):
         value = json.dumps(json_value(value), ensure_ascii=False)
     return value if len(value) <= TEXT_LIMIT else value[:TEXT_LIMIT] + " …"
+
+
+def origin_target(origin: str) -> str:
+    """Return the belief target for the reliability of one source origin."""
+    return f"origin:{origin}"
 
 
 class _Sources:
@@ -99,11 +112,24 @@ class _Sources:
             "identity": identity,
             "ref": json_value(reference),
             "kind": kind,
+            "origin": self._origin(event, kind),
             "recorded_at": event.occurred_at.isoformat(),
             "text": _text(value),
             "new": new,
         }
         return [key]
+
+    @staticmethod
+    def _origin(event, kind: str) -> str:
+        """Name where a primary source comes from; its reliability is assessed per origin."""
+        if kind == "user":
+            return "user"
+        arguments = event.arguments if isinstance(event.arguments, Mapping) else {}
+        if arguments.get("source_id"):
+            return str(arguments["source_id"])
+        output = event.output if isinstance(event.output, Mapping) else {}
+        data = output.get("data") if isinstance(output.get("data"), Mapping) else {}
+        return f"tool:{data['name']}" if data.get("name") else kind
 
     @staticmethod
     def _kind(event) -> str:
@@ -116,7 +142,8 @@ class _Sources:
                 "input:"
             ):
                 return "user"
-            return "observation"
+            # A document reports what its author states; an observation records the world.
+            return "document" if arguments.get("source_type") == "document" else "observation"
         if event.operator == "provider_event" and output.get("kind") in {
             "tool_result",
             "file_change",
@@ -131,6 +158,9 @@ class _Sources:
             {"key": key, **{k: v for k, v in entry.items() if k != "identity"}}
             for key, entry in self.entries.items()
         ]
+
+    def origins(self) -> list[str]:
+        return list(dict.fromkeys(entry["origin"] for entry in self.entries.values()))
 
 
 class GraphEvidence:
@@ -263,11 +293,7 @@ class GraphEvidence:
         targets = []
         for _, node, assessed in waiting[:limit]:
             target = element_target(node)
-            try:
-                self.beliefs.target(target)
-                new_target = False
-            except KeyError:
-                new_target = True
+            new_target = not self.beliefs.known(target)
             targets.append(
                 {
                     "element": node.id,
@@ -278,7 +304,9 @@ class GraphEvidence:
                 }
             )
         chosen = {item["element"] for item in targets}
-        related_ids = list(candidates)
+        # Alternatives competing with a changed element are judged together with it.
+        related_ids = [sibling for item in targets for sibling in self._siblings(item["element"])]
+        related_ids.extend(candidates)
         for item in targets:
             related_ids.extend(self._neighbors(self.graph.get(item["element"])))
         # A search hit on an entity also brings the facts about it: a correction may concern
@@ -295,11 +323,7 @@ class GraphEvidence:
             if node is None or identity in chosen or not self.assessable(node):
                 continue
             target = element_target(node)
-            try:
-                self.beliefs.target(target)
-                known = True
-            except KeyError:
-                known = False
+            known = self.beliefs.known(target)
             if not known and not self._grounds(identity, _Sources(self.memory), 0):
                 continue
             related.append(
@@ -311,13 +335,132 @@ class GraphEvidence:
                 }
             )
             chosen.add(identity)
+        scopes = self._scopes(targets + related, sources)
+        origins = self._origins(sources)
+        keys = {item["origin"]: item["key"] for item in origins}
+        public = sources.public()
+        identities = {_key(_reference(source["ref"])): source["key"] for source in public}
+        for source in public:
+            source["origin_key"] = keys.get(source["origin"])
+            withdrawer = self.beliefs.withdrawn_by(_reference(source["ref"]))
+            if withdrawer is not None:
+                reference = _reference(withdrawer)
+                source["withdrawn_by"] = (
+                    identities.get(_key(reference), "earlier") if reference else "earlier"
+                )
         return {
             "revision": self.graph.revision,
-            "sources": sources.public(),
+            "sources": public,
+            "origins": origins,
+            "scopes": scopes,
             "targets": targets,
             "related": related,
             "remaining": max(len(waiting) - limit, 0),
         }
+
+    def _siblings(self, element: int) -> list[int]:
+        scope = self.beliefs.scope_of(f"graph:{element}")
+        if scope is None:
+            return []
+        return [
+            int(label.removeprefix("graph:"))
+            for label in self.beliefs.scope(scope)["alternatives"]
+            if label != OTHER and label != f"graph:{element}"
+        ]
+
+    def _scopes(self, items: list[dict], sources: _Sources) -> list[dict]:
+        """Describe the competition scopes of batch elements, keyed C1, C2, …; mark members."""
+        result, keys = [], {}
+        for item in items:
+            scope = self.beliefs.scope_of(f"graph:{item['element']}")
+            if scope is None:
+                continue
+            if scope not in keys:
+                keys[scope] = f"C{len(keys) + 1}"
+                declared = self.beliefs.scope(scope)
+                labels = declared["alternatives"]
+                active = []
+                for component in self.beliefs.active_sources(scope):
+                    reference = _reference(component.source_ref)
+                    if reference is None:
+                        continue
+                    favoured = labels[component.contribution.index(max(component.contribution))]
+                    for key in sources.expand(reference, new=False):
+                        active.append({"source": key, "favours": _alternative(favoured)})
+                result.append(
+                    {
+                        "key": keys[scope],
+                        "scope": scope,
+                        "question": declared["question"],
+                        "alternatives": [_alternative(label) for label in labels],
+                        "active": active,
+                    }
+                )
+            item["scope"] = keys[scope]
+        return result
+
+    def _origins(self, sources: _Sources, limit: int = ORIGIN_LIMIT) -> list[dict]:
+        """Origins of the batch's sources first, then other origins already assessed."""
+        names = sources.origins()
+        for target in self.beliefs.target_ids():
+            if target.startswith("origin:"):
+                names.append(target.removeprefix("origin:"))
+        result = []
+        for name in list(dict.fromkeys(names))[:limit]:
+            item = {"key": f"O{len(result) + 1}", "origin": name, "new_target": True}
+            try:
+                reading = self.beliefs.read(origin_target(name))
+            except KeyError:
+                item["reliability"] = None
+            else:
+                item.update(
+                    new_target=False,
+                    reliability=round(reading.strength, 3),
+                    support=round(reading.support, 3),
+                    evidence_count=reading.stats.evidence_count,
+                    # Earlier statements about the origin, so a new one can withdraw them.
+                    active=self._active(origin_target(name), sources),
+                )
+            result.append(item)
+        return result
+
+    def stale(self, threshold: float = STALE_RELIABILITY) -> list[dict]:
+        """Active contributions judged under an origin reliability that has since changed."""
+        result = []
+        for target, source_ref, basis in self.beliefs.bases():
+            origin = basis.get("origin")
+            if not origin or "reliability" not in basis:
+                continue
+            try:
+                reliability = self.beliefs.read(origin_target(origin)).strength
+            except KeyError:
+                continue
+            if abs(reliability - basis["reliability"]) <= threshold:
+                continue
+            item = {
+                "target": target,
+                "source_ref": json_value(source_ref),
+                "basis": json_value(basis),
+                "reliability": reliability,
+            }
+            if target.startswith("graph:"):
+                node = self._node(int(target.removeprefix("graph:")))
+                if node is None or not self.assessable(node):
+                    continue
+                item["element"] = node.id
+            elif target.startswith("origin:"):
+                item["origin"] = target.removeprefix("origin:")
+            elif target.startswith("scope:"):
+                declared = self.beliefs.scope(target)
+                item.update(
+                    scope=target,
+                    question=declared["question"],
+                    alternatives=[_alternative(label) for label in declared["alternatives"]],
+                )
+            else:
+                continue
+            result.append(item)
+        return result
 
     def record(
         self,
@@ -339,22 +482,185 @@ class GraphEvidence:
         if type(revision) is not int or not 0 <= revision <= self.graph.revision:
             raise ContractError("Assessment revision must be a known graph revision")
         target = element_target(node)
+        if self.beliefs.scope_of(target) is not None:
+            raise ContractError("A scope alternative's evidence is recorded for its scope")
+        result = self._apply(target, prior, assign, retract, created_by)
+        self.beliefs.mark_assessed(target, revision)
+        return {"element": element, **result}
+
+    def withdraw(self, source_ref: Any, by: Any) -> dict:
+        """Record that a later source withdrew an earlier one; it then gives no new evidence."""
+        reference, withdrawer = _reference(source_ref), _reference(by)
+        if reference is None or withdrawer is None:
+            raise ContractError("Withdrawal needs source references")
+        self.memory.resolve(reference)
+        self.memory.resolve(withdrawer)
+        self.beliefs.withdraw(reference, withdrawer)
+        return {"withdrawn": json_value(reference), "by": json_value(withdrawer)}
+
+    def record_origin(
+        self,
+        origin: str,
+        *,
+        prior: float | None = None,
+        assign: list | tuple = (),
+        retract: list | tuple = (),
+        created_by: Any = None,
+    ) -> dict:
+        """Apply assessed evidence about the reliability of one source origin."""
+        if not isinstance(origin, str) or not origin:
+            raise ContractError("An origin is a non-empty name")
+        return {
+            "origin": origin,
+            **self._apply(origin_target(origin), prior, assign, retract, created_by),
+        }
+
+    def record_scope(
+        self,
+        revision: int,
+        *,
+        alternatives: list | tuple,
+        question: str,
+        other: bool = True,
+        scope: str | None = None,
+        prior: Mapping | None = None,
+        assign: list | tuple = (),
+        retract: list | tuple = (),
+        created_by: Any = None,
+    ) -> dict:
+        """Record evidence for mutually exclusive graph elements as one competition scope.
+
+        alternatives are element ids; other adds the alternative that none of them is
+        true. A different set of alternatives than scope declares creates a new scope
+        version. Elements joining a scope stop counting their binary evidence: the scope's
+        evidence judges every source against all alternatives at once. likelihoods and
+        prior are keyed by element id (as a string) and "other".
+        """
+        if type(revision) is not int or not 0 <= revision <= self.graph.revision:
+            raise ContractError("Assessment revision must be a known graph revision")
+        elements = list(dict.fromkeys(alternatives))
+        if not isinstance(question, str) or not question:
+            raise ContractError("A competition scope states its question")
+        for element in elements:
+            node = self._node(element) if type(element) is int else None
+            if node is None or not self.assessable(node):
+                raise ContractError("Scope alternatives must be assessable graph elements")
+        labels = [f"graph:{element}" for element in elements] + ([OTHER] if other else [])
+        if len(labels) < 2:
+            raise ContractError("A competition scope needs at least two alternatives")
+        names = {str(element): f"graph:{element}" for element in elements} | {OTHER: OTHER}
+
+        def keyed(mapping, what):
+            if not isinstance(mapping, Mapping) or set(mapping) != {
+                key for key, label in names.items() if label in labels
+            }:
+                raise ContractError(f"Scope {what} must cover exactly its alternatives")
+            values = {names[key]: value for key, value in mapping.items()}
+            if not all(
+                isinstance(value, (int, float)) and math.isfinite(value) and value > 0
+                for value in values.values()
+            ):
+                raise ContractError(f"Scope {what} must be positive and finite")
+            return values
+
+        assignments = []
+        for item in assign:
+            reference, root = _reference(item.get("source_ref")), item.get("dependency_root")
+            if reference is None or root is not None and _reference(root) is None:
+                raise ContractError("Evidence needs a retained source reference")
+            basis = item.get("basis")
+            if basis is not None and not isinstance(basis, Mapping):
+                raise ContractError("An assessment basis is an object")
+            self.memory.resolve(reference)
+            assignments.append(
+                (reference, keyed(item.get("likelihoods"), "likelihoods"), root, basis)
+            )
+        retractions = [_reference(item) for item in retract]
+        if any(reference is None for reference in retractions):
+            raise ContractError("Retraction needs a source reference")
+        weights = keyed(prior, "prior") if prior is not None else None
+        # An unnamed scope over exactly an existing scope's alternatives is that scope.
+        target = scope or self.beliefs.scope_of(labels[0])
+        if (
+            target is None
+            or not self.beliefs.known(target)
+            or set(self.beliefs.scope(target)["alternatives"]) != set(labels)
+        ):
+            count = sum(item.startswith("scope:") for item in self.beliefs.target_ids())
+            target = f"scope:{count + 1}"
+            if weights is not None:
+                low = PRIOR_BOUNDS[0] / len(labels)
+                total = sum(max(value, low) for value in weights.values())
+                weights = {key: max(value, low) / total for key, value in weights.items()}
+            self.beliefs.declare_scope(target, question, labels, weights)
+        released = []
+        for label in labels:
+            if (
+                label == OTHER
+                or not self.beliefs.known(label)
+                or label not in self.beliefs.target_ids()
+            ):
+                continue
+            for component in self.beliefs.active_sources(label):
+                self.beliefs.retract(label, component.source_ref)
+                released.append(
+                    {
+                        "element": int(label.removeprefix("graph:")),
+                        "source_ref": json_value(component.source_ref),
+                    }
+                )
+        active = {_key(_reference(item.source_ref)) for item in self.beliefs.active_sources(target)}
+        retracted = []
+        for reference in retractions:
+            if _key(reference) in active:
+                self.beliefs.retract(target, reference)
+                retracted.append(json_value(reference))
+        created = []
+        for reference, likelihoods, root, basis in assignments:
+            assignment = self.beliefs.assess_likelihoods(
+                target,
+                reference,
+                likelihoods,
+                backed=False,
+                dependency_root=_reference(root) if root else None,
+                created_by=created_by,
+            )
+            self.beliefs.set_basis(target, reference, basis)
+            self.memory.retain(reference, "evidence:" + target)
+            created.append(assignment.id)
+        for label in labels:
+            if label != OTHER:
+                self.beliefs.mark_assessed(label, revision)
+        return {
+            "scope": target,
+            "alternatives": [_alternative(label) for label in labels],
+            "assignments": created,
+            "retracted": retracted,
+            "released": released,
+            "belief": json_value(self.beliefs.read(target)),
+        }
+
+    def _apply(self, target: str, prior, assign, retract, created_by) -> dict:
         retractions = [_reference(item) for item in retract]
         assignments = []
         for item in assign:
             reference, root = _reference(item.get("source_ref")), item.get("dependency_root")
-            likelihoods = item.get("likelihoods")
+            likelihoods, basis = item.get("likelihoods"), item.get("basis")
             if reference is None or root is not None and _reference(root) is None:
                 raise ContractError("Evidence needs a retained source reference")
             if not isinstance(likelihoods, Mapping) or set(likelihoods) != {"false", "true"}:
-                raise ContractError("Graph element likelihoods are keyed by false and true")
+                raise ContractError("Binary likelihoods are keyed by false and true")
             if not all(
                 isinstance(value, (int, float)) and math.isfinite(value) and value > 0
                 for value in likelihoods.values()
             ):
                 raise ContractError("Likelihoods must be positive and finite")
+            if basis is not None and not isinstance(basis, Mapping):
+                raise ContractError("An assessment basis is an object")
             self.memory.resolve(reference)
-            assignments.append((reference, dict(likelihoods), _reference(root) if root else None))
+            assignments.append(
+                (reference, dict(likelihoods), _reference(root) if root else None, basis)
+            )
         if any(reference is None for reference in retractions):
             raise ContractError("Retraction needs a source reference")
         try:
@@ -370,7 +676,7 @@ class GraphEvidence:
                 self.beliefs.retract(target, reference)
                 retracted.append(json_value(reference))
         created = []
-        for reference, likelihoods, root in assignments:
+        for reference, likelihoods, root, basis in assignments:
             assignment = self.beliefs.assess_likelihoods(
                 target,
                 reference,
@@ -381,11 +687,10 @@ class GraphEvidence:
                 dependency_root=root,
                 created_by=created_by,
             )
+            self.beliefs.set_basis(target, reference, basis)
             self.memory.retain(reference, "evidence:" + target)
             created.append(assignment.id)
-        self.beliefs.mark_assessed(target, revision)
         return {
-            "element": element,
             "target": target,
             "assignments": created,
             "retracted": retracted,

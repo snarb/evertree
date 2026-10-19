@@ -1,0 +1,2051 @@
+[
+  {
+    "id": "facet-interval-correction",
+    "covers": [
+      "A4",
+      "S6",
+      "S7",
+      "G4"
+    ],
+    "title": "Facet states of one pump; the user corrects an interval",
+    "task": "Запомни историю работы насоса Н-1: когда он был выключен и когда работал. Сохрани состояния с их временными границами и связь каждого состояния с насосом.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "12 октября 2026 года насос Н-1 был выключен с 09:00 до 09:10 UTC. С 09:10 до 09:20 UTC тот же насос работал.",
+        "analysis": "Один насос Н-1, два интервала: выключен 09:00–09:10 UTC, работает 09:10–09:20 UTC 12 октября 2026 года."
+      },
+      {
+        "kind": "observation",
+        "source_id": "sensor:I-1",
+        "content": {
+          "sensor": "Н-1 ток двигателя",
+          "date": "2026-10-12",
+          "readings": [
+            {
+              "at": "09:12Z",
+              "amps": 11.8
+            },
+            {
+              "at": "09:18Z",
+              "amps": 12.1
+            }
+          ]
+        },
+        "analysis": "Ток двигателя Н-1 около 12 А в 09:12 и 09:18 UTC: насос работал."
+      },
+      {
+        "kind": "user",
+        "content": "Поправка: я ошибся. Насос Н-1 был выключен только с 09:00 до 09:05 UTC, а с 09:05 UTC уже работал.",
+        "analysis": "Пользователь исправляет своё прежнее сообщение: выключен 09:00–09:05 UTC, работает с 09:05 UTC."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "kind": "facet",
+          "all": [
+            "Н-1"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ],
+        "mode": "all"
+      },
+      {
+        "at": 1,
+        "select": {
+          "kind": "facet",
+          "all": [
+            "Н-1"
+          ]
+        },
+        "evidence_count": [
+          "==",
+          1
+        ],
+        "mode": "all",
+        "why": "the analytical Note restates the message and is not a second source"
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "facet",
+          "all": [
+            "Н-1",
+            [
+              "работ",
+              "running",
+              "operat"
+            ]
+          ]
+        },
+        "evidence_count": [
+          ">=",
+          2
+        ]
+      },
+      {
+        "at": 3,
+        "select": {
+          "kind": "facet",
+          "all": [
+            "Н-1"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.6
+        ],
+        "mode": "all",
+        "why": "corrected facets rest on the correction, not on the withdrawn statement"
+      }
+    ]
+  },
+  {
+    "id": "location-confirm-repeat-contradict",
+    "covers": [
+      "S1",
+      "S2",
+      "S3",
+      "S5",
+      "S9",
+      "D2"
+    ],
+    "title": "Independent confirmation, self-repetition, contradiction and a hedged doubt",
+    "task": "Запомни, где находится насос Н-2: сохрани его местоположение как отдельное состояние.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Насос Н-2 находится в цехе 3.",
+        "analysis": "Пользователь сообщает, что насос Н-2 находится в цехе 3."
+      },
+      {
+        "kind": "observation",
+        "source_id": "scanner:inventory",
+        "content": {
+          "scanner": "инвентаризация",
+          "asset": "Н-2",
+          "zone": "цех 3"
+        },
+        "analysis": "Инвентаризационный сканер независимо видит Н-2 в цехе 3."
+      },
+      {
+        "kind": "user",
+        "content": "Как я уже говорил, Н-2 стоит в третьем цехе.",
+        "analysis": "Пользователь повторяет, что Н-2 стоит в цехе 3."
+      },
+      {
+        "kind": "observation",
+        "source_id": "gate:rfid",
+        "content": {
+          "scanner": "RFID-ворота",
+          "asset": "Н-2",
+          "zone": "цех 5",
+          "at": "10:00Z"
+        },
+        "analysis": "RFID-ворота фиксируют Н-2 в цехе 5."
+      },
+      {
+        "kind": "user",
+        "content": "Кажется, Н-2 могли перевезти в цех 5, но я не уверен.",
+        "analysis": "Пользователь неуверенно предполагает, что Н-2 перевезли в цех 5."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "all": [
+            "Н-2",
+            [
+              "цех 3",
+              "цехе 3",
+              "workshop 3",
+              "shop 3"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "relation_instance",
+            "claim"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "evidence_count": [
+          "==",
+          1
+        ]
+      },
+      {
+        "change": [
+          1,
+          2
+        ],
+        "select": {
+          "all": [
+            "Н-2",
+            [
+              "цех 3",
+              "цехе 3",
+              "workshop 3",
+              "shop 3"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "relation_instance",
+            "claim"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "evidence_count": "up",
+        "why": "an independent scanner adds evidence"
+      },
+      {
+        "change": [
+          2,
+          3
+        ],
+        "select": {
+          "all": [
+            "Н-2",
+            [
+              "цех 3",
+              "цехе 3",
+              "workshop 3",
+              "shop 3"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "relation_instance",
+            "claim"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "support": "same",
+        "why": "the same user repeating themselves adds no support"
+      },
+      {
+        "change": [
+          3,
+          4
+        ],
+        "select": {
+          "all": [
+            "Н-2",
+            [
+              "цех 3",
+              "цехе 3",
+              "workshop 3",
+              "shop 3"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "relation_instance",
+            "claim"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": "down"
+      },
+      {
+        "change": [
+          4,
+          5
+        ],
+        "select": {
+          "all": [
+            "Н-2",
+            [
+              "цех 3",
+              "цехе 3",
+              "workshop 3",
+              "shop 3"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "relation_instance",
+            "claim"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": "down",
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "retraction-and-reassertion",
+    "covers": [
+      "B5",
+      "S6"
+    ],
+    "title": "The user withdraws a statement and then reasserts it",
+    "task": "Запомни, какой оператор отвечает за насос Н-3.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "За насос Н-3 отвечает оператор Иванов.",
+        "analysis": "Пользователь сообщает, что за насос Н-3 отвечает оператор Иванов."
+      },
+      {
+        "kind": "user",
+        "content": "Забудь это: я перепутал насосы, Иванов не отвечает за Н-3.",
+        "analysis": "Пользователь отзывает утверждение об ответственности Иванова за Н-3."
+      },
+      {
+        "kind": "user",
+        "content": "Нет, всё-таки я был прав: за Н-3 отвечает Иванов.",
+        "analysis": "Пользователь снова утверждает, что за Н-3 отвечает Иванов."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-3",
+            "Иванов"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-3",
+            "Иванов"
+          ],
+          "none": [
+            "не отвечает",
+            "not responsible",
+            "отозвал",
+            "withdr",
+            "retract",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF",
+            "NOT_"
+          ]
+        },
+        "strength": [
+          "<=",
+          0.55
+        ],
+        "optional": true,
+        "why": "a withdrawn responsibility fact, if kept, must lose the withdrawn support"
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-3",
+            "Иванов",
+            [
+              "не отвечает",
+              "not responsible",
+              "NOT_"
+            ]
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ],
+        "optional": true,
+        "why": "the correction itself is the user's current statement"
+      },
+      {
+        "at": 3,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-3",
+            "Иванов"
+          ],
+          "none": [
+            "не отвечает",
+            "not responsible",
+            "отозвал",
+            "withdr",
+            "retract",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF",
+            "NOT_"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      }
+    ]
+  },
+  {
+    "id": "numeric-setpoint-correction",
+    "covers": [
+      "A8",
+      "S5",
+      "S7",
+      "S8"
+    ],
+    "title": "A stated setpoint is contradicted by SCADA, an unrelated reading follows, the user corrects the value",
+    "task": "Запомни уставку давления для насоса Н-4.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Уставка давления насоса Н-4 равна 5 бар.",
+        "analysis": "Пользователь: уставка давления Н-4 равна 5 бар."
+      },
+      {
+        "kind": "observation",
+        "source_id": "scada:main",
+        "content": {
+          "system": "SCADA",
+          "asset": "Н-4",
+          "parameter": "уставка давления",
+          "bar": 6
+        },
+        "analysis": "SCADA показывает уставку давления Н-4 равной 6 бар."
+      },
+      {
+        "kind": "observation",
+        "source_id": "scada:main",
+        "content": {
+          "system": "SCADA",
+          "asset": "Н-7",
+          "parameter": "уставка давления",
+          "bar": 9
+        },
+        "analysis": "SCADA показывает уставку давления другого насоса Н-7 равной 9 бар."
+      },
+      {
+        "kind": "user",
+        "content": "Проверил на месте: уставка Н-4 действительно 6 бар, я ошибся.",
+        "analysis": "Пользователь подтверждает уставку Н-4 в 6 бар и исправляет прежние 5 бар."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-4",
+            "5"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-4",
+            "5"
+          ],
+          "none": [
+            "6",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "change": [
+          2,
+          3
+        ],
+        "select": {
+          "all": [
+            "Н-4"
+          ]
+        },
+        "strength": "same",
+        "mode": "all",
+        "why": "a reading about another pump does not bear on Н-4"
+      },
+      {
+        "at": 4,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-4",
+            "6"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      }
+    ]
+  },
+  {
+    "id": "claim-hypothesis-tested",
+    "covers": [
+      "A1",
+      "S9"
+    ],
+    "title": "A hedged causal hypothesis gains from a sensor and loses to an inspection report",
+    "task": "Помоги разобраться, почему насос Н-5 перегревается. Сохраняй гипотезы и то, что их подтверждает или опровергает.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Думаю, Н-5 перегревается из-за износа подшипника.",
+        "analysis": "Гипотеза пользователя: причина перегрева Н-5 — износ подшипника."
+      },
+      {
+        "kind": "observation",
+        "source_id": "sensor:VIB-5",
+        "content": {
+          "sensor": "вибрация подшипникового узла",
+          "asset": "Н-5",
+          "vibration_mm_s": 11.2,
+          "norm_max_mm_s": 4.5
+        },
+        "analysis": "Вибрация подшипникового узла Н-5 в 2,5 раза выше нормы."
+      },
+      {
+        "kind": "document",
+        "source_id": "report:inspection-2026-10-18",
+        "content": "Акт осмотра насоса Н-5 от 18.10.2026: подшипники заменены 10.10.2026, следов износа нет. Обнаружено засорение фильтра системы охлаждения; вибрация вызвана ослабленным креплением рамы.",
+        "analysis": "Акт осмотра: подшипники новые и без износа; причина — засорённый фильтр охлаждения."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "all": [
+            "Н-5",
+            [
+              "подшип",
+              "bearing"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "note",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          "between",
+          0.52,
+          0.75
+        ]
+      },
+      {
+        "change": [
+          1,
+          2
+        ],
+        "select": {
+          "all": [
+            "Н-5",
+            [
+              "подшип",
+              "bearing"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "note",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": "up"
+      },
+      {
+        "at": 3,
+        "select": {
+          "all": [
+            "Н-5",
+            [
+              "подшип",
+              "bearing"
+            ]
+          ],
+          "none": [
+            "нет износа",
+            "без износа",
+            "no wear",
+            "заменен",
+            "replaced",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ],
+          "kinds": [
+            "claim",
+            "note",
+            "relation_instance"
+          ]
+        },
+        "strength": [
+          "<",
+          0.5
+        ]
+      }
+    ]
+  },
+  {
+    "id": "note-checked-against-log",
+    "covers": [
+      "A2"
+    ],
+    "title": "A preserved generalisation is contradicted by an incident log",
+    "task": "Веди заметки о закономерностях аварий насосной станции.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Запиши закономерность: аварии насосов на нашей станции почти всегда происходят ночью.",
+        "analysis": "Пользователь формулирует закономерность: аварии насосов почти всегда ночью."
+      },
+      {
+        "kind": "observation",
+        "source_id": "log:incidents",
+        "content": {
+          "journal": "журнал аварий за сентябрь 2026",
+          "total": 7,
+          "day_08_20": 6,
+          "night_20_08": 1
+        },
+        "analysis": "За сентябрь 7 аварий, 6 из них днём и только 1 ночью."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "all": [
+            [
+              "ноч",
+              "night"
+            ]
+          ]
+        },
+        "strength": [
+          ">=",
+          0.6
+        ]
+      },
+      {
+        "change": [
+          1,
+          2
+        ],
+        "select": {
+          "all": [
+            [
+              "ноч",
+              "night"
+            ]
+          ],
+          "none": [
+            "днём",
+            "day"
+          ]
+        },
+        "strength": "down"
+      }
+    ]
+  },
+  {
+    "id": "relation-part-whole-contradicted",
+    "covers": [
+      "A3"
+    ],
+    "title": "A part-whole relation is contradicted by a circuit schematic",
+    "task": "Запомни, из каких насосов состоят контуры станции.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Насос Н-6 входит в контур охлаждения К-1.",
+        "analysis": "Пользователь: Н-6 — часть контура охлаждения К-1."
+      },
+      {
+        "kind": "document",
+        "source_id": "doc:schematic-K1-2026",
+        "content": "Схема контура охлаждения К-1, редакция 2026: в контур входят насосы Н-8 и Н-9. Насос Н-6 относится к контуру пожаротушения П-2.",
+        "analysis": "Схема К-1: насосы Н-8 и Н-9; Н-6 — в контуре П-2."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-6",
+            "К-1"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-6",
+            "К-1"
+          ],
+          "none": [
+            "П-2",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-8",
+            "К-1"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ],
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "prototype-definition-counterexample",
+    "covers": [
+      "A5",
+      "A6"
+    ],
+    "title": "A class definition is challenged by a counterexample",
+    "task": "Помоги вести справочник видов оборудования и их определений.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Насос — это машина с электродвигателем, которая перекачивает жидкость.",
+        "analysis": "Определение пользователя: насос — машина с электродвигателем для перекачки жидкости."
+      },
+      {
+        "kind": "user",
+        "content": "На складе есть ручной насос Р-2: он перекачивает воду, двигателя у него нет, он работает от рычага.",
+        "analysis": "Ручной насос Р-2 перекачивает воду без двигателя."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "kinds": [
+            "prototype",
+            "concept"
+          ],
+          "all": [
+            [
+              "электродвиг",
+              "electric motor",
+              "motor"
+            ]
+          ]
+        },
+        "strength": [
+          ">=",
+          0.6
+        ]
+      },
+      {
+        "change": [
+          1,
+          2
+        ],
+        "select": {
+          "kinds": [
+            "prototype",
+            "concept"
+          ],
+          "all": [
+            [
+              "электродвиг",
+              "electric motor",
+              "motor"
+            ]
+          ],
+          "none": [
+            "ручн",
+            "manual",
+            "without"
+          ]
+        },
+        "strength": "down",
+        "optional": true,
+        "why": "if the definition still requires a motor, the counterexample opposes it"
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "instance",
+          "all": [
+            "Р-2"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      }
+    ]
+  },
+  {
+    "id": "classification-corrected-by-passport",
+    "covers": [
+      "A7"
+    ],
+    "title": "A classification is contradicted by an equipment passport",
+    "task": "Веди учёт оборудования: что это за объект и к какому виду он относится.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Т-1 — это насос.",
+        "analysis": "Пользователь классифицирует Т-1 как насос."
+      },
+      {
+        "kind": "document",
+        "source_id": "doc:passport-T1",
+        "content": "Паспорт изделия Т-1: пластинчатый теплообменник ПТ-40, поверхность теплообмена 40 м², насосной части не имеет.",
+        "analysis": "Паспорт: Т-1 — пластинчатый теплообменник, не насос."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "kinds": [
+            "relation_instance"
+          ],
+          "all": [
+            "Т-1",
+            [
+              "насос",
+              "pump"
+            ]
+          ],
+          "none": [
+            "теплообмен",
+            "heat exchanger"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      },
+      {
+        "at": 2,
+        "select": {
+          "kinds": [
+            "relation_instance"
+          ],
+          "all": [
+            "Т-1",
+            [
+              "насос",
+              "pump"
+            ]
+          ],
+          "none": [
+            "теплообмен",
+            "heat exchanger"
+          ]
+        },
+        "strength": [
+          "<",
+          0.5
+        ],
+        "optional": true
+      },
+      {
+        "at": 2,
+        "select": {
+          "kinds": [
+            "relation_instance",
+            "facet",
+            "claim"
+          ],
+          "all": [
+            "Т-1",
+            [
+              "теплообмен",
+              "heat exchanger"
+            ]
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      }
+    ]
+  },
+  {
+    "id": "state-succession-not-contradiction",
+    "covers": [
+      "E1"
+    ],
+    "title": "A later state change does not contradict an earlier state",
+    "task": "Запомни, когда работал и когда был остановлен насос Н-10.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "19 октября 2026 года в 09:00 UTC насос Н-10 работал.",
+        "analysis": "Н-10 работал 19.10.2026 в 09:00 UTC."
+      },
+      {
+        "kind": "observation",
+        "source_id": "log:operations",
+        "content": {
+          "journal": "журнал операций",
+          "asset": "Н-10",
+          "event": "остановлен оператором",
+          "at": "2026-10-19T10:15Z"
+        },
+        "analysis": "Н-10 остановлен оператором в 10:15 UTC."
+      }
+    ],
+    "expect": [
+      {
+        "change": [
+          1,
+          2
+        ],
+        "select": {
+          "all": [
+            "Н-10",
+            [
+              "работ",
+              "running",
+              "operat"
+            ]
+          ],
+          "none": [
+            "останов",
+            "stopp",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ]
+        },
+        "strength": "same"
+      },
+      {
+        "at": 2,
+        "select": {
+          "all": [
+            "Н-10",
+            [
+              "останов",
+              "stopp"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      }
+    ]
+  },
+  {
+    "id": "instance-failure-vs-generalisation",
+    "covers": [
+      "F1"
+    ],
+    "title": "One failure barely bears on a general reliability claim",
+    "task": "Веди сведения о надёжности насосов станции.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Насосы нашей станции надёжны: отказы у них редки.",
+        "analysis": "Пользователь утверждает, что отказы насосов станции редки."
+      },
+      {
+        "kind": "observation",
+        "source_id": "log:incidents",
+        "content": {
+          "journal": "журнал отказов",
+          "asset": "Н-11",
+          "event": "обрыв вала",
+          "at": "2026-10-18"
+        },
+        "analysis": "Н-11 отказал 18.10 из-за обрыва вала."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "select": {
+          "all": [
+            [
+              "редк",
+              "rare",
+              "надёж",
+              "reliab"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "note",
+            "relation_instance",
+            "facet"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.55
+        ],
+        "why": "one failure does not refute that failures are rare"
+      },
+      {
+        "at": 2,
+        "select": {
+          "all": [
+            "Н-11"
+          ],
+          "kinds": [
+            "claim",
+            "facet",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pattern-from-earlier-observations",
+    "covers": [
+      "F2"
+    ],
+    "title": "A pattern claimed later is supported by earlier, already integrated observations",
+    "task": "Веди сведения об отказах насосов и их моделях.",
+    "steps": [
+      {
+        "kind": "observation",
+        "source_id": "log:incidents",
+        "content": {
+          "asset": "Н-12",
+          "model": "КМ-80",
+          "event": "течь торцевого уплотнения",
+          "at": "2026-09-02"
+        }
+      },
+      {
+        "kind": "observation",
+        "source_id": "log:incidents",
+        "content": {
+          "asset": "Н-13",
+          "model": "КМ-80",
+          "event": "течь торцевого уплотнения",
+          "at": "2026-09-15"
+        }
+      },
+      {
+        "kind": "observation",
+        "source_id": "log:incidents",
+        "content": {
+          "asset": "Н-14",
+          "model": "КМ-80",
+          "event": "течь торцевого уплотнения",
+          "at": "2026-10-01"
+        }
+      },
+      {
+        "kind": "user",
+        "content": "Похоже, у модели КМ-80 слабое торцевое уплотнение.",
+        "analysis": "Гипотеза пользователя: у модели КМ-80 слабое торцевое уплотнение."
+      }
+    ],
+    "expect": [
+      {
+        "at": 4,
+        "select": {
+          "all": [
+            "КМ-80",
+            [
+              "уплотн",
+              "seal"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "note",
+            "relation_instance",
+            "facet"
+          ],
+          "none": [
+            "Н-12",
+            "Н-13",
+            "Н-14",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "evidence_count": [
+          ">=",
+          2
+        ],
+        "why": "the earlier failure records bear on the new claim"
+      }
+    ]
+  },
+  {
+    "id": "question-and-hypothetical-are-not-evidence",
+    "covers": [
+      "G1",
+      "G2"
+    ],
+    "title": "A question and a counterfactual assert nothing",
+    "task": "Отвечай на вопросы о насосах станции и запоминай факты о них.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Насос Н-16 сейчас работает?"
+      },
+      {
+        "kind": "user",
+        "content": "Если бы насос Н-17 был включён, давление выросло бы до 8 бар."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "all": [
+            "Н-16",
+            [
+              "работ",
+              "running",
+              "operat"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          "<=",
+          0.55
+        ],
+        "optional": true
+      },
+      {
+        "at": 2,
+        "select": {
+          "all": [
+            "Н-17",
+            [
+              "включ",
+              "on",
+              "running"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim"
+          ],
+          "none": [
+            "если",
+            "if",
+            "would",
+            "бы"
+          ]
+        },
+        "strength": [
+          "<=",
+          0.55
+        ],
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "hearsay-then-measurement",
+    "covers": [
+      "G3"
+    ],
+    "title": "Unverified hearsay is weak and a measurement overturns it",
+    "task": "Запомни техническое состояние насоса Н-18.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Петров сказал, что Н-18 сломан, но я сам не проверял.",
+        "analysis": "Со слов Петрова Н-18 сломан; пользователь не проверял."
+      },
+      {
+        "kind": "observation",
+        "source_id": "sensor:I-18",
+        "content": {
+          "asset": "Н-18",
+          "motor_current_a": 12.0,
+          "pressure_bar": 5.1,
+          "status": "в работе",
+          "at": "2026-10-19T10:00Z"
+        },
+        "analysis": "Н-18 в работе: ток 12 А, давление 5,1 бар."
+      }
+    ],
+    "expect": [
+      {
+        "at": 1,
+        "select": {
+          "all": [
+            "Н-18",
+            [
+              "слом",
+              "broken",
+              "fail",
+              "неисправ"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          "between",
+          0.5,
+          0.7
+        ]
+      },
+      {
+        "change": [
+          1,
+          2
+        ],
+        "select": {
+          "all": [
+            "Н-18",
+            [
+              "слом",
+              "broken",
+              "fail",
+              "неисправ"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": "down"
+      }
+    ]
+  },
+  {
+    "id": "reposts-vs-peer-reviewed-study",
+    "covers": [
+      "B1",
+      "D1"
+    ],
+    "stage": 2,
+    "title": "Reposts of one forum rumour are one source; a peer-reviewed trial outweighs it",
+    "task": "Собери, что известно о влиянии присадки ПА-7 на кавитацию в насосах, с оценкой надёжности.",
+    "steps": [
+      {
+        "kind": "document",
+        "source_id": "forum:user123",
+        "content": "Пост на форуме pumps-talk (user123): присадка ПА-7 в охлаждающей жидкости полностью предотвращает кавитацию в насосах, проверено у меня в гараже."
+      },
+      {
+        "kind": "document",
+        "source_id": "forum:user456",
+        "content": "Репост на форуме pumps-talk (user456) со ссылкой на пост user123: «ПА-7 полностью предотвращает кавитацию»."
+      },
+      {
+        "kind": "document",
+        "source_id": "telegram:pumpnews",
+        "content": "Канал PumpNews: по сообщению с форума pumps-talk, присадка ПА-7 полностью предотвращает кавитацию в насосах."
+      },
+      {
+        "kind": "document",
+        "source_id": "doi:10.1038/s41586-026-0001",
+        "content": "Nature, 2026, рандомизированное контролируемое испытание на 120 промышленных насосах: присадка ПА-7 не снизила частоту кавитации (12 % против 13 % в контроле, p = 0.8)."
+      }
+    ],
+    "expect": [
+      {
+        "change": [
+          1,
+          3
+        ],
+        "select": {
+          "all": [
+            "ПА-7",
+            [
+              "кавитац",
+              "cavitation"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "relation_instance",
+            "facet",
+            "note"
+          ],
+          "none": [
+            "не снизила",
+            "did not",
+            "no effect",
+            "Nature",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "support": "same",
+        "why": "reposts depend on the first post"
+      },
+      {
+        "at": 4,
+        "select": {
+          "all": [
+            "ПА-7",
+            [
+              "кавитац",
+              "cavitation"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "relation_instance",
+            "facet",
+            "note"
+          ],
+          "none": [
+            "не снизила",
+            "did not",
+            "no effect",
+            "Nature",
+            "испытан",
+            "trial",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          "<",
+          0.45
+        ]
+      }
+    ]
+  },
+  {
+    "id": "independent-weak-sources-vs-bulletin",
+    "covers": [
+      "B2"
+    ],
+    "stage": 2,
+    "title": "Several independent anonymous comments versus one manufacturer bulletin",
+    "task": "Собери сведения о протечках сальника насосов серии Н-30 с учётом надёжности источников.",
+    "steps": [
+      {
+        "kind": "document",
+        "source_id": "comment:anon-a1",
+        "content": "Анонимный комментарий под статьёй: у насосов серии Н-30 часто протекает сальник."
+      },
+      {
+        "kind": "document",
+        "source_id": "comment:anon-b2",
+        "content": "Анонимный отзыв на маркетплейсе: насос серии Н-30, через месяц потёк сальник."
+      },
+      {
+        "kind": "document",
+        "source_id": "comment:anon-c3",
+        "content": "Анонимное сообщение в чате: слышал, что у Н-30 бывают протечки сальника."
+      },
+      {
+        "kind": "document",
+        "source_id": "doc:manufacturer-bulletin-N30",
+        "content": "Технический бюллетень производителя, 2026: по данным сервисной статистики 2000 насосов серии Н-30 за 5 лет эксплуатации доля протечек сальника 0,3 %, это ниже среднего по отрасли (2 %)."
+      }
+    ],
+    "expect": [
+      {
+        "at": 3,
+        "select": {
+          "all": [
+            "Н-30",
+            [
+              "сальник",
+              "gland",
+              "seal"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "relation_instance",
+            "facet",
+            "note"
+          ],
+          "none": [
+            "0,3",
+            "0.3",
+            "бюллетен",
+            "bulletin",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">",
+          0.5
+        ]
+      },
+      {
+        "at": 4,
+        "select": {
+          "all": [
+            "Н-30",
+            [
+              "сальник",
+              "gland",
+              "seal"
+            ]
+          ],
+          "kinds": [
+            "claim",
+            "relation_instance",
+            "facet",
+            "note"
+          ],
+          "none": [
+            "0,3",
+            "0.3",
+            "бюллетен",
+            "bulletin",
+            "ниже",
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          "<",
+          0.5
+        ]
+      }
+    ]
+  },
+  {
+    "id": "discredited-sensor-then-rehabilitated",
+    "covers": [
+      "B3",
+      "B4"
+    ],
+    "stage": 2,
+    "title": "A sensor is found faulty, so every fact resting on it weakens; then it is cleared",
+    "task": "Следи за температурой насосов Н-20, Н-21 и Н-22 и запоминай их перегревы.",
+    "steps": [
+      {
+        "kind": "observation",
+        "source_id": "sensor:T-7",
+        "content": {
+          "sensor": "T-7",
+          "asset": "Н-20",
+          "temperature_c": 95,
+          "limit_c": 80,
+          "at": "2026-10-19T08:00Z"
+        },
+        "analysis": "Датчик T-7: Н-20 перегрет, 95 °C при пределе 80 °C."
+      },
+      {
+        "kind": "observation",
+        "source_id": "sensor:T-7",
+        "content": {
+          "sensor": "T-7",
+          "asset": "Н-21",
+          "temperature_c": 97,
+          "limit_c": 80,
+          "at": "2026-10-19T08:05Z"
+        },
+        "analysis": "Датчик T-7: Н-21 перегрет, 97 °C."
+      },
+      {
+        "kind": "observation",
+        "source_id": "sensor:T-7",
+        "content": {
+          "sensor": "T-7",
+          "asset": "Н-22",
+          "temperature_c": 99,
+          "limit_c": 80,
+          "at": "2026-10-19T08:10Z"
+        },
+        "analysis": "Датчик T-7: Н-22 перегрет, 99 °C."
+      },
+      {
+        "kind": "user",
+        "content": "Метролог сообщил: переносной датчик T-7 был неисправен всю неделю и завышал температуру примерно на 30 °C. Его показаниям нельзя доверять.",
+        "analysis": "Датчик T-7 неисправен и завышает температуру на 30 °C."
+      },
+      {
+        "kind": "user",
+        "content": "Метролог ошибся: неисправен был датчик T-8, а T-7 прошёл поверку и исправен.",
+        "analysis": "T-7 исправен, неисправен T-8."
+      }
+    ],
+    "expect": [
+      {
+        "at": 3,
+        "select": {
+          "all": [
+            [
+              "Н-20",
+              "Н-21",
+              "Н-22"
+            ],
+            [
+              "перегр",
+              "overheat",
+              "95",
+              "97",
+              "99"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ],
+        "mode": "all"
+      },
+      {
+        "at": 4,
+        "origin": "sensor:T-7",
+        "reliability": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "change": [
+          3,
+          4
+        ],
+        "select": {
+          "all": [
+            [
+              "Н-20",
+              "Н-21",
+              "Н-22"
+            ],
+            [
+              "перегр",
+              "overheat",
+              "95",
+              "97",
+              "99"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": "down",
+        "mode": "all",
+        "why": "every fact resting on the discredited sensor is reassessed"
+      },
+      {
+        "at": 5,
+        "origin": "sensor:T-7",
+        "reliability": [
+          ">",
+          0.5
+        ]
+      },
+      {
+        "change": [
+          4,
+          5
+        ],
+        "select": {
+          "all": [
+            [
+              "Н-20",
+              "Н-21",
+              "Н-22"
+            ],
+            [
+              "перегр",
+              "overheat",
+              "95",
+              "97",
+              "99"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": "up",
+        "mode": "all"
+      }
+    ]
+  },
+  {
+    "id": "failure-cause-hypotheses",
+    "covers": [
+      "C1",
+      "C3"
+    ],
+    "stage": 3,
+    "title": "Mutually exclusive failure causes compete; a new alternative extends the scope",
+    "task": "Помоги найти единственную причину остановки насоса Н-40. Сохраняй гипотезы о причине и свидетельства за и против них.",
+    "steps": [
+      {
+        "kind": "user",
+        "content": "Насос Н-40 остановился. Причина одна из трёх: износ подшипника, кавитация или неисправность электродвигателя.",
+        "analysis": "Три взаимоисключающие гипотезы о причине остановки Н-40: подшипник, кавитация, электродвигатель."
+      },
+      {
+        "kind": "observation",
+        "source_id": "sensor:VIB-40",
+        "content": {
+          "asset": "Н-40",
+          "vibration_mm_s": 2.1,
+          "norm_max_mm_s": 4.5,
+          "cavitation_noise": "не обнаружен"
+        },
+        "analysis": "Вибрация Н-40 в норме, шум кавитации не обнаружен."
+      },
+      {
+        "kind": "document",
+        "source_id": "report:electric-N40",
+        "content": "Протокол электротехнической лаборатории: сопротивление изоляции обмотки электродвигателя Н-40 — 0,1 МОм при норме не менее 1 МОм, пробой изоляции.",
+        "analysis": "Пробой изоляции обмотки двигателя Н-40."
+      },
+      {
+        "kind": "user",
+        "content": "Есть и четвёртая возможная причина остановки Н-40 — засор входного фильтра.",
+        "analysis": "Добавлена гипотеза: засор входного фильтра Н-40."
+      }
+    ],
+    "expect": [
+      {
+        "at": 3,
+        "scope": [
+          {
+            "all": [
+              "Н-40",
+              [
+                "подшип",
+                "bearing"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          },
+          {
+            "all": [
+              "Н-40",
+              [
+                "кавитац",
+                "cavitation"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          },
+          {
+            "all": [
+              "Н-40",
+              [
+                "двигат",
+                "motor",
+                "изоляц",
+                "insulation"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          }
+        ]
+      },
+      {
+        "at": 3,
+        "compare": [
+          {
+            "all": [
+              "Н-40",
+              [
+                "двигат",
+                "motor",
+                "изоляц",
+                "insulation"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          },
+          ">",
+          {
+            "all": [
+              "Н-40",
+              [
+                "подшип",
+                "bearing"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          }
+        ]
+      },
+      {
+        "at": 3,
+        "compare": [
+          {
+            "all": [
+              "Н-40",
+              [
+                "двигат",
+                "motor",
+                "изоляц",
+                "insulation"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          },
+          ">",
+          {
+            "all": [
+              "Н-40",
+              [
+                "кавитац",
+                "cavitation"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          }
+        ]
+      },
+      {
+        "at": 4,
+        "scope": [
+          {
+            "all": [
+              "Н-40",
+              [
+                "подшип",
+                "bearing"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          },
+          {
+            "all": [
+              "Н-40",
+              [
+                "фильтр",
+                "filter"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          },
+          {
+            "all": [
+              "Н-40",
+              [
+                "двигат",
+                "motor",
+                "изоляц",
+                "insulation"
+              ]
+            ],
+            "kinds": [
+              "claim",
+              "relation_instance",
+              "facet"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "categorical-location",
+    "covers": [
+      "C2"
+    ],
+    "stage": 3,
+    "title": "Two locations of one pump at the same time are exclusive alternatives",
+    "task": "Запомни, где сейчас находится насос Н-41. Он может быть только в одном месте.",
+    "steps": [
+      {
+        "kind": "document",
+        "source_id": "doc:movement-log",
+        "content": "Журнал перемещений оборудования, 19.10.2026: насос Н-41 находится в цехе 5.",
+        "analysis": "Журнал: Н-41 в цехе 5."
+      },
+      {
+        "kind": "user",
+        "content": "Сейчас Н-41 стоит в цехе 3, я его вижу.",
+        "analysis": "Пользователь видит Н-41 в цехе 3 сейчас."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "scope": [
+          {
+            "all": [
+              "Н-41",
+              [
+                "цех 3",
+                "цехе 3",
+                "workshop 3",
+                "shop 3"
+              ]
+            ],
+            "kinds": [
+              "facet",
+              "claim",
+              "relation_instance"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          },
+          {
+            "all": [
+              "Н-41",
+              [
+                "цех 5",
+                "цехе 5",
+                "workshop 5",
+                "shop 5"
+              ]
+            ],
+            "kinds": [
+              "facet",
+              "claim",
+              "relation_instance"
+            ],
+            "none": [
+              "IDENTITY_TYPE",
+              "SUBTYPE_OF"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

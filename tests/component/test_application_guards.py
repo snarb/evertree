@@ -16,6 +16,7 @@ from tests.support.application import IntegrationScriptedProvider as ScriptedPro
 from tests.support.application import (
     decision,
     framing,
+    is_evidence_request,
     is_integration_request,
     verification,
     wait_for_event,
@@ -298,7 +299,11 @@ async def test_input_accepted_during_turn_reaches_controller_before_delivery(tmp
             self.entered, self.release = asyncio.Event(), asyncio.Event()
 
         async def run(self, request_id, request, **kwargs):
-            if not is_integration_request(request) and len(self.task_requests) == pause_at:
+            if (
+                not is_integration_request(request)
+                and not is_evidence_request(request)
+                and len(self.task_requests) == pause_at
+            ):
                 self.entered.set()
                 await self.release.wait()
             async for event in super().run(request_id, request, **kwargs):

@@ -7,7 +7,7 @@ experience, integrates it, then runs EvidenceAssessment (graph assessment, then 
 Program assessment placeholder) with real Codex decisions, and prints every assessed
 graph element's belief and its change since the previous step.
 
-Edit STEPS to try other cases. Each run writes graph.json, trace.json, beliefs.json,
+Edit STEPS to try other cases, or pass a case id from tests/evidence/cases.json. Each run writes graph.json, trace.json, beliefs.json,
 evidence.json (assessment results per step), calls.json, tools.json and model-*.md
 files under tmp/debug-evidence-assessment/<run>/, also on failure.
 
@@ -33,6 +33,8 @@ from uuid import uuid4
 from evertree.common.logging_setup import configure_logging
 from evertree.core.beliefs import element_target
 from evertree.core.cognition.tasks import TaskSpecification
+from evertree.core.graph.types import RelationInstance
+from evertree.core.semantics.reading import fact_nodes
 from evertree.core.values import json_value
 from evertree.debug_integration import DebugSession, load_debug_environment
 from evertree.processes.learning.evidence_assessment._exec import run as assess
@@ -86,99 +88,16 @@ STEPS = [
     },
 ]
 
-# Other scenarios: python -m evertree.debug_evidence_assessment <name>. Each is (task, steps).
-SCENARIOS = {
-    "location": (
-        "Запомни, где находится насос Н-2: сохрани его местоположение как отдельное состояние.",
-        [
-            {
-                "kind": "user",
-                "content": "Насос Н-2 находится в цехе 3.",
-                "analysis": "Пользователь сообщает, что насос Н-2 находится в цехе 3.",
-            },
-            {
-                "kind": "observation",
-                "content": {"scanner": "инвентаризация", "asset": "Н-2", "zone": "цех 3"},
-                "analysis": "Инвентаризационный сканер независимо видит Н-2 в цехе 3.",
-            },
-            {
-                "kind": "user",
-                "content": "Как я уже говорил, Н-2 стоит в третьем цехе.",
-                "analysis": "Пользователь повторяет, что Н-2 стоит в цехе 3.",
-            },
-            {
-                "kind": "observation",
-                "content": {
-                    "scanner": "RFID-ворота",
-                    "asset": "Н-2",
-                    "zone": "цех 5",
-                    "at": "10:00Z",
-                },
-                "analysis": "RFID-ворота фиксируют Н-2 в цехе 5.",
-            },
-            {
-                "kind": "user",
-                "content": "Кажется, Н-2 могли перевезти в цех 5, но я не уверен.",
-                "analysis": "Пользователь неуверенно предполагает, что Н-2 перевезли в цех 5.",
-            },
-        ],
-    ),
-    "retraction": (
-        "Запомни, какой оператор отвечает за насос Н-3.",
-        [
-            {
-                "kind": "user",
-                "content": "За насос Н-3 отвечает оператор Иванов.",
-                "analysis": "Пользователь сообщает, что за насос Н-3 отвечает оператор Иванов.",
-            },
-            {
-                "kind": "user",
-                "content": "Забудь это: я перепутал насосы, Иванов не отвечает за Н-3.",
-                "analysis": "Пользователь отзывает утверждение об ответственности Иванова за Н-3.",
-            },
-            {
-                "kind": "user",
-                "content": "Нет, всё-таки я был прав: за Н-3 отвечает Иванов.",
-                "analysis": "Пользователь снова утверждает, что за Н-3 отвечает Иванов.",
-            },
-        ],
-    ),
-    "threshold": (
-        "Запомни уставку давления для насоса Н-4.",
-        [
-            {
-                "kind": "user",
-                "content": "Уставка давления насоса Н-4 равна 5 бар.",
-                "analysis": "Пользователь: уставка давления Н-4 равна 5 бар.",
-            },
-            {
-                "kind": "observation",
-                "content": {
-                    "system": "SCADA",
-                    "asset": "Н-4",
-                    "parameter": "уставка давления",
-                    "bar": 6,
-                },
-                "analysis": "SCADA показывает уставку давления Н-4 равной 6 бар.",
-            },
-            {
-                "kind": "observation",
-                "content": {
-                    "system": "SCADA",
-                    "asset": "Н-7",
-                    "parameter": "уставка давления",
-                    "bar": 9,
-                },
-                "analysis": "SCADA показывает уставку давления другого насоса Н-7 равной 9 бар.",
-            },
-            {
-                "kind": "user",
-                "content": "Проверил на месте: уставка Н-4 действительно 6 бар, я ошибся.",
-                "analysis": "Пользователь подтверждает уставку Н-4 в 6 бар и исправляет прежние 5 бар.",
-            },
-        ],
-    ),
-}
+# Text-based evidence cases shared with tests/evidence; run one by id.
+CASES = Path(__file__).resolve().parents[2] / "tests" / "evidence" / "cases.json"
+
+
+def load_case(case_id):
+    """Return (task, steps) of one case in tests/evidence/cases.json."""
+    for case in json.loads(CASES.read_text(encoding="utf-8")):
+        if case["id"] == case_id:
+            return case["task"], case["steps"]
+    raise SystemExit(f"Нет сценария {case_id} в {CASES}")
 
 
 class EvidenceSession(DebugSession):
@@ -189,16 +108,21 @@ class EvidenceSession(DebugSession):
         output_dir: Path,
         *,
         timeout_seconds: float | None = None,
-        scenario: str | None = None,
+        task: str = USER_TASK,
+        steps: list | None = None,
     ):
         super().__init__(output_dir, timeout_seconds=timeout_seconds)
-        self.task, self.steps = SCENARIOS[scenario] if scenario else (USER_TASK, None)
+        self.task, self.steps = task, steps
+        # Cards shown to integration and assessment include current beliefs, as in the runtime.
+        self.graph.belief_reader = self.operations.beliefs.read
         self.metadata["task_id"] = "debug-evidence-assessment"
         task = self.metadata["integration_context"]["task"]
         task["id"] = "debug-evidence-assessment"
         task["specification"] = TaskSpecification(self.task).to_dict()
         self.evidence = []
         self.previous = {}
+        # Beliefs after each step, for case checks.
+        self.history = []
 
     def record_step(self, index, step):
         """Record one step's experience and optional analytical Note as integration sources."""
@@ -210,11 +134,12 @@ class EvidenceSession(DebugSession):
         if step["kind"] == "user":
             event = self.memory.record(run, "user_input", output=step["content"])
         else:
+            # kind "observation" or "document"; source_id names the origin of the record.
+            arguments = {"source_id": step.get("source_id") or f"debug-sensor:{index}"}
+            if step["kind"] == "document":
+                arguments["source_type"] = "document"
             event = self.memory.record(
-                run,
-                "observation",
-                arguments={"source_id": f"debug-sensor:{index}"},
-                output=step["content"],
+                run, "observation", arguments=arguments, output=step["content"]
             )
         refs.append(json_value(self.memory.output_ref(event)))
         self.memory.finish_run(run)
@@ -240,20 +165,45 @@ class EvidenceSession(DebugSession):
         result = {}
         for node in self.graph.nodes():
             target = element_target(node)
-            try:
-                self.operations.beliefs.target(target)
-            except KeyError:
+            if not self.operations.beliefs.known(target):
                 continue
             reading = self.operations.beliefs.read(target)
             result[node.id] = {
                 "name": node.name,
                 "kind": node.kind,
                 "description": node.description,
+                "text": self.element_text(node),
                 "strength": round(reading.strength, 3),
                 "support": round(reading.support, 3),
                 "evidence_count": reading.stats.evidence_count,
+                "scope": self.operations.beliefs.scope_of(target),
             }
         return result
+
+    def origins_now(self):
+        """Current reliability belief of every assessed source origin, keyed by origin id."""
+        beliefs = self.operations.beliefs
+        result = {}
+        for target in beliefs.snapshot()["current"]:
+            if target.startswith("origin:"):
+                reading = beliefs.read(target)
+                result[target.removeprefix("origin:")] = {
+                    "reliability": round(reading.strength, 3),
+                    "support": round(reading.support, 3),
+                    "evidence_count": reading.stats.evidence_count,
+                }
+        return result
+
+    def element_text(self, node):
+        """Searchable text of an element: its own text plus, for a fact, its participants."""
+        parts = [node.name or "", node.description or ""]
+        if isinstance(node, RelationInstance):
+            parts.append(self.graph.get(node.relation_type).name)
+            for identity in sorted(fact_nodes(self.graph, node)):
+                other = self.graph.get(identity)
+                parts.extend((other.name or "", other.description or ""))
+            parts.append(json.dumps(json_value(node.args), ensure_ascii=False))
+        return " ".join(parts)
 
     def report(self, index):
         """Print beliefs after a step, marking changes since the previous step."""
@@ -268,12 +218,17 @@ class EvidenceSession(DebugSession):
                 f"Δsupport {item['support'] - before['support']:+.3f}"
             )
             label = item["description"] or item["name"]
+            scope = f" [{item['scope']}]" if item["scope"] else ""
             print(
-                f"  {identity} {item['kind']}: {label[:70]}\n"
+                f"  {identity} {item['kind']}{scope}: {label[:70]}\n"
                 f"      strength={item['strength']} support={item['support']} "
                 f"evidence={item['evidence_count']} ({change})"
             )
         self.previous = current
+        for origin, item in self.origins_now().items():
+            print(
+                f"  источник {origin}: надёжность={item['reliability']} evidence={item['evidence_count']}"
+            )
 
     async def run(self):
         """Integrate and assess each step, saving artifacts even on failure."""
@@ -293,6 +248,7 @@ class EvidenceSession(DebugSession):
                     f"не решено: {len(graph['unresolved'])}, осталось: {graph['remaining']}"
                 )
                 self.report(index)
+                self.history.append({"elements": self.beliefs_now(), "origins": self.origins_now()})
             return self.beliefs_now()
         finally:
             try:
@@ -320,7 +276,8 @@ def main():
     configure_logging()
     repository = Path(__file__).resolve().parents[2]
     output_dir = repository / "tmp" / "debug-evidence-assessment" / uuid4().hex[:12]
-    session = EvidenceSession(output_dir, scenario=sys.argv[1] if len(sys.argv) > 1 else None)
+    task, steps = load_case(sys.argv[1]) if len(sys.argv) > 1 else (USER_TASK, None)
+    session = EvidenceSession(output_dir, task=task, steps=steps)
     load_debug_environment(repository, session.config)
     missing = [
         name

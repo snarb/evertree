@@ -22,6 +22,10 @@ def _source_key(source: Any) -> str:
     return json.dumps(json_value(source), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
+# The alternative that none of a scope's listed alternatives is true.
+OTHER = "other"
+
+
 def element_target(element: Any) -> str:
     """Return the belief target of a graph element: its explicit binding or its identity."""
     return getattr(element, "belief_target", None) or f"graph:{element.id}"
@@ -146,6 +150,15 @@ class BeliefStore:
         # sequence below which every assessable change has been assessed.
         self._assessed: dict[str, int] = {}
         self._assessment_cursor = 0
+        # How each active contribution was judged (stance, source origin and the origin's
+        # reliability then), so a change in that reliability can revise it.
+        self._basis: dict[str, dict[str, Any]] = {}
+        # Competition scopes over element targets: scope -> {question, alternatives}, and
+        # each member target -> its scope; a member reads as its alternative's probability.
+        self._scopes: dict[str, dict[str, Any]] = {}
+        self._members: dict[str, str] = {}
+        # Sources their author withdrew, keyed by source, with the withdrawing source.
+        self._withdrawn: dict[str, Any] = {}
 
     def register_binary(
         self, target: str, prior: float = 0.5, *, prior_backed: bool = False
@@ -235,9 +248,88 @@ class BeliefStore:
         with self._lock:
             self._assessment_cursor = max(self._assessment_cursor, seq)
 
-    def active_sources(self, target: str) -> tuple[EvidenceComponent, ...]:
-        """Return the currently active per-source evidence components of a target."""
+    def set_basis(self, target: str, source_ref: Any, basis: Mapping[str, Any] | None) -> None:
+        """Record how an active contribution was judged, or discard it with None."""
         with self._lock:
+            key = _source_key(source_ref)
+            if basis is None:
+                self._basis.get(str(target), {}).pop(key, None)
+                return
+            if self._current[str(target)].get(key) is None:
+                raise ContractError("basis needs an active contribution")
+            self._basis.setdefault(str(target), {})[key] = freeze(dict(basis))
+
+    def declare_scope(
+        self,
+        target: str,
+        question: str,
+        alternatives: Sequence[str],
+        prior: Mapping[str, float] | None = None,
+    ) -> BeliefTarget:
+        """Register a competition scope whose alternatives other than "other" are member
+        targets; members then read as their alternative in the scope's Profile."""
+        with self._lock:
+            contract = self.register_scope(target, alternatives, prior)
+            self._scopes[str(target)] = {"question": question, "alternatives": list(alternatives)}
+            for alternative in alternatives:
+                if alternative != OTHER:
+                    self._members[alternative] = str(target)
+            self._last_changed = utcnow()
+            return contract
+
+    def scope_of(self, target: str) -> str | None:
+        """Return the competition scope a target is an alternative of, if any."""
+        return self._members.get(str(target))
+
+    def scope(self, target: str) -> dict[str, Any]:
+        """Return a declared competition scope's question and alternatives."""
+        return dict(self._scopes[str(target)])
+
+    def known(self, target: str) -> bool:
+        """Tell whether a target is registered or readable as a scope alternative."""
+        return str(target) in self._targets or str(target) in self._members
+
+    def withdraw(self, source_ref: Any, by: Any) -> None:
+        """Mark a source withdrawn by a later one; withdrawals made by it become void."""
+        with self._lock:
+            key, by_key = _source_key(source_ref), _source_key(by)
+            if key == by_key:
+                raise ContractError("a source cannot withdraw itself")
+            self._withdrawn = {
+                source: withdrawer
+                for source, withdrawer in self._withdrawn.items()
+                if _source_key(withdrawer) != key
+            }
+            self._withdrawn[key] = freeze(by)
+            self._last_changed = utcnow()
+
+    def withdrawn_by(self, source_ref: Any) -> Any:
+        """Return the source that withdrew a source, or None."""
+        return self._withdrawn.get(_source_key(source_ref))
+
+    def target_ids(self) -> tuple[str, ...]:
+        """Return every declared target id in declaration order."""
+        with self._lock:
+            return tuple(self._targets)
+
+    def bases(self) -> list[tuple[str, Any, Any]]:
+        """Return (target, source_ref, basis) for every active contribution with a basis."""
+        with self._lock:
+            result = []
+            for target, mapping in self._basis.items():
+                for component in self._active_components(target):
+                    if component.source_key in mapping:
+                        result.append((target, component.source_ref, mapping[component.source_key]))
+            return result
+
+    def active_sources(self, target: str) -> tuple[EvidenceComponent, ...]:
+        """Return the currently active per-source evidence components of a target.
+
+        A scope alternative that never had its own binary target has none.
+        """
+        with self._lock:
+            if str(target) not in self._current:
+                return ()
             return tuple(self._active_components(str(target)))
 
     def _contribution(
@@ -319,6 +411,7 @@ class BeliefStore:
             if key not in self._current[target]:
                 raise ContractError("cannot retract missing evidence")
             self._replace_current(target, {key}, None, None)
+            self._basis.get(target, {}).pop(key, None)
             self._last_changed = utcnow()
 
     def _replace_current(
@@ -445,6 +538,19 @@ class BeliefStore:
                 and timestamp(known_at) < self._last_changed
             ):
                 return UNKNOWN
+            scope = self._members.get(str(target))
+            if scope is not None:
+                reading = self.read(scope, valid_at=valid_at, known_at=known_at)
+                if reading is UNKNOWN:
+                    return reading
+                # One alternative of a scope reads as a binary belief: its Profile
+                # probability with the support of the scope as a whole.
+                return BeliefReading(
+                    str(target),
+                    reading.for_alternative(str(target)),
+                    reading.stats,
+                    None,
+                )
             contract = self.target(target)
             if contract.alternatives:
                 cap = math.log(3 * (len(contract.alternatives) - 1))
@@ -583,6 +689,10 @@ class BeliefStore:
                 "last_changed": self._last_changed.isoformat() if self._last_changed else None,
                 "assessed": dict(self._assessed),
                 "assessment_cursor": self._assessment_cursor,
+                "basis": json_value(self._basis),
+                "scopes": json_value(self._scopes),
+                "withdrawn": json_value(self._withdrawn),
+                "members": dict(self._members),
             }
 
     @classmethod
@@ -612,6 +722,13 @@ class BeliefStore:
         store._last_changed = timestamp(data["last_changed"]) if data.get("last_changed") else None
         store._assessed = dict(data["assessed"])
         store._assessment_cursor = data["assessment_cursor"]
+        store._scopes = {target: dict(value) for target, value in data["scopes"].items()}
+        store._members = dict(data["members"])
+        store._withdrawn = {key: freeze(value) for key, value in data["withdrawn"].items()}
+        store._basis = {
+            target: {key: freeze(value) for key, value in mapping.items()}
+            for target, mapping in data["basis"].items()
+        }
         for target, mapping in store._current.items():
             if target not in store._targets or any(
                 identity is not None

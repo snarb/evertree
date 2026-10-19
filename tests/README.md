@@ -13,6 +13,7 @@ Complex behavior does not require expensive infrastructure. Most tests should ex
 | `integration` | Git, persistent snapshots, worker IPC, DBOS, application startup/recovery | Real dependencies required by the contract |
 | `native` | OS permissions, sandbox enforcement, process ownership, isolated tool environments | macOS Seatbelt / Windows AppContainer |
 | `live` | Compatibility with the signed-in SDK and external model | Explicit opt-in; may use account resources |
+| `evidence` | Text-based end-to-end belief cases: integration then evidence assessment ([catalog](evidence/README.md)) | Explicit opt-in; real model, Redis Search and embeddings |
 
 `pytest` selects only `unit` and `component` by default. A subprocess audit guard covers their setup, execution, and teardown, including subprocess aliases and asyncio subprocess launches; sandbox construction is also rejected. The pytest-xdist worker processes are created outside these test boundaries.
 

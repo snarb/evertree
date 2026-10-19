@@ -23,9 +23,14 @@ from tests.support.semantics import (
 class Judge:
     """Answer the assessment request from (source text, stance, options) rules per element."""
 
-    def __init__(self, rules=None, *, prior=None):
+    def __init__(self, rules=None, *, prior=None, origins=None, origin_priors=None, scopes=None):
         self.rules = rules or {}
         self.prior = prior
+        # origin name -> [(source text, stance, {withdraws})], and new-origin priors.
+        self.origins = origins or {}
+        self.origin_priors = origin_priors or {}
+        # Scope answers; source texts in their evidence are replaced by source keys.
+        self.scopes = scopes or []
         self.batches = []
 
     async def __call__(self, payload, call_tool=None):
@@ -57,7 +62,33 @@ class Judge:
                     "unresolved": None,
                 }
             )
-        return {"targets": answers}
+        origins = []
+        for item in batch["origins"]:
+            evidence = [
+                {
+                    "source": keys[text],
+                    "stance": stance,
+                    "withdraws": keys.get((options[0] if options else {}).get("withdraws")),
+                    "reason": "scripted",
+                }
+                for text, stance, *options in self.origins.get(item["origin"], ())
+                if text in keys
+            ]
+            prior = self.origin_priors.get(item["origin"]) if item["reliability"] is None else None
+            if evidence or prior is not None:
+                origins.append({"origin": item["key"], "prior": prior, "evidence": evidence})
+        scopes = [
+            {
+                **scope,
+                "evidence": [
+                    {**entry, "source": keys[entry["source"]]}
+                    for entry in scope["evidence"]
+                    if entry["source"] in keys
+                ],
+            }
+            for scope in self.scopes
+        ]
+        return {"targets": answers, "origins": origins, "scopes": scopes}
 
 
 class FixedIndex:
@@ -286,6 +317,8 @@ async def test_invalid_judgement_is_ignored_and_model_failure_leaves_elements_pe
 
     async def garbage(payload, call_tool=None):
         return {
+            "origins": [{"origin": "O99", "prior": 0.9, "evidence": []}],
+            "scopes": [],
             "targets": [
                 {"element": 999, "prior": 0.9, "evidence": [], "unresolved": None},
                 {
@@ -302,7 +335,7 @@ async def test_invalid_judgement_is_ignored_and_model_failure_leaves_elements_pe
                     ],
                     "unresolved": "not enough context",
                 },
-            ]
+            ],
         }
 
     result = await assess(world, garbage)
@@ -442,3 +475,228 @@ async def test_citing_a_field_and_the_whole_observation_is_one_source():
     [component] = world.beliefs.active_sources(f"graph:{element}")
     assert component.source_ref["event_ref"] == sensor["event_ref"]
     assert not component.source_ref["output_path"]
+
+
+def recorded_sources(world, *items):
+    """Record (origin, text, source_type) observations; source_type "document" or None."""
+    refs = []
+    for origin, text, source_type in items:
+        run = world.memory.start_run("Observation", "revision", {"task_id": "task"})
+        arguments = {"source_id": origin}
+        if source_type:
+            arguments["source_type"] = source_type
+        event = world.memory.record(run, "observation", arguments=arguments, output=text)
+        world.memory.finish_run(run)
+        refs.append(json_value(world.memory.output_ref(event)))
+    return refs
+
+
+async def test_discredited_origin_revises_every_fact_resting_on_it_and_recovers():
+    """B3, B4: a faulty-sensor report weakens all its readings; withdrawing it restores them."""
+    index = FixedIndex()
+    world = semantic_world(index=index)
+    _, metadata = recorded_experience(world)
+    readings = [f"T-7: pump N-2{number} at {95 + number} C" for number in range(3)]
+    elements = []
+    for text in readings:
+        [source] = recorded_sources(world, ("sensor:T-7", text, None))
+        element = claim(world, metadata, [source], name=f"Overheat {text[-8:]}", description=text)
+        await assess(
+            world,
+            Judge({element: [(text, "supports")]}, origin_priors={"sensor:T-7": 0.9}),
+            [source],
+        )
+        elements.append(element)
+    trusted = [reading(world, element).strength for element in elements]
+    assert all(value > 0.7 for value in trusted)
+
+    faulty = "The metrologist says sensor T-7 was faulty all week and overstated by 30 C."
+    [report] = recorded_messages(world, faulty)
+    result = await assess(world, Judge(origins={"sensor:T-7": [(faulty, "opposes")]}), [report])
+    assert world.beliefs.read("origin:sensor:T-7").strength <= 0.5
+    assert {item["element"] for item in result["reassessed"]} == set(elements)
+    for element in elements:
+        belief = reading(world, element)
+        assert belief.strength < 0.55 and belief.stats.evidence_count == 1
+
+    cleared = "Correction: it was T-8 that was faulty; T-7 passed calibration."
+    [correction] = recorded_messages(world, cleared)
+    rules = {"sensor:T-7": [(cleared, "supports", {"withdraws": faulty})]}
+    await assess(world, Judge(origins=rules), [correction])
+    assert world.beliefs.read("origin:sensor:T-7").strength > 0.7
+    assert [reading(world, element).strength for element in elements] == pytest.approx(trusted)
+
+
+async def test_reliable_document_outweighs_an_unreliable_one_and_origins_cannot_vouch_for_themselves():
+    """B1, B2: a rumour from a low-reliability origin loses to a peer-reviewed trial."""
+    index = FixedIndex()
+    world = semantic_world(index=index)
+    _, metadata = recorded_experience(world)
+    rumour = "Forum post: additive PA-7 fully prevents cavitation."
+    [post] = recorded_sources(world, ("forum:user123", rumour, "document"))
+    element = claim(world, metadata, [post], name="PA-7 prevents cavitation", description=rumour)
+    priors = {"forum:user123": 0.35, "doi:10.1038/x": 0.9}
+    self_praise = {"forum:user123": [(rumour, "supports")]}
+    await assess(
+        world,
+        Judge({element: [(rumour, "supports")]}, origin_priors=priors, origins=self_praise),
+        [post],
+    )
+    assert world.beliefs.read("origin:forum:user123").stats.evidence_count == 0
+    assert reading(world, element).strength == pytest.approx(0.5)
+
+    index.ids = [element]
+    trial = "Nature 2026, randomised trial on 120 pumps: PA-7 did not reduce cavitation."
+    [paper] = recorded_sources(world, ("doi:10.1038/x", trial, "document"))
+    await assess(world, Judge({element: [(trial, "opposes")]}, origin_priors=priors), [paper])
+    belief = reading(world, element)
+    assert belief.strength < 0.3 and belief.stats.evidence_count == 2
+
+
+def scope_answer(scope, alternatives, other, evidence, prior=()):
+    """A judged competition scope; evidence is [(source text, {element|"other": stance})]."""
+    return {
+        "scope": scope,
+        "question": "What stopped pump N-40?",
+        "alternatives": alternatives,
+        "other": other,
+        "prior": [{"alternative": key, "probability": value} for key, value in prior],
+        "evidence": [
+            {
+                "source": text,
+                "stances": [
+                    {"alternative": str(alternative), "stance": stance}
+                    for alternative, stance in stances.items()
+                ],
+                "repeats": None,
+                "withdraws": None,
+                "reason": "scripted",
+            }
+            for text, stances in evidence
+        ],
+    }
+
+
+async def test_competing_hypotheses_share_one_profile_and_a_new_alternative_versions_the_scope():
+    """C1, C3: exclusive causes compete in one scope; adding a cause rejudges every source."""
+    index = FixedIndex()
+    world = semantic_world(index=index)
+    _, metadata = recorded_experience(world)
+    stated = "N-40 stopped: bearing wear, cavitation or a motor fault, one of the three."
+    [message] = recorded_messages(world, stated)
+    bearing, cavitation, motor = (
+        claim(world, metadata, [message], name=name, description=f"N-40 stopped due to {name}.")
+        for name in ("bearing wear", "cavitation", "motor fault")
+    )
+    causes = [bearing, cavitation, motor]
+    listed = {element: "weak_support" for element in causes}
+    first = Judge(
+        {bearing: [(stated, "supports")]},
+        scopes=[scope_answer(None, causes, False, [(stated, listed)])],
+    )
+    await assess(world, first, [message])
+    assert world.beliefs.scope_of(f"graph:{bearing}") == "scope:1"
+    assert world.beliefs.active_sources(f"graph:{bearing}") == ()
+    assert sum(reading(world, element).strength for element in causes) == pytest.approx(1)
+
+    index.ids = causes
+    vibration = "N-40 vibration 2.1 mm/s, normal; no cavitation noise."
+    report = "Lab report: N-40 motor winding insulation 0.1 MOhm, breakdown."
+    for text, stances in (
+        (vibration, {bearing: "opposes", cavitation: "opposes"}),
+        (report, {motor: "supports"}),
+    ):
+        [source] = recorded_sources(world, ("sensor:VIB-40", text, None))
+        judge = Judge(scopes=[scope_answer("C1", causes, False, [(text, stances)])])
+        await assess(world, judge, [source])
+        assert judge.batches[-1]["scopes"][0]["alternatives"] == causes
+    strengths = {element: reading(world, element).strength for element in causes}
+    assert strengths[motor] > max(strengths[bearing], strengths[cavitation])
+    assert sum(strengths.values()) == pytest.approx(1)
+    assert reading(world, motor).stats.evidence_count == 3
+
+    added = "Another possible cause of the N-40 stop is a clogged inlet filter."
+    [fourth] = recorded_messages(world, added)
+    clogged = claim(world, metadata, [fourth], name="clogged filter", description=added)
+    extended = [*causes, clogged]
+    rejudged = [
+        (stated, listed),
+        (vibration, {bearing: "opposes", cavitation: "opposes"}),
+        (report, {motor: "supports", clogged: "opposes"}),
+        (added, {clogged: "weak_support"}),
+    ]
+    prior = [(str(element), 0.2) for element in extended] + [("other", 0.2)]
+    judge = Judge(scopes=[scope_answer("C1", extended, True, rejudged, prior)])
+    result = await assess(world, judge, [fourth])
+    [recorded] = result["scopes"]
+    assert recorded["scope"] == "scope:2" and len(recorded["assignments"]) == 4
+    assert world.beliefs.scope_of(f"graph:{motor}") == "scope:2"
+    strengths = {element: reading(world, element).strength for element in extended}
+    assert max(strengths, key=strengths.get) == motor
+    assert sum(strengths.values()) < 1
+
+
+async def test_scope_member_binary_evidence_is_released_and_rejected():
+    """C2: competing values of one property join a scope; members take no binary evidence."""
+    index = FixedIndex()
+    world = semantic_world(index=index)
+    _, metadata = recorded_experience(world)
+    log, seen = "Movement log: N-41 is in shop 5.", "Right now N-41 stands in shop 3, I see it."
+    [entry] = recorded_sources(world, ("doc:movement-log", log, "document"))
+    shop5 = claim(world, metadata, [entry], name="N-41 in shop 5", description=log)
+    await assess(world, Judge({shop5: [(log, "supports")]}), [entry])
+    assert reading(world, shop5).strength > 0.7
+    index.ids = [shop5]
+    [message] = recorded_messages(world, seen)
+    shop3 = claim(world, metadata, [message], name="N-41 in shop 3", description=seen)
+    evidence = [
+        (log, {shop5: "supports", shop3: "opposes"}),
+        (seen, {shop3: "supports", shop5: "opposes"}),
+    ]
+    judge = Judge(scopes=[scope_answer(None, [shop5, shop3], True, evidence)])
+    result = await assess(world, judge, [message])
+    [recorded] = result["scopes"]
+    assert [item["element"] for item in recorded["released"]] == [shop5]
+    assert reading(world, shop5).strength + reading(world, shop3).strength < 1
+    with pytest.raises(Exception, match="scope"):
+        world.operations.execute(
+            "evidence.record",
+            {"element": shop3, "revision": world.graph.revision, "assign": []},
+            metadata={**metadata, "run_id": "r"},
+        )
+
+
+async def test_withdrawn_statement_is_not_reused_against_the_correction():
+    """B5 live finding: a withdrawn message must not oppose the element that replaces it."""
+    index = FixedIndex()
+    world = semantic_world(index=index)
+    _, metadata = recorded_experience(world)
+    said, withdrawal = (
+        "Ivanov is responsible for N-3.",
+        "Forget it: Ivanov is not responsible for N-3.",
+    )
+    [first] = recorded_messages(world, said)
+    responsible = claim(world, metadata, [first], name="Ivanov responsible", description=said)
+    await assess(world, Judge({responsible: [(said, "supports")]}), [first])
+    index.ids = [responsible]
+    [second] = recorded_messages(world, withdrawal)
+    negation = claim(
+        world, metadata, [second], name="Ivanov not responsible", description=withdrawal
+    )
+    rules = {
+        responsible: [(withdrawal, "opposes", {"withdraws": said})],
+        negation: [(withdrawal, "supports"), (said, "opposes")],
+    }
+    await assess(world, Judge(rules), [second])
+    belief = reading(world, negation)
+    assert belief.stats.evidence_count == 1 and belief.strength > 0.7
+    assert world.beliefs.withdrawn_by(TraceOutputRef(first["event_ref"])) is not None
+
+    reasserted = "No, I was right: Ivanov is responsible for N-3."
+    index.ids = [responsible, negation]
+    [third] = recorded_messages(world, reasserted)
+    rules = {negation: [(reasserted, "opposes", {"withdraws": withdrawal})]}
+    await assess(world, Judge(rules), [third])
+    assert reading(world, negation).strength < 0.3
+    # Withdrawing the withdrawal makes the first statement usable again.
+    assert world.beliefs.withdrawn_by(TraceOutputRef(first["event_ref"])) is None

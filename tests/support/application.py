@@ -57,7 +57,7 @@ class IntegrationScriptedProvider(ScriptedProvider):
     async def run(self, request_id, request, **kwargs):
         if is_evidence_request(request):
             self.requests.append(request)
-            for event in completed({"targets": []}):
+            for event in completed({"targets": [], "origins": [], "scopes": []}):
                 yield event
             return
         if not is_integration_request(request):

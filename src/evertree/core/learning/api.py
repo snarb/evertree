@@ -90,8 +90,9 @@ async def pending_evidence(
 ) -> Any:
     """Read one batch of graph elements awaiting evidence assessment.
 
-    Returns {revision, sources, targets, related, remaining}. Sources are primary
+    Returns {revision, sources, origins, targets, related, remaining}. Sources are primary
     experience keyed S1, S2, …; agent-derived results are expanded to what they cite.
+    origins (O1, O2, …) are where sources come from, with their current reliability.
     candidates are element ids, such as search results, to offer as related targets.
     """
     return await ctx.step(
@@ -116,7 +117,9 @@ async def record_evidence(
 ) -> Any:
     """Record assessed evidence for one graph element and mark it assessed at revision.
 
-    assign items are {source_ref, likelihoods: {false, true}, dependency_root?}; retract
+    assign items are {source_ref, likelihoods: {false, true}, dependency_root?, basis?};
+    basis records how the item was judged ({origin, reliability, …}) so a later change in
+    that origin's reliability reports it through stale_evidence. retract
     lists source refs whose active contribution no longer applies. prior is used only
     when the element's target is first registered; Core caps its unsupported influence.
     """
@@ -130,6 +133,76 @@ async def record_evidence(
             "retract": retract or [],
         },
     )
+
+
+async def record_origin_evidence(
+    ctx: ProgramContext,
+    origin: str,
+    *,
+    prior: float | None = None,
+    assign: list[dict] | None = None,
+    retract: list[dict] | None = None,
+) -> Any:
+    """Record assessed evidence about the reliability of a source origin.
+
+    Items are as in record_evidence; prior applies when the origin is first registered.
+    """
+    return await ctx.step(
+        "evidence.record_origin",
+        {"origin": origin, "prior": prior, "assign": assign or [], "retract": retract or []},
+    )
+
+
+async def record_scope_evidence(
+    ctx: ProgramContext,
+    revision: int,
+    *,
+    alternatives: list[int],
+    question: str,
+    other: bool = True,
+    scope: str | None = None,
+    prior: dict | None = None,
+    assign: list[dict] | None = None,
+    retract: list[dict] | None = None,
+) -> Any:
+    """Record evidence for mutually exclusive graph elements as one competition scope.
+
+    alternatives are element ids; other adds "none of them". scope names an existing
+    scope; a different set of alternatives creates a new version. assign items are
+    {source_ref, likelihoods: {"<element id>"…, "other"?}, dependency_root?, basis?}; prior
+    is keyed the same way and applies to a new scope. Members then read as their
+    alternative's probability, and their earlier binary evidence stops counting.
+    """
+    return await ctx.step(
+        "evidence.record_scope",
+        {
+            "revision": revision,
+            "alternatives": alternatives,
+            "question": question,
+            "other": other,
+            "scope": scope,
+            "prior": prior,
+            "assign": assign or [],
+            "retract": retract or [],
+        },
+    )
+
+
+async def withdraw_evidence(ctx: ProgramContext, source_ref: dict, by: dict) -> Any:
+    """Record that source by withdrew source_ref, such as "I was wrong earlier".
+
+    A withdrawn source is then marked in batches and gives no new evidence; withdrawals
+    made by a source that is itself withdrawn become void.
+    """
+    return await ctx.step("evidence.withdraw", {"source_ref": source_ref, "by": by})
+
+
+async def stale_evidence(ctx: ProgramContext) -> Any:
+    """List active contributions whose origin's reliability changed since they were judged.
+
+    Items are {target, element | origin | scope, source_ref, basis, reliability}.
+    """
+    return await ctx.step("evidence.stale", {})
 
 
 async def call_credit_assignment(

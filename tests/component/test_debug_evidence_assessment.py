@@ -34,7 +34,7 @@ class Provider:
                 ],
                 "unresolved": None,
             }
-            for event in completed({"targets": [answer]}):
+            for event in completed({"targets": [answer], "origins": [], "scopes": []}):
                 yield event
             return
         material = json.loads(request.prompt)["material"]
@@ -74,6 +74,7 @@ async def test_debug_steps_integrate_then_assess_and_save_beliefs(tmp_path, monk
     assert [call["method"] for call in session.calls if "evidence" in call["method"]] == [
         "evidence.pending",
         "evidence.record",
+        "evidence.stale",
     ]
     saved = json.loads((tmp_path / "beliefs.json").read_text())
     assert saved["assessed"] == {f"graph:{element}": session.graph.revision}

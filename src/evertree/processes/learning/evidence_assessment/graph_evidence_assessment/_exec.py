@@ -6,13 +6,33 @@ on without having changed them. One model call judges how each source bears on e
 element. Code converts that judgement into likelihoods through OBSERVATION_MODEL, an
 initial heuristic table to be trained on independently resolved cases, and Core keeps
 its influence under the shared cap for unsupported estimates.
+
+Each source has an origin (the user, a sensor, a journal) whose reliability is itself a
+binary belief: "reports from this origin are correct". The same call judges new
+experience about origins, such as a calibration failure. The table's likelihoods are
+weakened toward non-discrimination by that reliability, and every contribution keeps the
+reliability it was judged under, so when an origin's reliability changes, code revises
+all contributions resting on it without another model call.
+
+Elements that answer one question with mutually exclusive alternatives (competing causes,
+values of one property at one time) are judged together as a competition scope: each
+source gets one assignment over all alternatives, and each member reads as its
+alternative's probability in the scope's Profile.
 """
 
 from evertree.common.structured import ask
-from evertree.core.learning.api import pending_evidence, record_evidence
+from evertree.core.learning.api import (
+    pending_evidence,
+    record_evidence,
+    record_origin_evidence,
+    record_scope_evidence,
+    stale_evidence,
+    withdraw_evidence,
+)
 from evertree.core.semantics.api import call_semantic_search
 
-# (P(stance | element true), P(stance | element false)) by source kind and stance.
+# (P(stance | element true), P(stance | element false)) by source kind and stance, for an
+# origin of presumed reliability; documents report what their authors state.
 OBSERVATION_MODEL = {
     "user": {
         "supports": (0.75, 0.25),
@@ -29,28 +49,49 @@ OBSERVATION_MODEL = {
         "opposes": (0.15, 0.85),
     },
 }
+OBSERVATION_MODEL["document"] = OBSERVATION_MODEL["observation"]
 STANCES = (*OBSERVATION_MODEL["user"], "not_addressed")
+# Presumed reliability of a new origin, the cooperative-user presumption of the belief
+# model; it is also the reliability at which the table above applies unchanged.
+PRESUMED_RELIABILITY = 0.75
+REASSESSMENT_ROUNDS = 3
 SEARCH_LIMIT = 6
 QUERY_CHARACTERS = 400
 
 INSTRUCTIONS = """You assess evidence for elements of an agent's knowledge graph.
 
 Input fields:
-- sources: primary experience, keyed S1, S2, …. kind is "user" (a person's message) or
-  "observation" (a tool result or other recorded observation); recorded_at is when it was
-  recorded; new marks experience not yet assessed. Agent reasoning is never a source: it
-  was already replaced by the experience it cites.
+- sources: primary experience, keyed S1, S2, …. kind is "user" (a person's message),
+  "observation" (a sensor reading, tool result or other recorded observation) or
+  "document" (an article, report, post or other text whose author states something);
+  origin_key names its origin; recorded_at is when it was recorded; new marks experience
+  not yet assessed; withdrawn_by marks a source its author later withdrew (the
+  withdrawing source's key, or "earlier"). Agent reasoning is never a source: it was already replaced by the
+  experience it cites.
+- origins: where sources come from, keyed O1, O2, …: origin is its name (a sensor id, a
+  journal DOI, a forum account, "user"); reliability is the current belief that its
+  reports are correct, or null for a new origin; active lists sources already counted
+  about its reliability and their direction.
 - targets: elements that were created or changed. card is the element (relation facts
   show relation, args and conditions; facets show their validity interval). grounds are the
   sources cited when the element was written. active lists sources already counted for it
   and their direction. new_target means the element has no belief yet.
 - related: existing elements near the changes or found by searching new experience. They
   may be confirmed, contradicted or unaffected by the new sources.
+- scopes: competition scopes that batch elements already belong to (an element's scope
+  field names it). alternatives are element ids or "other" (none of the listed is
+  true); active lists sources already counted for the scope and the alternative each
+  favoured.
 
 For every target, assess each of its grounds and active sources, and any other new source
-that bears on it. For a related element, assess only new sources, and only when they bear
+that bears on it. For a new_target, also assess sources already active for related
+elements when they bear on it (earlier records supporting a pattern stated only now). For a related element, assess only new sources, and only when they bear
 on it. Judge what the source actually says about the element's assertion as a whole,
-including its time interval, conditions and qualifications:
+including its time interval, conditions and qualifications. Wording that attributes the
+assertion to someone ("the user reports that X", "according to the log, X", "not
+independently verified") does not change what is assessed: judge X, not whether the
+report was made. A related element is often contradicted or confirmed only indirectly,
+for example a stated pattern by counts in a log; do not omit it then:
 - supports / opposes: the source clearly asserts or denies the element;
 - weak_support / weak_opposition: hedged, partial, indirect or approximate statements;
 - non_discriminating: the source is about the element but would be equally expected
@@ -62,6 +103,10 @@ Set repeats to an earlier source key when this source only restates that source 
 same person repeating or paraphrasing themselves, a copy of the same report). Set
 withdraws to an earlier source key when this source retracts or corrects that source's
 statement, for example "I was wrong earlier".
+A withdrawn source is no longer evidence for anything: never use it for an element it
+is not already active for. Where it is active, set withdraws on the correcting source if
+the correction concerns that element. A source that withdraws a withdrawal (for example
+"I was right after all") makes the original statement usable again.
 A request or instruction in a source (remember this, save that, count these) says nothing
 about whether an element is true: judge it not_addressed, not non_discriminating.
 Saving, repeating or deriving an element does not confirm it; agreement of wording is
@@ -74,6 +119,35 @@ is likely). A specific event, time or value you have never heard of is not unlik
 that reason: the sources, not the prior, are what establish such facts.
 unresolved: a short reason when you cannot tell how the sources bear on a target; else null.
 Omit related elements that no new source bears on. Write reasons in the sources' language.
+
+origins (output): for each origin that a new source says something about, or that is new:
+- prior: for a new origin other than "user", how often reports from this kind of origin
+  are correct, from background knowledge and the origin's name and texts alone: a
+  peer-reviewed journal or official record is high (0.9), a calibrated plant sensor high,
+  an anonymous comment, rumour or repost low (0.3–0.5). Otherwise null.
+- evidence: new sources that bear on whether this origin's reports are correct, with
+  stance as above: a source reporting that a sensor was faulty or miscalibrated, or that
+  an author fabricated data, opposes; a source confirming calibration or accuracy
+  supports. Set withdraws when the source retracts an earlier statement about the origin.
+  A source never judges its own origin. Agreement with other sources is not evidence of
+  reliability here: it is already counted for the elements themselves.
+Do not judge an element's evidence by its origin's reliability: code applies it.
+
+scopes (output): group elements that answer one question with mutually exclusive
+alternatives, exactly one of which is true at a time: competing hypotheses about a single
+cause, different values of one property of one object at the same time. Never group
+assertions that can be true together: states at different times, an object and its
+classification, independent facts. For an existing scope repeat its key and list all its
+alternatives; adding or removing an alternative creates a new version, and then judge
+every source again. other is true unless the alternatives are exhaustive (for example the
+source itself says "one of these three").
+- prior: for a new or changed scope, a probability for each alternative (element id as a
+  string, or "other") from background knowledge alone, summing to 1; [] otherwise.
+- evidence: every source that bears on the question (the members' grounds and active
+  sources, the scope's active sources, and new sources), with a stance for every
+  alternative: supports for the one it asserts, opposes for ones it rules out,
+  not_addressed for ones it says nothing about. repeats and withdraws are as above.
+Elements in a scope get evidence only there: give them an empty evidence list in targets.
 """
 
 SCHEMA = {
@@ -107,32 +181,204 @@ SCHEMA = {
                 },
                 "required": ["element", "prior", "evidence", "unresolved"],
             },
-        }
+        },
+        "origins": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "origin": {"type": "string"},
+                    "prior": {"type": ["number", "null"]},
+                    "evidence": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "source": {"type": "string"},
+                                "stance": {"type": "string", "enum": list(STANCES)},
+                                "withdraws": {"type": ["string", "null"]},
+                                "reason": {"type": "string"},
+                            },
+                            "required": ["source", "stance", "withdraws", "reason"],
+                        },
+                    },
+                },
+                "required": ["origin", "prior", "evidence"],
+            },
+        },
+        "scopes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "scope": {"type": ["string", "null"]},
+                    "question": {"type": "string"},
+                    "alternatives": {"type": "array", "items": {"type": "integer"}},
+                    "other": {"type": "boolean"},
+                    "prior": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "alternative": {"type": "string"},
+                                "probability": {"type": "number"},
+                            },
+                            "required": ["alternative", "probability"],
+                        },
+                    },
+                    "evidence": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "source": {"type": "string"},
+                                "stances": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": False,
+                                        "properties": {
+                                            "alternative": {"type": "string"},
+                                            "stance": {"type": "string", "enum": list(STANCES)},
+                                        },
+                                        "required": ["alternative", "stance"],
+                                    },
+                                },
+                                "repeats": {"type": ["string", "null"]},
+                                "withdraws": {"type": ["string", "null"]},
+                                "reason": {"type": "string"},
+                            },
+                            "required": ["source", "stances", "repeats", "withdraws", "reason"],
+                        },
+                    },
+                },
+                "required": ["scope", "question", "alternatives", "other", "prior", "evidence"],
+            },
+        },
     },
-    "required": ["targets"],
+    "required": ["targets", "origins", "scopes"],
 }
+
+
+def likelihoods(kind, stance, reliability):
+    """Table likelihoods of a stance, moved toward 0.5 for an origin of lower reliability.
+
+    An origin no better than chance (reliability ≤ 0.5) discriminates nothing; at the
+    presumed reliability or above the table applies unchanged.
+    """
+    true, false = OBSERVATION_MODEL.get(kind, OBSERVATION_MODEL["user"])[stance]
+    if reliability is None:
+        reliability = PRESUMED_RELIABILITY
+    weight = min(max((reliability - 0.5) / (PRESUMED_RELIABILITY - 0.5), 0.0), 1.0)
+    return {"true": 0.5 + (true - 0.5) * weight, "false": 0.5 + (false - 0.5) * weight}
+
+
+def _evidence(source, stance, reliability, dependency_root=None):
+    """One assign item with the basis that lets a reliability change revise it.
+
+    stance is one stance, or for a scope a mapping from alternative to stance; a scope
+    alternative's likelihood is P(source says this | that alternative is true).
+    """
+    basis = {
+        "kind": source["kind"],
+        "origin": source["origin"],
+        "reliability": reliability if reliability is not None else PRESUMED_RELIABILITY,
+    }
+    if isinstance(stance, dict):
+        basis["stances"] = stance
+        values = {
+            alternative: 0.5
+            if value == "not_addressed"
+            else likelihoods(source["kind"], value, reliability)["true"]
+            for alternative, value in stance.items()
+        }
+    else:
+        basis["stance"] = stance
+        values = likelihoods(source["kind"], stance, reliability)
+    item = {"source_ref": source["ref"], "likelihoods": values, "basis": basis}
+    if dependency_root is not None:
+        item["dependency_root"] = dependency_root
+        basis["dependency_root"] = dependency_root
+    return item
 
 
 def _for_model(batch):
     """Keep only decision-relevant fields; references stay in code."""
     return {
         "sources": [
-            {key: source[key] for key in ("key", "kind", "recorded_at", "new", "text")}
+            {
+                key: source[key]
+                for key in (
+                    "key",
+                    "kind",
+                    "origin_key",
+                    "recorded_at",
+                    "new",
+                    "text",
+                    "withdrawn_by",
+                )
+                if key in source
+            }
             for source in batch["sources"]
         ],
+        "origins": [
+            {key: item.get(key, []) for key in ("key", "origin", "reliability", "active")}
+            for item in batch["origins"]
+        ],
         "targets": [
-            {key: item[key] for key in ("element", "card", "new_target", "grounds", "active")}
+            {
+                key: item[key]
+                for key in ("element", "card", "new_target", "grounds", "active", "scope")
+                if key in item
+            }
             for item in batch["targets"]
         ],
         "related": [
-            {key: item[key] for key in ("element", "card", "new_target", "active")}
+            {
+                key: item[key]
+                for key in ("element", "card", "new_target", "active", "scope")
+                if key in item
+            }
             for item in batch["related"]
+        ],
+        "scopes": [
+            {key: item[key] for key in ("key", "question", "alternatives", "active")}
+            for item in batch["scopes"]
         ],
     }
 
 
-def _plan(batch, judgement):
-    """Turn the model's judgement into per-element records, ignoring unknown keys."""
+def _withdrawals(batch, judgement):
+    """(withdrawn, withdrawing) source key pairs a judgement states for new sources."""
+    sources = {source["key"]: source for source in batch["sources"]}
+    entries = [
+        entry
+        for group in ("targets", "origins", "scopes")
+        for answer in judgement.get(group, ())
+        for entry in answer["evidence"]
+    ]
+    return {
+        (entry["withdraws"], entry["source"])
+        for entry in entries
+        if entry["withdraws"] in sources
+        and entry["source"] in sources
+        and entry["withdraws"] != entry["source"]
+        and sources[entry["source"]]["new"]
+    }
+
+
+def _plan(batch, judgement, reliability, members=frozenset(), withdrawn=frozenset()):
+    """Turn the model's judgement into per-element records, ignoring unknown keys.
+
+    reliability maps origin names to their current reliability; members are elements
+    judged in a competition scope, which get no binary record; withdrawn sources give
+    no evidence to an element they are not already active for.
+    """
     sources = {source["key"]: source for source in batch["sources"]}
     new = {key for key, source in sources.items() if source["new"]}
     elements = {item["element"]: (item, True) for item in batch["targets"]}
@@ -141,8 +387,13 @@ def _plan(batch, judgement):
     for answer in judgement["targets"]:
         if answer["element"] in elements and answer["element"] not in answers:
             answers[answer["element"]] = answer
+    # Experience already counted for nearby elements may bear on a new element too, such
+    # as earlier failure records on a pattern claimed only now.
+    context = {entry["source"] for item in batch["related"] for entry in item["active"]}
     records, unresolved = [], []
     for element, (item, pending) in elements.items():
+        if element in members or "scope" in item:
+            continue
         answer = answers.get(element)
         if answer is None and not pending:
             continue
@@ -151,27 +402,25 @@ def _plan(batch, judgement):
         # Changed elements may be judged against any of their sources; related ones
         # only against new experience, so old sources are not reassessed through them.
         allowed = set(item.get("grounds", ())) | active | new if pending else new
+        if pending and item["new_target"]:
+            allowed |= context
         assign, retract = {}, {}
         for entry in answer["evidence"]:
             key, stance = entry["source"], entry["stance"]
-            if key not in allowed:
+            if key not in allowed or key in withdrawn and key not in active:
                 continue
-            withdrawn = entry["withdraws"]
-            if withdrawn in active and withdrawn != key:
-                retract[withdrawn] = sources[withdrawn]["ref"]
+            earlier = entry["withdraws"]
+            if earlier in active and earlier != key:
+                retract[earlier] = sources[earlier]["ref"]
             if stance == "not_addressed":
                 if key in active:
                     retract[key] = sources[key]["ref"]
                 continue
-            model = OBSERVATION_MODEL.get(sources[key]["kind"], OBSERVATION_MODEL["user"])
-            true, false = model[stance]
-            evidence = {
-                "source_ref": sources[key]["ref"],
-                "likelihoods": {"true": true, "false": false},
-            }
+            root = None
             if entry["repeats"] in sources and entry["repeats"] != key:
-                evidence["dependency_root"] = sources[entry["repeats"]]["ref"]
-            assign[key] = evidence
+                root = sources[entry["repeats"]]["ref"]
+            source = sources[key]
+            assign[key] = _evidence(source, stance, reliability.get(source["origin"]), root)
         for key in retract:
             assign.pop(key, None)
         if answer["unresolved"]:
@@ -181,6 +430,164 @@ def _plan(batch, judgement):
         prior = answer["prior"] if item["new_target"] else None
         records.append((element, prior, list(assign.values()), list(retract.values())))
     return records, unresolved
+
+
+def _plan_scopes(batch, judgement, reliability, withdrawn=frozenset()):
+    """Turn judged competition scopes into scope records; return them and their members.
+
+    Existing scopes the batch touches but the judgement omits are recorded unchanged,
+    so their changed members still count as assessed.
+    """
+    sources = {source["key"]: source for source in batch["sources"]}
+    new = {key for key, source in sources.items() if source["new"]}
+    items = {item["element"]: item for item in batch["targets"] + batch["related"]}
+    existing = {scope["key"]: scope for scope in batch["scopes"]}
+    records, members, answered = [], set(), set()
+    for answer in judgement.get("scopes", ()):
+        alternatives = [
+            element
+            for element in dict.fromkeys(answer["alternatives"])
+            if element in items and element not in members
+        ]
+        labels = [str(element) for element in alternatives] + (["other"] if answer["other"] else [])
+        if len(alternatives) < 1 or len(labels) < 2:
+            continue
+        declared = existing.get(answer["scope"])
+        scope_active = {entry["source"] for entry in declared["active"]} if declared else set()
+        allowed = set(new) | scope_active
+        for element in alternatives:
+            allowed.update(items[element].get("grounds", ()))
+            allowed.update(entry["source"] for entry in items[element]["active"])
+        assign, retract = {}, {}
+        for entry in answer["evidence"]:
+            key = entry["source"]
+            if key not in allowed or key in withdrawn and key not in scope_active:
+                continue
+            earlier = entry["withdraws"]
+            if earlier in scope_active and earlier != key:
+                retract[earlier] = sources[earlier]["ref"]
+            given = {str(item["alternative"]): item["stance"] for item in entry["stances"]}
+            stances = {label: given.get(label, "not_addressed") for label in labels}
+            if all(value == "not_addressed" for value in stances.values()):
+                if key in scope_active:
+                    retract[key] = sources[key]["ref"]
+                continue
+            root = None
+            if entry["repeats"] in sources and entry["repeats"] != key:
+                root = sources[entry["repeats"]]["ref"]
+            source = sources[key]
+            assign[key] = _evidence(source, stances, reliability.get(source["origin"]), root)
+        for key in retract:
+            assign.pop(key, None)
+        prior = {str(item["alternative"]): item["probability"] for item in answer["prior"]}
+        records.append(
+            {
+                "scope": declared["scope"] if declared else None,
+                "alternatives": alternatives,
+                "other": answer["other"],
+                "question": answer["question"],
+                "prior": prior if set(prior) == set(labels) else None,
+                "assign": list(assign.values()),
+                "retract": list(retract.values()),
+            }
+        )
+        members.update(alternatives)
+        if declared:
+            answered.add(declared["key"])
+    for key, declared in existing.items():
+        if key in answered:
+            continue
+        labels = declared["alternatives"]
+        records.append(
+            {
+                "scope": declared["scope"],
+                "alternatives": [label for label in labels if label != "other"],
+                "other": "other" in labels,
+                "question": declared["question"],
+                "prior": None,
+                "assign": [],
+                "retract": [],
+            }
+        )
+    return records, members
+
+
+async def _assess_origins(ctx, batch, judgement):
+    """Register new origins and record new evidence about origins; return reliabilities."""
+    sources = {source["key"]: source for source in batch["sources"]}
+    by_key = {item["key"]: item for item in batch["origins"]}
+    by_name = {item["origin"]: item for item in batch["origins"]}
+    reliability = {item["origin"]: item["reliability"] for item in batch["origins"]}
+    answers = {}
+    for answer in judgement.get("origins", ()):
+        item = by_key.get(answer["origin"]) or by_name.get(answer["origin"])
+        if item is not None and item["origin"] not in answers:
+            answers[item["origin"]] = answer
+    recorded = []
+    for name, item in by_name.items():
+        answer = answers.get(name, {"prior": None, "evidence": []})
+        assign, retract = [], []
+        for entry in answer["evidence"]:
+            source = sources.get(entry["source"])
+            if source is None or not source["new"] or source["origin"] == name:
+                continue
+            withdrawn = sources.get(entry["withdraws"])
+            if withdrawn is not None and withdrawn is not source:
+                retract.append(withdrawn["ref"])
+            if entry["stance"] in {"not_addressed", "non_discriminating"}:
+                continue
+            assign.append(_evidence(source, entry["stance"], reliability.get(source["origin"])))
+        # A new origin without evidence is registered only for a judged prior: until then
+        # it reads as presumed, and the user origin always starts presumed.
+        prior = None
+        if item["new_target"]:
+            prior = None if name == "user" else answer["prior"]
+            if prior is None and (assign or retract):
+                prior = PRESUMED_RELIABILITY
+        if prior is None and not assign and not retract:
+            continue
+        result = await record_origin_evidence(
+            ctx, name, prior=prior, assign=assign, retract=retract
+        )
+        reliability[name] = result["belief"]["data"]["strength"]
+        recorded.append(result)
+    return reliability, recorded
+
+
+async def _reassess(ctx, revision):
+    """Revise contributions whose origin reliability changed since they were judged."""
+    revised = []
+    for _ in range(REASSESSMENT_ROUNDS):
+        stale = await stale_evidence(ctx)
+        if not stale:
+            break
+        grouped = {}
+        for item in stale:
+            basis = dict(item["basis"])
+            basis["reliability"] = item["reliability"]
+            source = {"kind": basis["kind"], "origin": basis["origin"], "ref": item["source_ref"]}
+            stance = basis.get("stances", basis.get("stance"))
+            evidence = _evidence(source, stance, item["reliability"], basis.get("dependency_root"))
+            key = (item.get("element"), item.get("origin"), item.get("scope"))
+            grouped.setdefault(key, (item, []))[1].append(evidence)
+        for (element, origin, scope), (item, assign) in grouped.items():
+            if element is not None:
+                result = await record_evidence(ctx, element, revision, assign=assign)
+            elif origin is not None:
+                result = await record_origin_evidence(ctx, origin, assign=assign)
+            else:
+                alternatives = item["alternatives"]
+                result = await record_scope_evidence(
+                    ctx,
+                    revision,
+                    scope=scope,
+                    alternatives=[label for label in alternatives if label != "other"],
+                    other="other" in alternatives,
+                    question=item["question"],
+                    assign=assign,
+                )
+            revised.append(result)
+    return revised
 
 
 async def run(ctx, experience_refs: list | None = None):
@@ -201,25 +608,41 @@ async def run(ctx, experience_refs: list | None = None):
         batch = await pending_evidence(
             ctx, experience_refs=experience_refs, candidates=list(dict.fromkeys(candidates))
         )
-    if not batch["targets"] and not batch["related"]:
-        result = {"assessed": [], "unresolved": [], "remaining": 0, "search_errors": search_errors}
-        return {"result": result, "feedback": None}
-    judgement = await ask(
-        ctx,
-        instructions=INSTRUCTIONS,
-        data=_for_model(batch),
-        schema=SCHEMA,
-    )
-    records, unresolved = _plan(batch, judgement["result"])
-    assessed = []
-    for element, prior, assign, retract in records:
-        recorded = await record_evidence(
-            ctx, element, batch["revision"], prior=prior, assign=assign, retract=retract
+    assessed, unresolved, origins, scopes = [], [], [], []
+    has_new = any(source["new"] for source in batch["sources"])
+    if batch["targets"] or batch["related"] or has_new:
+        judgement = await ask(
+            ctx,
+            instructions=INSTRUCTIONS,
+            data=_for_model(batch),
+            schema=SCHEMA,
         )
-        assessed.append(recorded)
+        sources = {source["key"]: source for source in batch["sources"]}
+        withdrawn = {key for key, source in sources.items() if source.get("withdrawn_by")}
+        for earlier, later in sorted(_withdrawals(batch, judgement["result"])):
+            await withdraw_evidence(ctx, sources[earlier]["ref"], sources[later]["ref"])
+            withdrawn.add(earlier)
+            # Withdrawing a withdrawal makes the original statements usable again.
+            withdrawn -= {
+                key for key, source in sources.items() if source.get("withdrawn_by") == earlier
+            }
+        reliability, origins = await _assess_origins(ctx, batch, judgement["result"])
+        scope_records, members = _plan_scopes(batch, judgement["result"], reliability, withdrawn)
+        records, unresolved = _plan(batch, judgement["result"], reliability, members, withdrawn)
+        for element, prior, assign, retract in records:
+            recorded = await record_evidence(
+                ctx, element, batch["revision"], prior=prior, assign=assign, retract=retract
+            )
+            assessed.append(recorded)
+        for record in scope_records:
+            scopes.append(await record_scope_evidence(ctx, batch["revision"], **record))
+    reassessed = await _reassess(ctx, batch["revision"])
     return {
         "result": {
             "assessed": assessed,
+            "origins": origins,
+            "scopes": scopes,
+            "reassessed": reassessed,
             "unresolved": unresolved,
             "remaining": batch["remaining"],
             "search_errors": search_errors,

@@ -51,6 +51,10 @@ async def test_wrappers_send_core_methods_and_payload_keys():
     await learning.assess_evidence(ctx, "target", {"ref": 1}, {"true": 0.9})
     await learning.pending_evidence(ctx, experience_refs=["ref"], candidates=[3])
     await learning.record_evidence(ctx, 7, 4, prior=0.6, retract=["ref"])
+    await learning.record_origin_evidence(ctx, "sensor:T-7", prior=0.8)
+    await learning.record_scope_evidence(ctx, 4, alternatives=[7, 8], question="cause")
+    await learning.withdraw_evidence(ctx, {"ref": 1}, {"ref": 2})
+    await learning.stale_evidence(ctx)
     await evaluation.match(ctx, [1], context={}, metrics=["m"])
     await evaluation.review(ctx, cases=[], credits=[])
     assert ctx.steps == [
@@ -100,6 +104,25 @@ async def test_wrappers_send_core_methods_and_payload_keys():
             "evidence.record",
             {"element": 7, "revision": 4, "prior": 0.6, "assign": [], "retract": ["ref"]},
         ),
+        (
+            "evidence.record_origin",
+            {"origin": "sensor:T-7", "prior": 0.8, "assign": [], "retract": []},
+        ),
+        (
+            "evidence.record_scope",
+            {
+                "revision": 4,
+                "alternatives": [7, 8],
+                "question": "cause",
+                "other": True,
+                "scope": None,
+                "prior": None,
+                "assign": [],
+                "retract": [],
+            },
+        ),
+        ("evidence.withdraw", {"source_ref": {"ref": 1}, "by": {"ref": 2}}),
+        ("evidence.stale", {}),
         (
             "evaluation.match",
             {"observations": [1], "context": {}, "metrics": ["m"], "selected_targets": []},

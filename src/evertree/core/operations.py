@@ -324,6 +324,32 @@ class CoreOperations:
                 retract=payload.get("retract", ()),
                 created_by=metadata["run_id"],
             )
+        elif method == "evidence.record_origin":
+            result = GraphEvidence(self.graph, self.memory, self.beliefs).record_origin(
+                payload["origin"],
+                prior=payload.get("prior"),
+                assign=payload.get("assign", ()),
+                retract=payload.get("retract", ()),
+                created_by=metadata["run_id"],
+            )
+        elif method == "evidence.record_scope":
+            result = GraphEvidence(self.graph, self.memory, self.beliefs).record_scope(
+                payload["revision"],
+                alternatives=payload["alternatives"],
+                question=payload["question"],
+                other=payload.get("other", True),
+                scope=payload.get("scope"),
+                prior=payload.get("prior"),
+                assign=payload.get("assign", ()),
+                retract=payload.get("retract", ()),
+                created_by=metadata["run_id"],
+            )
+        elif method == "evidence.withdraw":
+            result = GraphEvidence(self.graph, self.memory, self.beliefs).withdraw(
+                payload["source_ref"], payload["by"]
+            )
+        elif method == "evidence.stale":
+            result = GraphEvidence(self.graph, self.memory, self.beliefs).stale()
         elif method == "learning.predict":
             result = self.learning.predict(payload["state_id"], payload.get("inputs"))
         elif method == "learning.learn":
