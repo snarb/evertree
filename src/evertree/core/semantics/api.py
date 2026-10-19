@@ -23,11 +23,6 @@ async def load_sources(
     return await ctx.step("semantic.sources", {"experience_refs": experience_refs, "focus": focus})
 
 
-async def revision(ctx: ProgramContext) -> Any:
-    """Return the current semantic index revision that search results are pinned to."""
-    return await ctx.step("semantic.revision", {}, journal=False)
-
-
 async def lookup(ctx: ProgramContext, query: str, *, kind: str | None, limit: int) -> Any:
     """Return exact graph matches for query, or None when no exact identity matches."""
     return await ctx.step(
@@ -35,18 +30,14 @@ async def lookup(ctx: ProgramContext, query: str, *, kind: str | None, limit: in
     )
 
 
-async def bm25(ctx: ProgramContext, query: str, *, kind: str | None, revision: Any) -> list:
-    """Rank object ids by the lexical index at revision."""
-    return await ctx.step(
-        "semantic.bm25", {"query": query, "kind": kind, "revision": revision}, journal=False
-    )
+async def bm25(ctx: ProgramContext, query: str, *, kind: str | None) -> list:
+    """Rank object ids by the lexical index."""
+    return await ctx.step("semantic.bm25", {"query": query, "kind": kind}, journal=False)
 
 
-async def vector(ctx: ProgramContext, query: str, *, kind: str | None, revision: Any) -> list:
-    """Rank object ids by the vector index at revision."""
-    return await ctx.step(
-        "semantic.vector", {"query": query, "kind": kind, "revision": revision}, journal=False
-    )
+async def vector(ctx: ProgramContext, query: str, *, kind: str | None) -> list:
+    """Rank object ids by the vector index."""
+    return await ctx.step("semantic.vector", {"query": query, "kind": kind}, journal=False)
 
 
 async def results(
@@ -54,7 +45,6 @@ async def results(
     query: str,
     *,
     kind: str | None,
-    revision: Any,
     items: list[dict],
     errors: list[dict],
     limit: int,
@@ -68,7 +58,6 @@ async def results(
         {
             "query": query,
             "kind": kind,
-            "revision": revision,
             "items": items,
             "errors": errors,
             "limit": limit,

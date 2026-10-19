@@ -38,7 +38,6 @@ MODEL_OPERATIONS = frozenset(
         "graph.describe",
         "graph.read_property",
         "semantic.lookup",
-        "semantic.revision",
         "semantic.bm25",
         "semantic.vector",
         "semantic.results",

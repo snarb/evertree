@@ -18,6 +18,7 @@ from uuid import uuid4
 from evertree.application import EverTree
 from evertree.core.contracts import ProgramResult
 from evertree.core.runtime.controller import ProgramSpec, RunResult, Runtime
+from evertree.core.runtime.coordination import semantic_scope
 from evertree.core.runtime.llm import ProgramLLMInvocations, run_llm_dialogue
 from evertree.core.runtime.repository import ProgramExecutionError
 from tests.support.application import IntegrationScriptedProvider as ScriptedProvider
@@ -47,6 +48,10 @@ class SourceRuntime(Runtime):
                 "known_runs": {},
                 "run_dir": run_dir,
                 "llm": ProgramLLMInvocations(self.gateway),
+                "execution_stack": [],
+                "execution_scopes": {},
+                "requests": {},
+                "semantic_scope": semantic_scope.get() or "run:" + run_id,
             }
             work = asyncio.create_task(self._call(program, arguments, run_id))
             self._active["reader_task"] = work
@@ -73,32 +78,43 @@ class SourceRuntime(Runtime):
         await self._dispatch(
             {
                 "run_id": run_id,
+                "method": "run_enter",
+                "program": asdict(spec),
+                "payload": {"parent_run_id": parent_run_id},
+            }
+        )
+        await self._dispatch(
+            {
+                "run_id": run_id,
                 "method": "run_started",
                 "program": asdict(spec),
                 "payload": {"arguments": arguments, "parent_run_id": parent_run_id},
             }
         )
-        path = Path(spec.git_path)
-        assert path.parts[:3] == ("src", "evertree", "processes")
-        function = getattr(
-            importlib.import_module(".".join(path.with_suffix("").parts[1:])), spec.entrypoint
-        )
-        kwargs = dict(arguments)
-        if "ctx" in inspect.signature(function).parameters:
-            ctx = SimpleNamespace(step=step, call=call, run_id=run_id)
+        try:
+            path = Path(spec.git_path)
+            assert path.parts[:3] == ("src", "evertree", "processes")
+            function = getattr(
+                importlib.import_module(".".join(path.with_suffix("").parts[1:])), spec.entrypoint
+            )
+            kwargs = dict(arguments)
+            if "ctx" in inspect.signature(function).parameters:
+                ctx = SimpleNamespace(step=step, call=call, run_id=run_id)
 
-            async def llm(payload, **options):
-                return await run_llm_dialogue(ctx, payload, **options)
+                async def llm(payload, **options):
+                    return await run_llm_dialogue(ctx, payload, **options)
 
-            ctx.llm = llm
-            kwargs["ctx"] = ctx
-        result = function(**kwargs)
-        if inspect.isawaitable(result):
-            result = await result
-        if hasattr(result, "result"):
-            result = {"result": result.result, "feedback": result.feedback}
-        await step("run_finished", {"result": result})
-        return result
+                ctx.llm = llm
+                kwargs["ctx"] = ctx
+            result = function(**kwargs)
+            if inspect.isawaitable(result):
+                result = await result
+            if hasattr(result, "result"):
+                result = {"result": result.result, "feedback": result.feedback}
+            await step("run_finished", {"result": result})
+            return result
+        finally:
+            await step("run_leave")
 
 
 @asynccontextmanager

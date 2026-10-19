@@ -17,6 +17,7 @@ import sys
 import threading
 import traceback
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 
 from evertree.core.contracts import ProgramResult
@@ -100,7 +101,21 @@ async def rpc(method, payload):
     future = asyncio.get_running_loop().create_future()
     _pending[request_id] = future
     send({"type": "request", "id": request_id, "method": method, "payload": payload})
-    return await future
+    try:
+        return await asyncio.shield(future)
+    except asyncio.CancelledError:
+        # Cancelling a local wait does not cancel the operation in Core. Keep
+        # ownership until its reply, including when cancellation is repeated.
+        while not future.done():
+            try:
+                await asyncio.shield(future)
+            except asyncio.CancelledError:
+                continue
+            except Exception:  # noqa: BLE001 -- consume the reply before propagating cancellation
+                break
+        if not future.cancelled():
+            future.exception()
+        raise
 
 
 class Context:
@@ -108,19 +123,47 @@ class Context:
         self.program, self.run_id = spec, run_id
         self.task_id = _configuration["task_id"]
         self.run_mode = _configuration["run_mode"]
+        self._owner = None
+        self._depth = 0
+        self._index_calls = set()
+
+    @contextmanager
+    def _operation(self, method):
+        task = asyncio.current_task()
+        index = method in {"semantic.bm25", "semantic.vector"}
+        if index and self.program["role"] == "model" and self._owner is None:
+            if method in self._index_calls:
+                raise RuntimeError("Duplicate concurrent search channel")
+            self._index_calls.add(method)
+            try:
+                yield
+            finally:
+                self._index_calls.remove(method)
+            return
+        if self._index_calls or (self._owner is not None and self._owner is not task):
+            raise RuntimeError("Programs must execute in one sequential call chain")
+        self._owner = task
+        self._depth += 1
+        try:
+            yield
+        finally:
+            self._depth -= 1
+            if not self._depth:
+                self._owner = None
 
     async def llm(self, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
         """See ProgramContext.llm."""
-        from evertree.core.runtime.llm import run_llm_dialogue
+        with self._operation("llm"):
+            from evertree.core.runtime.llm import run_llm_dialogue
 
-        return await run_llm_dialogue(
-            self,
-            payload,
-            tools=tools,
-            tool_handler=tool_handler,
-            max_tool_calls=max_tool_calls,
-            stop_when=stop_when,
-        )
+            return await run_llm_dialogue(
+                self,
+                payload,
+                tools=tools,
+                tool_handler=tool_handler,
+                max_tool_calls=max_tool_calls,
+                stop_when=stop_when,
+            )
 
     async def step(self, method: str, payload: dict | None = None, *, journal: bool = True):
         """Execute a durable Core operation, retaining its source line for runtime tracing.
@@ -128,46 +171,51 @@ class Context:
         The line is the nearest Program-file frame, so calls made through Core API
         wrappers and shared helpers still resolve to the Program line that requested them.
         """
-        if not isinstance(method, str) or method.startswith("_"):
-            raise ValueError("Invalid gateway method")
-        program_file = str((Path(_configuration["checkout"]) / self.program["git_path"]).resolve())
-        frame = inspect.currentframe().f_back
-        source_line = None
-        while frame is not None:
-            if str(Path(frame.f_code.co_filename).resolve()) == program_file:
-                source_line = frame.f_lineno
-                break
-            frame = frame.f_back
-        del frame
-        if not journal:
-            return await gateway_read(self.run_id, method, payload or {}, source_line)
-        return await gateway_step(self.run_id, method, payload or {}, source_line)
+        with self._operation(method):
+            if not isinstance(method, str) or method.startswith("_"):
+                raise ValueError("Invalid gateway method")
+            program_file = str(
+                (Path(_configuration["checkout"]) / self.program["git_path"]).resolve()
+            )
+            frame = inspect.currentframe().f_back
+            source_line = None
+            while frame is not None:
+                if str(Path(frame.f_code.co_filename).resolve()) == program_file:
+                    source_line = frame.f_lineno
+                    break
+                frame = frame.f_back
+            del frame
+            if not journal:
+                return await gateway_read(self.run_id, method, payload or {}, source_line)
+            return await gateway_step(self.run_id, method, payload or {}, source_line)
 
     async def call(self, program, arguments: dict | None = None):
         """Run a child Program at the pinned revision and return its result and feedback."""
-        spec = json_value(program)
-        if isinstance(spec, (str, int)) and not isinstance(spec, bool):
-            spec = await self.step("resolve_program", {"program_id": spec})
-        if not isinstance(spec, dict):
-            raise TypeError("Child program must be a ProgramSpec or program identifier")
-        if spec.get("revision") != _configuration["revision"]:
-            raise ValueError(
-                "Cross-revision child requires explicit replacement of the execution tree"
-            )
-        if self.program["role"] == "model" and spec.get("role", "exec") != "model":
-            raise PermissionError("A model Program cannot call exec")
-        result = await program_workflow(spec, arguments or {}, self.run_id)
-        return ProgramResult(result["result"], result.get("feedback"))
+        with self._operation("call"):
+            spec = json_value(program)
+            if isinstance(spec, (str, int)) and not isinstance(spec, bool):
+                spec = await self.step("resolve_program", {"program_id": spec})
+            if not isinstance(spec, dict):
+                raise TypeError("Child program must be a ProgramSpec or program identifier")
+            if spec.get("revision") != _configuration["revision"]:
+                raise ValueError(
+                    "Cross-revision child requires explicit replacement of the execution tree"
+                )
+            if self.program["role"] == "model" and spec.get("role", "exec") != "model":
+                raise PermissionError("A model Program cannot call exec")
+            result = await program_workflow(spec, arguments or {}, self.run_id)
+            return ProgramResult(result["result"], result.get("feedback"))
 
     async def next_observation(self, timeout_seconds: float = 60):
         """Wait for an exec Program observation, exposing the idle boundary to Core."""
-        if self.program["role"] != "exec":
-            raise PermissionError("A model Program cannot receive observations")
-        send({"type": "boundary", "state": "waiting", "run_id": self.run_id})
-        try:
-            return await DBOS.recv_async("observations", timeout_seconds=timeout_seconds)
-        finally:
-            send({"type": "boundary", "state": "running", "run_id": self.run_id})
+        with self._operation("next_observation"):
+            if self.program["role"] != "exec":
+                raise PermissionError("A model Program cannot receive observations")
+            send({"type": "boundary", "state": "waiting", "run_id": self.run_id})
+            try:
+                return await DBOS.recv_async("observations", timeout_seconds=timeout_seconds)
+            finally:
+                send({"type": "boundary", "state": "running", "run_id": self.run_id})
 
     async def emit(self, operator: str, *, arguments=None, output=None):
         """Append a Program operation and its output to the semantic trace."""
@@ -244,9 +292,12 @@ async def _main(configuration):
             "source_line": source_line,
         }
 
-    async def gateway_read(run_id, method, payload, source_line=None):
+    async def gateway_read(run_id, method, payload, source_line=None, *, program=None):
         """Call Core without a journal entry; recovery repeats the call."""
-        return await rpc("gateway", gateway_request(run_id, method, payload, source_line))
+        request = gateway_request(run_id, method, payload, source_line)
+        if program is not None:
+            request["program"] = program
+        return await rpc("gateway", request)
 
     @DBOS.step()
     async def gateway_step(run_id, method, payload, source_line=None, *, program=None):
@@ -260,7 +311,15 @@ async def _main(configuration):
         run_id = DBOS.workflow_id
         context = Context(spec, run_id)
         token = _current.set(context)
+        entered = False
         try:
+            await gateway_read(
+                run_id,
+                "run_enter",
+                {"parent_run_id": parent_run_id},
+                program=spec,
+            )
+            entered = True
             await gateway_step(
                 run_id,
                 "run_started",
@@ -294,11 +353,15 @@ async def _main(configuration):
             await gateway_step(run_id, "run_finished", {"result": result})
             return result
         except BaseException as exc:
-            if not isinstance(exc, asyncio.CancelledError):
+            if entered and not isinstance(exc, asyncio.CancelledError):
                 await gateway_step(run_id, "run_failed", {"error": f"{type(exc).__name__}: {exc}"})
             raise
         finally:
-            _current.reset(token)
+            try:
+                if entered:
+                    await gateway_read(run_id, "run_leave", {})
+            finally:
+                _current.reset(token)
 
     DBOS(
         config={

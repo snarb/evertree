@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import math
 import threading
 from collections.abc import Callable, Iterator, Mapping
@@ -64,35 +63,23 @@ class GraphStore:
         self.belief_reader = belief_reader
         self.known_at: datetime | None = None
         self.read_only = False
-        self._change_listeners = []
-
-    def on_change(self, listener):
-        """Register a non-I/O invalidation callback for every committed delta."""
-        self._change_listeners.append(listener)
-        return lambda: self._change_listeners.remove(listener)
+        self.write_guard = lambda: None
 
     @contextmanager
     def transaction(self):
-        """Publish graph changes only after the surrounding core write succeeds."""
+        """Roll back graph changes if the surrounding core write fails."""
+        self.write_guard()
         with self._lock:
             nodes, next_id, history = self._nodes, self._next_id, list(self._history)
-            listeners, self._change_listeners = self._change_listeners, []
             try:
                 yield
             except BaseException:
                 self._nodes, self._next_id, self._history = nodes, next_id, history
                 raise
-            finally:
-                self._change_listeners = listeners
-            for change in self._history[len(history) :]:
-                for listener in tuple(listeners):
-                    try:
-                        listener(change)
-                    except Exception:
-                        logging.getLogger(__name__).exception("Graph change observer failed")
 
     def reserve_id(self) -> int:
         """Reserve the next graph identity without creating a node."""
+        self.write_guard()
         with self._lock:
             identity = self._next_id
             self._next_id += 1
@@ -186,6 +173,7 @@ class GraphStore:
             raise ContractError("historical graph is read-only")
         if provenance is None:
             raise ContractError("graph changes require producer provenance")
+        self.write_guard()
         with self._lock:
             touched = (
                 [node.id for node in delta.creates]
@@ -233,12 +221,6 @@ class GraphStore:
             self._nodes = staged
             self._history.append(change)
             self._next_id = max(self._next_id, max(staged, default=0) + 1)
-            for listener in tuple(self._change_listeners):
-                try:
-                    listener(change)
-                except Exception:
-                    # Observers cannot undo an already committed transaction.
-                    logging.getLogger(__name__).exception("Graph change observer failed")
             return change
 
     def _validate_scalar(self, value: Any, slot: Slot, nodes: dict[int, Node]) -> None:
@@ -515,6 +497,7 @@ class GraphStore:
 
     def activate(self, identity: int, axis: str, value: float) -> None:
         """Set a finite activation value on a named axis without a semantic graph delta."""
+        self.write_guard()
         self.get(identity)
         if not math.isfinite(value):
             raise ContractError("activation must be finite")

@@ -32,6 +32,7 @@ from .core.cache import prune
 from .core.environment import capture_runtime, require_committed_runtime
 from .core.programs.lifecycle import initialize_seed_repository, resolve_program_remote
 from .core.provider import LLMProvider
+from .core.runtime.coordination import ExecutionOwner
 from .core.values import json_value
 
 
@@ -118,6 +119,8 @@ class EverTree(
         self.semantic_config = semantic_config or SemanticConfig.load(self.directory)
         self.search_index = search_index or RedisSearchIndex(self.semantic_config, self.directory)
         self._semantic_service = None
+        self._execution = ExecutionOwner()
+        self._maintenance_due = False
         self.state_dir = self.directory / ".state"
         self.repository = self.state_dir / "program-repository"
         self.provider = provider or CodexProvider(state_dir=self.state_dir / "codex-runtime")

@@ -8,7 +8,7 @@ from tests.support.application import decision, framing, verification, wait_for_
 from tests.support.component import component_app
 
 
-async def test_busy_agent_still_prunes_temporary_files(tmp_path, monkeypatch):
+async def test_busy_agent_defers_temporary_file_maintenance(tmp_path, monkeypatch):
     from unittest.mock import Mock
 
     from evertree import application
@@ -24,7 +24,12 @@ async def test_busy_agent_still_prunes_temporary_files(tmp_path, monkeypatch):
 
     monkeypatch.setattr(application.asyncio, "sleep", tick)
     await agent._periodic_maintenance()
+    prune.assert_not_called()
+    assert agent._maintenance_due
+    agent._active_requests.clear()
+    await agent._run_maintenance()
     prune.assert_called_once_with(tmp_path)
+    assert not agent._maintenance_due
 
 
 async def test_final_answer_waits_for_delivery_acknowledgement(tmp_path):

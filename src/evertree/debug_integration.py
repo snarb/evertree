@@ -114,6 +114,7 @@ class DebugSession:
         self.metadata = {
             "task_id": "debug-pump-history",
             "run_id": "debug-integration-run",
+            "semantic_scope": "debug-integration",
             "run_mode": "evaluation",
             "program": {"role": "exec", "revision": revision},
             # The host grants this only to the isolated integration call below.
@@ -163,6 +164,7 @@ class DebugSession:
         """
         if stop_when is not None:
             raise ValueError("The debug harness does not support stop_when")
+        self.metadata["semantic_scope"] = "debug:" + uuid4().hex
         definitions = {tool["name"]: tool for tool in json_value(tools)}
         used = 0
         failure = None
@@ -284,8 +286,8 @@ class DebugSession:
         if program != "semantic_search":
             raise ValueError(f"Unsupported debug child: {program}")
 
-        async def read(method, payload):
-            return await self.step(method, payload, role="model")
+        async def read(method, payload, *, journal=True):
+            return await self.step(method, payload, role="model", journal=journal)
 
         return SimpleNamespace(**await search(SimpleNamespace(step=read), **arguments))
 
@@ -302,7 +304,6 @@ class DebugSession:
                 raise RuntimeError(
                     "Для штатного поиска задайте в .env или PyCharm: " + ", ".join(missing)
                 )
-            self.index.attach(self.graph)
             self.record_experience()
             outcome = await integrate(self, self.experience_refs)
             self.result = outcome["result"]

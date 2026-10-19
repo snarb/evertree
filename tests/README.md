@@ -145,6 +145,16 @@ Lint, formatting, source/taxonomy validation, and `git diff --check` passed. Nat
 
 ## Semantic interface checks
 
+Execution-order checks cover the single Program call chain, parent/sibling rejection,
+paired search channels, external graph-write exclusion, and deferred memory maintenance.
+Search reviews belong to one model invocation and survive its own writes. Recovery tests
+also cover a completed search child returned by DBOS before a new creation, using the
+retained Core confirmation. Program-returned completion cannot authorize creation; a later
+incomplete search revokes earlier confirmation. RPC timeout tests cover root and child
+Programs, repeated cancellation, and draining both successful and failed Core replies. Query/walk pagination still rejects
+continuation after a write. Redis tests verify on-demand replacement and cache reconstruction;
+no graph commit starts index I/O.
+
 `test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, the 20-result search ceiling and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_program_agents` checks the shared native-tool bridge's role restrictions, schema validation and call limits. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including tool repair, child calls, replay and an IPC concurrency barrier.
 
 Program tool tests should call the declared `tool_handler` through the provider interface.

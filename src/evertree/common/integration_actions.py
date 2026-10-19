@@ -18,13 +18,12 @@ _NODE_VALUE_TYPES = frozenset({"node", "concept", "prototype", "instance", "face
 class SemanticTools:
     """Search/read assistance; write authority and persistent state remain in Core."""
 
-    def __init__(self, *, search, describe, write, revision, read=None):
+    def __init__(self, *, search, describe, write, read=None):
         self._search_port = search
         self._describe_port = describe
         self._write_port = write
-        self._revision_port = revision
         self._read_port = read
-        # casefolded query -> (graph revision, last search result)
+        # casefolded query -> last search result in this model invocation
         self._searches = {}
         # object id -> card as last shown to the model
         self._shown_candidates = {}
@@ -50,7 +49,12 @@ class SemanticTools:
         A creation is only blocked for candidates not recorded here: once the model was shown
         the possible matches and repeats the creation, that is treated as a deliberate choice.
         """
-        nodes = [*result.get("nodes", []), *result.get("items", []), *result.get("created", [])]
+        nodes = [
+            *result.get("nodes", []),
+            *result.get("items", []),
+            *result.get("created", []),
+            *result.get("updated", []),
+        ]
         if "subject" in result:
             nodes.append(result["subject"])
         for node in nodes:
@@ -58,11 +62,20 @@ class SemanticTools:
                 continue
             self._shown_candidates[node["id"]] = self._candidate_card(node)
 
+    def remember_read(self, name, arguments, result):
+        """Share explicit consciousness reads with the creation review gate."""
+        self._track_shown_candidates(result)
+        if (
+            name == "search"
+            and isinstance(arguments.get("query"), str)
+            and not arguments.get("kind")
+        ):
+            self._searches[arguments["query"].strip().casefold()] = result
+
     async def _search(self, query, reads):
-        revision = await self._revision_port()
         key = query.strip().casefold()
         result = await self._search_port(query)
-        self._searches[key] = (revision, result)
+        self._searches[key] = result
         reads.append({"tool": "search", "query": query, "result": result})
         return result
 
@@ -74,7 +87,7 @@ class SemanticTools:
         return result
 
     async def _require_reviewed_search(self, action, reads):
-        """Gate for creations: the name needs a complete, current and reviewed search.
+        """Gate for creations: the name needs a complete and reviewed search.
 
         Unseen candidates reject the first attempt; repeating the same name afterwards means
         the model reviewed them and chose to create anyway.
@@ -82,10 +95,9 @@ class SemanticTools:
         name = action["name"]
         key = name.strip().casefold()
         previous = self._searches.get(key)
-        if previous is None or previous[0] != await self._revision_port():
+        if previous is None:
             found = await self._search(name, reads)
-            # Refresh retrieval after graph changes, but do not make the model review
-            # the same unchanged cards again under every proposed new name.
+            # A new name still needs a search, but already shown candidates need no review.
             unseen = [
                 node
                 for node in found.get("items", [])
@@ -98,7 +110,7 @@ class SemanticTools:
                     "repeat this creation with the SAME name to proceed. Changing the "
                     "name starts another search and review."
                 )
-        if self._searches[key][1].get("status") != "complete":
+        if self._searches[key].get("status") != "complete":
             raise ValueError("Search is incomplete; retry later or omit this creation")
 
     async def _describe_referenced(self, action, reads):

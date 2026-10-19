@@ -48,25 +48,21 @@ async def test_real_redis_quotas_mutations_rebuild_and_restore():
         assert len(lexical) == 7 and len(vector) == 12
         assert set(lexical) <= {n.id for n in nodes}
         assert await index.lexical(cards, "feline", "facet") == []
-        index.attach(g)
-        await index._refresh_task
-        async with index._generation_lease(cards) as old_generation:
-            g.apply(
-                GraphDelta(
-                    updates=(
-                        NodeUpdate(
-                            nodes[0].id, {"name": "Unique sentinel", "description": "renamed"}
-                        ),
-                    ),
-                    deletes=(nodes[1].id,),
+        old_generation = index._current
+        g.apply(
+            GraphDelta(
+                updates=(
+                    NodeUpdate(nodes[0].id, {"name": "Unique sentinel", "description": "renamed"}),
                 ),
-                provenance="mutation",
-            )
-            await index._refresh_task
-            assert index.indexed_revision["revision"] == g.revision
-            new_cards = [card(n) for n in g.nodes()]
-            assert await index.lexical(new_cards, "sentinel") == [nodes[0].id]
-            assert await client.execute_command("FT.INFO", old_generation)
+                deletes=(nodes[1].id,),
+            ),
+            provenance="mutation",
+        )
+        # A commit does no Redis work. The next search replaces the derived index.
+        assert index._current == old_generation
+        assert await client.execute_command("FT.INFO", old_generation)
+        new_cards = [card(n) for n in g.nodes()]
+        assert await index.lexical(new_cards, "sentinel") == [nodes[0].id]
         owned = [
             name.decode()
             for name in await client.execute_command("FT._LIST")
@@ -76,8 +72,6 @@ async def test_real_redis_quotas_mutations_rebuild_and_restore():
         from evertree.core.graph.store import GraphStore
 
         restored = GraphStore.from_snapshot(snapshot)
-        index.attach(restored)
-        await index._refresh_task
         assert await index.lexical([card(n) for n in restored.nodes()], "sentinel") == []
         # Losing Redis data is recoverable without touching authoritative graph data.
         generation = index._generation(cards)

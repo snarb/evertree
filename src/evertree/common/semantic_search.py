@@ -13,11 +13,9 @@ async def search(ctx, query, kind=None, limit=20):
     if exact is not None:
         return {"result": exact, "feedback": None}
 
-    revision = await semantics.revision(ctx)
-
     async def channel(name, rank):
         try:
-            ids = await rank(ctx, query, kind=kind, revision=revision)
+            ids = await rank(ctx, query, kind=kind)
             return list(dict.fromkeys(ids)), None
         except Exception as exc:  # noqa: BLE001 -- preserve the other index and report partial search
             return [], {"channel": name, "error": str(exc)}
@@ -38,7 +36,6 @@ async def search(ctx, query, kind=None, limit=20):
         ctx,
         query,
         kind=kind,
-        revision=revision,
         items=[{"id": identity, "channels": channels[identity]} for identity in ranked],
         errors=errors,
         limit=limit,

@@ -297,3 +297,111 @@ async def run(ctx):
     # Recovery replays the journaled step but repeats the unjournaled read.
     assert starts == ["started", "peek", "peek"]
     await runtime.close()
+
+
+async def test_worker_rejects_parallel_children_and_parent_access(tmp_path):
+    """Real worker ownership spans a child call, including gaps between IPC operations."""
+    repository = tmp_path / "repository"
+    revision = commit_programs(
+        repository,
+        {
+            "parent.py": """
+import asyncio
+async def run(ctx):
+    started = asyncio.Event()
+    async def first():
+        started.set()
+        return await ctx.call("child", {})
+    child = asyncio.create_task(first())
+    await started.wait()
+    rejected = []
+    try:
+        for name in ("sibling", "parent-read"):
+            try:
+                if name == "sibling":
+                    await ctx.call("child", {})
+                else:
+                    await ctx.step("read_value", {})
+            except RuntimeError as error:
+                rejected.append(str(error))
+    finally:
+        result = await child
+    return {"result": {"rejected": rejected, "child": result.result}}
+""",
+            "child.py": 'async def run(ctx): return {"result": await ctx.step("read_value", {})}\n',
+        },
+    )
+    child = ProgramSpec("child", "child.py", revision)
+    reads = []
+
+    async def gateway(method, payload):
+        if method == "resolve_program":
+            return child
+        reads.append(payload["_runtime"]["program"]["program_id"])
+        return 7
+
+    runtime = Runtime(tmp_path / "runtime", repository, gateway, process_factory=TestProcess)
+    try:
+        result = await runtime.execute("task", ProgramSpec("parent", "parent.py", revision), {})
+        assert result.result["child"] == 7
+        assert len(result.result["rejected"]) == 2
+        assert all("sequential call chain" in message for message in result.result["rejected"])
+        assert reads == ["child"]
+    finally:
+        await runtime.close()
+
+
+@pytest.mark.parametrize("nested", [False, True])
+async def test_handled_rpc_timeout_drains_core_before_continuing(tmp_path, nested):
+    """Real IPC must drain a cancelled read before a Program returns to its caller."""
+    repository = tmp_path / "repository"
+    revision = commit_programs(
+        repository,
+        {
+            "parent.py": """
+async def run(ctx, nested):
+    if nested:
+        result = await ctx.call("child", {})
+    else:
+        result = await operation(ctx)
+    return {"result": await ctx.step("after", {})}
+
+async def operation(ctx):
+    import asyncio
+    try:
+        await asyncio.wait_for(ctx.step("slow", {}, journal=False), 0.05)
+    except TimeoutError:
+        return {"result": "handled"}
+    raise AssertionError("Expected timeout")
+""",
+            "child.py": """
+import asyncio
+async def run(ctx):
+    try:
+        await asyncio.wait_for(ctx.step("slow", {}, journal=False), 0.05)
+    except TimeoutError:
+        return {"result": "handled"}
+    raise AssertionError("Expected timeout")
+""",
+        },
+    )
+    finished = asyncio.Event()
+
+    async def gateway(method, payload):
+        if method == "resolve_program":
+            return ProgramSpec("child", "child.py", revision)
+        if method == "slow":
+            await asyncio.sleep(0.2)
+            finished.set()
+            return None
+        assert method == "after" and finished.is_set()
+        return "continued"
+
+    runtime = Runtime(tmp_path / "runtime", repository, gateway, process_factory=TestProcess)
+    try:
+        result = await runtime.execute(
+            "task", ProgramSpec("parent", "parent.py", revision), {"nested": nested}
+        )
+        assert result.result == "continued"
+    finally:
+        await runtime.close()

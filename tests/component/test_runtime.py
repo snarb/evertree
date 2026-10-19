@@ -50,6 +50,9 @@ async def test_gateway_uses_registered_metadata_and_rejects_later_program_fields
         "run_mode": "evaluation",
         "cancelled": False,
         "known_runs": {"root": asdict(spec)},
+        "execution_stack": ["root"],
+        "execution_scopes": {"root": ["scope"]},
+        "requests": {},
     }
     try:
         assert await runtime._dispatch({"run_id": "root", "method": "read_value"}) == 7

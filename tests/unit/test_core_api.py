@@ -100,11 +100,10 @@ async def test_wrappers_send_core_methods_and_payload_keys():
 
 async def test_only_repeatable_reads_skip_the_journal():
     ctx = RecordingContext()
-    await semantics.revision(ctx)
     await semantics.lookup(ctx, "q", kind=None, limit=1)
-    await semantics.bm25(ctx, "q", kind=None, revision=1)
-    await semantics.vector(ctx, "q", kind=None, revision=1)
-    await semantics.results(ctx, "q", kind=None, revision=1, items=[], errors=[], limit=1)
+    await semantics.bm25(ctx, "q", kind=None)
+    await semantics.vector(ctx, "q", kind=None)
+    await semantics.results(ctx, "q", kind=None, items=[], errors=[], limit=1)
     await graph.describe(ctx, 1)
     await graph.read(ctx, "query", {})
     await memory.retrieve(ctx, "q")
@@ -141,14 +140,13 @@ async def test_shared_helpers_use_typed_semantic_and_llm_steps():
     )
     await semantic_search.search(ctx, "Query", kind="Note")
     methods = [method for method, _ in ctx.steps]
-    assert methods[:2] == ["semantic.lookup", "semantic.revision"]
-    assert sorted(methods[2:4]) == ["semantic.bm25", "semantic.vector"]
+    assert methods[0] == "semantic.lookup"
+    assert sorted(methods[1:3]) == ["semantic.bm25", "semantic.vector"]
     assert ctx.steps[-1] == (
         "semantic.results",
         {
             "query": "Query",
             "kind": "note",
-            "revision": None,
             "items": [{"id": 1, "channels": ["bm25", "vector"]}, {"id": 2, "channels": ["bm25"]}],
             "errors": [],
             "limit": 20,

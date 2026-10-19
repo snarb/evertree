@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from uuid import uuid4
 
 from ..core.provider import LLMRequest, current_tool_call_id
+from ..core.runtime.coordination import semantic_scope
 
 
 class TaskExecutionMixin:
@@ -56,7 +57,21 @@ class TaskExecutionMixin:
                 if improvement:
                     meter["charged_seconds"] += seconds
 
-    async def _invoke(
+    async def _invoke(self, task_id, request, **kwargs):
+        """Own the execution chain and give each conscious invocation its own search scope."""
+        with self._execution.enter():
+            token = (
+                semantic_scope.set("consciousness:" + uuid4().hex)
+                if kwargs.get("conversation")
+                else None
+            )
+            try:
+                return await self._invoke_model(task_id, request, **kwargs)
+            finally:
+                if token is not None:
+                    semantic_scope.reset(token)
+
+    async def _invoke_model(
         self,
         task_id,
         request: LLMRequest,
@@ -145,6 +160,7 @@ class TaskExecutionMixin:
                     },
                     {
                         "task_id": task_id,
+                        "semantic_scope": semantic_scope.get(),
                         "program": {"role": request.mode, "revision": self._program_revision()},
                         "consciousness_graph_authorized": True,
                         "integration_operation_id": "consciousness:" + str(request_event.id),
@@ -153,12 +169,7 @@ class TaskExecutionMixin:
                 await self.backup()
                 return result
 
-            async def revision():
-                return self.graph.revision
-
-            semantic_tools = SemanticTools(
-                search=search, describe=describe, write=write, revision=revision
-            )
+            semantic_tools = SemanticTools(search=search, describe=describe, write=write)
         with self._meter(task_id, operation_id=request_id + ":active_time") as meter:
             used_tokens = 0
             usage_known = False
@@ -183,6 +194,16 @@ class TaskExecutionMixin:
                             output = await self._tool(
                                 task_id, name, args, semantic_tools=semantic_tools
                             )
+                            if semantic_tools is not None and name in {
+                                "graph.search",
+                                "graph.describe",
+                                "graph.query",
+                                "graph.walk",
+                                "graph.read_property",
+                            }:
+                                semantic_tools.remember_read(
+                                    name.removeprefix("graph."), args, output
+                                )
                             if conversation:
                                 remember_refs(output)
                                 if call_id is not None:

@@ -31,7 +31,7 @@ class PersistenceMixin:
 
     def _reset_stores(self):
         self.graph, self.memory, self.beliefs = GraphStore(), TraceStore(), BeliefStore()
-        self.search_index.attach(self.graph)
+        self.graph.write_guard = self._execution.check
         self.graph.belief_reader = self.beliefs.read
         self.attribution = AttributionRuntime(self.graph, self.beliefs)
         self.tasks = TaskStore()
@@ -188,7 +188,7 @@ class PersistenceMixin:
             BeliefStore.from_snapshot(data["beliefs"]),
             TaskStore.from_snapshot(data["tasks"]),
         )
-        self.search_index.attach(self.graph)
+        self.graph.write_guard = self._execution.check
         self.graph.belief_reader = self.beliefs.read
         self.attribution = AttributionRuntime.from_snapshot(
             data["attribution"], self.graph, self.beliefs
@@ -335,14 +335,28 @@ class PersistenceMixin:
         for key in candidates:
             self._candidate_owners.pop(key, None)
 
+    async def _run_maintenance(self):
+        """Perform due maintenance only after the active task has yielded execution."""
+        if (
+            not self._maintenance_due
+            or self._current_task
+            or self._active_requests
+            or self._operations
+        ):
+            return
+        with self._execution.enter():
+            self._maintenance_due = False
+            try:
+                await asyncio.to_thread(prune, self.directory)
+                self.memory.review_batch()
+                self.memory.finalize_deletions()
+                await self.backup()
+            except Exception as exc:  # noqa: BLE001 -- maintenance must not stop queued work
+                await self._publish("maintenance_error", data={"message": str(exc)})
+
     async def _periodic_maintenance(self):
         while not self._closed:
             await asyncio.sleep(300)
-            try:
-                await asyncio.to_thread(prune, self.directory)
-                if not self._active_requests:
-                    self.memory.review_batch()
-                    self.memory.finalize_deletions()
-                    await self.backup()
-            except Exception as exc:  # noqa: BLE001 -- report failed background maintenance
-                await self._publish("maintenance_error", data={"message": str(exc)})
+            self._maintenance_due = True
+            if not self._execution.busy:
+                await self._run_maintenance()

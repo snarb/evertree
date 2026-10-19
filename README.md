@@ -77,7 +77,7 @@ uv run python src/evertree/debug_integration.py
 
 - Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.
 - Keep trusted execution, isolation, and mandatory acceptance checks in `core`, evolving behavior in `processes`, and reusable Program helpers in `common`.
-- Call other Programs with `call_program`, including other roles of the same process; do not import their implementations directly.
+- Call other Programs with `call_program`, including other roles of the same process; do not import their implementations directly. Await each child before further Core work; parallel Program branches are rejected. Only paired semantic-search index reads may overlap at the gateway.
 - Write Programs as ordinary async Python. Reach Core and the outside world only through the
   typed `evertree.core.<domain>.api` and `evertree.core.runtime.api` functions (for example
   `from evertree.core.memory.api import retrieve`, `from evertree.core.runtime.api import llm`);
@@ -142,7 +142,7 @@ export EVERTREE_REDIS_URL=redis://127.0.0.1:6379
 # Set OPENAI_API_KEY in the core process environment using your secret manager.
 ```
 
-On Windows, or for a managed service, set `EVERTREE_REDIS_URL` to the provider's `rediss://` connection URL (TLS, including its credentials). These secrets belong to the trusted core process, never Program arguments or LLM context. Embeddings use OpenAI API billing. Queries use `TIMEOUT 0`; if the managed server enforces a ceiling, configure its timeout policy to fail instead of returning partial results ([Redis configuration](https://redis.io/docs/latest/develop/ai/search-and-query/administration/configuration/)). Index outages produce an explicitly incomplete non-exact search. GraphStore and backups remain authoritative.
+On Windows, or for a managed service, set `EVERTREE_REDIS_URL` to the provider's `rediss://` connection URL (TLS, including its credentials). These secrets belong to the trusted core process, never Program arguments or LLM context. Embeddings use OpenAI API billing. Queries use `TIMEOUT 0`; if the managed server enforces a ceiling, configure its timeout policy to fail instead of returning partial results ([Redis configuration](https://redis.io/docs/latest/develop/ai/search-and-query/administration/configuration/)). Index outages produce an explicitly incomplete non-exact search. GraphStore and backups remain authoritative. Indexes are prepared on demand; writes do not start background indexing. The first indexed search after a graph change may take longer while the current index is prepared.
 
 Optional `<agent-home>/evertree.toml`:
 

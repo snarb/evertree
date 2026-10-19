@@ -28,6 +28,7 @@ async def run_llm_dialogue(ctx, payload, *, tools, tool_handler, max_tool_calls=
     history = []
     failed = False
     drain = False
+    await ctx.step("llm.enter", {"invocation_id": identity}, journal=False)
     try:
         while True:
             event = await ctx.step(
@@ -69,6 +70,8 @@ async def run_llm_dialogue(ctx, payload, *, tools, tool_handler, max_tool_calls=
         except BaseException:
             if not failed:
                 raise
+        finally:
+            await ctx.step("llm.leave", {"invocation_id": identity}, journal=False)
 
 
 @dataclass

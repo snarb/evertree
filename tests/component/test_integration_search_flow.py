@@ -100,10 +100,7 @@ async def test_reviewed_creation_reuses_search_and_links_missing_parent():
             {"action": action, "operation_key": operation_key, "experience_refs": refs},
         )
 
-    async def revision():
-        return world.graph.revision
-
-    handler = SemanticTools(search=search, describe=describe, write=write, revision=revision)
+    handler = SemanticTools(search=search, describe=describe, write=write)
     parent = None
     for name in ("Equipment", "Pump"):
         args = {"name": name, "description": None, "parent": parent, "sources": refs}

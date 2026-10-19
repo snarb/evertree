@@ -79,7 +79,6 @@ class LargeGraphSession(DebugSession):
             "id": "datacenter-evaluation",
             "specification": {"objective": TASK},
         }
-        self.index.attach(self.graph)
 
     def snapshot(self):
         return {"graph": self.graph.snapshot(), "trace": self.memory.snapshot()}

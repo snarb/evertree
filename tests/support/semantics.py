@@ -1,6 +1,7 @@
 """In-process semantic domain fixture; models and the external index are injected."""
 
 from types import SimpleNamespace
+from uuid import uuid4
 
 from evertree.core.attribution import AttributionRuntime
 from evertree.core.beliefs import BeliefStore
@@ -50,6 +51,7 @@ def recorded_experience(world, *contents, run_mode="live", context=None):
     world.memory.finish_run(run)
     return refs, {
         "task_id": "task",
+        "semantic_scope": "packet",
         "run_id": "original-run",
         "program": {"role": "exec", "revision": "revision"},
         "knowledge_integration_authorized": True,
@@ -61,14 +63,26 @@ def recorded_experience(world, *contents, run_mode="live", context=None):
 def write_action(world, refs, metadata, action, *, key="write", searched=True):
     """Exercise Core validation; Program tests separately exercise the actual search path."""
     if searched and action["action"] in CREATE_ACTIONS:
-        world.service.results(action["name"], None, [], [], 20, metadata["task_id"])
+        world.service.results(
+            action["name"], None, [], [], 20, metadata["task_id"], scope=metadata["semantic_scope"]
+        )
     return world.service.write(
         {"experience_refs": refs, "action": action, "operation_key": key}, metadata
     )
 
 
-def context(world, model, *, role="model", integration_context=None, operation_id="packet"):
+def context(
+    world, model, *, role="model", integration_context=None, operation_id="packet", scope="packet"
+):
+    run_id = uuid4().hex
+    invocation = 0
+    scopes = []
+
     async def llm(payload, *, tools, tool_handler, stop_when=None, max_tool_calls=40):
+        nonlocal scope, invocation
+        invocation += 1
+        scope = f"{run_id}:llm:{invocation}"
+
         class Finished(BaseException):
             def __init__(self, result):
                 self.result = result
@@ -93,12 +107,22 @@ def context(world, model, *, role="model", integration_context=None, operation_i
         return result or {"text": ""}
 
     async def step(method, payload, *, journal=True):
+        nonlocal scope
+        if method == "llm.enter":
+            scopes.append(scope)
+            scope = payload["invocation_id"]
+            return
+        if method == "llm.leave":
+            assert scope == payload["invocation_id"]
+            scope = scopes.pop()
+            return
         authorize_operation(method, role)
         if method == "llm.run":
             return {"parsed": await model(payload)}
         metadata = {
             "task_id": "task",
-            "run_id": "run",
+            "run_id": run_id,
+            "semantic_scope": scope,
             "program": {"role": role, "revision": "revision"},
             "knowledge_integration_authorized": role == "exec",
             "integration_operation_id": operation_id,
@@ -113,7 +137,7 @@ def context(world, model, *, role="model", integration_context=None, operation_i
 
         if program != "semantic_search":
             raise AssertionError("Unsupported semantic child: " + program)
-        result = await run(context(world, model, role="model"), **arguments)
+        result = await run(context(world, model, role="model", scope=scope), **arguments)
         return SimpleNamespace(**result)
 
     return SimpleNamespace(step=step, call=call, llm=llm)

@@ -506,3 +506,49 @@ async def test_replayed_conscious_call_returns_same_write_and_deleted_history_re
     assert len(history) == 2
     assert str(note.id) in history[-1]["before"] and history[-1]["after"] == {}
     assert app.memory.resolve(TraceOutputRef(**source))["text"] == note.description
+
+
+async def test_explicit_conscious_search_is_reused_after_own_write(app):
+    from evertree._application.prompts import tool_sets
+    from evertree.core.provider import LLMRequest, ScriptedProvider
+
+    class Index(EmptyIndex):
+        def __init__(self):
+            self.queries = []
+
+        async def lexical(self, nodes, query, kind):
+            self.queries.append(query)
+            return []
+
+    index = Index()
+    app.search_index = index
+    task = app.tasks.create_task("Create a useful meaning")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Write")
+    source = app._record_analysis(task.id, {"text": "A pump is useful"})
+    calls = [
+        ("graph.search", {"query": "Useful pump"}),
+        ("graph.save_note", {"name": "Explanation", "source": source, "sources": []}),
+        ("graph.create_concept", {"name": "Useful pump", "description": None, "sources": [source]}),
+    ]
+    app.provider = ScriptedProvider(
+        [
+            [
+                *(LLMEvent("tool_call", {"name": name, "arguments": args}) for name, args in calls),
+                LLMEvent("completed", {"text": "Done"}),
+            ]
+        ]
+    )
+    writes = next(item for item in tool_sets() if item.name == "graph_write_tools")
+    search = next(tool for tool in app._tools() if tool.name == "graph.search")
+    await app._invoke(
+        task.id,
+        LLMRequest(
+            json.dumps({"source": source}),
+            app._workspace(task.id),
+            mode="exec",
+            tools=(*writes.tools, search),
+        ),
+        conversation=True,
+    )
+    assert app.graph.find("Useful pump") is not None
+    assert index.queries == ["Useful pump"]

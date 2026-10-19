@@ -115,3 +115,79 @@ async def test_restart_replays_interrupted_integration_without_repeating_graph_w
 
 
 pytestmark = pytest.mark.usefixtures("offline_application")
+
+
+async def test_restored_search_child_authorizes_creation_only_in_resumed_invocation(tmp_path):
+    """A cached DBOS search child must restore Core review from the retained Core confirmation."""
+    from tests.support.semantics import EmptyIndex
+
+    class Index(EmptyIndex):
+        def __init__(self):
+            self.reads = []
+
+        async def lexical(self, nodes, query, kind):
+            self.reads.append(query)
+            return []
+
+    class Provider(IntegrationScriptedProvider):
+        def __init__(self, scripts, *, pause):
+            super().__init__(scripts)
+            self.pause = pause
+            self.searched = asyncio.Event()
+
+        async def run(self, request_id, request, **kwargs):
+            if not is_integration_request(request):
+                async for event in super().run(request_id, request, **kwargs):
+                    yield event
+                return
+            self.requests.append(request)
+            material = json.loads(request.prompt.split("\n\nExecution resumed", 1)[0])["material"]
+            source = material["experience"][0]["reference"]
+            calls = (
+                [("search", {"query": "Recovered pump category"})]
+                if self.pause
+                else [
+                    (
+                        "create_concept",
+                        {
+                            "name": "Recovered pump category",
+                            "description": "A category of pumps",
+                            "sources": [source],
+                        },
+                    )
+                ]
+            )
+            async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
+                if event.kind == "tool_result":
+                    assert "error" not in event.data["result"], event.data["result"]
+                if event.kind == "completed" and self.pause:
+                    self.searched.set()
+                    await asyncio.Event().wait()
+                yield event
+
+    home = tmp_path / "agent"
+    runtime = partial(Runtime, process_factory=TestProcess)
+    first_index = Index()
+    provider = Provider([framing(), decision("Categorized")], pause=True)
+    async with EverTree(
+        home, provider=provider, runtime_factory=runtime, search_index=first_index
+    ) as first:
+        task = await first.submit("Categorize the pump")
+        await asyncio.wait_for(provider.searched.wait(), 60)
+        first._pump.cancel()
+        await asyncio.wait_for(first._pump, 60)
+        identity = task.id
+        assert first_index.reads == ["Recovered pump category"]
+        assert first.backups.list()
+
+    second_index = Index()
+    provider = Provider([budget_review(), verification()], pause=False)
+    async with EverTree(
+        home, provider=provider, runtime_factory=runtime, search_index=second_index
+    ) as restored:
+        await restored.resume(identity)
+        answer, _ = await wait_for_event(restored, "answer")
+        assert restored.graph.find("Recovered pump category") is not None
+        assert second_index.reads == []
+        await restored.acknowledge_delivery(answer.data["delivery_id"])
+        await wait_for_event(restored, "task_completed")

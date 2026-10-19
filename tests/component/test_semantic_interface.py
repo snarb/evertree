@@ -282,12 +282,11 @@ async def test_index_failure_reports_incomplete_and_cards_are_authoritative(fail
         "semantic.results",
         {
             "query": "query",
-            "revision": world.graph.revision,
             "items": [{"id": node.id, "name": "invented", "channels": ["bm25"]}],
             "errors": [],
             "limit": 20,
         },
-        {"task_id": "task"},
+        {"task_id": "task", "run_id": "test", "semantic_scope": "packet"},
     )
     assert result["items"][0]["name"] == node.name
 
@@ -298,13 +297,13 @@ def test_search_returns_only_top_results_and_enforces_twenty_item_ceiling(limit)
     nodes = [Node(world.graph.reserve_id(), f"Candidate {i}") for i in range(25)]
     world.graph.apply(GraphDelta(creates=nodes), provenance="test")
     cards = [{"id": node.id} for node in nodes]
-    result = world.service.results("query", None, cards, [], limit, "task")
+    result = world.service.results("query", None, cards, [], limit, "task", scope="packet")
     assert result["items"] == cards[:limit] and result["total"] == 25
     assert "cursor" not in result and "has_more" not in result
     with pytest.raises(ContractError, match="between 1 and 20"):
-        world.service.lookup("query", limit=21, task_id="task")
+        world.service.lookup("query", limit=21, task_id="task", scope="packet")
     with pytest.raises(ContractError, match="between 1 and 20"):
-        world.service.results("query", None, cards, [], 21, "task")
+        world.service.results("query", None, cards, [], 21, "task", scope="packet")
 
 
 def test_describe_filters_relations_by_facet_time_and_removed_definitions():

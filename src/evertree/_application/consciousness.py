@@ -26,6 +26,12 @@ class ConsciousnessMixin:
     """Internal EverTree method group; state is owned and initialized by EverTree."""
 
     async def _run_queue(self):
+        """Run within the application's exclusive execution chain."""
+        await self._execution.wait_idle()
+        with self._execution.enter():
+            return await self._run_queue_owned()
+
+    async def _run_queue_owned(self):
         """Admit queued tasks, recover interrupted work and release execution ownership after each task."""
         while not self._closed and (identity := self.attention.next_task()) is not None:
             state = self.tasks.get(identity)
@@ -102,6 +108,7 @@ class ConsciousnessMixin:
                     )
                 self._task_stopped[identity].set()
                 self._current_task = None
+                await self._run_maintenance()
                 try:
                     await self.backup()
                 except Exception as exc:  # noqa: BLE001 -- failed maintenance must not stop queued work

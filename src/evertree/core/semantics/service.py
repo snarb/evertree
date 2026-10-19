@@ -15,17 +15,15 @@ class SemanticService:
     def __init__(self, graph, memory, attribution, config, index, operations):
         self.graph, self.memory, self.attribution = graph, memory, attribution
         self.config, self.index, self.operations = config, index, operations
-        self._searches = {}
         self._index_reads = {}
         self.queries = GraphQueries(graph, attribution, config.read)
 
     def release(self, task_id):
-        """Discard a task's query continuations, search reviews and index-read state."""
+        """Discard a task's transient query continuations and index-read state."""
         self.queries.release(task_id)
-        self._searches.pop(task_id, None)
         self._index_reads.pop(task_id, None)
 
-    def lookup(self, query, kind=None, limit=20, *, task_id):
+    def lookup(self, query, kind=None, limit=20, *, task_id, scope):
         """Serve exact graph matches, returning None when text needs non-exact search."""
         kind = kind.strip().casefold() if kind is not None else None
         if type(limit) is not int or not 1 <= limit <= 20:
@@ -33,21 +31,24 @@ class SemanticService:
         matches = self.graph.lookup(query, kind=kind)
         if matches or isinstance(query, int):
             return self.results(
-                query, kind, [card(n) for n in matches], [], limit, task_id, exact=True
+                query, kind, [card(n) for n in matches], [], limit, task_id, scope=scope, exact=True
             )
         if not query.strip():
             raise ContractError("Search query cannot be empty")
         return None
 
-    def results(self, query, kind, items, errors, limit, task_id, exact=False):
-        """Record revision-scoped search results for candidate review and report channel completeness."""
+    def results(self, query, kind, items, errors, limit, task_id, *, scope, exact=False):
+        """Record invocation-scoped search results for candidate review and report channel completeness."""
         if type(limit) is not int or not 1 <= limit <= 20:
             raise ContractError("limit must be between 1 and 20")
-        self._searches.setdefault(task_id, {})[str(query).strip().casefold()] = {
-            "revision": self.graph.revision,
-            "complete": not errors,
-            "items": items[:limit],
-        }
+        key = [task_id, scope, str(query).strip().casefold()]
+        complete = not errors
+        if self._search_confirmation(key) != complete:
+            with self.memory.transaction():
+                run = self.memory.start_run("SemanticSearchReview", "core", {"key": key})
+                event = self.memory.record(run, "search_review", output={"complete": complete})
+                self.memory.finish_run(run)
+                self.memory.retain(self.memory.output_ref(event), "task:" + task_id)
         return {
             "status": "incomplete" if errors else "complete",
             "items": items[:limit],
@@ -55,10 +56,6 @@ class SemanticService:
             "total": len(items),
             "exact": exact,
         }
-
-    def _check_revision(self, revision):
-        if revision != self.graph.revision:
-            raise ContractError("Graph changed during search; repeat the query")
 
     @staticmethod
     def _authorize(metadata):
@@ -130,15 +127,24 @@ class SemanticService:
             and child.output_path[: len(parent.output_path)] == parent.output_path
         )
 
+    def _search_confirmation(self, key):
+        # Core records both complete and incomplete results so replay cannot revive
+        # an earlier approval after a failed explicit search.
+        for event in reversed(self.memory.events):
+            if event.operator != "search_review":
+                continue
+            run = self.memory.get_run(event.program_run)
+            if run.program == "SemanticSearchReview" and list(run.arguments.get("key", ())) == key:
+                return event.output["complete"]
+        return None
+
     def _check_search(self, action, metadata):
         if action["action"] not in CREATE_ACTIONS:
             return
         query = action["name"].strip().casefold()
-        search = self._searches.get(metadata["task_id"], {}).get(query)
-        if not search or not search["complete"] or search["revision"] != self.graph.revision:
-            raise ContractError(
-                "Creating an identity requires a complete current search for " + query
-            )
+        key = [metadata["task_id"], metadata["semantic_scope"], query]
+        if self._search_confirmation(key) is not True:
+            raise ContractError("Creating an identity requires a complete search for " + query)
 
     def write(self, payload, metadata):
         """Validate and persist one source-backed semantic operation, deduplicating durable callback retries."""
@@ -251,27 +257,28 @@ class SemanticService:
         if method in {"graph.query", "graph.walk"}:
             return self.queries.read(method.removeprefix("graph."), payload, task_id=task_id)
         if method == "semantic.lookup":
-            return self.lookup(**payload, task_id=task_id)
-        if method == "semantic.revision":
-            return self.graph.revision
+            self._index_reads.setdefault(task_id, {}).pop(metadata["run_id"], None)
+            return self.lookup(**payload, task_id=task_id, scope=metadata["semantic_scope"])
         if method in {"semantic.bm25", "semantic.vector"}:
-            self._check_revision(payload["revision"])
             nodes = [card(n) for n in self.graph.nodes()]
             operation = self.index.lexical if method == "semantic.bm25" else self.index.vector
             result = await operation(nodes, payload["query"], payload.get("kind"))
-            self._check_revision(payload["revision"])
-            key = (payload["query"], payload.get("kind"), payload["revision"])
-            self._index_reads.setdefault(task_id, {}).setdefault(key, set()).add(method)
+            key = metadata["run_id"]
+            self._index_reads.setdefault(task_id, {}).setdefault(key, {})[method] = (
+                payload["query"],
+                payload.get("kind"),
+            )
             return result
         if method == "semantic.results":
             errors = list(payload["errors"])
-            key = (payload["query"], payload.get("kind"), payload["revision"])
-            completed = self._index_reads.get(task_id, {}).get(key, set())
-            if not errors and completed != {"semantic.bm25", "semantic.vector"}:
+            key = metadata["run_id"]
+            completed = self._index_reads.get(task_id, {}).pop(key, {})
+            if not errors and completed != {
+                method: (payload["query"], payload.get("kind"))
+                for method in ("semantic.bm25", "semantic.vector")
+            }:
                 errors.append({"channel": "search", "error": "Search needs completed index reads"})
-            if payload["revision"] != self.graph.revision:
-                errors.append({"channel": "graph", "error": "Graph changed; repeat search"})
-            items = payload["items"] if payload["revision"] == self.graph.revision else []
+            items = payload["items"]
             checked = []
             for item in items:
                 node = self.graph.get(item["id"])
@@ -282,7 +289,13 @@ class SemanticService:
                     raise ContractError("Search result has an unknown index channel")
                 checked.append({**card(node), "channels": channels, "source_facts": []})
             return self.results(
-                payload["query"], payload.get("kind"), checked, errors, payload["limit"], task_id
+                payload["query"],
+                payload.get("kind"),
+                checked,
+                errors,
+                payload["limit"],
+                task_id,
+                scope=metadata["semantic_scope"],
             )
         if method == "semantic.sources":
             return self.sources(**payload, metadata=metadata)

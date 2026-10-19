@@ -33,7 +33,9 @@ async def test_read_context_crosses_callback_boundary_and_replays_without_leakin
     class Context:
         run_id = "workflow"
 
-        async def step(self, method, args):
+        async def step(self, method, args, *, journal=True):
+            if method in {"llm.enter", "llm.leave"}:
+                return
             if method == "llm.next":
                 event = await invocations.next(args, METADATA)
                 recorded.append(event)
@@ -52,7 +54,9 @@ async def test_read_context_crosses_callback_boundary_and_replays_without_leakin
         class Replay:
             run_id = "workflow"
 
-            async def step(self, method, args):
+            async def step(self, method, args, *, journal=True):
+                if method in {"llm.enter", "llm.leave"}:
+                    return
                 if method == "llm.next":
                     return recorded.pop(0)
 
@@ -182,7 +186,9 @@ async def test_callback_transport_failure_propagates_and_closes_inference():
     class Context:
         run_id = "workflow"
 
-        async def step(self, method, arguments):
+        async def step(self, method, arguments, *, journal=True):
+            if method in {"llm.enter", "llm.leave"}:
+                return
             if method == "llm.next":
                 return await invocations.next(arguments, METADATA)
             assert method == "llm.close"
@@ -319,7 +325,9 @@ async def test_terminal_tool_rejects_already_queued_parallel_calls_and_drains_us
     class Context:
         run_id = "workflow"
 
-        async def step(self, method, arguments):
+        async def step(self, method, arguments, *, journal=True):
+            if method in {"llm.enter", "llm.leave"}:
+                return
             if method == "llm.next":
                 return await invocations.next(arguments, METADATA)
             assert method == "llm.close"

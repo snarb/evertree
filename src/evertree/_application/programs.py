@@ -202,7 +202,12 @@ class ProgramsMixin:
             self._candidate_owners[candidate.id] = self._current_task
         return {"program": json_value(program), "candidate": dataclasses.asdict(candidate)}
 
-    async def _run_program(self, task_id, identity, arguments, *, timeout=None):
+    async def _run_program(self, *args, **kwargs):
+        """Run within the application's exclusive execution chain."""
+        with self._execution.enter():
+            return await self._run_program_owned(*args, **kwargs)
+
+    async def _run_program_owned(self, task_id, identity, arguments, *, timeout=None):
         """Execute or recover the task's pinned pending ProgramRun while metering resource use."""
         spec = self._program(identity)
         async with self._state_lock:

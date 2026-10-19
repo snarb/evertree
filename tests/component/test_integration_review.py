@@ -33,8 +33,6 @@ def test_result_recording_failure_rolls_back_only_its_operation(monkeypatch):
     )
     assert "error" not in first, first
     before = (world.graph.snapshot(), world.memory.snapshot())
-    notifications = []
-    world.graph.on_change(notifications.append)
     original = world.memory.record
 
     def fail_result(run, operator, *args, **kwargs):
@@ -52,11 +50,9 @@ def test_result_recording_failure_rolls_back_only_its_operation(monkeypatch):
     result = write_action(world, refs, metadata, action, key="correction")
     assert result["error"]
     assert (world.graph.snapshot(), world.memory.snapshot()) == before
-    assert notifications == []
     monkeypatch.setattr(world.memory, "record", original)
     result = write_action(world, refs, metadata, action, key="correction")
     assert result["object"] == first["object"]
-    assert len(notifications) == 1
     assert world.graph.get(first["object"]).description == "Corrected"
 
 

@@ -11,6 +11,7 @@ from evertree.core.memory.types import TraceOutputRef
 
 from ..core.programs.lifecycle import git
 from ..core.provider import LLMRequest, ToolDefinition
+from ..core.runtime.coordination import semantic_scope
 from ..core.values import json_value
 from .prompts import CANDIDATE_INSTRUCTIONS, CODING_INSTRUCTIONS
 
@@ -50,6 +51,7 @@ class ToolsMixin:
                 [{"channel": "budget", "error": "Task time budget exhausted"}],
                 args.get("limit", 20),
                 task_id,
+                scope=semantic_scope.get(),
             )
         finally:
             self._tool_tasks[task_id].discard(callback)
@@ -83,7 +85,7 @@ class ToolsMixin:
                 ),
             )
         if name == "graph.search":
-            exact = self._semantics().lookup(**args, task_id=task_id)
+            exact = self._semantics().lookup(**args, task_id=task_id, scope=semantic_scope.get())
             if exact is not None:
                 return exact
             from ..core.runtime.repository import ProgramExecutionError
@@ -98,6 +100,7 @@ class ToolsMixin:
                     [{"channel": "runtime", "error": str(exc)}],
                     args.get("limit", 20),
                     task_id,
+                    scope=semantic_scope.get(),
                 )
             return result["result"]
         if name == "record_analysis":

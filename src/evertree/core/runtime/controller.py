@@ -17,6 +17,7 @@ from typing import Any, Literal
 from evertree.core.sandbox.process import SandboxLimits, start_process
 
 from ..backup import _extended, _restore_io, safe_remove_tree
+from .coordination import semantic_scope
 from .llm import ProgramLLMInvocations
 from .repository import (
     ProgramExecutionError,
@@ -186,6 +187,10 @@ class Runtime:
                     "run_dir": run_dir,
                     "source_dir": source_dir,
                     "llm": ProgramLLMInvocations(self.gateway),
+                    "execution_stack": [],
+                    "execution_scopes": {},
+                    "requests": {},
+                    "semantic_scope": semantic_scope.get() or "run:" + run_id,
                 }
                 process = None
                 reader_task = stderr_task = None
@@ -326,6 +331,70 @@ class Runtime:
                     task.cancel()
 
     async def _dispatch(self, request):
+        """Enforce exclusive Program ownership before servicing a worker request."""
+        if not isinstance(request, dict):
+            raise TypeError("Gateway request must be an object")
+        active = self._active
+        if active is None or active["cancelled"]:
+            raise ProgramExecutionError("Task is no longer admitted")
+        run_id, method = request["run_id"], request["method"]
+        stack, scopes, pending = (
+            active["execution_stack"],
+            active["execution_scopes"],
+            active["requests"],
+        )
+        if method == "run_enter":
+            parent = request.get("payload", {}).get("parent_run_id")
+            if parent != (stack[-1] if stack else None) or run_id in stack or pending:
+                raise RuntimeBusy("Programs must execute in one sequential call chain")
+            inherited = scopes[parent][-1] if parent is not None else active["semantic_scope"]
+            stack.append(run_id)
+            scopes[run_id] = [inherited]
+            try:
+                return await self._dispatch_operation(request)
+            except BaseException:
+                stack.pop()
+                scopes.pop(run_id)
+                raise
+        if run_id not in active["known_runs"]:
+            raise PermissionError("Workflow is not admitted by protected core")
+        if not stack or stack[-1] != run_id:
+            raise RuntimeBusy("Only the current Program may access Core")
+        if method == "run_leave":
+            if pending:
+                raise RuntimeBusy("Program still has unfinished Core operations")
+            stack.pop()
+            scopes.pop(run_id)
+            return None
+        payload = request.get("payload", {})
+        signature = (run_id, payload.get("query"), payload.get("kind"))
+        indexes = {"semantic.bm25", "semantic.vector"}
+        if pending and not (
+            method in indexes
+            and active["known_runs"][run_id]["role"] == "model"
+            and method not in pending
+            and set(pending) <= indexes
+            and all(value == signature for value in pending.values())
+        ):
+            raise RuntimeBusy("Concurrent Core operations are limited to paired search channels")
+        pending[method] = signature
+        try:
+            if method == "llm.enter":
+                identity = payload["invocation_id"]
+                if not isinstance(identity, str) or not identity.startswith(run_id + ":llm:"):
+                    raise ValueError("Invalid model invocation scope")
+                scopes[run_id].append(identity)
+                return None
+            if method == "llm.leave":
+                if len(scopes[run_id]) < 2 or scopes[run_id][-1] != payload["invocation_id"]:
+                    raise ValueError("Model invocation scope does not match")
+                scopes[run_id].pop()
+                return None
+            return await self._dispatch_operation(request)
+        finally:
+            pending.pop(method, None)
+
+    async def _dispatch_operation(self, request):
         """Authorize and service worker requests against Core, tracing durable results and child runs."""
         if self._pause_requested:
             self._paused.set()
@@ -337,7 +406,7 @@ class Runtime:
             raise TypeError("Gateway request must be an object")
         active["waiting"] = False
         method, run_id = request["method"], request["run_id"]
-        if method == "run_started":
+        if method in {"run_enter", "run_started"}:
             spec = ProgramSpec(**request["program"])
             if spec.revision != active["program"].revision:
                 raise PermissionError("Worker requested another executable revision")
@@ -373,6 +442,7 @@ class Runtime:
             "run_id": run_id,
             "run_mode": active["run_mode"],
             "program": asdict(spec),
+            "semantic_scope": active["execution_scopes"][run_id][-1],
         }
         source_line = request.get("source_line")
         if isinstance(source_line, int) and not isinstance(source_line, bool):
@@ -400,7 +470,7 @@ class Runtime:
                 metadata["source_line"] = anchor.line
         self._gateway_active += 1
         try:
-            if method == "run_started":
+            if method in {"run_enter", "run_started"}:
                 parent = payload.get("parent_run_id")
                 if parent is not None and parent not in active["known_runs"]:
                     raise PermissionError("Child workflow parent is not admitted")
@@ -437,6 +507,8 @@ class Runtime:
                 (active["run_dir"] / "core_runs.json").write_text(
                     json.dumps(active["known_runs"]), encoding="utf-8"
                 )
+                if method == "run_enter":
+                    return None
                 await self._trace(
                     {
                         "arguments": payload.get("arguments", {}),

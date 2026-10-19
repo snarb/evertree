@@ -123,7 +123,7 @@ async def test_search_is_bounded_and_refreshes_after_a_successful_graph_write():
 
 
 @pytest.mark.parametrize("action_name", ["create_concept", "create_claim"])
-def test_identity_creation_requires_complete_fresh_search(action_name):
+def test_identity_creation_keeps_complete_search_after_own_write(action_name):
     world = semantic_world()
     refs, metadata = recorded_experience(world, "Object exists")
     action = {
@@ -132,24 +132,14 @@ def test_identity_creation_requires_complete_fresh_search(action_name):
         "description": "The object may be a new kind of pump.",
         "sources": refs,
     }
-    assert (
-        "complete current search"
-        in write_action(world, refs, metadata, action, searched=False)["error"]
-    )
+    assert "complete search" in write_action(world, refs, metadata, action, searched=False)["error"]
     world.service.results(
-        "Object", None, [], [{"channel": "vector", "error": "offline"}], 20, "task"
+        "Object", None, [], [{"channel": "vector", "error": "offline"}], 20, "task", scope="packet"
     )
-    assert (
-        "complete current search"
-        in write_action(world, refs, metadata, action, searched=False)["error"]
-    )
-    world.service.results("Object", None, [], [], 20, "task")
+    assert "complete search" in write_action(world, refs, metadata, action, searched=False)["error"]
+    world.service.results("Object", None, [], [], 20, "task", scope="packet")
     assert "error" not in write_action(world, refs, metadata, note(refs[0]), key="intervening")
-    assert (
-        "complete current search"
-        in write_action(world, refs, metadata, action, searched=False)["error"]
-    )
-    result = write_action(world, refs, metadata, action)
+    result = write_action(world, refs, metadata, action, searched=False)
     assert result["object"] > 0
 
 
@@ -177,7 +167,6 @@ async def test_fabricated_search_completion_cannot_authorize_creation():
         {
             "query": "Candidate",
             "kind": None,
-            "revision": world.graph.revision,
             "items": [],
             "errors": [],
             "limit": 20,
@@ -190,7 +179,7 @@ async def test_fabricated_search_completion_cannot_authorize_creation():
 
 
 @pytest.mark.parametrize("action_name", ["create_concept", "create_claim"])
-async def test_program_searches_before_creation_and_refreshes_after_intervening_write(action_name):
+async def test_program_reuses_search_after_own_write(action_name):
     searches = []
 
     class Index(EmptyIndex):
@@ -225,7 +214,7 @@ async def test_program_searches_before_creation_and_refreshes_after_intervening_
     )
     assert result["feedback"] is None
     assert len(result["result"]["writes"]) == 2
-    assert searches == ["Useful term", "Useful term"]
+    assert searches == ["Useful term"]
 
 
 async def test_model_projection_preserves_meaning_without_audit_or_obligation_metadata():
@@ -498,6 +487,7 @@ def test_character_citations_cannot_ground_graph_writes():
         "description": "UPS-1 returned to mains at 10:07 UTC",
         "sources": [{**refs[0], "output_path": [0]}],
     }
+    world.service.results("Power restored", None, [], [], 20, "task", scope="packet")
     before = world.graph.snapshot(), world.memory.snapshot()
     result = write_action(world, refs, metadata, action)
     assert "not text characters" in result["error"]
@@ -507,8 +497,8 @@ def test_character_citations_cannot_ground_graph_writes():
     world.memory.validate()
 
 
-async def test_creation_refreshes_search_but_reviews_only_new_or_changed_candidates():
-    from evertree.core.graph.types import GraphDelta, Node, NodeUpdate
+async def test_new_names_search_without_reviewing_own_known_updates():
+    from evertree.core.graph.types import GraphDelta, Node
 
     searches = []
 
@@ -529,12 +519,11 @@ async def test_creation_refreshes_search_but_reviews_only_new_or_changed_candida
         # A different proposed name still refreshes search, but the same card was just shown.
         saved = await call("create_concept", {**fields, "name": "Second"})
         assert "object" in saved
-        world.graph.apply(
-            GraphDelta(updates=(NodeUpdate(existing.id, {"description": "Changed meaning"}),)),
-            provenance="concurrent correction",
+        updated = await call(
+            "update",
+            {"object": existing.id, "changes": {"description": "Changed meaning"}, "sources": refs},
         )
-        changed = await call("create_concept", {**fields, "name": "Third"})
-        assert "Review search candidates" in changed["error"]
+        assert "error" not in updated
         assert "object" in await call("create_concept", {**fields, "name": "Third"})
 
     await run(context(world, model, role="exec"), refs)
@@ -564,3 +553,87 @@ async def test_explicit_search_exposes_candidates_before_new_name_preflight():
         assert "object" in result
 
     await run(context(world, model, role="exec"), refs)
+
+
+def test_search_review_is_owned_by_one_model_invocation():
+    world = semantic_world()
+    refs, metadata = recorded_experience(world, "A pump")
+    action = {"action": "create_concept", "name": "Pump", "description": None, "sources": refs}
+    world.service.results("Pump", None, [], [], 20, "task", scope="parent")
+    world.service.results(
+        "Pump", None, [], [{"channel": "vector", "error": "offline"}], 20, "task", scope="child"
+    )
+    for scope in ("child", "next-turn"):
+        result = write_action(
+            world, refs, {**metadata, "semantic_scope": scope}, action, key=scope, searched=False
+        )
+        assert "complete search" in result["error"]
+    result = write_action(
+        world, refs, {**metadata, "semantic_scope": "parent"}, action, searched=False
+    )
+    assert result["object"] > 0
+
+
+async def test_completed_channels_cannot_be_reused_for_a_second_search():
+    world = semantic_world()
+    _, metadata = recorded_experience(world, "A pump")
+    for method in ("semantic.bm25", "semantic.vector"):
+        await world.service.execute(method, {"query": "pump", "kind": None}, metadata)
+    payload = {"query": "pump", "kind": None, "items": [], "errors": [], "limit": 20}
+    assert (await world.service.execute("semantic.results", payload, metadata))[
+        "status"
+    ] == "complete"
+    assert (await world.service.execute("semantic.results", payload, metadata))[
+        "status"
+    ] == "incomplete"
+
+
+def test_program_completion_cannot_authorize_creation():
+    from evertree.core.graph.types import GraphDelta, Node
+
+    world = semantic_world()
+    refs, metadata = recorded_experience(world, "A pump")
+    program = Node(
+        world.graph.reserve_id(),
+        "SemanticSearch.model",
+        kind="program",
+        properties={"slug": "semantic_search"},
+    )
+    world.graph.apply(GraphDelta(creates=(program,)), provenance="registered")
+    run = world.memory.start_run(program.id, "revision", {"query": "Pump"})
+    world.memory.record(
+        run,
+        "run_finished",
+        output={
+            "type": "run_finished",
+            "task_id": "task",
+            "semantic_scope": "packet",
+            "result": {"result": {"status": "complete", "items": []}},
+        },
+    )
+    world.memory.finish_run(run)
+    world.service.release("task")
+    action = {"action": "create_concept", "name": "Pump", "description": None, "sources": refs}
+    assert "error" in write_action(
+        world, refs, {**metadata, "semantic_scope": "other"}, action, key="other", searched=False
+    )
+    assert "error" in write_action(world, refs, metadata, action, searched=False)
+
+
+@pytest.mark.parametrize("complete", [True, False])
+def test_core_search_confirmation_survives_restore(complete):
+    world = semantic_world()
+    refs, metadata = recorded_experience(world, "A pump")
+    world.service.results("Pump", None, [], [], 20, "task", scope="packet")
+    if not complete:
+        world.service.results("Pump", None, [], [{"channel": "vector"}], 20, "task", scope="packet")
+    world.memory = TraceStore.from_snapshot(world.memory.snapshot())
+    world.service.memory = world.memory
+    world.operations.memory = world.memory
+    world.service.release("task")
+    action = {"action": "create_concept", "name": "Pump", "description": None, "sources": refs}
+    assert "error" in write_action(
+        world, refs, {**metadata, "semantic_scope": "other"}, action, key="other", searched=False
+    )
+    result = write_action(world, refs, metadata, action, searched=False)
+    assert ("object" in result) is complete
