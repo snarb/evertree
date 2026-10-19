@@ -126,14 +126,6 @@ class DebugSession:
                     "id": "debug-pump-history",
                     "specification": TaskSpecification(USER_TASK).to_dict(),
                 },
-                "values": [
-                    {
-                        "name": "EpistemicQuality",
-                        "description": "Сохранять основания и неопределённость.",
-                        "origin": "debug configuration",
-                    }
-                ],
-                "self": [],
             },
         }
         self.run_id = self.metadata["run_id"]

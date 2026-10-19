@@ -120,6 +120,10 @@ class SemanticTools:
             subjects = [action["instance"], "STATE_IDENTITY"]
         elif name == "create_prototype" and action["parent"] is not None:
             subjects = [action["parent"], "SUBTYPE_OF"]
+        elif name == "create_property":
+            subjects = action["applies_to"]
+        elif name == "create_property_reference":
+            subjects = [action["property"], action["domain"], *action["classes"]]
         elif name == "update":
             subjects = [action["object"]]
         elif name == "delete":
@@ -169,7 +173,7 @@ class SemanticTools:
                 arguments.get(k) is not None for k in ("focus", "at")
             ):
                 result = await self._describe(action["subject"], reads)
-            elif name in {"query", "walk", "read_property", "describe"}:
+            elif name in {"query", "walk", "read_property", "summarize_property", "describe"}:
                 if self._read_port is None:
                     raise ValueError("This invocation has no graph read port")
                 result = await self._read_port(name, arguments)

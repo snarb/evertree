@@ -121,7 +121,7 @@ AgentCapability
 
 [[#Self-Improvement Loop|Self-improvement]] is a way to increase `AgentCapability`, not a separate `Value`.
 
-[[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] uses these Values, the current task specification and selected existing Self knowledge to decide which distinctions and experience are useful to organize. Runtime supplies this context with its revision and provenance; a caller's focus text does not redefine Values or the task. Missing interests or goals remain unknown rather than being invented. An important counterexample or weak but useful hypothesis may deserve preservation, while its reliability remains a separate evidence question. This use of Self does not require a new autonomous goal lifecycle.
+In the MVP, [[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] selects useful knowledge from the current task requirements, recorded experience and optional focus. Agent personality, Values and selected Self knowledge are not supplied as integration context or used as preservation criteria. Knowledge about the agent itself can still be organized when it is the subject of the supplied experience. An important counterexample or weak but useful hypothesis may deserve preservation, while its reliability remains a separate evidence question.
 
 ---
 

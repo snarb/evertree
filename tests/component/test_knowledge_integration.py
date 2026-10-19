@@ -219,7 +219,13 @@ async def test_program_reuses_search_after_own_write(action_name):
 
 async def test_model_projection_preserves_meaning_without_audit_or_obligation_metadata():
     world = semantic_world()
-    source = {"origin": "factory", "revision": "pump-v2", "pressure": 5}
+    source = {
+        "origin": "factory",
+        "revision": "pump-v2",
+        "pressure": 5,
+        "self": "The sensor reports its own pressure.",
+        "values": [4, 5],
+    }
     refs, metadata = recorded_experience(world, source, run_mode="replay")
     analysis_ref = world.operations.execute(
         "memory.note",
@@ -232,7 +238,9 @@ async def test_model_projection_preserves_meaning_without_audit_or_obligation_me
             "id": "task",
             "specification": {
                 "objective": "Study pressure",
+                "success_criteria": ["Retain the sensor readings"],
                 "constraints": ["Keep hypotheses qualified"],
+                "preferences": ["Prefer compact representations"],
                 "revision": 8,
                 "source_ids": ["message-id"],
             },
@@ -259,6 +267,7 @@ async def test_model_projection_preserves_meaning_without_audit_or_obligation_me
 
     async def model(payload, call):
         material = json.loads(payload["prompt"])["material"]
+        assert material["focus"] == "Pressure under load"
         assert "origin" not in material["experience"][0]
         assert material["experience"][0]["content"] == source
         assert material["experience"][0]["experience_mode"] == "replay"
@@ -267,17 +276,21 @@ async def test_model_projection_preserves_meaning_without_audit_or_obligation_me
         assert analysis["content"]["source_refs"] == refs[:1]
         assert set(analysis["content"]) <= {"text", "kind", "source_refs"}
         context_ = material["context"]
-        assert context_["task"] == {
-            "objective": "Study pressure",
-            "constraints": ["Keep hypotheses qualified"],
+        assert context_ == {
+            "task": {
+                "objective": "Study pressure",
+                "success_criteria": ["Retain the sensor readings"],
+                "constraints": ["Keep hypotheses qualified"],
+                "preferences": ["Prefer compact representations"],
+            }
         }
-        assert context_["values"] == [{"name": "Accuracy", "description": "Retain uncertainty"}]
-        assert [node["name"] for node in context_["self"]] == ["Sensor limitation"]
-        assert "provenance" not in context_["self"][0]
-        assert "preservation_intents" not in context_
         await call("save_note", {"name": "Hypothesis", "source": analysis_ref, "sources": []})
 
-    result = await run(context(world, model, role="exec", integration_context=trusted), refs)
+    result = await run(
+        context(world, model, role="exec", integration_context=trusted),
+        refs,
+        focus="Pressure under load",
+    )
     assert len(result["result"]["writes"]) == 1
     assert not world.operations.beliefs.snapshot()["targets"]
     original = world.service.sources(refs, metadata={**metadata, "integration_context": trusted})

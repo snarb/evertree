@@ -142,12 +142,10 @@ async def test_preserved_insight_uses_note_without_self_reinforcing_belief(app):
     context = prompt["material"]["context"]
     assert context["task"]["objective"] == task.objective
     assert "revision" not in context["task"]
-    assert context["values"] and all(value["description"] for value in context["values"])
-    assert all("provenance" not in value for value in context["values"])
+    assert set(context) == {"task"}
     retained = app._integration_context(task)
     assert retained["task"]["specification"]["revision"] == 2
-    assert all(value["provenance"] for value in retained["values"])
-    assert retained["self"] and all(item["provenance"] for item in retained["self"])
+    assert set(retained) == {"task"}
     check = next(
         json.loads(request.prompt)
         for request in app.provider.requests

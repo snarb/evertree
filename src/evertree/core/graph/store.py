@@ -268,7 +268,8 @@ class GraphStore:
                 if not 1 <= len(key.split()) <= 3 or key in names:
                     raise ContractError("canonical names must be unique and contain 1–3 words")
                 names.add(key)
-        from ..attribution import PropertyDefinition
+        from ..attribution import PropertyDefinition, validate_parameters
+        from ..attribution_population import finite_number, validate_reference
 
         for node in nodes.values():
             binding = node.properties.get("attribution") if node.kind == "property" else None
@@ -315,6 +316,9 @@ class GraphStore:
             relation = nodes.get(node.relation_type)
             if not isinstance(relation, RelationType):
                 raise ContractError("fact relation type is missing")
+            if relation.name == "HAS_NUMERIC_VALUE":
+                finite_number(node.args.get("value"))
+                validate_parameters(node.properties.get("conditions", {}))
             labels = {slot.label for slot in relation.signature}
             if not set(node.args) <= labels:
                 raise ContractError("fact contains undeclared slots")
@@ -341,6 +345,8 @@ class GraphStore:
                 seen.add(current)
                 current = parents[current]
         for node in nodes.values():
+            if "numeric_reference" in node.properties:
+                validate_reference(node.properties["numeric_reference"], nodes, parents)
             if node.kind == "instance" and node.id not in instance_types:
                 raise ContractError("Instance requires exactly one IDENTITY_TYPE fact")
             if node.kind == "facet" and node.id not in facet_instances:

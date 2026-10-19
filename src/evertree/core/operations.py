@@ -38,6 +38,7 @@ MODEL_OPERATIONS = frozenset(
         "graph.view",
         "graph.describe",
         "graph.read_property",
+        "graph.summarize_property",
         "semantic.lookup",
         "semantic.bm25",
         "semantic.vector",
@@ -231,6 +232,10 @@ class CoreOperations:
             from .semantics.reading import read_property
 
             result = read_property(self.graph, self.attribution, **payload)
+        elif method == "graph.summarize_property":
+            from .semantics.reading import summarize_property
+
+            result = summarize_property(self.graph, self.attribution, **payload)
         elif method in {"graph.read", "graph.get"}:
             result = self.graph.get(payload["id"])
         elif method == "graph.view":

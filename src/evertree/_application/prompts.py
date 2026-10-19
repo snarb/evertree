@@ -14,7 +14,26 @@ class AnswerVerification(BaseModel):
     reason: str
 
 
-CONSCIOUSNESS_INSTRUCTIONS = """You perform one bounded work step for EverTree, an agent
+NUMERIC_READ_INSTRUCTIONS = """When answering from retained measurements, numeric guides or
+statistical tables, use summarize_property. Search and describe discover identities and declarations;
+their descriptions do not replace the runtime calculation. Before answering about these sources,
+obtain their summary; for each requested guide obtain its interpretation with reference, value and
+unit. Preserve an unavailable interpretation as unknown rather than calculating from a search snippet.
+The summary keeps one observation per subject separate from external references. Omitting at
+uses each individual's latest recorded measurement, not a current census; explicit at selects
+states applicable at that world time. Pass the intended domain and conditions; distinct
+populations can have different norms. Use observations.nearest for the nearest known individual,
+preserving returned identities and ties.
+An optional value and unit produce a conditional interpretation, not a new belief or a measured
+property of an object. Keep conflicting references visible rather than silently choosing one.
+Even a few observations can support a tentative answer limited to that sample; do not reject
+it solely because the sample is small. Preserve BeliefData for observations and references,
+including an unassessed belief. Source reliability qualifies the conclusion; it is not an
+arbitrary weight for averaging measurements. Sample counts do not become epistemic Support.
+"""
+
+
+CONSCIOUSNESS_INSTRUCTIONS = f"""You perform one bounded work step for EverTree, an agent
 that solves tasks over successive iterations.
 
 ## Read the input
@@ -72,6 +91,7 @@ Continue only when needed with next_page=true and optional max_items; Core store
 This continues the latest selection of that tool; repeat the original filters/fields to continue an earlier one. Recorded qualifications
 and unknown temporal applicability are not established truths. Use graph.read_property
 when a discovered property needs computation or parameters.
+{NUMERIC_READ_INSTRUCTIONS}
 Load specialized tool sets when needed; they expire after this invocation. Additional work
 for future reuse must fit state.self_improvement_remaining; necessary task work uses the
 main allowance. Modify agent state and reusable Programs only through EverTree tools.
@@ -257,7 +277,7 @@ def semantic_tools():
     return tuple(
         replace(tool, name="graph." + tool.name)
         for tool in READ_TOOLS
-        if tool.name in {"query", "walk"}
+        if tool.name in {"query", "walk", "summarize_property"}
     ) + (
         define(
             "graph.search",
@@ -288,7 +308,7 @@ def semantic_tools():
         ),
         define(
             "graph.integrate",
-            "Ask KnowledgeIntegration to organize saved experience in the knowledge graph. Supply source_ref values or references returned by record_analysis. The controller provides the task, agent priorities and known capabilities. The integrator independently selects useful knowledge.",
+            "Ask KnowledgeIntegration to organize saved experience in the knowledge graph. Supply source_ref values or references returned by record_analysis. The controller provides the task requirements. The integrator independently selects useful knowledge.",
             {
                 "experience_refs": {
                     "type": "array",

@@ -1,8 +1,9 @@
 """Compact named reads shared by consciousness and semantic Programs."""
 
+from ..attribution import validate_parameters
 from ..beliefs import element_target
 from ..graph.types import Facet, Prototype, RelationInstance, RelationType
-from ..values import UNKNOWN, ContractError, json_value, timestamp, utcnow
+from ..values import UNKNOWN, json_value, timestamp, utcnow
 
 
 def card(node):
@@ -95,13 +96,49 @@ def read_property(graph, attribution, subject, property, at=None, parameters=Non
         return prop
     parameters = parameters or {}
     definition = attribution.definitions().get(prop.id)
-    if set(parameters) & {"subject", "property", "valid_at", "known_at", "_compute"}:
-        raise ContractError("Temporal service arguments are not property parameters")
+    validate_parameters(parameters)
     if definition and (missing := set(definition.required_parameters) - parameters.keys()):
         return {"status": "needs_parameters", "required_parameters": sorted(missing)}
     return json_value(
         attribution.read_property(
             node.id, prop.id, valid_at=timestamp(at) if at else utcnow(), **parameters
+        )
+    )
+
+
+def summarize_property(
+    graph,
+    attribution,
+    domain,
+    property,
+    value=None,
+    unit=None,
+    reference=None,
+    at=None,
+    parameters=None,
+):
+    """Resolve a numeric summary's domain, property and optional source reference."""
+    domain_node, prop = resolve(graph, domain), resolve(graph, property)
+    if isinstance(domain_node, dict):
+        return domain_node
+    if isinstance(prop, dict):
+        return prop
+    if reference is not None:
+        reference = resolve(graph, reference)
+        if isinstance(reference, dict):
+            return reference
+        reference = reference.id
+    parameters = parameters or {}
+    validate_parameters(parameters)
+    return json_value(
+        attribution.summarize_property(
+            domain_node.id,
+            prop.id,
+            value=value,
+            unit=unit,
+            reference=reference,
+            valid_at=timestamp(at) if at else None,
+            **parameters,
         )
     )
 
@@ -134,6 +171,28 @@ def describe(graph, attribution, subject, focus=None, at=None):
     }
     if not isinstance(node, RelationInstance) and (belief := belief_summary(graph, node)):
         result["subject"]["belief"] = belief
+    definitions = {
+        key: json_value(node.properties[key])
+        for key in ("attribution", "numeric_reference")
+        if key in node.properties
+    }
+    if reference := definitions.get("numeric_reference"):
+        for field, limit in (
+            ("samples", 20),
+            ("boundaries", 20),
+            ("boundary_inclusive", 20),
+            ("classes", 21),
+        ):
+            if len(reference.get(field, [])) > limit:
+                reference[field + "_total"] = len(reference[field])
+                reference[field] = reference[field][:limit]
+                reference["truncated"] = True
+        if reference.get("truncated"):
+            reference["details"] = (
+                "Preview only; use query with fields=['properties'] for the complete reference."
+            )
+    if definitions:
+        result["subject"]["properties"] = definitions
     if focus not in (None, "", "properties", "relations"):
         term = focus.casefold()
         properties = [p for p in properties if term in str(p).casefold()]

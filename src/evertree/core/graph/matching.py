@@ -9,12 +9,15 @@ from .types import Clause, Slot
 NODE_TYPES = frozenset({"node", "concept", "prototype", "instance", "facet"})
 
 
-def _equal(left, right):
+def values_equal(left, right):
+    """Compare structured JSON values across frozen and mutable representations."""
     # JSON booleans must not match numeric conditions such as enabled == 0.
     if isinstance(left, bool) != isinstance(right, bool):
         return False
     if isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
-        return len(left) == len(right) and all(_equal(a, b) for a, b in zip(left, right))
+        return len(left) == len(right) and all(values_equal(a, b) for a, b in zip(left, right))
+    if isinstance(left, Mapping) and isinstance(right, Mapping):
+        return left.keys() == right.keys() and all(values_equal(left[k], right[k]) for k in left)
     return left == right
 
 
@@ -41,10 +44,10 @@ def compare(value, clause):
     ):
         raise ContractError("ordered predicates require a scalar ordered field")
     operations = {
-        "==": lambda: _equal(value, clause.value),
-        "!=": lambda: not _equal(value, clause.value),
-        "in": lambda: any(_equal(value, item) for item in clause.value),
-        "not_in": lambda: not any(_equal(value, item) for item in clause.value),
+        "==": lambda: values_equal(value, clause.value),
+        "!=": lambda: not values_equal(value, clause.value),
+        "in": lambda: any(values_equal(value, item) for item in clause.value),
+        "not_in": lambda: not any(values_equal(value, item) for item in clause.value),
         "<": lambda: value < clause.value,
         "<=": lambda: value <= clause.value,
         ">": lambda: value > clause.value,
@@ -52,7 +55,7 @@ def compare(value, clause):
         "contains": lambda: (
             clause.value in value
             if isinstance(value, str)
-            else any(_equal(clause.value, item) for item in value)
+            else any(values_equal(clause.value, item) for item in value)
         ),
     }
     try:
