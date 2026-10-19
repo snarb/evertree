@@ -16,14 +16,14 @@ The suite is selected only explicitly and needs the live opt-in plus search cred
    --basetemp=tmp/evidence-cases -o tmp_path_retention_policy=all)
 ```
 
-At most two workers: more hit the model's rate limit (HTTP 429). A case usually takes 0.5–3 minutes (two model calls per step, integration and assessment, plus integration's graph tools); a full run takes about half an hour and uses account resources. A rate-limited or stalled call (over 5 minutes) reruns the case from scratch after a pause, up to three attempts, each in its own `attempt-N` directory. Each case directory keeps `history.json` (beliefs and origin reliabilities after each step, plus failed expectations), `graph.json`, `trace.json`, `beliefs.json`, `evidence.json` and the model transcripts. Run one case with `-k <id>`, or step through it in the debugger with `python -m evertree.debug_evidence_assessment <id>`.
+At most two workers: more hit the model's rate limit (HTTP 429). A case usually takes 0.5–3 minutes (two model calls per step, integration and assessment, plus integration's graph tools); a full run takes about half an hour and uses account resources. A rate-limited or stalled call (over 5 minutes) reruns the case from scratch after a pause, up to three attempts, each in its own `attempt-N` directory. Each case directory keeps `history.json` (beliefs and origin reliabilities after each step, plus failed expectations), `graph.json`, `trace.json`, `beliefs.json`, `evidence.json` and the model transcripts. Run one case with `-k <id>`, or step through it in the debugger with `python -m evertree.debug_evidence_assessment <id>`. `EVERTREE_EVIDENCE_MODEL=<model>` (for example `gpt-6-sol`) runs only the assessment call on another model, keeping integration on the configured one, to tell a model's limits from a prompt's.
 
 ## Expectation forms
 
 | Form | Meaning |
 | --- | --- |
 | `{"at": n, "select": S, "strength": [op, x]}` | after step `n`, a selected element (`"mode": "all"`: every one) satisfies the bound; also `support`, `evidence_count`; `op` is `<`, `<=`, `>`, `>=`, `==` or `between` |
-| `{"change": [m, n], "select": S, "strength": "up"}` | the field moved `up`, `down` or stayed the `same` (±0.01) between steps for an element present at both |
+| `{"change": [m, n], "select": S, "strength": "up"}` | the field moved `up`, `down`, stayed the `same` (±0.01) or did `not_up` between steps for an element present at both |
 | `{"at": n, "compare": [S1, ">", S2]}` | the strongest match of `S1` against the strongest of `S2` |
 | `{"at": n, "origin": "sensor:T-7", "reliability": [op, x]}` | reliability belief of a source origin |
 | `{"at": n, "scope": [S1, S2, …]}` | one match of each selector belongs to one competition scope, and their probabilities sum to at most 1 |

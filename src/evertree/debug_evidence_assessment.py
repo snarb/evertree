@@ -26,6 +26,7 @@ import asyncio
 import json
 import os
 import sys
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
@@ -38,6 +39,9 @@ from evertree.core.semantics.reading import fact_nodes
 from evertree.core.values import json_value
 from evertree.debug_integration import DebugSession, load_debug_environment
 from evertree.processes.learning.evidence_assessment._exec import run as assess
+from evertree.processes.learning.evidence_assessment.graph_evidence_assessment._exec import (
+    INSTRUCTIONS,
+)
 from evertree.processes.learning.evidence_assessment.graph_evidence_assessment._exec import (
     run as assess_graph,
 )
@@ -151,6 +155,13 @@ class EvidenceSession(DebugSession):
             )
             refs.append(json_value(note))
         return refs
+
+    def profile(self, payload):
+        """Assessment uses EVERTREE_EVIDENCE_MODEL when set, to compare models on one case."""
+        model = os.environ.get("EVERTREE_EVIDENCE_MODEL")
+        if model and payload["instructions"] == INSTRUCTIONS:
+            return replace(self.config.remember, model=model)
+        return super().profile(payload)
 
     async def call(self, program, arguments):
         """Run evidence assessment children and SemanticSearch in process."""
@@ -287,6 +298,8 @@ def main():
     if missing:
         raise SystemExit("Для штатного поиска задайте в .env или PyCharm: " + ", ".join(missing))
     print(f"Codex: {session.config.remember.model}, {session.config.remember.effort}")
+    if os.environ.get("EVERTREE_EVIDENCE_MODEL"):
+        print(f"Оценка свидетельств: {os.environ['EVERTREE_EVIDENCE_MODEL']}")
     print(f"Артефакты: {output_dir}", flush=True)
     asyncio.run(session.run())
     print(f"\nГраф, trace и убеждения сохранены в {output_dir}")

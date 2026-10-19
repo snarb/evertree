@@ -203,6 +203,10 @@ class DebugSession:
             if call["method"].startswith("tool:")
         ]
 
+    def profile(self, payload):
+        """Model profile for one request; the configured integration profile by default."""
+        return self.config.remember
+
     async def model(self, payload, *, tool_handler=None):
         """Invoke the real model and save readable requests and provider transcripts for debugging."""
         request_name = f"model-{len(self.calls):03d}"
@@ -227,8 +231,8 @@ class DebugSession:
                     mode=payload.get("mode", "model"),
                     tools=tuple(ToolDefinition(**tool) for tool in payload.get("tools", [])),
                     output_schema=payload.get("output_schema"),
-                    model=self.config.remember.model,
-                    effort=self.config.remember.effort,
+                    model=self.profile(payload).model,
+                    effort=self.profile(payload).effort,
                     token_encoding=self.config.read.token_encoding,
                     timeout_seconds=self.timeout_seconds,
                 ),

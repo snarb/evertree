@@ -50,6 +50,7 @@ def _direction(before, after, expected):
         "up": delta > TOLERANCE,
         "down": delta < -TOLERANCE,
         "same": abs(delta) <= TOLERANCE,
+        "not_up": delta <= TOLERANCE,
     }[expected]
 
 

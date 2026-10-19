@@ -563,8 +563,8 @@
       {
         "kind": "document",
         "source_id": "report:inspection-2026-10-18",
-        "content": "Акт осмотра насоса Н-5 от 18.10.2026: подшипники заменены 10.10.2026, следов износа нет. Обнаружено засорение фильтра системы охлаждения; вибрация вызвана ослабленным креплением рамы.",
-        "analysis": "Акт осмотра: подшипники новые и без износа; причина — засорённый фильтр охлаждения."
+        "content": "Акт осмотра насоса Н-5 от 18.10.2026: подшипники в норме, следов износа нет. Обнаружено засорение фильтра системы охлаждения; вибрация вызвана ослабленным креплением рамы.",
+        "analysis": "Акт осмотра: подшипники без износа; причина перегрева — засорённый фильтр охлаждения."
       }
     ],
     "expect": [
@@ -627,27 +627,26 @@
             [
               "подшип",
               "bearing"
+            ],
+            [
+              "перегр",
+              "overheat"
             ]
-          ],
-          "none": [
-            "нет износа",
-            "без износа",
-            "no wear",
-            "заменен",
-            "replaced",
-            "IDENTITY_TYPE",
-            "SUBTYPE_OF"
           ],
           "kinds": [
             "claim",
-            "note",
-            "relation_instance"
+            "note"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
           ]
         },
         "strength": [
           "<",
           0.5
-        ]
+        ],
+        "why": "the inspection checks the hypothesis directly and finds another cause"
       }
     ]
   },
@@ -980,9 +979,10 @@
           ]
         },
         "strength": [
-          ">=",
-          0.7
-        ]
+          ">",
+          0.5
+        ],
+        "why": "the passport outweighs the user; integration may update the user's fact, which the user's statement then opposes"
       }
     ]
   },
@@ -1464,7 +1464,10 @@
         ],
         "select": {
           "all": [
-            "ПА-7",
+            [
+              "ПА-7",
+              "PA-7"
+            ],
             [
               "кавитац",
               "cavitation"
@@ -1485,14 +1488,17 @@
             "SUBTYPE_OF"
           ]
         },
-        "support": "same",
+        "support": "not_up",
         "why": "reposts depend on the first post"
       },
       {
         "at": 4,
         "select": {
           "all": [
-            "ПА-7",
+            [
+              "ПА-7",
+              "PA-7"
+            ],
             [
               "кавитац",
               "cavitation"
@@ -1508,9 +1514,6 @@
             "не снизила",
             "did not",
             "no effect",
-            "Nature",
-            "испытан",
-            "trial",
             "IDENTITY_TYPE",
             "SUBTYPE_OF"
           ]
@@ -1518,7 +1521,8 @@
         "strength": [
           "<",
           0.45
-        ]
+        ],
+        "why": "the trial opposes the rumour itself; a description mentioning the trial is still the rumour"
       }
     ]
   },
@@ -1602,6 +1606,11 @@
               "сальник",
               "gland",
               "seal"
+            ],
+            [
+              "часто",
+              "often",
+              "frequent"
             ]
           ],
           "kinds": [
@@ -1622,8 +1631,7 @@
           ]
         },
         "strength": "down",
-        "mode": "all",
-        "why": "the bulletin outweighs hearsay, though the shared cap keeps it from refuting"
+        "why": "the bulletin's rare leaks oppose the claim that leaks are frequent; single reported leaks stay compatible with it"
       }
     ]
   },
@@ -1714,7 +1722,7 @@
         },
         "strength": [
           ">=",
-          0.7
+          0.6
         ],
         "mode": "all"
       },

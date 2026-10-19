@@ -6,6 +6,7 @@ import math
 import pytest
 
 from evertree.core.beliefs import BeliefStore
+from evertree.core.graph.types import GraphDelta
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.semantics.reading import describe
 from evertree.core.values import json_value
@@ -635,6 +636,36 @@ async def test_competing_hypotheses_share_one_profile_and_a_new_alternative_vers
     strengths = {element: reading(world, element).strength for element in extended}
     assert max(strengths, key=strengths.get) == motor
     assert sum(strengths.values()) < 1
+
+
+async def test_deleted_alternative_leaves_the_scope_without_failing_the_assessment():
+    """A correction deletes one competing value; a judgement still naming it versions the scope."""
+    index = FixedIndex()
+    world = semantic_world(index=index)
+    _, metadata = recorded_experience(world)
+    stated = "N-40 stopped: bearing wear, cavitation or a motor fault, one of the three."
+    [message] = recorded_messages(world, stated)
+    causes = [
+        claim(world, metadata, [message], name=name, description=f"N-40 stopped due to {name}.")
+        for name in ("bearing wear", "cavitation", "motor fault")
+    ]
+    bearing, cavitation, motor = causes
+    listed = {element: "weak_support" for element in causes}
+    await assess(world, Judge(scopes=[scope_answer(None, causes, False, [(stated, listed)])]))
+    world.graph.apply(GraphDelta(deletes=(cavitation,)), provenance={"test": True})
+
+    index.ids = [bearing, motor]
+    report = "Lab report: N-40 motor winding insulation 0.1 MOhm, breakdown."
+    [source] = recorded_sources(world, ("lab:N-40", report, "document"))
+    stances = {bearing: "opposes", cavitation: "opposes", motor: "supports"}
+    judge = Judge(scopes=[scope_answer("C1", causes, False, [(stated, listed), (report, stances)])])
+    result = await assess(world, judge, [source])
+
+    assert judge.batches[-1]["scopes"][0]["alternatives"] == [bearing, motor]
+    [recorded] = result["scopes"]
+    assert recorded["scope"] == "scope:2"
+    assert world.beliefs.scope_of(f"graph:{motor}") == "scope:2"
+    assert reading(world, motor).strength > reading(world, bearing).strength
 
 
 async def test_scope_member_binary_evidence_is_released_and_rejected():

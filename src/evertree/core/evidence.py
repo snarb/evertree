@@ -175,6 +175,13 @@ class GraphEvidence:
         except KeyError:
             return None
 
+    def _current(self, label: str) -> bool:
+        """Tell whether a scope alternative still names an assessable element."""
+        if label == OTHER:
+            return True
+        node = self._node(int(label.removeprefix("graph:")))
+        return node is not None and self.assessable(node)
+
     def assessable(self, node) -> bool:
         """Tell whether a node is a semantic graph element this program assesses as binary."""
         qualitative = node.kind == "property" and "qualitative_norm" in node.properties
@@ -440,7 +447,10 @@ class GraphEvidence:
                         "key": keys[scope],
                         "scope": scope,
                         "question": declared["question"],
-                        "alternatives": [_alternative(label) for label in labels],
+                        # A deleted alternative is gone; judging without it versions the scope.
+                        "alternatives": [
+                            _alternative(label) for label in labels if self._current(label)
+                        ],
                         "active": active,
                     }
                 )
@@ -500,6 +510,9 @@ class GraphEvidence:
                 item["origin"] = target.removeprefix("origin:")
             elif target.startswith("scope:"):
                 declared = self.beliefs.scope(target)
+                # A scope that lost an alternative is versioned at its next judgement instead.
+                if not all(self._current(label) for label in declared["alternatives"]):
+                    continue
                 item.update(
                     scope=target,
                     question=declared["question"],

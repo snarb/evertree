@@ -134,7 +134,7 @@ PRESUMED_RELIABILITY = 0.5
 # Reliability at which an origin discriminates nothing, such as a sensor reported faulty.
 DISCREDITED_RELIABILITY = 0.25
 REASSESSMENT_ROUNDS = 3
-SEARCH_LIMIT = 6
+SEARCH_LIMIT = 10
 QUERY_CHARACTERS = 400
 
 INSTRUCTIONS = """You assess evidence for elements of an agent's knowledge graph.
@@ -173,9 +173,15 @@ assertion to someone ("the user reports that X", "according to the log, X", "not
 independently verified") does not change what is assessed: judge X, not whether the
 report was made: "Petrov said N-18 is broken; I did not check" is about whether N-18 is
 broken, so Petrov's word is weak_support and a measurement showing N-18 running opposes
-it. An unchanged target is often contradicted or confirmed only indirectly, for example a
+it. This holds for unchanged targets too: an element recording that an anonymous comment
+said "N-30 seals often leak" is judged on whether they often leak, so later service
+statistics showing rare leaks oppose it. An unchanged target is often contradicted or confirmed only indirectly, for example a
 stated pattern by counts in a log:
-- supports / opposes: the source clearly asserts or denies the element;
+- supports / opposes: the source clearly asserts or denies the element. A direct check of
+  the element that finds it false opposes it, even when the check cannot exclude every
+  earlier possibility (a test finding the battery healthy opposes "a weak battery causes
+  the stalls"); so does a source that establishes a different cause of the same
+  outcome for a competing causal claim, unless it says both causes contribute;
 - weak_support / weak_opposition: hedged, partial, indirect or approximate statements,
   and hearsay the speaker has not checked ("Petrov says it is broken; I did not check");
 - non_discriminating: the source is about the element but would be equally expected
@@ -184,7 +190,9 @@ stated pattern by counts in a log:
   added from general knowledge, or a ground that no longer fits a changed element).
   An active source marked not_addressed stops counting.
 Set repeats to an earlier source key when this source only restates that source (the
-same person repeating or paraphrasing themselves, a copy of the same report). Set
+same person repeating or paraphrasing themselves, a copy of the same report), including a
+retelling under another origin that cites it or adds nothing of its own (a repost, a news
+item "according to the forum"). Set
 withdraws to an earlier source key when this source retracts or corrects that source's
 statement, for example "I was wrong earlier".
 A withdrawn source is no longer evidence for anything: never use it for an element it
