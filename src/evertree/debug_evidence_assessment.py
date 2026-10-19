@@ -32,6 +32,7 @@ from uuid import uuid4
 
 from evertree.common.logging_setup import configure_logging
 from evertree.core.beliefs import element_target
+from evertree.core.cognition.tasks import TaskSpecification
 from evertree.core.values import json_value
 from evertree.debug_integration import DebugSession, load_debug_environment
 from evertree.processes.learning.evidence_assessment._exec import run as assess
@@ -122,6 +123,61 @@ SCENARIOS = {
             },
         ],
     ),
+    "retraction": (
+        "Запомни, какой оператор отвечает за насос Н-3.",
+        [
+            {
+                "kind": "user",
+                "content": "За насос Н-3 отвечает оператор Иванов.",
+                "analysis": "Пользователь сообщает, что за насос Н-3 отвечает оператор Иванов.",
+            },
+            {
+                "kind": "user",
+                "content": "Забудь это: я перепутал насосы, Иванов не отвечает за Н-3.",
+                "analysis": "Пользователь отзывает утверждение об ответственности Иванова за Н-3.",
+            },
+            {
+                "kind": "user",
+                "content": "Нет, всё-таки я был прав: за Н-3 отвечает Иванов.",
+                "analysis": "Пользователь снова утверждает, что за Н-3 отвечает Иванов.",
+            },
+        ],
+    ),
+    "threshold": (
+        "Запомни уставку давления для насоса Н-4.",
+        [
+            {
+                "kind": "user",
+                "content": "Уставка давления насоса Н-4 равна 5 бар.",
+                "analysis": "Пользователь: уставка давления Н-4 равна 5 бар.",
+            },
+            {
+                "kind": "observation",
+                "content": {
+                    "system": "SCADA",
+                    "asset": "Н-4",
+                    "parameter": "уставка давления",
+                    "bar": 6,
+                },
+                "analysis": "SCADA показывает уставку давления Н-4 равной 6 бар.",
+            },
+            {
+                "kind": "observation",
+                "content": {
+                    "system": "SCADA",
+                    "asset": "Н-7",
+                    "parameter": "уставка давления",
+                    "bar": 9,
+                },
+                "analysis": "SCADA показывает уставку давления другого насоса Н-7 равной 9 бар.",
+            },
+            {
+                "kind": "user",
+                "content": "Проверил на месте: уставка Н-4 действительно 6 бар, я ошибся.",
+                "analysis": "Пользователь подтверждает уставку Н-4 в 6 бар и исправляет прежние 5 бар.",
+            },
+        ],
+    ),
 }
 
 
@@ -138,7 +194,9 @@ class EvidenceSession(DebugSession):
         super().__init__(output_dir, timeout_seconds=timeout_seconds)
         self.task, self.steps = SCENARIOS[scenario] if scenario else (USER_TASK, None)
         self.metadata["task_id"] = "debug-evidence-assessment"
-        self.metadata["integration_context"]["task"]["id"] = "debug-evidence-assessment"
+        task = self.metadata["integration_context"]["task"]
+        task["id"] = "debug-evidence-assessment"
+        task["specification"] = TaskSpecification(self.task).to_dict()
         self.evidence = []
         self.previous = {}
 

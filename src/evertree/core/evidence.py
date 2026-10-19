@@ -281,6 +281,12 @@ class GraphEvidence:
         related_ids = list(candidates)
         for item in targets:
             related_ids.extend(self._neighbors(self.graph.get(item["element"])))
+        # A search hit on an entity also brings the facts about it: a correction may concern
+        # an earlier fact that integration did not touch.
+        for identity in candidates:
+            node = self._node(identity) if type(identity) is int else None
+            if node is not None:
+                related_ids.extend(self._neighbors(node))
         related = []
         for identity in dict.fromkeys(related_ids):
             if len(related) >= related_limit:
