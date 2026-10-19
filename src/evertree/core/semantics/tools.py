@@ -1,19 +1,9 @@
-"""Shared semantic action schemas and compilation of one checked graph operation."""
-
-import dataclasses
-import json
+"""Semantic graph tool catalog shared by Programs and Core, and schema checks of their actions."""
 
 from evertree.common.structured import validate
-from evertree.core.graph.types import (
-    ARITIES,
-    VALUE_TYPES,
-    GraphDelta,
-    NodeUpdate,
-    RelationInstance,
-    node_from_dict,
-)
+from evertree.core.graph.types import ARITIES, VALUE_TYPES
 from evertree.core.provider import ToolDefinition
-from evertree.core.values import ContractError, json_value
+from evertree.core.values import ContractError
 
 
 def _object(properties):
@@ -113,14 +103,14 @@ _QUERY_COMMON = {
 }
 
 
-TOOLS = (
-    {
-        "name": "search",
-        "description": (
+READ_TOOLS = (
+    ToolDefinition(
+        "search",
+        (
             "Find one object or reusable meaning by name or description. Exact names resolve "
             "first; otherwise lexical and semantic similarity return up to 20 candidates, not proven matches. Refine the query if none fits; no pagination."
         ),
-        "parameters": _object(
+        _object(
             {
                 "query": {
                     **_TEXT,
@@ -133,11 +123,11 @@ TOOLS = (
                 },
             }
         ),
-        "read_only": True,
-    },
-    {
-        "name": "describe",
-        "description": (
+        read_only=True,
+    ),
+    ToolDefinition(
+        "describe",
+        (
             "Read an object, its relation schema and known assertions. Follow returned IDs: "
             "STATE_IDENTITY connects a Facet to its Instance; IDENTITY_TYPE connects an Instance "
             "to its Prototype; SUBTYPE_OF connects a class to its broader parent. "
@@ -147,7 +137,7 @@ TOOLS = (
             "that full list. A Prototype's parent is one card or null; children lists up to 7 "
             "direct subtype names, preceded by children_total only when shortened."
         ),
-        "parameters": _read_object(
+        _read_object(
             {
                 "subject": {"type": ["integer", "string"]},
                 "focus": {
@@ -158,12 +148,12 @@ TOOLS = (
             },
             ("subject",),
         ),
-        "read_only": True,
-    },
-    {
-        "name": "query",
-        "description": "Find facts by named slots or all facts involving subject. Bind any subset of roles, select values or unique nodes. List reads report total before returning a token-bounded page. Counts return exact totals in one call; exists stops at a definite match and returns true/false/null without totals. Keep source facts and qualifications; a match is not proof.",
-        "parameters": _read_object(
+        read_only=True,
+    ),
+    ToolDefinition(
+        "query",
+        "Find facts by named slots or all facts involving subject. Bind any subset of roles, select values or unique nodes. List reads report total before returning a token-bounded page. Counts return exact totals in one call; exists stops at a definite match and returns true/false/null without totals. Keep source facts and qualifications; a match is not proof.",
+        _read_object(
             {
                 **_QUERY_COMMON,
                 "subject": {
@@ -187,12 +177,12 @@ TOOLS = (
                 },
             }
         ),
-        "read_only": True,
-    },
-    {
-        "name": "walk",
-        "description": "Follow one relation from a named node slot to another, breadth-first without cycles. SUBTYPE_OF supertype→type finds descendants; reverse finds ancestors. Returns unique nodes, depth and supporting facts, with total and token-bounded pages. Counts return exact totals in one call; exists stops at a definite match and returns true/false/null without totals.",
-        "parameters": _read_object(
+        read_only=True,
+    ),
+    ToolDefinition(
+        "walk",
+        "Follow one relation from a named node slot to another, breadth-first without cycles. SUBTYPE_OF supertype→type finds descendants; reverse finds ancestors. Returns unique nodes, depth and supporting facts, with total and token-bounded pages. Counts return exact totals in one call; exists stops at a definite match and returns true/false/null without totals.",
+        _read_object(
             {
                 **_QUERY_COMMON,
                 "start": {"type": ["integer", "null"]},
@@ -209,12 +199,12 @@ TOOLS = (
                 },
             }
         ),
-        "read_only": True,
-    },
-    {
-        "name": "read_property",
-        "description": "Read a discovered property, including computed/parameterized values. Preserve uncertainty and grounds; missing parameters are reported.",
-        "parameters": _read_object(
+        read_only=True,
+    ),
+    ToolDefinition(
+        "read_property",
+        "Read a discovered property, including computed/parameterized values. Preserve uncertainty and grounds; missing parameters are reported.",
+        _read_object(
             {
                 "subject": {"type": ["integer", "string"]},
                 "property": {"type": ["integer", "string"]},
@@ -223,24 +213,25 @@ TOOLS = (
             },
             ("subject", "property"),
         ),
-        "read_only": True,
-    },
-    {
-        "name": "create_concept",
-        "description": "Save a useful distinction not expressed by an existing concept.",
-        "parameters": _object(
-            {**_NAMED, "name": {**_TEXT, "description": "Unique canonical name, 1–3 words."}}
-        ),
-        "read_only": False,
-    },
-    {
-        "name": "create_prototype",
-        "description": (
+        read_only=True,
+    ),
+)
+
+WRITE_TOOLS = (
+    ToolDefinition(
+        "create_concept",
+        "Save a useful distinction not expressed by an existing concept.",
+        _object({**_NAMED, "name": {**_TEXT, "description": "Unique canonical name, 1–3 words."}}),
+        read_only=False,
+    ),
+    ToolDefinition(
+        "create_prototype",
+        (
             "Save a class under its nearest justified broader class. Create a missing parent "
             "first; only a broad root or an unclassifiable concept uses parent=null. "
             "Declaring the class does not assert typical properties."
         ),
-        "parameters": _object(
+        _object(
             {
                 **_NAMED,
                 "name": {**_TEXT, "description": "Unique canonical class name, 1–3 words."},
@@ -254,18 +245,18 @@ TOOLS = (
                 },
             }
         ),
-        "read_only": False,
-    },
-    {
-        "name": "create_instance",
-        "description": "Save one identifiable object and its class membership.",
-        "parameters": _object({**_NAMED, "prototype": _ID}),
-        "read_only": False,
-    },
-    {
-        "name": "create_facet",
-        "description": "Save a changing aspect of an object, with known or unknown time bounds.",
-        "parameters": _object(
+        read_only=False,
+    ),
+    ToolDefinition(
+        "create_instance",
+        "Save one identifiable object and its class membership.",
+        _object({**_NAMED, "prototype": _ID}),
+        read_only=False,
+    ),
+    ToolDefinition(
+        "create_facet",
+        "Save a changing aspect of an object, with known or unknown time bounds.",
+        _object(
             {
                 **_NAMED,
                 "instance": _ID,
@@ -273,16 +264,16 @@ TOOLS = (
                 "valid_until": _STATE_END,
             }
         ),
-        "read_only": False,
-    },
-    {
-        "name": "define_relation",
-        "description": (
+        read_only=False,
+    ),
+    ToolDefinition(
+        "define_relation",
+        (
             "Save a reusable predicate with named roles. Name and definition must agree. "
             "Generalize across subjects without merging different or opposite assertions; "
             "use distinct predicates or an explicit distinguishing role where needed."
         ),
-        "parameters": _object(
+        _object(
             {
                 **_NAMED,
                 "roles": {
@@ -319,18 +310,18 @@ TOOLS = (
                 },
             }
         ),
-        "read_only": False,
-    },
-    {
-        "name": "relate",
-        "description": (
+        read_only=False,
+    ),
+    ToolDefinition(
+        "relate",
+        (
             "Save an assertion using an existing relation type whose predicate fits. "
             "Preserve direction, conditions and meaningful distinctions in roles/values; "
             "the description must not negate or repair the type's meaning. Reject a type "
             "combining incompatible meanings without a role distinguishing them; define "
             "a fitting schema instead."
         ),
-        "parameters": _object(
+        _object(
             {
                 "relation": _ID,
                 "arguments": {
@@ -351,11 +342,11 @@ TOOLS = (
                 "sources": _SOURCES,
             }
         ),
-        "read_only": False,
-    },
-    {
-        "name": "create_claim",
-        "description": (
+        read_only=False,
+    ),
+    ToolDefinition(
+        "create_claim",
+        (
             "Save one independently revisable prose assertion with its conditions and grounds. "
             "Assertions that evidence could confirm, reject or correct separately need separate "
             "representations, including alternative explanations. Keep a hypothesis's necessary "
@@ -364,7 +355,7 @@ TOOLS = (
             "A missing relation schema can be defined with define_relation. "
             "Saving a Claim does not assess evidence or assign confidence."
         ),
-        "parameters": _object(
+        _object(
             {
                 **_NAMED,
                 "description": {
@@ -376,16 +367,16 @@ TOOLS = (
                 },
             }
         ),
-        "read_only": False,
-    },
-    {
-        "name": "save_note",
-        "description": (
+        read_only=False,
+    ),
+    ToolDefinition(
+        "save_note",
+        (
             "Copy source text worth retrieving as a self-contained whole for its wording or "
             "reasoning. Use selectively: ordinarily extract reusable graph knowledge. "
             "Copies analytical text or strings verbatim; other structured sources become JSON."
         ),
-        "parameters": _object(
+        _object(
             {
                 "name": _TEXT,
                 "source": {
@@ -399,12 +390,12 @@ TOOLS = (
                 },
             }
         ),
-        "read_only": False,
-    },
-    {
-        "name": "update",
-        "description": "Update selected fields of an existing object, preserving history and sources.",
-        "parameters": _object(
+        read_only=False,
+    ),
+    ToolDefinition(
+        "update",
+        "Update selected fields of an existing object, preserving history and sources.",
+        _object(
             {
                 "object": _ID,
                 "changes": {
@@ -426,31 +417,23 @@ TOOLS = (
                 "sources": _SOURCES,
             }
         ),
-        "read_only": False,
-    },
-    {
-        "name": "delete",
-        "description": "Remove selected objects from the current graph, preserving history. No cascading deletion.",
-        "parameters": _object(
+        read_only=False,
+    ),
+    ToolDefinition(
+        "delete",
+        "Remove selected objects from the current graph, preserving history. No cascading deletion.",
+        _object(
             {
                 "objects": {"type": "array", "items": _ID, "minItems": 1},
                 "sources": _SOURCES,
             }
         ),
-        "read_only": False,
-    },
+        read_only=False,
+    ),
 )
 
-TOOLS_BY_NAME = {tool["name"]: tool for tool in TOOLS}
-
-INTEGRATION_TOOLS = tuple(
-    ToolDefinition(
-        tool["name"], tool["description"], tool["parameters"], read_only=tool["read_only"]
-    )
-    for tool in TOOLS
-)
-
-WRITE_TOOLS = tuple(tool for tool in INTEGRATION_TOOLS if not tool.read_only)
+TOOLS = READ_TOOLS + WRITE_TOOLS
+TOOLS_BY_NAME = {tool.name: tool for tool in TOOLS}
 CREATE_ACTIONS = frozenset(
     {
         "create_concept",
@@ -461,7 +444,6 @@ CREATE_ACTIONS = frozenset(
         "define_relation",
     }
 )
-_NODE_CREATES = CREATE_ACTIONS - {"define_relation"}
 
 
 def validate_action(action):
@@ -470,7 +452,7 @@ def validate_action(action):
         raise ContractError("Unknown semantic action")
     validate(
         {key: value for key, value in action.items() if key != "action"},
-        TOOLS_BY_NAME[action["action"]]["parameters"],
+        TOOLS_BY_NAME[action["action"]].input_schema,
     )
     if action["action"] == "relate":
         # The schema allows any JSON in values; relation values must be scalars or scalar lists.
@@ -479,174 +461,3 @@ def validate_action(action):
                 value = item["value"]
                 for part in value if isinstance(value, list) else [value]:
                     validate(part, _SCALAR)
-
-
-class _DeltaBuilder:
-    """Collects the nodes one action creates, allocating permanent IDs as it goes."""
-
-    def __init__(self, graph):
-        self.graph = graph
-        self.creates = []
-
-    def node(self, **fields):
-        """Allocate a node in the pending delta and return its ID without applying the delta."""
-        node = node_from_dict({"id": self.graph.reserve_id(), **fields})
-        self.creates.append(node)
-        return node.id
-
-    def fact(self, relation, args, description=None, conditions=None):
-        """Create a relation instance of the `relation` type."""
-        return self.node(
-            name=relation.name,
-            kind="relation_instance",
-            relation_type=relation.id,
-            args=args,
-            description=description,
-            properties={"conditions": conditions} if conditions else {},
-        )
-
-    def relation_type(self, subject):
-        """Resolve an existing relation type by name or ID."""
-        node = self.graph.find(subject) if isinstance(subject, str) else self.graph.get(subject)
-        if node is None or node.kind != "relation_type":
-            raise ContractError("Expected an existing relation type")
-        return node
-
-    def result(self, identity):
-        """Package the pending graph delta with the operation's returned semantic identity."""
-        return GraphDelta(creates=tuple(self.creates)), identity
-
-
-def _compile_update(graph, action, material):
-    node = graph.get(action["object"])
-    changes = action["changes"]
-    allowed = {field.name for field in dataclasses.fields(node)} - {"id", "kind", "belief_target"}
-    if not changes or changes.keys() - allowed:
-        raise ContractError("Update requires nonempty mutable fields of this object type")
-    # Qualifications also live in descriptions and relation definitions, not just args.
-    if (isinstance(node, RelationInstance) and node.belief_target) or (
-        node.kind == "relation_type" and any(fact.belief_target for fact in graph.facts(node.id))
-    ):
-        raise ContractError("Changing assessed evidence requires evidence assessment")
-    # The typed constructor also validates complete replacement schemas and intervals.
-    updated = node_from_dict({**json_value(node), **changes})
-    update = NodeUpdate(node.id, {key: getattr(updated, key) for key in changes})
-    return GraphDelta(updates=(update,)), node.id
-
-
-def _compile_delete(graph, action, material):
-    ids = action["objects"]
-    if len(set(ids)) != len(ids):
-        raise ContractError("Delete identities must be distinct")
-    for identity in ids:
-        node = graph.get(identity)
-        if isinstance(node, RelationInstance) and node.belief_target:
-            raise ContractError("Removing assessed evidence requires evidence assessment")
-    return GraphDelta(deletes=tuple(ids)), None
-
-
-def _compile_node(graph, action, material):
-    """Concept, prototype, instance, facet or claim; the first three link it to its context."""
-    builder = _DeltaBuilder(graph)
-    kind = action["action"].removeprefix("create_")
-    fields = {"name": action["name"], "description": action["description"], "kind": kind}
-    if kind == "facet":
-        fields.update(valid_from=action["valid_from"], valid_until=action["valid_until"])
-    identity = builder.node(**fields)
-    if kind == "instance":
-        link = builder.relation_type("IDENTITY_TYPE")
-        builder.fact(link, {"instance": identity, "type": action["prototype"]})
-    elif kind == "facet":
-        link = builder.relation_type("STATE_IDENTITY")
-        builder.fact(link, {"facet": identity, "instance": action["instance"]})
-    elif kind == "prototype" and action["parent"] is not None:
-        link = builder.relation_type("SUBTYPE_OF")
-        builder.fact(link, {"type": identity, "supertype": action["parent"]})
-    return builder.result(identity)
-
-
-def _compile_relation_type(graph, action, material):
-    builder = _DeltaBuilder(graph)
-    roles = action["roles"]
-    labels = [role["label"] for role in roles]
-    identity = builder.node(
-        kind="relation_type",
-        name=action["name"],
-        description=action["description"],
-        signature=roles,
-        # One lookup view per role: given every other role, list the values of this one.
-        views=[
-            {
-                "name": "get_" + label,
-                "inputs": [other for other in labels if other != label],
-                "outputs": [label],
-                "output_arity": "list0",
-            }
-            for label in labels
-        ],
-    )
-    return builder.result(identity)
-
-
-def _compile_relate(graph, action, material):
-    builder = _DeltaBuilder(graph)
-    arguments = {item["role"]: item["value"] for item in action["arguments"]}
-    conditions = {item["parameter"]: item["value"] for item in action["conditions"]}
-    if len(arguments) != len(action["arguments"]) or len(conditions) != len(action["conditions"]):
-        raise ContractError("Relation roles and conditions must be distinct")
-    relation = builder.relation_type(action["relation"])
-    identity = builder.fact(relation, arguments, action["description"], conditions)
-    return builder.result(identity)
-
-
-def _note_text(item, ref):
-    """Note body: trusted analytical text verbatim, other strings verbatim, the rest as JSON."""
-    value, origin = item["content"], item["origin"]
-    analytical = origin["operator"] == "analytical_note" and origin["output_type"].endswith(
-        ".AnalyticalNote"
-    )
-    fragment = (
-        origin["program"] == "ExperienceFragments"
-        and origin["operator"] == "experience_fragment"
-        and isinstance(value, dict)
-        and value.get("encoding") == "analytical_text"
-    )
-    # Unwrap {"text": ...} only for a whole trusted output, never for a nested path inside it.
-    if not ref.get("output_path") and (analytical or fragment):
-        return value["text"]
-    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2)
-
-
-def _compile_note(graph, action, material):
-    builder = _DeltaBuilder(graph)
-    ref = action["source"]
-    item = next(item for item in material["experience"] if item["reference"] == ref)
-    identity = builder.node(
-        kind="note",
-        name=action["name"],
-        description=_note_text(item, ref),
-        properties={"source_ref": ref},
-    )
-    return builder.result(identity)
-
-
-_COMPILERS = {
-    "update": _compile_update,
-    "delete": _compile_delete,
-    "define_relation": _compile_relation_type,
-    "relate": _compile_relate,
-    "save_note": _compile_note,
-    **dict.fromkeys(_NODE_CREATES, _compile_node),
-}
-
-
-def compile_action(graph, action, material):
-    """Compile one write action into a GraphDelta and the affected object's ID (None for delete).
-
-    Runs inside the caller's single-operation transaction, so reserved IDs are never leaked.
-    """
-    validate_action(action)
-    compiler = _COMPILERS.get(action["action"])
-    if compiler is None:
-        raise ContractError("Expected a graph write action")
-    return compiler(graph, action, material)

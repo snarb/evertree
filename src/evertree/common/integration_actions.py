@@ -2,12 +2,7 @@
 
 import logging
 
-from evertree.core.semantics.actions import (  # noqa: F401 -- shared tool catalog
-    CREATE_ACTIONS,
-    INTEGRATION_TOOLS,
-    WRITE_TOOLS,
-    validate_action,
-)
+from evertree.core.semantics.tools import CREATE_ACTIONS, TOOLS_BY_NAME, validate_action
 
 _log = logging.getLogger(__name__)
 
@@ -32,11 +27,13 @@ class SemanticTools:
 
     @staticmethod
     def _candidate_card(node):
-        """Comparable card of an object; unwraps `$datetime` so cards from any path match."""
+        """Comparable card of an object, normalized so cards from any path match."""
         card = {
             key: node.get(key)
             for key in ("id", "name", "kind", "description", "valid_from", "valid_until")
         }
+        # Model-facing projections omit empty descriptions.
+        card["description"] = card["description"] or None
         for key in ("valid_from", "valid_until"):
             value = card[key]
             if isinstance(value, dict) and set(value) == {"$datetime"}:
@@ -184,7 +181,7 @@ class SemanticTools:
             _log.info("LLM %s %r rejected: %s", name, self._subject(action), exc)
             return {"error": str(exc), **({"reads": reads} if reads else {})}
 
-        if name in {"search", "describe", "query", "walk", "read_property"}:
+        if TOOLS_BY_NAME[name].read_only:
             self._track_shown_candidates(result)
             _log.debug("LLM %s %r", name, self._subject(action))
         elif "error" in result:

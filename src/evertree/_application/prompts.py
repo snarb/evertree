@@ -252,11 +252,11 @@ def semantic_tools():
     string = {"type": "string"}
     from dataclasses import replace
 
-    from ..core.semantics.actions import INTEGRATION_TOOLS
+    from ..core.semantics.tools import READ_TOOLS
 
     return tuple(
         replace(tool, name="graph." + tool.name)
-        for tool in INTEGRATION_TOOLS
+        for tool in READ_TOOLS
         if tool.name in {"query", "walk"}
     ) + (
         define(
@@ -325,7 +325,7 @@ def tool_sets():
     """Group available tools for on-demand loading by the conscious agent."""
     from dataclasses import replace
 
-    from ..common.integration_actions import WRITE_TOOLS
+    from ..core.semantics.tools import WRITE_TOOLS
     from ..core.toolsets import ToolSet
 
     def low(name, description, properties, required=(), read_only=True):

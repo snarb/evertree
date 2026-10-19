@@ -9,8 +9,8 @@ from ..graph.matching import NODE_TYPES, match_fact, node_ids, prepare
 from ..graph.types import Facet, RelationType
 from ..tokens import count_tokens, current_read_context, read_budget
 from ..values import ContractError, json_value, timestamp
-from .actions import validate_action
 from .reading import card, describe, resolve
+from .tools import validate_action
 
 _FIELDS = {"description", "properties", "schema"}
 

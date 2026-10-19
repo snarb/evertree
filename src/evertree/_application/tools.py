@@ -59,7 +59,7 @@ class ToolsMixin:
 
     async def _dispatch_tool(self, task_id, name, args, *, semantic_tools=None):
         """Execute a conscious agent tool within its task and trace authority."""
-        from ..common.integration_actions import WRITE_TOOLS
+        from ..core.semantics.tools import WRITE_TOOLS
 
         state = self.tasks.get(task_id)
         if state.terminal or state.hard_limit_reached:

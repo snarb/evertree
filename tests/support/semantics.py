@@ -10,9 +10,9 @@ from evertree.core.graph.store import GraphStore
 from evertree.core.learning.state import LearningStore
 from evertree.core.memory.store import TraceStore
 from evertree.core.operations import CoreOperations, authorize_operation
-from evertree.core.semantics.actions import CREATE_ACTIONS
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.service import SemanticService
+from evertree.core.semantics.tools import CREATE_ACTIONS
 from evertree.core.values import json_value
 
 

@@ -14,8 +14,9 @@ tool calls in order), tools.json (tool calls only) and per-request model-*.md fi
 
 Useful breakpoints:
 - DebugSession.record_experience: source references and the analytical Note.
-- knowledge_integration/_exec.py:handle_tool: native tool dispatch, search, schema reads, repair.
-- core/semantics/actions.py: shared tool definitions, validation and operation construction.
+- knowledge_integration/_exec.py:run: native tool ports and model-facing read projections.
+- core/semantics/tools.py: shared tool definitions and action validation.
+- core/semantics/compile.py: graph delta construction for one write action.
 - common/integration_actions.py: search/read assistance and graph tool dispatch.
 - DebugSession.llm: tool dispatch from the provider callback; handlers share its stack.
 - DebugSession.model: actual Codex request, declared tools and provider events.

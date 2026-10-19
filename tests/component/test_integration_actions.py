@@ -7,7 +7,7 @@ import pytest
 
 from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.memory.types import TraceOutputRef
-from evertree.core.semantics.actions import TOOLS_BY_NAME, validate_action
+from evertree.core.semantics.tools import TOOLS_BY_NAME, validate_action
 from evertree.core.values import UNKNOWN, ContractError
 from tests.support.semantics import recorded_experience, semantic_world, write_action
 
