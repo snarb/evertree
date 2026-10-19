@@ -47,6 +47,42 @@ _SOURCES = {"type": "array", "items": _REFERENCE, "minItems": 1}
 _NAMED = {"name": _TEXT, "description": _OPTIONAL_TEXT, "sources": _SOURCES}
 _SCALAR = {"type": ["string", "number", "boolean", "null"]}
 _VALUE = {"anyOf": [_SCALAR, {"type": "array", "items": _SCALAR}]}
+_NORM_FIELDS = {
+    "property": {
+        **_ID,
+        "description": "Numeric input property whose observations define the norm.",
+    },
+    "domain": {
+        **_ID,
+        "description": "Existing population Prototype whose recorded measurements define the norm.",
+    },
+    "classes": {"type": "array", "items": _ID, "minItems": 2},
+    "conditions": {
+        "type": "object",
+        "description": (
+            "Exact varying measurement inputs already present in the source facts, such as "
+            "exercise_state=resting; otherwise {}. Every condition filters the training rows. "
+            "A comparison group, list of subjects, source or sample qualification is not a "
+            "measurement condition: use domain and description. Do not add conditions to facts "
+            "just to populate a norm."
+        ),
+    },
+    "quantiles": {
+        "type": "array",
+        "items": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+        "description": (
+            "Omit for equal default bands. Supply only an intentionally different quantile "
+            "criterion, not rounded approximations of the default fractions."
+        ),
+    },
+    "reference": {
+        "type": ["integer", "null"],
+        "description": "One distribution reference, or null for recorded individuals. Sources are never pooled.",
+    },
+    "min_samples": {"type": "integer", "minimum": 1},
+    "hysteresis": {"type": "number", "minimum": 0, "maximum": 1},
+}
+_NORM_OPTIONAL = ("quantiles", "reference", "min_samples", "hysteresis")
 
 
 def _read_object(properties, required=()):
@@ -210,6 +246,7 @@ READ_TOOLS = (
                 "property": {"type": ["integer", "string"]},
                 "at": _OPTIONAL_TEXT,
                 "parameters": {"type": ["object", "null"]},
+                "point_policy": {"type": ["string", "null"], "enum": ["argmax", None]},
             },
             ("subject", "property"),
         ),
@@ -253,12 +290,70 @@ READ_TOOLS = (
         ),
         read_only=True,
     ),
+    ToolDefinition(
+        "interpret_property",
+        "Apply a saved learned qualitative norm to a hypothetical number. Returns a conditional label and the frozen norm version, not an assessed belief about a real object's class. Does not train or save an observation.",
+        _read_object(
+            {
+                "property": {"type": ["integer", "string"]},
+                "value": {"type": "number"},
+                "unit": _OPTIONAL_TEXT,
+                "parameters": {"type": ["object", "null"]},
+            },
+            ("property", "value"),
+        ),
+        read_only=True,
+    ),
+    ToolDefinition(
+        "select_properties",
+        "Filter explicit candidate subjects with AND predicates and optionally rank or find nearest. Numeric values use property units. Profiles require an explicit alternative and strength threshold or order; unknowns are reported separately.",
+        _read_object(
+            {
+                "subjects": {"type": "array", "items": _ID},
+                "filters": {
+                    "type": "array",
+                    "items": _read_object(
+                        {
+                            "property": _ID,
+                            "op": {
+                                "type": "string",
+                                "enum": ["==", "!=", "<", "<=", ">", ">=", "in", "approx"],
+                            },
+                            "value": _VALUE,
+                            "tolerance": {"type": "number", "minimum": 0},
+                            "alternative": _ID,
+                        },
+                        ("property", "op", "value"),
+                    ),
+                },
+                "order_by": {
+                    "anyOf": [
+                        {"type": "null"},
+                        _read_object(
+                            {
+                                "property": _ID,
+                                "direction": {"type": "string", "enum": ["asc", "desc", "nearest"]},
+                                "value": {"type": "number"},
+                                "alternative": _ID,
+                            },
+                            ("property", "direction"),
+                        ),
+                    ]
+                },
+                "limit": {"type": "integer", "minimum": 1, "maximum": 600},
+                "at": _OPTIONAL_TEXT,
+                "parameters": {"type": ["object", "null"]},
+            },
+            ("subjects",),
+        ),
+        read_only=True,
+    ),
 )
 
 WRITE_TOOLS = (
     ToolDefinition(
         "create_property",
-        "Define a reusable numeric property with its canonical unit and applicable subjects or types.",
+        "Define a reusable property, its scale and source. Numeric defaults to numeric facts; nominal/ordinal use explicit class concepts in order. A computed source requires an existing model Program; a relation source requires its declared view.",
         _object(
             {
                 **_NAMED,
@@ -275,7 +370,78 @@ WRITE_TOOLS = (
                         "Prototype, such as Dog, not a plain Concept or a guide-specific group."
                     ),
                 },
-            }
+                "scale": {"type": "string", "enum": ["numeric", "nominal", "ordinal", "circular"]},
+                "source": {
+                    "type": "string",
+                    "enum": ["numeric", "classification", "relation", "program", "result"],
+                },
+                "classes": {"type": "array", "items": _ID},
+                "period": {"type": ["number", "null"], "exclusiveMinimum": 0},
+                "required_parameters": {"type": "array", "items": _TEXT},
+                "parameter_types": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string",
+                        "enum": [
+                            "string",
+                            "number",
+                            "integer",
+                            "boolean",
+                            "node",
+                            "object",
+                            "array",
+                        ],
+                    },
+                },
+                "selection": {"type": "string", "enum": ["latest", "max_support", "unique"]},
+                "relation_type": {"type": ["integer", "string", "null"]},
+                "view": _OPTIONAL_TEXT,
+                "subject_slot": _TEXT,
+                "program": {"type": ["integer", "null"]},
+            },
+            optional=(
+                "scale",
+                "source",
+                "classes",
+                "period",
+                "required_parameters",
+                "parameter_types",
+                "selection",
+                "relation_type",
+                "view",
+                "subject_slot",
+                "program",
+            ),
+        ),
+        read_only=False,
+    ),
+    ToolDefinition(
+        "create_qualitative_property",
+        "Learn a relative qualitative property such as dog size from retained numeric observations or one frequency table. Supply ordered class concepts; Core fits quantile boundaries (equal bins by default, minimum 3 samples). Belief about a real object's class is assessed separately. Never supply invented cutoffs. After creation, describe the property to check norm_state count and status before using it.",
+        _object({**_NAMED, **_NORM_FIELDS}, optional=_NORM_OPTIONAL),
+        read_only=False,
+    ),
+    ToolDefinition(
+        "revise_property_norm",
+        "Change a learned property's criterion explicitly. Changed class meaning creates a new semantic revision; previous results and evidence retain their old meaning. Core recomputes the checkpoint.",
+        _object({"object": _ID, **_NORM_FIELDS, "sources": _SOURCES}, optional=_NORM_OPTIONAL),
+        read_only=False,
+    ),
+    ToolDefinition(
+        "save_property_result",
+        "Retain a typed property result with its exact subject, property, conditions and time bounds. Omit both time bounds for a timeless result; explicit null means unknown applicability. The property must declare source=result. Numeric values may be scalar, interval, normal distribution or ordered quantiles. Confidence is assessed from sources, not supplied here.",
+        _object(
+            {
+                **_NAMED,
+                "subject": _ID,
+                "property": _ID,
+                "conditions": {"type": "object"},
+                "value_U": {"type": ["number", "integer", "string", "object"]},
+                "unit": _OPTIONAL_TEXT,
+                "valid_from": _STATE_START,
+                "valid_until": _STATE_END,
+            },
+            optional=("valid_from", "valid_until"),
         ),
         read_only=False,
     ),
@@ -288,7 +454,9 @@ WRITE_TOOLS = (
             "preserve lower/upper bounds and counts; an exact "
             "value has lower=upper. Use empty arrays for the other reference kind. Preserve "
             "source qualifications in description; conditions are only varying query inputs, "
-            "otherwise {}. Do not invent thresholds or samples."
+            "otherwise {}. Bands require cutoffs explicitly given by the source. To learn "
+            "relative labels from observations or a distribution without source cutoffs, "
+            "use create_qualitative_property. Do not invent thresholds or samples."
         ),
         _object(
             {
@@ -314,8 +482,9 @@ WRITE_TOOLS = (
                     "items": {"type": "boolean"},
                     "description": (
                         "One flag per boundary: true assigns equality to the lower class, false "
-                        "to the next class. Omit for all true; [] for a distribution. For Small <6, "
-                        "Medium 6..9 inclusive, Large >9, use boundaries [6,9] and [false,true]."
+                        "to the next class. 'Up to the boundary inclusive' means true; 'below "
+                        "the boundary' means false. Omit when all upper boundaries are inclusive; "
+                        "[] for a distribution. Verify the source's rules at the exact boundaries."
                     ),
                 },
                 "classes": {"type": "array", "items": _ID},
@@ -473,7 +642,12 @@ WRITE_TOOLS = (
                 },
                 "description": _OPTIONAL_TEXT,
                 "sources": _SOURCES,
-            }
+                "criterion": {
+                    "type": ["integer", "null"],
+                    "description": "For CLASSIFIED_AS, the categorical property whose criterion this assertion uses. Required when the same class belongs to multiple applicable properties.",
+                },
+            },
+            optional=("criterion",),
         ),
         read_only=False,
     ),
@@ -576,6 +750,8 @@ CREATE_ACTIONS = frozenset(
         "create_claim",
         "create_property",
         "create_property_reference",
+        "create_qualitative_property",
+        "save_property_result",
         "define_relation",
     }
 )

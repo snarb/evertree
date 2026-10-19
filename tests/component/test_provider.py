@@ -1,6 +1,8 @@
 import asyncio
 import json
+from contextvars import Context
 from pathlib import Path
+from threading import Thread
 from types import SimpleNamespace
 
 import pytest
@@ -143,6 +145,327 @@ class FakeExecutor:
 
     async def close(self):
         self.closed = True
+
+
+async def test_sdk_thread_callback_keeps_application_execution_and_search_scope(app):
+    """SDK reader callbacks have their own context, unlike asyncio.to_thread test clients."""
+    from evertree.core.runtime.controller import RuntimeBusy
+    from evertree.core.runtime.coordination import semantic_scope
+    from tests.support.semantics import EmptyIndex
+
+    scopes = []
+
+    class Index(EmptyIndex):
+        async def lexical(self, *args):
+            scopes.append(semantic_scope.get())
+            with pytest.raises(RuntimeBusy, match="execution chain"):
+                Context().run(app.graph.reserve_id)
+            return []
+
+    class DetachedClient(FakeClient):
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            self.events.insert(0, SimpleNamespace(method="test/call", payload={}))
+            return result
+
+        def next_turn_notification(self, turn_id):
+            event = super().next_turn_notification(turn_id)
+            if event.method == "test/call":
+                callback = Thread(
+                    target=Context().run,
+                    args=(
+                        self.handler,
+                        "item/tool/call",
+                        {
+                            "namespace": "graph",
+                            "tool": "search",
+                            "callId": "native-search",
+                            "arguments": {"query": "unrecorded weight phrase"},
+                        },
+                    ),
+                )
+                callback.start()
+                callback.join(timeout=10)
+                assert not callback.is_alive()
+                return super().next_turn_notification(turn_id)
+            return event
+
+    app.search_index = Index()
+    app.provider = CodexProvider(client_factory=DetachedClient)
+    task = app.tasks.create_task("Read retained weight observations")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Native callback")
+    request = LLMRequest(
+        "{}",
+        app._workspace(task.id),
+        mode="exec",
+        tools=tuple(tool for tool in app._tools() if tool.name == "graph.search"),
+    )
+    await app._invoke(task.id, request, conversation=True)
+    calls = [
+        event.output["data"]
+        for event in app.memory.events
+        if event.operator == "provider_event" and event.output.get("kind") == "tool_result"
+    ]
+    assert len(calls) == 1
+    assert calls[0]["call_id"] == "native-search"
+    assert calls[0]["status"] == "completed", calls[0]
+    assert calls[0]["result"]["status"] == "complete"
+    assert scopes and all(scope.startswith("consciousness:") for scope in scopes)
+    assert semantic_scope.get() is None
+    assert not app._execution.busy
+
+
+async def test_consciousness_property_tools_dispatch_native_callbacks_to_real_stores(app):
+    from evertree._application.prompts import tool_sets
+    from evertree.core.attribution_evidence import AttributionEvidence
+    from evertree.core.semantics.tools import READ_TOOLS
+    from tests.support.semantics import recorded_experience, recorded_messages, write_action
+
+    world = SimpleNamespace(graph=app.graph, memory=app.memory, service=app._semantics())
+    sequence = 0
+
+    def write(action, **fields):
+        nonlocal sequence
+        sequence += 1
+        refs = recorded_messages(world, str(fields))
+        _, metadata = recorded_experience(world)
+        result = write_action(
+            world,
+            refs,
+            metadata,
+            {"action": action, "sources": refs, **fields},
+            key=str(sequence),
+        )
+        assert "error" not in result, result
+        return result["object"]
+
+    def create(action, name, **fields):
+        return write(action, name=name, description=None, **fields)
+
+    domain = create("create_prototype", "Dog", parent=None)
+    numeric = create("create_property", "Body mass", unit="kg", applies_to=[domain])
+    classes = [create("create_concept", name) for name in ("Small", "Medium", "Large")]
+    subjects = []
+    for name, value in (("Jack", 8), ("Luna", 5), ("Grom", 10)):
+        subject = create("create_instance", name, prototype=domain)
+        subjects.append(subject)
+        write(
+            "relate",
+            relation=app.graph.find("HAS_NUMERIC_VALUE").id,
+            arguments=[
+                {"role": key, "value": item}
+                for key, item in {
+                    "entity": subject,
+                    "property": numeric,
+                    "value": value,
+                    "unit": "kg",
+                }.items()
+            ],
+            conditions=[],
+            description="An owner's measurement",
+        )
+    qualitative = create(
+        "create_qualitative_property",
+        "Relative size",
+        property=numeric,
+        domain=domain,
+        classes=classes,
+        conditions={},
+    )
+    assessment = AttributionEvidence(app.attribution, app.memory)
+    for subject in subjects:
+        prepared = assessment.prepare(subject, qualitative)
+        source = next(item for item in prepared["sources"] if item["role"] == "measurement")
+        chosen = prepared["conditional_interpretation"]["class"]
+        assessment.record(
+            subject,
+            qualitative,
+            prepared["input_revision"],
+            assign=[
+                {
+                    "source_ref": source["ref"],
+                    "likelihoods": {
+                        str(identity): 0.8 if identity == chosen else 0.1 for identity in classes
+                    },
+                    "dependency_root": source["dependency_root"],
+                }
+            ],
+            parameters=prepared["parameters"],
+            at=prepared["at"],
+        )
+
+    calls = [
+        (
+            "read_property",
+            {"subject": subjects[2], "property": qualitative, "point_policy": "argmax"},
+        ),
+        ("interpret_property", {"property": qualitative, "value": 7, "unit": "kg"}),
+        (
+            "select_properties",
+            {
+                "subjects": subjects,
+                "order_by": {
+                    "property": qualitative,
+                    "direction": "desc",
+                    "alternative": classes[2],
+                },
+                "limit": 1,
+            },
+        ),
+    ]
+    declared = {tool.name: tool for tool in app._tools()}
+    shared = {tool.name: tool for tool in READ_TOOLS}
+    for name, _ in calls:
+        assert declared["graph." + name].input_schema == shared[name].input_schema
+        assert declared["graph." + name].read_only
+    temporal = next(
+        tool
+        for group in tool_sets()
+        for tool in group.tools
+        if tool.name == "graph.read_property_at"
+    )
+    assert {"valid_at", "known_at"} <= temporal.input_schema["properties"].keys()
+
+    class PropertyClient(FakeClient):
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            self.events.insert(0, SimpleNamespace(method="test/call", payload={}))
+            return result
+
+        def next_turn_notification(self, turn_id):
+            event = super().next_turn_notification(turn_id)
+            if event.method == "test/call":
+                for name, arguments in calls:
+                    callback = Thread(
+                        target=Context().run,
+                        args=(
+                            self.handler,
+                            "item/tool/call",
+                            {
+                                "namespace": "graph",
+                                "tool": name,
+                                "callId": name,
+                                "arguments": arguments,
+                            },
+                        ),
+                    )
+                    callback.start()
+                    callback.join(timeout=10)
+                    assert not callback.is_alive()
+                return super().next_turn_notification(turn_id)
+            return event
+
+    before = app.graph.snapshot(), app.beliefs.snapshot(), app.attribution.snapshot()
+    app.provider = CodexProvider(client_factory=PropertyClient)
+    task = app.tasks.create_task("Read and compare learned dog size")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Native property reads")
+    request = LLMRequest("{}", app._workspace(task.id), mode="exec", tools=app._tools())
+    await app._invoke(task.id, request, conversation=True)
+    results = {
+        event.output["data"]["call_id"]: event.output["data"]
+        for event in app.memory.events
+        if event.operator == "provider_event" and event.output.get("kind") == "tool_result"
+    }
+    assert set(results) == {name for name, _ in calls}
+    assert all(item["status"] == "completed" for item in results.values()), results
+    assert results["read_property"]["result"]["value_U"] == classes[2]
+    assert results["interpret_property"]["result"]["class"] == classes[0]
+    assert results["select_properties"]["result"]["items"][0]["subject"] == subjects[2]
+    assert before == (app.graph.snapshot(), app.beliefs.snapshot(), app.attribution.snapshot())
+
+
+async def test_invalid_model_reference_fails_its_tool_and_allows_valid_callback_retry(app):
+    from evertree.core.values import json_value
+
+    run = app.memory.start_run("Observation", "test", {})
+    source = app.memory.record(run, "user_input", output={"weight": 8})
+    app.memory.finish_run(run)
+    valid = json_value(app.memory.output_ref(source))
+    invalid = {**valid, "output_path": ["class"]}
+    bad_note = {"text": "Invalid note", "kind": "note", "source_refs": [invalid]}
+    good_note = {"text": "Retained weight is 8", "kind": "note", "source_refs": [valid]}
+    calls = [
+        ("bad-note", "record_analysis", bad_note),
+        ("repaired-note", "record_analysis", good_note),
+        ("subsequent-read", "graph.describe", {"subject": app.graph.find("Self").id}),
+    ]
+    callbacks = {}
+
+    class RepairClient(FakeClient):
+        def turn_start(self, *args):
+            result = super().turn_start(*args)
+            self.events[:0] = [
+                SimpleNamespace(
+                    method="item/started",
+                    payload={
+                        "item": {
+                            "type": "dynamicToolCall",
+                            "id": "bad-note",
+                            "tool": "record_analysis",
+                            "arguments": bad_note,
+                        }
+                    },
+                ),
+                SimpleNamespace(method="test/call", payload={}),
+            ]
+            return result
+
+        def next_turn_notification(self, turn_id):
+            event = super().next_turn_notification(turn_id)
+            if event.method == "test/call":
+                for call_id, name, arguments in calls:
+
+                    def invoke(call_id=call_id, name=name, arguments=arguments):
+                        callbacks[call_id] = self.handler(
+                            "item/tool/call",
+                            {"tool": name, "callId": call_id, "arguments": arguments},
+                        )
+
+                    callback = Thread(target=Context().run, args=(invoke,))
+                    callback.start()
+                    callback.join(timeout=10)
+                    assert not callback.is_alive()
+                return super().next_turn_notification(turn_id)
+            return event
+
+    app.provider = CodexProvider(client_factory=RepairClient)
+    task = app.tasks.create_task("Repair an invalid citation and continue")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Reference repair")
+    request = LLMRequest(
+        json.dumps({"source": valid, "untrusted_reference": invalid}),
+        app._workspace(task.id),
+        mode="exec",
+        tools=app._tools(),
+    )
+    result = await app._invoke(task.id, request, conversation=True)
+    assert result["text"] == '{"ok": true}'
+    assert callbacks["bad-note"]["success"] is False
+    assert "dangling TraceOutputRef" in callbacks["bad-note"]["contentItems"][0]["text"]
+    assert callbacks["repaired-note"]["success"] is True
+    assert callbacks["subsequent-read"]["success"] is True
+    notes = [event for event in app.memory.events if event.operator == "analytical_note"]
+    assert len(notes) == 1
+    assert notes[0].output["text"] == good_note["text"]
+    assert notes[0].dependencies == (app.memory.output_ref(source),)
+    raw_events = [
+        event
+        for event in app.memory.events
+        if event.operator == "provider_event" and "unvalidated_json" in event.output.get("data", {})
+    ]
+    assert raw_events
+    assert any(
+        json.loads(event.output["data"]["unvalidated_json"])
+        .get("payload", {})
+        .get("item", {})
+        .get("arguments")
+        == bad_note
+        for event in raw_events
+    )
+    assert all(not event.dependencies for event in raw_events)
+    for event in app.memory.events:
+        for reference in event.dependencies:
+            app.memory.resolve(reference)
+    assert not app._execution.busy
 
 
 async def test_tool_read_context_uses_latest_window_not_cumulative_usage(tmp_path):

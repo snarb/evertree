@@ -18,12 +18,13 @@ from evertree.core.memory.store import TraceStore
 
 from ..core.actions import ActionGateway
 from ..core.attribution import AttributionRuntime
-from ..core.backup import _restore_io, safe_remove_tree
+from ..core.backup import BackupError, _restore_io, safe_remove_tree
 from ..core.beliefs import BeliefStore
 from ..core.cache import prune
 from ..core.datasets import DatasetStore
 from ..core.environment import validate_runtime
 from ..core.programs.lifecycle import fetch_programs, git, publish_programs
+from ..core.values import timestamp
 
 
 class PersistenceMixin:
@@ -33,7 +34,10 @@ class PersistenceMixin:
         self.graph, self.memory, self.beliefs = GraphStore(), TraceStore(), BeliefStore()
         self.graph.write_guard = self._execution.check
         self.graph.belief_reader = self.beliefs.read
-        self.attribution = AttributionRuntime(self.graph, self.beliefs)
+        self.attribution = AttributionRuntime(
+            self.graph, self.beliefs, historical_loader=self._historical_attribution
+        )
+        self.attribution.memory = self.memory
         self.tasks = TaskStore()
         self.attention = AttentionRuntime(self.tasks)
         self.datasets, self.evaluations, self.learning = (
@@ -193,6 +197,8 @@ class PersistenceMixin:
         self.attribution = AttributionRuntime.from_snapshot(
             data["attribution"], self.graph, self.beliefs
         )
+        self.attribution.historical_loader = self._historical_attribution
+        self.attribution.memory = self.memory
         self.attention = AttentionRuntime.from_snapshot(data["attention"], self.tasks)
         self.datasets, self.evaluations = (
             DatasetStore.from_snapshot(data["datasets"]),
@@ -221,6 +227,37 @@ class PersistenceMixin:
                 if state.status == "running":
                     state.status = "suspended"
         self.attention.running_task = self.attention.focus = None
+
+    def _historical_attribution(self, known_at):
+        """Load an exact verified backup for reads without restoring workflows or live stores."""
+        if not hasattr(self, "backups"):
+            return None
+        known_at = timestamp(known_at)
+        for path in self.backups.list():
+            try:
+                manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
+                if timestamp(manifest["created_at"]) != known_at:
+                    continue
+            except (OSError, ValueError, KeyError, TypeError):
+                continue
+            try:
+                saved = self.backups.verify(path).state["core"]
+                graph = GraphStore.from_snapshot(saved["graph"])
+                beliefs = BeliefStore.from_snapshot(saved["beliefs"])
+                graph.known_at = known_at
+                graph.belief_reader = beliefs.read
+
+                def readonly():
+                    raise PermissionError("Historical attribution state is read-only")
+
+                graph.write_guard = readonly
+                runtime = AttributionRuntime.from_snapshot(saved["attribution"], graph, beliefs)
+                runtime.memory = TraceStore.from_snapshot(saved["memory"])
+                return runtime
+            except (BackupError, OSError, ValueError, KeyError, TypeError):
+                # A missing or damaged dependency cannot be replaced by present-day state.
+                return None
+        return None
 
     async def backup(self):
         """Publish retained Program revisions and save an idle agent backup, keeping the latest two.

@@ -10,9 +10,9 @@ from typing import Any
 
 from evertree.core.graph.matching import values_equal
 from evertree.core.graph.store import GraphStore
-from evertree.core.graph.types import Facet, Node, RelationInstance
+from evertree.core.graph.types import Facet, Node, RelationInstance, RelationType
 
-from .beliefs import BeliefData, BeliefReading, BeliefStore
+from .beliefs import BeliefData, BeliefReading, BeliefStore, element_target
 from .values import UNKNOWN, ContractError, freeze, json_value, restore_value, timestamp, utcnow
 
 _READ_ARGUMENTS = frozenset(
@@ -29,6 +29,7 @@ _READ_ARGUMENTS = frozenset(
         "at",
         "valid_at",
         "known_at",
+        "point_policy",
         "_compute",
     }
 )
@@ -56,12 +57,15 @@ class PropertyDefinition:
     selection: str = "latest"
     period: float | None = None
     required_parameters: tuple[str, ...] = ()
+    parameter_types: Any = dataclasses.field(default_factory=dict)
     applies_to: tuple[int, ...] = ()
+    program: int | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "classes", tuple(self.classes))
         object.__setattr__(self, "required_parameters", tuple(self.required_parameters))
         object.__setattr__(self, "applies_to", tuple(self.applies_to))
+        object.__setattr__(self, "parameter_types", freeze(self.parameter_types))
         if self.unit is not None and (not isinstance(self.unit, str) or not self.unit.strip()):
             raise ContractError("Property unit must be a nonempty unit or null")
         if any(
@@ -74,10 +78,18 @@ class PropertyDefinition:
             "classification",
             "relation",
             "program",
+            "result",
+            "norm",
         }:
             raise ContractError("unknown property scale or source")
+        if self.program is not None and (
+            type(self.program) is not int or self.program <= 0 or self.source != "program"
+        ):
+            raise ContractError("A computed property requires a positive Program identity")
         if self.selection not in {"latest", "max_support", "unique"}:
             raise ContractError("property source selection must be explicit")
+        if self.source == "numeric" and self.scale not in {"numeric", "circular"}:
+            raise ContractError("Numeric sources require a numeric or circular scale")
         if self.scale == "circular" and (
             self.period is None or self.period <= 0 or not math.isfinite(self.period)
         ):
@@ -88,6 +100,68 @@ class PropertyDefinition:
             not self.classes or len(set(self.classes)) != len(self.classes)
         ):
             raise ContractError("ordinal scales require an ordered unique class list")
+        if self.source == "classification" and (
+            self.scale not in {"nominal", "ordinal"} or not self.classes
+        ):
+            raise ContractError("Classifications require a declared categorical scale")
+        if not isinstance(self.parameter_types, Mapping) or set(self.parameter_types) - set(
+            self.required_parameters
+        ):
+            raise ContractError("Parameter types must describe declared required parameters")
+        if any(
+            kind not in {"string", "number", "integer", "boolean", "node", "object", "array"}
+            for kind in self.parameter_types.values()
+        ):
+            raise ContractError("Unknown property parameter type")
+
+    def validate_inputs(self, parameters: Mapping, graph: GraphStore) -> None:
+        """Validate declared input types without confusing booleans with numeric values."""
+        from .attribution_population import finite_number
+
+        for name, kind in self.parameter_types.items():
+            if name not in parameters:
+                continue
+            value = parameters[name]
+            valid = {
+                "string": isinstance(value, str),
+                "number": type(value) in {int, float},
+                "integer": type(value) is int,
+                "boolean": type(value) is bool,
+                "node": type(value) is int,
+                "object": isinstance(value, Mapping),
+                "array": isinstance(value, (list, tuple)),
+            }[kind]
+            if not valid:
+                raise ContractError(f"Property parameter {name!r} requires {kind}")
+            if kind in {"number", "integer"}:
+                finite_number(value)
+            if kind == "node":
+                graph.get(value)
+
+    def validate_relation(self, relation: RelationType) -> None:
+        """Require the relation view to produce one value compatible with this scale."""
+        if not isinstance(relation, RelationType):
+            raise ContractError("Property requires an existing declared relation view")
+        view = next((item for item in relation.views if item.name == self.view), None)
+        if view is None:
+            raise ContractError("Property requires an existing declared relation view")
+        if set(view.inputs) != {self.subject_slot, *self.required_parameters}:
+            raise ContractError("Property parameters must match relation view inputs")
+        slots = {slot.label: slot for slot in relation.signature}
+        if len(view.outputs) != 1 or slots[view.outputs[0]].arity not in {"one", "optional"}:
+            raise ContractError("Property relation views require one scalar output")
+        output = slots[view.outputs[0]]
+        allowed = None
+        if self.scale in {"numeric", "circular"}:
+            allowed = {"number", "integer", "any"}
+        elif self.classes:
+            allowed = {"any"}
+            if any(type(value) is int for value in self.classes):
+                allowed.update({"node", "concept", "prototype"})
+            if any(isinstance(value, str) for value in self.classes):
+                allowed.add("string")
+        if allowed is not None and output.value_type not in allowed:
+            raise ContractError("Property relation output does not match its scale")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -99,6 +173,7 @@ class PropertyReading:
     known_at: datetime | None = None
     conditions: Any = None
     unit: str | None = None
+    provenance: Any = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -137,6 +212,7 @@ class AttributionRuntime:
         self.beliefs = beliefs or BeliefStore()
         self._properties: dict[int, PropertyDefinition] = {}
         self._scopes: dict[str, str] = {}
+        self._scope_inputs: dict[str, str] = {}
         self._rules: dict[tuple[int, int | str], NormalizationRule] = {}
         self.program_reader = program_reader
         self.historical_loader = historical_loader
@@ -205,6 +281,12 @@ class AttributionRuntime:
                     f.args.get(definition.subject_slot) in subjects
                     for f in self.graph.facts(definition.relation_type)
                 )
+            elif definition.source == "result":
+                applies |= any(
+                    record.get("subject") in subjects and record.get("property") == definition.id
+                    for n in self.graph.nodes()
+                    if (record := n.properties.get("attribution_result")) is not None
+                )
             if applies:
                 found.append(definition)
         return tuple(found)
@@ -237,15 +319,32 @@ class AttributionRuntime:
     def _belief(
         self, fact: RelationInstance, valid_at: datetime, known_at: datetime | None
     ) -> BeliefData | BeliefReading | None | Any:
-        if fact.belief_target is None:
-            return None
         try:
-            reading = self.beliefs.read(fact.belief_target, valid_at=valid_at, known_at=known_at)
+            reading = self.beliefs.read(element_target(fact), valid_at=valid_at, known_at=known_at)
         except KeyError:
-            return UNKNOWN
+            return UNKNOWN if fact.belief_target else None
         if reading is UNKNOWN:
             return UNKNOWN
         return reading if reading.profile is not None else reading.data
+
+    def applies(self, subject: int, definition: PropertyDefinition) -> bool:
+        """Check a declared domain through the subject's state, identity and type ancestry."""
+        if not definition.applies_to:
+            return True
+        identities = {subject}
+        identities.update(
+            fact.args["instance"]
+            for fact in self.graph.facts("STATE_IDENTITY")
+            if fact.args["facet"] == subject
+        )
+        identities.update(
+            fact.args["type"]
+            for fact in self.graph.facts("IDENTITY_TYPE")
+            if fact.args["instance"] in identities
+        )
+        for identity in tuple(identities):
+            identities.update(node.id for node in self.graph.ancestors(identity))
+        return bool(identities.intersection(definition.applies_to))
 
     def _fact_recency(self, fact: RelationInstance) -> tuple:
         """Rank substantive fact corrections without promoting metadata-only edits."""
@@ -269,6 +368,7 @@ class AttributionRuntime:
         *,
         valid_at: datetime | None = None,
         known_at: datetime | None = None,
+        point_policy: str | None = None,
         _compute: bool = True,
         **parameters: Any,
     ) -> PropertyReading | Any:
@@ -279,42 +379,38 @@ class AttributionRuntime:
         Program-backed computation requests.
         """
         subject_id = subject.id if isinstance(subject, Node) else subject
+        if point_policy not in {None, "argmax"}:
+            raise ContractError("Unknown property point selection policy")
         validate_parameters(parameters)
         property_id = property.id if isinstance(property, Node) else property
+        if known_at is not None:
+            known = timestamp(known_at)
+            if self.graph.known_at != known:
+                historical = self.historical_loader(known) if self.historical_loader else None
+                if historical is None or historical.graph.known_at != known:
+                    return UNKNOWN
+                return historical.read_property(
+                    subject_id,
+                    property_id,
+                    valid_at=valid_at,
+                    known_at=known,
+                    point_policy=point_policy,
+                    _compute=_compute,
+                    **parameters,
+                )
         definition = self.definitions().get(property_id)
         if definition is None:
             return UNKNOWN
         at = timestamp(valid_at or utcnow())
-        if known_at is not None:
-            known = timestamp(known_at)
-            if self.graph.known_at is not None and known != self.graph.known_at:
-                return UNKNOWN
-            if (
-                self.graph.known_at is None
-                and self.graph._history
-                and known < self.graph._history[-1].at
-            ):
-                if self.historical_loader:
-                    historical = self.historical_loader(known)
-                    return (
-                        historical.read_property(
-                            subject_id,
-                            property_id,
-                            valid_at=at,
-                            known_at=known,
-                            _compute=_compute,
-                            **parameters,
-                        )
-                        if historical
-                        else UNKNOWN
-                    )
-                return UNKNOWN
         if any(parameter not in parameters for parameter in definition.required_parameters):
             return UNKNOWN
+        definition.validate_inputs(parameters, self.graph)
         subjects = [subject_id]
         try:
             node = self.graph.get(subject_id)
         except KeyError:
+            return UNKNOWN
+        if not self.applies(subject_id, definition):
             return UNKNOWN
         if isinstance(node, Facet):
             if node.applicability(at) != "applicable":
@@ -324,6 +420,13 @@ class AttributionRuntime:
             if facets is UNKNOWN:
                 return UNKNOWN
             subjects.extend(facet.id for facet in facets if facet.applicability(at) != "outside")
+        if definition.source == "norm":
+            from .attribution_evidence import read_norm_property
+
+            result = read_norm_property(
+                self, subject_id, property_id, valid_at=valid_at, known_at=known_at, **parameters
+            )
+            return self.point_view(result, point_policy)
         scope_readings = []
         for identity in subjects:
             target = self._scopes.get(self._binding_key(identity, property_id, parameters))
@@ -342,7 +445,11 @@ class AttributionRuntime:
                 )
         if scope_readings:
             # Overlapping applicable facets cannot silently become one profile.
-            return scope_readings[0] if len(scope_readings) == 1 else UNKNOWN
+            return (
+                self.point_view(scope_readings[0], point_policy)
+                if len(scope_readings) == 1
+                else UNKNOWN
+            )
         candidates: list[tuple[RelationInstance, Any]] = []
         if definition.source == "numeric":
             from .attribution_population import convert_value
@@ -371,8 +478,29 @@ class AttributionRuntime:
                     and fact.args["class"] in definition.classes
                     and values_equal(fact.properties.get("conditions", {}), parameters)
                 ):
+                    criterion = fact.properties.get("criterion")
+                    if criterion is not None and criterion != property_id:
+                        continue
+                    if criterion is None:
+                        compatible = [
+                            d
+                            for d in self.definitions().values()
+                            if d.source == "classification"
+                            and fact.args["class"] in d.classes
+                            and self.applies(subject_id, d)
+                        ]
+                        if len(compatible) != 1:
+                            continue
                     candidates.append((fact, fact.args["class"]))
         elif definition.source == "relation":
+            from .attribution_population import finite_number
+
+            relation = (
+                self.graph.find(definition.relation_type)
+                if isinstance(definition.relation_type, str)
+                else self.graph.get(definition.relation_type)
+            )
+            definition.validate_relation(relation)
             for identity in subjects:
                 matches = self.graph.query_view(
                     definition.relation_type,
@@ -386,8 +514,35 @@ class AttributionRuntime:
                 if matches is None:
                     continue
                 for match in matches if isinstance(matches, list) else [matches]:
-                    candidates.append((match.source_fact, match.value))
+                    value = match.value
+                    if value is None or value is UNKNOWN:
+                        return UNKNOWN
+                    if definition.scale in {"numeric", "circular"}:
+                        value = finite_number(value)
+                    elif definition.classes and not any(
+                        values_equal(value, allowed) for allowed in definition.classes
+                    ):
+                        raise ContractError(
+                            "Relation value is outside the property's declared scale"
+                        )
+                    elif isinstance(value, (Mapping, list, tuple, set, frozenset)):
+                        raise ContractError("Property relation views require one scalar value")
+                    candidates.append((match.source_fact, value))
+        elif definition.source == "result":
+            from .attribution_sources import read_saved_result
+
+            return self.point_view(
+                read_saved_result(self, subjects, definition, at, known_at, parameters),
+                point_policy,
+            )
         else:
+            if self.graph.known_at is not None:
+                from .attribution_sources import read_retained_program_result
+
+                return self.point_view(
+                    read_retained_program_result(self, subject_id, definition, at, parameters),
+                    point_policy,
+                )
             if not _compute or self.program_reader is None:
                 return UNKNOWN
             # The caller executes the bound Program through runtime and records
@@ -399,6 +554,14 @@ class AttributionRuntime:
             return UNKNOWN
         if any(self.graph.fact_applicability(fact, at) != "applicable" for fact, _ in candidates):
             return UNKNOWN
+        if definition.source == "classification" or (
+            definition.source == "relation"
+            and definition.scale in {"nominal", "ordinal"}
+            and definition.classes
+        ):
+            profile = self.classification_profile(candidates, definition, at, known_at, parameters)
+            if profile is not None:
+                return self.point_view(profile, point_policy)
         if definition.selection == "unique" and len(candidates) != 1:
             return UNKNOWN
         if definition.selection == "max_support":
@@ -426,6 +589,53 @@ class AttributionRuntime:
             if definition.source == "numeric"
             else definition.unit,
         )
+
+    def classification_profile(self, candidates, definition, at, known_at, parameters):
+        """Project one shared graph-evidence scope onto a complete categorical property scale.
+
+        None means these sources have no competition scope; UNKNOWN means competing
+        sources cannot faithfully represent this property's exhaustive alternatives.
+        """
+        scopes = {self.beliefs.scope_of(element_target(node)) for node, _ in candidates} - {None}
+        if not scopes:
+            return None
+        if len(scopes) != 1:
+            return UNKNOWN
+        reading = self.beliefs.read(scopes.pop(), valid_at=at, known_at=known_at)
+        if reading is UNKNOWN:
+            return UNKNOWN
+        classes = {element_target(node): str(value) for node, value in candidates}
+        if (
+            set(classes) != set(reading.profile)
+            or set(classes.values()) != set(map(str, definition.classes))
+            or len(classes) != len(definition.classes)
+        ):
+            return UNKNOWN
+        profile = dataclasses.replace(
+            reading, profile=freeze({classes[key]: value for key, value in reading.profile.items()})
+        )
+        return PropertyReading(
+            None,
+            profile,
+            tuple(node.id for node, _ in candidates),
+            at,
+            known_at,
+            freeze(parameters),
+        )
+
+    def point_view(self, reading: Any, policy: str | None) -> Any:
+        """Select a unique Profile winner only when requested, retaining the full Profile."""
+        if reading is UNKNOWN or policy is None:
+            return reading
+        profile = getattr(reading.belief_data, "profile", None)
+        if profile is None:
+            return reading
+        highest = max(profile.values())
+        winners = [key for key, value in profile.items() if value == highest]
+        value = winners[0] if len(winners) == 1 else None
+        if value is not None and value.isdecimal():
+            value = int(value)
+        return dataclasses.replace(reading, value_U=value)
 
     def summarize_property(
         self,
@@ -492,7 +702,13 @@ class AttributionRuntime:
         if definition.scale in {"nominal", "circular"}:
             raise ContractError("this scale has no linear ordering")
         if definition.scale == "ordinal":
+            if first not in definition.classes or second not in definition.classes:
+                raise ContractError("Value is outside the property's ordered scale")
             first, second = definition.classes.index(first), definition.classes.index(second)
+        else:
+            from .attribution_population import finite_number
+
+            first, second = finite_number(first), finite_number(second)
         return (first > second) - (first < second)
 
     def distance(self, property_id: int, first: float, second: float) -> float:
@@ -500,7 +716,9 @@ class AttributionRuntime:
         definition = self.definitions()[property_id]
         if definition.scale in {"nominal", "ordinal"}:
             raise ContractError("this scale has no numeric distance")
-        delta = abs(first - second)
+        from .attribution_population import finite_number
+
+        delta = abs(finite_number(first) - finite_number(second))
         if definition.scale == "circular":
             delta %= definition.period
             return min(delta, definition.period - delta)
@@ -550,6 +768,7 @@ class AttributionRuntime:
         return {
             "properties": [json_value(value) for value in self._properties.values()],
             "scopes": dict(self._scopes),
+            "scope_inputs": dict(self._scope_inputs),
             "rules": [json_value(value) for value in self._rules.values()],
         }
 
@@ -563,6 +782,7 @@ class AttributionRuntime:
             raw["id"]: PropertyDefinition(**restore_value(raw)) for raw in data["properties"]
         }
         runtime._scopes = dict(data["scopes"])
+        runtime._scope_inputs = dict(data.get("scope_inputs", {}))
         for raw in data["rules"]:
             values = restore_value(raw)
             if values["belief_data"] is not None:

@@ -210,6 +210,43 @@ async def stale_evidence(ctx: ProgramContext) -> Any:
     return await ctx.step("evidence.stale", {})
 
 
+async def pending_property_evidence(ctx: ProgramContext, *, limit: int = 20) -> Any:
+    """Read qualitative property questions whose declared inputs need assessment."""
+    return await ctx.step("evidence.pending_properties", {"limit": limit}, journal=False)
+
+
+async def record_property_evidence(
+    ctx: ProgramContext,
+    subject: int,
+    property: int,
+    input_revision: str,
+    *,
+    parameters: dict | None = None,
+    at: str | None = None,
+    prior: dict | None = None,
+    assign: list[dict] | None = None,
+    retract: list[dict] | None = None,
+) -> Any:
+    """Assess one complete qualitative scope against the prepared input revision.
+
+    Likelihoods and the optional initial prior are keyed by the property's class ids.
+    The Core rejects stale inputs and retains primary-source dependencies.
+    """
+    return await ctx.step(
+        "evidence.record_property",
+        {
+            "subject": subject,
+            "property": property,
+            "input_revision": input_revision,
+            "parameters": parameters or {},
+            "at": at,
+            "prior": prior,
+            "assign": assign or [],
+            "retract": retract or [],
+        },
+    )
+
+
 async def call_credit_assignment(
     ctx: ProgramContext, *, target: str, observation_ids: list[str], context: dict
 ) -> Any:

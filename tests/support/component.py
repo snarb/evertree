@@ -118,10 +118,16 @@ class SourceRuntime(Runtime):
 
 
 @asynccontextmanager
-async def component_app(directory, *, provider=None, approval_handler=None):
+async def component_app(
+    directory, *, provider=None, approval_handler=None, semantic_config=None, search_index=None
+):
     """Build real stores and coordinator; substitute only persistence and transport."""
     app = EverTree(
-        directory, provider=provider or ScriptedProvider([]), approval_handler=approval_handler
+        directory,
+        provider=provider or ScriptedProvider([]),
+        approval_handler=approval_handler,
+        semantic_config=semantic_config,
+        search_index=search_index,
     )
     app.state_dir.mkdir(parents=True, exist_ok=True)
     app._bootstrap_state(REVISION)

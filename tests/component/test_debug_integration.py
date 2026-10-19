@@ -119,6 +119,7 @@ async def test_debug_integration_forwards_native_tools_and_records_direct_writes
             "semantic.sources",
             "tool:save_note",
             "semantic.write",
+            "attribution.refresh_norms",
         ]
         transcripts = [json.loads(path.read_text()) for path in tmp_path.glob("model-*.json")]
         (events,) = transcripts

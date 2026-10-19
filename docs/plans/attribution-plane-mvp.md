@@ -2,19 +2,156 @@
 
 Аудит от 19 октября 2026 года, исходная ревизия `6b5b0e6`. Полностью рассмотрен [Attribution Plane](../architecture/Attribution%20Plane.md), включая числовые распределения, обучение, исторические чтения и интерфейс сознания.
 
-**В исходной ревизии фундамент чтения свойств реализован. Замкнутого пути «агент определяет свойство → учится на наблюдениях → применяет качественные понятия к новым объектам» пока нет.** Главная работа MVP — соединить существующие граф, источники, убеждения, обучение и интерфейс агента. Новая универсальная система машинного обучения для этого не нужна.
+**Текущий итог: необходимые механизмы плоскости реализованы и приняты.** На финальной версии прошли 766 fast tests, 159 integration tests, 22 native tests и 11 разных live-сценариев обучения/использования. Четыре native tests пропущены по явным платформенным/opt-in условиям. Точная приёмка, границы доказательства и сохранённая история ошибок приведены ниже.
+
+**В исходной ревизии был реализован фундамент чтения свойств, но отсутствовал замкнутый путь «агент определяет свойство → учится на наблюдениях → применяет качественные понятия к новым объектам».** Главная работа — соединить существующие граф, источники, убеждения, обучение и интерфейс агента. Новая универсальная система машинного обучения для этого не нужна.
 
 Этот план разделяет завершение полезного MVP и последующее расширение до всей архитектуры. «80 процентов кейсов» здесь — гипотеза приоритизации по принципу Парето: статистики реальных обращений к плоскости пока нет. Это не измеренная доля покрытия и не процент готовности кода.
 
-Первые разделы сохраняют срез исходной ревизии. Реализованные после аудита возможности и результаты проверок перечислены в конце; незавершённые архитектурные механизмы не считаются выполненными вместе с описательным MVP.
+Первоначальный аудит и результаты описательного MVP сохранены как история. Текущий этап начат с `main 4ab5dcf`, где уже объединён общий evidence assessment; он завершает необходимые механизмы плоскости без внедрения отдельного ML framework. Его состояние и приёмка приведены непосредственно ниже. Результаты прежних live-прогонов не считаются проверкой нового кода.
 
-## Текущее состояние после реализации
+## Текущий этап: качественные нормы и полный путь чтения
+
+К описательному MVP добавлены объявленные качественные свойства, обучаемые квантильные нормы, автоматическая оценка качественного вопроса через общий BeliefStore, typed результаты, Program readers, точное чтение сохранённого backup и общий выбор по свойствам. Реализация использует существующие graph history, sources, evidence assessment и Program execution. Ни отдельного хранилища моделей, ни фиктивных Evaluation/LearningSignal для накопления измерений нет.
+
+| Механизм | Реализованный контракт | Проверка |
+| --- | --- | --- |
+| Объявления и применимость | `create_property` задаёт scale, source, domain, classes, selection, typed parameters и при необходимости Program/view. Numeric/circular не превращаются в categorical; классы — реальные Concept, domain проверяется через тип и предков. | [Selection](../../tests/component/test_attribution_selection.py), [tools](../../tests/component/test_attribution_tools.py): атомарный отказ неверным определениям, общие class labels требуют согласованного Criterion. |
+| Наученная норма | `create_qualitative_property` создаёт одну ordinal Property с `source=norm`, `qualitative_norm` и `norm_state`; `revise_property_norm` меняет объявленный criterion. Данные — полная выборка latest_recorded либо один явно выбранный внешний distribution. | [Norm tests](../../tests/component/test_attribution_norms.py): 8/5/10, полная выборка за preview, frequencies, intervals, условия, породы, малые/вырожденные данные, correction, hysteresis и restore. |
+| Качественный Profile | `evidence.pending_properties` готовит конкретные subject/property/state questions; `evidence.record_property` оценивает их источники через общий scope. GraphEvidenceAssessment запускает эту фазу после оценки графа. Read ничего не регистрирует и не оценивает. | [Evidence tests](../../tests/component/test_attribution_evidence.py): источник измерения, domain, повтор, withdrawal, origin reassessment, stale inputs, old meaning, default/explicit time, Facets и JSON restore. |
+| Typed/Program sources | `source=result` читает сохранённый семантически связанный scalar/interval/normal/quantiles; `source=program` вызывает объявленный model Program и проверяет subject/property/conditions/time/unit результата. | [Source tests](../../tests/component/test_attribution_sources.py): типы, units, ошибочный результат, временная применимость, async child и computed selection. |
+| Исторические чтения | Exact verified backup восстанавливает graph, beliefs, attribution и memory в отдельный runtime. Завершённый Program result читается из execution trace с точными arguments/world time и actual revision/output reference. Отсутствующий trace даёт UNKNOWN; новый запуск текущего кода не подменяет историю. | [Persistence integration](../../tests/integration/test_attribution_persistence.py): реальные backup files, integrity/isolation, worker IPC, child execution/replay и исторический read сохранённого выполнения. |
+| Выбор по свойствам | `select_properties` фильтрует явных кандидатов, упорядочивает numeric/ordinal либо ищет numeric/circular nearest; Profile требует explicit alternative и сравнения Strength. Unknown сохраняются отдельно. | Selection/source tests: nominal без порядка, circular 350°/10°, Profile без implicit argmax, интервалы без вымышленного среднего, единое время всех чтений. |
+
+Приёмочный checkpoint этого этапа — `51f6e0ae2d76372ce70d1cddc3552709d85b0529eb74eff680b639d363376400`. Последующий review и IDE harness описаны ниже отдельно; исходные результаты не переименованы в проверки нового checkpoint.
+
+| Приёмка текущего checkpoint | Фактический итог |
+| --- | --- |
+| Полный fast suite после всех source/test edits | **766 passed, 2.84 s** |
+| Portable integration с настоящим Redis | **159 passed, 173.65 s** |
+| Native boundaries | **22 passed, 4 skipped, 43.52 s**; три Windows-only, один external HTTPS opt-in |
+| Learned norms: отдельные наблюдения и внешняя таблица | **Оба live cases прошли**, новые acquisitions, restore и использование |
+| Descriptive regression | **Все 9 live cases прошли**, новые acquisitions и независимый review 4/4 для каждого |
+| Статические проверки | Ruff, format 309 files, Program layout и diff check прошли |
+
+Boundary suites подтвердили одинаковый hash до/после. Их logs, XML и `validation.json` находятся в `/private/tmp/evertree-attribution-final-08`; fast log — `/private/tmp/evertree-attribution-final-fast-08.log`. Связанные наборы отдельно к общим suites не прибавляются.
+
+На одной финальной версии и фактической конфигурации приложения `gpt-6-luna/high` прошли **11 разных live-сценариев**. Первый запуск дал **4 passed, 7 deselected, 516.39 s**: оба learned norm пути, selection и parcels. Второй — **7 passed, 2 deselected, 467.92 s**: остальные descriptive cases. Это два дополняющих запуска с новыми acquisitions, не один общий запуск и не повторное использование старых snapshots. Source hash одинаков до/после каждого case и в текущем коде.
+
+Observation/norm case включает assessed Profiles, JSON restore, новый reader, selection/interpretation, независимый review и correction с сохранением истории. Table/norm case проверяет условное применение обученной нормы без выдуманных собак. Ранние live helpers принудительно использовали ту же модель с effort `medium`; теперь они используют настройки приложения и сохраняют explicit override запроса. Более ранние результаты и ошибки не смешиваются с финальной приёмкой и не переименованы в passes.
+
+### Повторный review и отладка из IDE
+
+Повторный независимый review выявил два дефекта. При выборе последнего сохранённого typed
+результата правка описания старого результата могла вернуть устаревшее значение. Теперь
+порядок меняет только изменение содержимого `attribution_result`, как для числовых фактов.
+Кроме того, неверный числовой фильтр мог запустить вычисляющий Program до проверки своего
+значения. Проверка перенесена перед вычислениями. Регрессии проверяют обе политики выбора
+(`latest` и `max_support`) и отсутствие Program calls при неверных аргументах.
+
+Существенного неоправданного усложнения в проверенных механизмах не обнаружено; отдельный
+framework или перестройка существующих слоёв не потребовались. В новом
+[`debug_attribution.py`](../../src/evertree/debug_attribution.py) переиспользованы debug session,
+KnowledgeIntegration, EvidenceAssessment и публичные semantic tools. Три отдельных сообщения
+про собак 8/5/10 kg проходят интеграцию и assessment, затем вопрос запускает обнаружение или
+обучение нормы; после assessment новый read-only вызов отвечает из сохранённых данных.
+Редактируются только `OBSERVATIONS` и `QUESTION`; IDs, пороги и ожидаемые ответы не зашиты.
+Состояния каждого этапа и вызовы сохраняются для IDE. Планировщик, worker transport и restart
+этот harness не моделирует.
+
+После этих исправлений и добавления harness прошли **773 fast tests**, связанные
+**109 component** и **3 integration** tests (связанные component уже входят в полный fast
+набор), Ruff, format и Program layout. Настоящий запуск IDE-сценария на checkpoint
+`2cffe16f214d26abc8be051817bdcf3242eca8bb98b78930d9a50664c0f15481`
+также прошёл: три отдельных наблюдения, mean=23/3 kg, learned boundaries=7 и 26/3 kg,
+оценённые Profiles и условный ответ 7 kg → Small. Последнее чтение не изменило graph,
+beliefs или attribution; гипотетическая четвёртая собака не создана. Артефакты находятся
+в `tmp/debug-attribution/ide-review-20261019/`, проверки — в `smoke-check.json`.
+
+### Наблюдение → обученная норма → использование
+
+1. Отдельные сообщения сохраняют числовые факты 8, 5 и 10 kg с исходными источниками. `summarize_property` сразу даёт `23/3 kg`; никакой нормы для этого не требуется.
+2. На естественный вопрос «кого из них по весу можно назвать маленькой, средней и большой собакой?» агент объявляет относительные Small/Medium/Large. Пользователь не передаёт IDs и не вызывает train. Одна качественная Property связывает эти классы, numeric BodyMass, domain и conditions. Это не универсальный размер, высота в холке или медицинский стандарт.
+3. Простая модель по умолчанию — weighted quantiles с линейной интерполяцией порядковых статистик; для трёх классов точки 1/3 и 2/3 дают границы **7 и 26/3 kg**. Граница включена в нижний класс: 7 kg условно Small, 8 kg Medium, 10 kg Large. Минимум три sample — техническое условие построения, а не доказательство репрезентативности. Одинаковые границы дают `degenerate`, недостаток данных — `needs_data`.
+4. Checkpoint сохраняет criterion semantic revision, fit revision, data revision, границы и их точность, sample count, rows и pinned graph dependencies. Изменение данных делает старый текущий fit недоступным до refresh вне read. KnowledgeIntegration обновляет существующие нормы после записи; небольшой сдвиг удерживается объявленным hysteresis. Старые версии остаются в graph history/backup. Исправление 8→9 kg даёт новые границы 23/3 и 28/3 без создания четвёртой собаки.
+5. Общий GraphEvidenceAssessment отдельно оценивает применимость нормы по её фактическим источникам и качественную категорию конкретной собаки. В categorical scope голосуют первичные источники её измерения; остальные training sources объясняют criterion, но не становятся независимыми голосами за эту собаку. Dependency roots, origin reliability и withdrawal используют существующий belief pipeline. Sample count не становится Support; belief нормы не копируется на объект и не перемножается с confidence измерения.
+6. `read_property` возвращает общий Profile и provenance только пока fingerprint оценки соответствует norm revision, измерению и текущим BeliefReadings всех training dependencies, включая другой объект или внешний distribution. Canonical question включает identity subject/property/criterion/conditions и выбранные state identities, а не буквально каждый timestamp; два момента одного Facet и чтение через Instance либо тот же Facet используют один вопрос. Новый Facet или изменённый смысл criterion — другой вопрос. Значения имён/описаний class Concepts закреплены в checkpoint: их изменение требует refresh и нового semantic target, без наследования старого prior. Повторное чтение неизменно; `point_policy=argmax` по явному запросу добавляет point view только при единственном победителе.
+7. Гипотетический вопрос «а 7 kg?» идёт через `interpret_property`: условный класс, границы, версия нормы и отдельная оценка её применимости. Запрос не создаёт собаку, измерение или epistemic Profile. Реальный новый объект получает Profile после сохранения источника измерения и обычной оценки evidence.
+
+Сохранённый Profile — результат существующей модели оценки evidence, а не доказанная эмпирическая калибровка вероятностей. Приёмочные tests с контролируемыми likelihoods проверяют общий updater, а live-проверка — реальный путь моделей и источников. Для supervised нормы нужны настоящие labels/outcomes и существующий Learning pipeline; эмпирические квантили таких labels не требуют.
+
+В live-проверке класс пограничного гипотетического значения определяется фактически сохранёнными quantiles и точными boundaries. Если модель явно задала округлённые quantiles, отображение первой границы как «примерно 7» не делает её ровно 7. Отдельный component test проверяет точный default Criterion: 7 kg относится к Small. Live assertion не подменяет выбранный Criterion воображаемым точным значением.
+
+Live norm harness дополнен независимым semantic review после строгих runtime checks: область сравнения, условность confidence, смысл газетного сообщения и гипотетического 7 kg. Reviewer получает только синтетические исходные сообщения, фактический ответ, краткие сведения о норме и Profile strengths, без полного graph/memory/transcript. Проверка не требует особых слов и не трактует unassessed как ненадёжность. В полном observation/norm case прогона 08 все четыре критерия прошли; это проверка конкретного выполненного пути, не оценка частоты ошибок модели.
+
+Начальный learned mapper обучается по объявленному numeric source и source-backed distributions. Произвольные Program/result outputs доступны для чтения и выбора, но не вызываются автоматически ради формирования обучающей популяции. Такое расширение потребует явных sampling semantics, а не скрытого запуска всех вычислений при read.
+
+Assessment context использует полный набор dependencies для freshness. Модели показываются до 20 training belief records и до 20 текстов norm-context sources, с полными totals; все actual measurement sources конкретного вопроса сохраняются. Оценённые inputs с меньшим Strength приоритетно попадают в preview вместе с их источниками, даже если они стояли за первыми 20. Это порядок показа, а не новые веса обучения и не синтетическая агрегированная confidence.
+
+Одна автоматическая assessment phase обрабатывает не более 20 pending качественных вопросов. Остальные unassessed или stale объекты сохраняют UNKNOWN до следующей фазы; read не запускает дооценку. Этот предел работы за один вызов не обрезает данные fit или fingerprint freshness.
+
+### Приёмочная матрица текущего этапа
+
+| Сценарий | Проверяемый результат | Статус |
+| --- | --- | --- |
+| N01: 8/5/10 и удержанное значение 7 | Среднее 23/3; границы 7 и 26/3; условное 7 не увеличивает count; Profile конкретных объектов появляется только после evidence assessment. | Component pass; полный live observation/norm case 08 pass, включая независимый review. |
+| N02: correction и обновление | 8→9 сохраняет число объектов, новый fit, тот же semantic criterion; stale assessment не принимается; старый checkpoint воспроизводится. | Component pass; correction/reassessment/history в live case 08 pass. |
+| N03: count, повторы и источники | Training samples не превращаются в независимые class votes; одна primary source не усиливается от повторного чтения; её dependency root переиспользуется. Изменение belief другого sample/reference делает Profile stale даже за пределами preview; слабый оценённый input виден модели. | Component pass. |
+| N04: withdrawal/reliability | Withdrawal или переоценка origin инвалидирует прошлый Profile; полная новая оценка может вернуть prior с evidence_count=0. | Component pass. |
+| N05: scope/time/meaning | Породная норма не оценивает другую породу; conditions совпадают точно; default/explicit/describe и Instance/Facet views одного состояния согласованы. Другие Facets и изменённое описание класса создают отдельный смысловой вопрос. | Component pass. |
+| N06: interval/weighted/sparse | Частоты влияют на fit как частоты; interval bounds и возможные классы сохраняют неточность; sparse/degenerate не выдумывают разделение. | Component pass. |
+| N07: typed computation | Scalar, interval, normal и quantiles сохраняют unit/semantics; wrong binding/type отвергается; model child не материализует read. | Component и worker IPC/replay integration pass. |
+| N08: exact backup и unknown | Проверенный snapshot и точный completed ProgramRun читаются без current fallback и мутаций live stores; отсутствующий/повреждённый snapshot, trace или несовпавшее world time даёт UNKNOWN. Более новый UNKNOWN не воскрешает старый estimate. | Backup/worker integration pass; сохранённые categorical results также сохраняют shared Profile. |
+| N09: property selection | Numeric/ordinal order, circular distance, explicit Profile threshold, unknown isolation, computed source bridge. | Component pass; Profile alternative-strength ranking через actual `select_properties` в live case 08 pass. |
+| N10: внешняя таблица → норма | Частоты 3×1/6×3/9×4/12×2 обучают norm с count=10 и boundaries 6/9; после restore гипотетические 7 kg дают условный Medium. Анонимные строки не создают собак или индивидуальных Profiles. | Component pass; полный table/norm live case 08 pass. |
+
+### История проверок и исправлений текущего этапа
+
+До последних исправлений freshness, class meanings и temporal/relation contracts полный fast suite дал **725 passed**, portable integration — **159 passed**, native — **22 passed, 4 skipped**; Ruff, format и Program layout прошли. Это промежуточный checkpoint, а не финальная проверка последующего кода.
+
+Четыре live-регрессии описательного пути — отдельные 8/5/10, справочник, frequency table и посылки — прошли вместе: **4 passed, 216.85 s**. Все case artifacts в `/private/tmp/evertree-attribution-regression-live-01/test_model_learns_attribution_{0..3}/attribution-learning.json` фиксируют неизменный production hash `8c95acf7ae5d25263d8ffadd4b823d13e13d456c8129acfdaf113b09770a9cda`. Это положительная регрессия существующих возможностей до последних исправлений, не доказательство нового качественного Profile.
+
+Первый запуск нового norm harness (`/private/tmp/evertree-attribution-norm-live-01/.../attribution-norm-learning.json`) остановился при initial assessment с `unexpected_model`: helper не принимал структурированный model request этой фазы. Во втором запуске норма не появилась: естественный вопрос ошибочно отправлялся только в KnowledgeIntegration вместо выполнения сознанием. Это не проверяло intended task path. Harness исправлен: первые три рассказа идут через реальный KI, вопрос — через production conscious step с обычными semantic tools, анализом, интеграцией и evidence assessment.
+
+Третий norm run обнаружил настоящий дефект production boundary: callback из SDK reader thread терял execution owner/semantic scope, и `graph.search` внутри conscious step отклонялся. Исправление переносит копию invocation context в каждый callback; проверка через реальный CodexProvider и отдельный SDK-style thread воспроизводит прежний отказ и подтверждает исправление, сохраняя запрет чужой записи. Связанный набор дал 64 passed, executor integration — 11 passed. Первые три failures сохранены.
+
+Norm run 04 завершился failure примерно за 222 s: модель добавила в норму `comparison_group`, хотя исходные измерения имеют пустые conditions. Runtime корректно вернул count=0 при несовпадающих условиях; usable norm/Profile не получены. Это ошибка выбора и сохранения критерия, не ошибка подсчёта. Дополнительный audit обнаружил отсутствие `interpret_property`, `select_properties` и explicit point policy в conscious tool surface, хотя Program tools уже предоставляли их. Следующий checkpoint исправляет этот разрыв API и уточняет, что условия измерения нельзя выдумывать ради названия группы сравнения.
+
+Norm run 05 завершился failure примерно за 119 s без сохранённой нормы: KnowledgeIntegration передавал старые source refs вне текущего supplied experience. Guard правильно отклонял такую запись, хотя текущий retained analysis уже содержал нужную ancestry. Следующее узкое исправление объясняет использование допустимой текущей ссылки и делает сообщение об отказе actionable, не расширяя доступ к произвольным источникам. Положительного live результата learned norm/Profile на этом этапе ещё нет.
+
+Norm run 07 на `d0b0…6766` завершился **2 failed, 219.98 s**. Первый case создал ready norm с count=3 и boundaries около 7 и 26/3, используя округлённые quantiles. Затем SDK event для `record_analysis` содержал невалидный source path: trace recorder попытался разрешить его до callback и упал, поэтому assessment/restore не были достигнуты. Исправление сохраняет невалидированное SDK event как opaque JSON с диагностикой и разрешает только валидные зависимости; настоящий callback по-прежнему отклоняет неверный note и допускает исправленный повтор. Новый regression использует настоящий application handler и отдельный SDK-style thread. Во втором case frequency distribution с count=10 была сохранена правильно, но предложенные сознанием середины 7.5/10.5 были ошибочно записаны как bands вместо learned norm. Уточнён контракт: явные cutoffs источника — bands, frequencies — distribution, относительные категории из распределения — qualitative Property со ссылкой на него; аналитическое предложение не превращается в исходное справочное правило. Артефакты сохранены в `/private/tmp/evertree-attribution-norm-live-07`.
+
+Первый case прогона 08 прошёл на неизменном `51f6…6400` и фактической конфигурации `gpt-6-luna/high`: три наблюдения, conscious создание нормы, автоматический assessment, JSON restore, новый reader с `read_property`/`select_properties`/`interpret_property`, независимый review 4/4 и correction 8→9 с reassessment и сохранённой историей. Победитель каждого Profile имеет Strength=0.6; это оценка evidence, не доказанная калибровка. Гипотетические 7 kg дали условный Small по сохранённому default criterion и не добавили наблюдение. Артефакт: `/private/tmp/evertree-attribution-live-08/test_real_model_learns_relativ0/attribution-norm-learning.json`.
+
+Второй case 08 также прошёл: natural acquisition внешней таблицы, conscious создание qualitative Property со ссылкой на сохранённый distribution, count=10 и boundaries 6/9, JSON restore и новый `interpret_property(7 kg)` → Medium. Индивидуальные собаки не созданы, чтение не меняет stores. Артефакт: `/private/tmp/evertree-attribution-live-08/test_real_model_learns_frequen0/attribution-table-norm-learning.json`.
+
+Третий case 08, descriptive selection, прошёл: один typed guide сохранён и прочитан, exact endpoint flags соответствуют источнику, три собаки получили правильные категории, Туман без массы сохранил unknown. Mean=50/3 kg, большая и ближайшая к 25 kg собака — Гром. Все четыре semantic review criteria прошли. Артефакт: `/private/tmp/evertree-attribution-live-08/test_model_learns_attribution_0/attribution-learning.json`. Четвёртый case, посылки со смешанными units и условной категорией 750 g, также прошёл hard assertions и review. Это новые acquisitions после прежних failures, не пересмотр старых артефактов. Итог прогона 08: **4 passed, 7 deselected, 516.39 s**; XML и log — `/private/tmp/evertree-attribution-live-08.xml` и соседний `.log`.
+
+Дополняющий descriptive-final-08 дал **7 passed, 2 deselected, 467.92 s**: отдельные наблюдения, справочник, frequency table, повтор/исправление записи, конфликтующие справочники, интервальная статистика и породная область. Все hard assertions и четыре semantic review criteria каждого case прошли. Для 7 kg общее правило дало Small, Chihuahua rule — Large, применение последнего к Labrador сохранило unknown. Source hash start/end/current равен финальному `51f6…6400`. Артефакты находятся в `/private/tmp/evertree-attribution-descriptive-final-08`, XML и log — в соседних `.xml`/`.log`. Вместе с предыдущим запуском это 9 descriptive и 2 learned norm cases, все на одной версии и `gpt-6-luna/high`.
+
+Пять остальных descriptive live-сценариев на hash `408c1e3891a91a658dc529e03b36b5342a54fbab09d73eea24ed954922bef413` завершились с тремя passes (correction, conflicting guides, breeds) и двумя failures. Interval case правильно сохранил данные, посчитал 7.6 и [6.6,8.6], указал категорию `unknown`, но oracle запрещал даже explicit unknown. Он уточнён: пустой список либо unknown допустимы, выдуманный класс отвергается; сохранённый ответ проходит уточнённые offline hard checks и negative control. Исходный pytest failure сохранён. Дополнительный внешний review старого ответа не запускался; новый полный descriptive run проверяет acquisition, использование и обычный semantic review заново.
+
+В selection case найден реальный дефект приобретения правила: источник говорит «до 10 включительно», а модель сохранила `boundary_inclusive=[false,true]`. Категории 7/15/28 и ближайшая к 25 собака были верны, однако ровно 10 kg ошибочно относились бы к Medium. Прежние hard checks проверяли только внутренние точки и пропустили ошибку. Теперь все inclusive guide fixtures проверяют точные boundaries и flags в сохранённом правиле и runtime report; компонентные negative controls отвергают неверную включительность. Уточнены инструкции приобретения и проверки каждой границы; исправление подтверждено новым live acquisition 08. Отдельное замечание reviewer к фразе «неоценённые по надёжности» не отменяет этого дефекта: unassessed означает отсутствие оценки, а не ненадёжность. Исходный прогон не считается успешным по правильной прозе или после изменения rubric.
+
+Попытка полного descriptive run в `/private/tmp/evertree-attribution-descriptive-live-final` на hash `0f70b0136cd57ea00eaa33a19badf9ba64422c621e6ce9290508403d3e8753da` остановлена после двух успешных cases и failure frequency table. В третьем case приобретение, restore, provenance и runtime верны: count=10, mean=8.1, для 7 kg четыре значения ниже и шесть выше. Проза также верна, но structured comparison fields равны null/null вместо 6/4. Test descriptions двусмысленно говорили «known dogs», хотя вопрос касается внешней frequency population; они уточнены без изменения ожидаемых чисел или assertions. Это failure structured ответа при двусмысленном тестовом контракте, не runtime failure и не pass; reviewer не запускался. Четвёртый acquisition прерван, его private Redis namespace очищен. Все исходные артефакты сохранены; новый suite проверяет эти случаи заново.
+
+Descriptive live 06 на hash `b1b6…5b58` завершился **5 passed, 4 failures, 714.60 s**. Прошли отдельные наблюдения, справочник, frequency table, correction и conflicting guides. Последние четыре остановлены в acquisition первого сообщения, до usage/reviewer. Interval case выполнил семь tools за примерно 13 s, затем 107.851 s не было новых tool events до лимита 120 s; причина паузы не установлена. Breed case не вызвал tools и получил SDK `workspace routing discovery timed out` после 97.378 s. Selection и parcels также не вызвали tools: routing discovery/reconnect завершились timeout. Эти остановки не считаются успешной проверкой, но не доказывают дефект числового runtime или необходимость увеличить лимит для полезной работы. Artifacts `_0…_8` и `timeout-diagnostics.json` сохранены в `/private/tmp/evertree-attribution-descriptive-live-06`; четыре private Redis namespaces проверены пустыми.
+
+В descriptive 07 на `d0b0…6766` interval и breed прошли. Selection выявил новое приобретение без typed numeric reference: справочник сохранён только описанием plain Concept. Вызовы `interpret_property` для числового свойства вернули UNKNOWN, но reader всё равно выдал категории в прозе и structured ответе. Числовые count=3, mean=50/3 и nearest к 25 kg были правильны; это не закрывает отсутствие применимого сохранённого правила. Parcel case прошёл все hard assertions, но reviewer отверг обычные слова «измеренные посылки» и «измерения имеют статус unassessed» как усиление источника. Это привело к уточнению общего rubric ниже и новому acquisition/review 08; исходный pytest failure не переименован в pass. Артефакты и `selection-and-parcel-failure-audit.json` сохранены в `/private/tmp/evertree-attribution-descriptive-live-07`.
+
+Перед новым повтором ordinary и extended reviews используют единый source-meaning criterion: слова «измерение» и unassessed сами по себе не заявляют личную проверку или ненадёжность. Явные неподдержанные утверждения по-прежнему недопустимы. Selection oracle также уточнён: он требует ровно четыре собаки в Dog/subtype domain, не запрещая отдельный Instance приюта. Три component controls проверяют допустимый Shelter и недопустимую лишнюю собаку; весь bridge набор дал 18 passed. Это изменения точности приёмки, без пересмотра исходных failures или повторного review старых ответов.
+
+Финальный portable integration повтор сначала использовал неверный локальный Redis endpoint из окружения запуска и получил connection refused. После загрузки конфигурации реального test Redis полный suite прошёл: 159 tests. Это исправление конфигурации запуска, без изменения production кода; исходный ошибочный запуск сохранён отдельно.
+
+Один native прогон завис на demo task из-за отсутствующего managed Git object при `evaluate_candidate`; attribution в ошибке не участвовала. Диагностика сохранена в `/private/tmp/evertree-native-hang-99566.json`; этот запуск не назван успешным. Полный повтор дал указанные выше 22 passed/4 skipped.
+
+## Итог описательного MVP до текущего этапа
 
 Реализован описательный числовой MVP: агент приобретает отдельные измерения, справочные границы и таблицы частот; новые запросы считают статистику, применяют выбранный справочник и находят ближайший известный объект. Источники, условия, единицы и BeliefData сохраняются. Чтение не обучает модель и не меняет stores; условная метка не выдаётся за уверенность в действительной категории объекта.
 
 Последний offline suite: **634 passed**. Все **156 различных portable integration cases** прошли через полный запуск и целевые повторы; native transport test также прошёл. Для исходных трёх и шести расширенных live-сценариев есть положительные evidence приобретения и использования через настоящий Redis Search, embeddings и отдельный reader после serialized restore. Это результаты нескольких запусков и checkpoints, включая явно отмеченные usage-only повторы; не один чистый suite на последней версии и не измеренные 80% реальных обращений. Ошибки модели, инфраструктуры и проверки сохранены ниже. Финальная проверка отдельных наблюдений включает успешные hard assertions и повтор независимого review того же ответа после уточнения rubric, с отрицательным контролем; первоначальный pytest failure не переименован в pass.
 
-Полная плоскость ещё не завершена: далее нужны canonical qualitative/Profile contracts, наученные версионированные нормы, typed Program readers и точное восстановление, затем общий выбор по свойствам. Для каждого этапа ниже указан результат и приёмочный сценарий. Для простого среднего и условного применения сохранённого справочника эти механизмы не требуются.
+На этом checkpoint ещё отсутствовали canonical qualitative/Profile contracts, наученные версионированные нормы, typed Program readers, точное восстановление и общий выбор по свойствам. Их реализация относится к текущему этапу выше; старые результаты не доказывают новые возможности.
 
 ## Что уже работает в исходной ревизии
 
@@ -317,7 +454,7 @@ Rubric уточнён: общие слова weights/measurements сами по 
 
 Отдельно reference с `unit=null` удавалось сохранить для `kind=property` без typed attribution declaration; последующий summary не находил допустимое numeric свойство. Исправление атомарно отклоняет такую новую запись до явного объявления контракта, без добавления незаказанной миграционной поддержки. Независимый ручной повтор подтвердил отказы для зарезервированных keys без mutation и Python TypeError, успешное matching arrays/nested maps, различие boolean/number и отклонение reference без declaration. Новые component regressions также прошли. Для условий `relate` разрешены структурированные JSON values; relation arguments сохраняют прежний scalar/array контракт. Отдельная component-проверка выявила и подтвердила исправление повторного кодирования временных полей публичного summary. Исходные отказы учтены; успешный smoke не подменяет live-прогоны матрицы.
 
-## Порядок реализации
+## Первоначальный порядок реализации описательного MVP
 
 ### Этап 1 Объявления через семантические tools
 
@@ -331,14 +468,14 @@ Rubric уточнён: общие слова weights/measurements сами по 
 
 Провести три контрольных пути выше через реальные semantic writes и чтения; затем через настоящий KnowledgeIntegration. Обучение и использование — разные сообщения/контексты. Проверять фактические записи и источники, арифметику и отсутствие мутаций на read. Отдельно проверить snapshot/restore и повторное использование новой задачей.
 
-### Следующие этапы завершения плоскости
+### Порядок завершения плоскости после описательного MVP
 
-Следующие этапы расширяют уже работающие descriptive reads. Они используют существующие graph, BeliefStore, Learning и Program contracts; отдельный ML framework не требуется.
+Этот порядок был следующим после описательного MVP и реализован в текущем этапе выше. Он задаёт зависимости и приёмку; успешные старые numeric live-прогоны не закрывают новые пункты автоматически.
 
 | Порядок | Результат и зависимость | Приёмочный сценарий |
 | --- | --- | --- |
-| 1. Canonical qualitative readings | Объявления nominal/ordinal properties, canonical binding к exclusive/exhaustive alternatives и явный observation/evidence adapter. Разделить условный rule result, degree of membership и epistemic Profile; reads не создают evidence. Это основа последующего learned mapper. | Для массы у границы с заданной uncertainty и проверяемой моделью наблюдения чтение возвращает полный Profile Small/Medium/Large с источниками. Без такой модели сохраняется условная метка либо unknown, без вымышленного p=1; повторное чтение не меняет beliefs. |
-| 2. Наученная норма | Обучать определённый criterion через существующий Learning pipeline; сохранять domain, sampling basis, immutable version и проверку на отложенных данных. Для квантилей обучающий input — исходные observations; для supervised classes — реальные labels/outcomes. Не создавать фиктивный LearningSignal ради накопления samples. Зависит от контракта класса и belief из этапа 1. | На обучающей части сохраняется версия нормы; ранее не использованная масса интерпретируется через неё. После новых данных появляется новая версия, старый сохранённый результат воспроизводится со старой. Проверка на отложенной части подтверждает заранее заданный критерий; перенос нормы породы на всех собак не происходит молча. |
+| 1. Canonical qualitative readings | Объявления nominal/ordinal properties и source-backed evidence adapter через общий BeliefStore. Условный rule result, degree of membership и epistemic Profile различаются; reads не создают evidence. | Контролируемая оценка источника даёт полный Profile Small/Medium/Large без вымышленного p=1 и без Support=count. Неоценённый или stale вопрос даёт UNKNOWN; повторное чтение не меняет beliefs. |
+| 2. Наученная норма | Эмпирические weighted quantiles из сохранённых observations либо одного source distribution; semantic/fit/data revisions и pinned dependencies. Существующий Learning pipeline нужен для supervised labels/outcomes, а не как промежуточный склад измерений. | На 5/8/10 fit сохраняет 7 и 26/3; удержанное значение 7 интерпретируется без нового наблюдения. Correction создаёт новую fit revision, прежний checkpoint сохраняет результат. Породная норма не переносится на всех собак. Это проверка процедуры и источников, не статистическая оценка генерализации по трём собакам. |
 | 3. Typed Program readers и точное восстановление | Подключить необходимые typed результаты к общему PropertyReading через существующий Program contract. Восстанавливать definitions, bindings, model versions и источники из настоящего exact backup, без ручной регистрации readers. Зависит от устойчивых деклараций и versioning первых двух этапов. | После backup и нового runtime numeric, qualitative и одно Program-backed свойство дают те же значения, Profile и provenance на заданных world/knowledge times. Недоступная историческая версия возвращает unknown, а не текущую модель. |
 | 4. Общий выбор по свойствам | Обобщить уже реализованный numeric nearest до единых filter/rank/nearest поверх PropertyReading с явными правилами для unknown, partial Profile, единиц и ties. До появления нужного масштаба обходиться без computed-property индекса. Зависит от общего read contract; learned norms используются только там, где выбран соответствующий criterion. | Числовой пример 7/15/28 kg с unknown остаётся регрессией: nearest к 25 kg — 28 kg, distance=3. Дополнительно фильтр qualitative Profile использует явно заданный порог, сохраняет недостаточные оценки как unknown и объясняет решение через criterion и evidence. |
 | 5. Расширенные оси по потребности | Добавлять composite axes, learned transforms, drift handling и другие возможности только для измеренной задачи, которую предыдущие этапы не решают. Сначала фиксировать требуемое улучшение, sampling semantics и стоимость. | На реальном сценарии новая ось улучшает заранее выбранный результат против простого свойства, сохраняет источники и воспроизводимость; без такого эффекта расширение не включается в runtime. |
@@ -376,20 +513,18 @@ Live-проверка подаёт рассказы естественным я�
 
 Проверки новой реализации и их результаты добавляются только после запуска. Описанные критерии являются задачами приёмки, а не утверждением, что они уже пройдены.
 
-## Что отложить после MVP
+## Необязательные расширения после текущего этапа
 
 | Возможность | Когда возвращаться |
 | --- | --- |
-| Frozen quantile norms и автоматическая qualitative классификация локальной выборки | Когда определены смысл классов, достаточность и применение устойчивой нормы. Описательное среднее не требует этой системы. |
-| Observation-model adapter и новые epistemic Profiles | Для убеждения о действительной категории объекта, с обоснованной оценкой evidence; не для условной арифметики источника. |
 | `peak_modes`, isotonic/learned_monotonic, membership functions | Когда есть labels/outcomes и задача, которую не решают простые правила. |
 | Streaming sketches, EMA, drift detector, InstanceSketch, RecentSamples | После измерения объёма и необходимости динамики. |
 | Автоматическое объединение источников и породных strata | После явного контракта независимости, sampling units и overlap. |
-| Общие typed results/Program readers и computed-property indexes | После доказанной необходимости; использовать существующие Program contracts. |
+| Computed-property indexes и автоматическая материализация | После измеренного выигрыша; typed results и Program readers уже входят в текущую реализацию. |
 | Composite axes, PCA/IPCA, автономное открытие осей | После проверки их операционной пользы; для BodyMass не нужны. |
-| Произвольная историческая реконструкция, causal engine, query DSL | Это отдельные механизмы, не следствие наличия numeric summary. |
+| История между exact backups, causal engine, новый query DSL | Exact saved checkpoints уже читаются; произвольное восстановление отсутствующих промежуточных состояний — отдельная задача. |
 
-Круговая дистанция уже есть: сохранить регрессию `350° ↔ 10° = 20°`. Полная плоскость шире этого MVP; успешное приобретение описательного знания не означает завершение всех архитектурных возможностей.
+Круговая дистанция проверяется регрессией `350° ↔ 10° = 20°`. `InstanceSketch`, `RecentSamples`, альтернативные формы numeric relation и composite axes в архитектуре — варианты расширения, а не основание добавлять параллельные структуры без сценария. Текущий контракт завершает основные операции плоскости; наличие этих необязательных примеров в design document не означает их реализацию.
 
 ## Проверки исходной реализации
 
@@ -405,7 +540,7 @@ Live-проверка подаёт рассказы естественным я�
 
 **Эти baseline-тесты не доказывают сквозное приобретение и использование новых описательных свойств.** Для новой реализации нужны отдельные результаты по трём путям и условиям приёмки выше.
 
-## Реализовано после аудита и проверено
+## Исторические результаты описательного MVP
 
 Добавлены source-backed `create_property` и `create_property_reference`, общий `summarize_property`, подключение к semantic tools и инструкции KnowledgeIntegration. [Числовая сводка](../../src/evertree/core/attribution_population.py) считает известные индивидуальные наблюдения и отдельные внешние distributions, применяет bands с включительными либо исключительными границами, сохраняет sources/BeliefData и ограничивает previews. Новые stores и обязательный train/refresh не добавлены.
 

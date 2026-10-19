@@ -197,7 +197,6 @@ class ToolsMixin:
     async def _graph_tool(self, task_id, name, args):
         """Route shared semantic tools through task-scoped reads and checked writes."""
         from ..core.semantics.reading import fact_card, fact_nodes, resolve
-        from ..core.values import timestamp
 
         if name in {"graph.query", "graph.walk"}:
             return await self._semantics().execute(name, args, {"task_id": task_id})
@@ -214,21 +213,35 @@ class ToolsMixin:
                 for f in self.graph.facts()
                 if node.id in fact_nodes(self.graph, f)
             ]
-        if name == "graph.read_property_at":
-            subject, prop = (
-                resolve(self.graph, args["subject"]),
-                resolve(self.graph, args["property"]),
-            )
-            if isinstance(subject, dict) or isinstance(prop, dict):
-                return {"subject": json_value(subject), "property": json_value(prop)}
-            return json_value(
-                self.attribution.read_property(
-                    subject.id,
-                    prop.id,
-                    valid_at=timestamp(args["valid_at"]) if args.get("valid_at") else None,
-                    known_at=timestamp(args["known_at"]) if args.get("known_at") else None,
-                    **args.get("parameters", {}),
+        if name in {"graph.read_property", "graph.read_property_at", "graph.select_properties"}:
+            from ..core.attribution_sources import read_property, select_properties
+
+            async def step(method, payload):
+                return self._core_operations().execute(
+                    method,
+                    payload,
+                    metadata={
+                        "task_id": task_id,
+                        "program": {"role": "model", "revision": self._program_revision()},
+                    },
                 )
+
+            async def call(program, arguments):
+                return await self._run_program(task_id, program, arguments)
+
+            if name == "graph.select_properties":
+                payload = dict(args)
+                payload["valid_at"] = payload.pop("at", None)
+                return await select_properties(step, call, **payload)
+            return await read_property(
+                step,
+                call,
+                args["subject"],
+                args["property"],
+                valid_at=args.get("at", args.get("valid_at")),
+                known_at=args.get("known_at"),
+                parameters=args.get("parameters"),
+                point_policy=args.get("point_policy"),
             )
         return self._core_operations().execute(
             name,

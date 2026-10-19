@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from itertools import pairwise
 
+from .beliefs import element_target
 from .datasets import content_revision
 from .graph.matching import values_equal
 from .graph.types import Facet
@@ -69,7 +70,7 @@ def convert_value(value, source_unit, target_unit):
 
 def validate_reference(reference, nodes, parents):
     """Validate a graph-backed numeric reference and every dependency before commit."""
-    from .attribution import validate_parameters
+    from .attribution import PropertyDefinition, validate_parameters
 
     expected = {
         "property",
@@ -110,6 +111,17 @@ def validate_reference(reference, nodes, parents):
         raise ContractError("Reference unit must be a nonempty unit or null")
     convert_value(1, unit, definition.get("unit"))
     validate_parameters(reference["conditions"])
+    contract = PropertyDefinition(id=prop.id, **definition)
+    conditions = reference["conditions"]
+    if set(contract.required_parameters) - conditions.keys():
+        raise ContractError("Reference conditions must supply required property parameters")
+    contract.validate_inputs(conditions, nodes)
+    if any(
+        kind == "node" and conditions.get(name) not in nodes
+        for name, kind in contract.parameter_types.items()
+        if name in conditions
+    ):
+        raise ContractError("Reference node parameters require existing graph identities")
     boundaries, classes, samples = (
         reference["boundaries"],
         reference["classes"],
@@ -238,23 +250,8 @@ def _population_belief(runtime, domain, property_id, sources, parameters, at):
     }
 
 
-def summarize_property(
-    runtime,
-    domain,
-    property_id,
-    *,
-    value=None,
-    unit=None,
-    reference=None,
-    valid_at: datetime | None = None,
-    **parameters,
-):
-    """Summarize recorded individuals and separate references without training or belief writes.
-
-    With no valid_at, use each individual's latest recorded measurement, including historical
-    reports. Explicit world time restricts observations to applicable facts. Reference results
-    are conditional calculations; neither class membership nor population reliability is implied.
-    """
+def collect_observations(runtime, domain, property_id, *, valid_at=None, **parameters):
+    """Collect every selected individual and source for summaries and explicit norm fitting."""
     graph = runtime.graph
     domain_node = graph.get(domain)
     if domain_node.kind != "prototype":
@@ -267,9 +264,6 @@ def summarize_property(
         raise ContractError("Property is not declared for this population")
     at = timestamp(valid_at) if valid_at is not None else None
     target_unit = definition.unit
-    supplied = convert_value(value, unit, target_unit) if value is not None else None
-    if value is None and unit is not None:
-        raise ContractError("A comparison unit requires a comparison value")
     missing = set(definition.required_parameters) - parameters.keys()
     if missing:
         return {"status": "needs_parameters", "required_parameters": sorted(missing)}
@@ -311,7 +305,7 @@ def summarize_property(
         except ContractError as exc:
             exclusions.append({"fact": fact.id, "reason": str(exc)})
             continue
-        belief = _read_belief(runtime, fact.belief_target, at)
+        belief = _read_belief(runtime, element_target(fact), at)
         subject = graph.get(fact.args["entity"])
         observation = {
             "subject": owner,
@@ -332,6 +326,43 @@ def summarize_property(
         observations.append(observation)
         rows.append({"lower": numeric, "upper": numeric, "count": 1})
     rows.sort(key=lambda row: row["lower"])
+    return {
+        "observations": observations,
+        "rows": rows,
+        "excluded": exclusions,
+        "unit": target_unit,
+        "at": at,
+    }
+
+
+def summarize_property(
+    runtime,
+    domain,
+    property_id,
+    *,
+    value=None,
+    unit=None,
+    reference=None,
+    valid_at: datetime | None = None,
+    **parameters,
+):
+    """Summarize recorded individuals and separate references without training or belief writes.
+
+    With no valid_at, use each individual's latest recorded measurement, including historical
+    reports. Explicit world time restricts observations to applicable facts. Reference results
+    are conditional calculations; neither class membership nor population reliability is implied.
+    """
+    graph = runtime.graph
+    collected = collect_observations(runtime, domain, property_id, valid_at=valid_at, **parameters)
+    if collected.get("status") == "needs_parameters":
+        return collected
+    observations, rows, exclusions = (
+        collected[key] for key in ("observations", "rows", "excluded")
+    )
+    target_unit, at = collected["unit"], collected["at"]
+    supplied = convert_value(value, unit, target_unit) if value is not None else None
+    if value is None and unit is not None:
+        raise ContractError("A comparison unit requires a comparison value")
     sources = [item["source"] for item in observations]
     nearest = None
     if supplied is not None and observations:
@@ -381,6 +412,7 @@ def summarize_property(
             )
             continue
         provenance = _provenance(graph, node.id)
+        source_belief = _read_belief(runtime, element_target(node), at)
         result = {
             "id": node.id,
             "name": node.name,
@@ -388,6 +420,10 @@ def summarize_property(
             "reference_kind": data["reference_kind"],
             "conditions": json_value(data["conditions"]),
             "source": provenance,
+            "source_belief_data": json_value(source_belief.data)
+            if source_belief is not None
+            else None,
+            "source_belief_status": _belief_status(source_belief),
             **_population_belief(
                 runtime,
                 domain,

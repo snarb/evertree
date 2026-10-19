@@ -9,8 +9,10 @@ import time
 from contextlib import contextmanager
 from uuid import uuid4
 
+from ..core.memory.types import _references
 from ..core.provider import LLMRequest, current_tool_call_id
 from ..core.runtime.coordination import semantic_scope
+from ..core.values import ContractError, json_value
 
 
 class TaskExecutionMixin:
@@ -119,12 +121,13 @@ class TaskExecutionMixin:
 
         def remember_refs(value):
             from ..core.cognition.steps import trace_reference
-            from ..core.values import json_value
 
             if isinstance(value, dict):
                 if "event_ref" in value and set(value) <= {"event_ref", "output_path"}:
                     try:
-                        ref = json_value(trace_reference(value))
+                        reference = trace_reference(value)
+                        self.memory.resolve(reference)
+                        ref = json_value(reference)
                     except ValueError:
                         # Context may contain ordinary data that resembles a trace reference.
                         return
@@ -201,6 +204,8 @@ class TaskExecutionMixin:
                                 "graph.walk",
                                 "graph.read_property",
                                 "graph.summarize_property",
+                                "graph.interpret_property",
+                                "graph.select_properties",
                             }:
                                 semantic_tools.remember_read(
                                     name.removeprefix("graph."), args, output
@@ -223,9 +228,19 @@ class TaskExecutionMixin:
                 async for event in self.provider.run(
                     request_id, request, tool_handler=handle_tool, approval_handler=handle_approval
                 ):
-                    trace_event = self.memory.record(
-                        run, "provider_event", output={"kind": event.kind, "data": event.data}
-                    )
+                    output = {"kind": event.kind, "data": event.data}
+                    try:
+                        for reference in _references(event.data):
+                            self.memory.resolve(reference)
+                    except ContractError as exc:
+                        # Unchecked SDK arguments are data; their tool validates the references.
+                        output["data"] = {
+                            "unvalidated_json": json.dumps(
+                                json_value(event.data), ensure_ascii=False
+                            ),
+                            "reference_error": str(exc),
+                        }
+                    trace_event = self.memory.record(run, "provider_event", output=output)
                     if event.kind == "session":
                         session = {"provider": event.data["provider"], "id": event.data["id"]}
                         if conversation:

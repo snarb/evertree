@@ -12,6 +12,8 @@ _NODE_CREATES = CREATE_ACTIONS - {
     "define_relation",
     "create_property",
     "create_property_reference",
+    "create_qualitative_property",
+    "save_property_result",
 }
 
 
@@ -28,7 +30,7 @@ class _DeltaBuilder:
         self.creates.append(node)
         return node.id
 
-    def fact(self, relation, args, description=None, conditions=None):
+    def fact(self, relation, args, description=None, conditions=None, criterion=None):
         """Create a relation instance of the `relation` type."""
         return self.node(
             name=relation.name,
@@ -36,7 +38,10 @@ class _DeltaBuilder:
             relation_type=relation.id,
             args=args,
             description=description,
-            properties={"conditions": conditions} if conditions else {},
+            properties={
+                **({"conditions": conditions} if conditions else {}),
+                **({"criterion": criterion} if criterion is not None else {}),
+            },
         )
 
     def relation_type(self, subject):
@@ -54,6 +59,11 @@ class _DeltaBuilder:
 def _compile_update(graph, action, material):
     node = graph.get(action["object"])
     changes = action["changes"]
+    protected = {"qualitative_norm", "norm_state"}
+    if (protected & node.properties.keys() and "properties" in changes) or (
+        isinstance(changes.get("properties"), dict) and protected & changes["properties"].keys()
+    ):
+        raise ContractError("Learned norms must be revised through revise_property_norm")
     allowed = {field.name for field in dataclasses.fields(node)} - {"id", "kind", "belief_target"}
     if not changes or changes.keys() - allowed:
         raise ContractError("Update requires nonempty mutable fields of this object type")
@@ -124,16 +134,58 @@ def _compile_relation_type(graph, action, material):
 
 def _compile_property(graph, action, material):
     builder = _DeltaBuilder(graph)
+    scale = action.get("scale", "numeric")
+    definition = {
+        "scale": scale,
+        "source": action.get(
+            "source", "classification" if scale in {"nominal", "ordinal"} else "numeric"
+        ),
+        "unit": action["unit"],
+        "applies_to": action["applies_to"],
+        **{
+            key: action[key]
+            for key in (
+                "classes",
+                "period",
+                "required_parameters",
+                "parameter_types",
+                "selection",
+                "relation_type",
+                "view",
+                "subject_slot",
+                "program",
+            )
+            if key in action
+        },
+    }
     identity = builder.node(
         kind="property",
         name=action["name"],
         description=action["description"],
+        properties={"attribution": definition},
+    )
+    return builder.result(identity)
+
+
+def _compile_result(graph, action, material):
+    builder = _DeltaBuilder(graph)
+    identity = builder.node(
+        kind="concept",
+        name=action["name"],
+        description=action["description"],
         properties={
-            "attribution": {
-                "scale": "numeric",
-                "source": "numeric",
-                "unit": action["unit"],
-                "applies_to": action["applies_to"],
+            "attribution_result": {
+                key: action[key]
+                for key in (
+                    "subject",
+                    "property",
+                    "conditions",
+                    "value_U",
+                    "unit",
+                    "valid_from",
+                    "valid_until",
+                )
+                if key in action
             }
         },
     )
@@ -174,7 +226,9 @@ def _compile_relate(graph, action, material):
     if len(arguments) != len(action["arguments"]) or len(conditions) != len(action["conditions"]):
         raise ContractError("Relation roles and conditions must be distinct")
     relation = builder.relation_type(action["relation"])
-    identity = builder.fact(relation, arguments, action["description"], conditions)
+    identity = builder.fact(
+        relation, arguments, action["description"], conditions, action.get("criterion")
+    )
     return builder.result(identity)
 
 
@@ -215,18 +269,41 @@ _COMPILERS = {
     "define_relation": _compile_relation_type,
     "create_property": _compile_property,
     "create_property_reference": _compile_property_reference,
+    "save_property_result": _compile_result,
     "relate": _compile_relate,
     "save_note": _compile_note,
     **dict.fromkeys(_NODE_CREATES, _compile_node),
 }
 
 
-def compile_action(graph, action, material):
+def compile_action(graph, action, material, *, attribution=None):
     """Compile one write action into a GraphDelta and the affected object's ID (None for delete).
 
     Runs inside the caller's single-operation transaction, so reserved IDs are never leaked.
     """
     validate_action(action)
+    if action["action"] in {"create_qualitative_property", "revise_property_norm"}:
+        from ..attribution_norms import prepare_norm, revise_norm
+
+        if attribution is None:
+            raise ContractError("Norm fitting requires the shared Attribution Runtime")
+        definition = {
+            key: action[key]
+            for key in (
+                "property",
+                "domain",
+                "classes",
+                "conditions",
+                "quantiles",
+                "reference",
+                "min_samples",
+                "hysteresis",
+            )
+            if key in action
+        }
+        if action["action"] == "create_qualitative_property":
+            return prepare_norm(attribution, action["name"], action["description"], definition)
+        return revise_norm(attribution, action["object"], definition), action["object"]
     compiler = _COMPILERS.get(action["action"])
     if compiler is None:
         raise ContractError("Expected a graph write action")

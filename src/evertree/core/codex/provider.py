@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import uuid
+from contextvars import copy_context
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -181,6 +182,7 @@ class CodexProvider:
         if request.mode == "model" and any(not t.read_only for t in request.tools):
             raise ProviderError("Model calls cannot expose action tools")
         loop = asyncio.get_running_loop()
+        invocation_context = copy_context()
         queue: asyncio.Queue[LLMEvent | None] = asyncio.Queue()
         model_name, effort = request.model or MODEL, request.effort or EFFORT
         available_sets = {s.name: s.for_mode(request.mode) for s in request.tool_sets}
@@ -334,7 +336,10 @@ class CodexProvider:
                 invocation.callbacks.discard(task)
 
         def handler(method, params):
-            future = asyncio.run_coroutine_threadsafe(server_request(method, params), loop)
+            # SDK reader threads do not inherit the admitted execution context.
+            future = invocation_context.copy().run(
+                asyncio.run_coroutine_threadsafe, server_request(method, params), loop
+            )
             try:
                 return future.result()
             except Exception:  # noqa: BLE001 -- failed SDK callbacks must deny the operation
