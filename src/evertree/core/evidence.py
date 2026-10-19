@@ -488,15 +488,29 @@ class GraphEvidence:
         self.beliefs.mark_assessed(target, revision)
         return {"element": element, **result}
 
-    def withdraw(self, source_ref: Any, by: Any) -> dict:
-        """Record that a later source withdrew an earlier one; it then gives no new evidence."""
+    def withdraw(self, source_ref: Any, by: Any, keep: list | tuple = ()) -> dict:
+        """Record that a later source withdrew an earlier one and retract it everywhere.
+
+        A withdrawn source gives no new evidence, and its contributions are retracted from
+        every target except those in keep, where the assessment judged that the
+        correction does not concern them.
+        """
         reference, withdrawer = _reference(source_ref), _reference(by)
         if reference is None or withdrawer is None:
             raise ContractError("Withdrawal needs source references")
         self.memory.resolve(reference)
         self.memory.resolve(withdrawer)
         self.beliefs.withdraw(reference, withdrawer)
-        return {"withdrawn": json_value(reference), "by": json_value(withdrawer)}
+        retracted = []
+        for target in self.beliefs.targets_of(reference):
+            if target not in keep:
+                self.beliefs.retract(target, reference)
+                retracted.append(target)
+        return {
+            "withdrawn": json_value(reference),
+            "by": json_value(withdrawer),
+            "retracted": retracted,
+        }
 
     def record_origin(
         self,

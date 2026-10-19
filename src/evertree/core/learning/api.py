@@ -188,13 +188,18 @@ async def record_scope_evidence(
     )
 
 
-async def withdraw_evidence(ctx: ProgramContext, source_ref: dict, by: dict) -> Any:
+async def withdraw_evidence(
+    ctx: ProgramContext, source_ref: dict, by: dict, *, keep: list[str] | None = None
+) -> Any:
     """Record that source by withdrew source_ref, such as "I was wrong earlier".
 
-    A withdrawn source is then marked in batches and gives no new evidence; withdrawals
+    Its contributions are retracted from every target except the target ids in keep. A
+    withdrawn source is then marked in batches and gives no new evidence; withdrawals
     made by a source that is itself withdrawn become void.
     """
-    return await ctx.step("evidence.withdraw", {"source_ref": source_ref, "by": by})
+    return await ctx.step(
+        "evidence.withdraw", {"source_ref": source_ref, "by": by, "keep": keep or []}
+    )
 
 
 async def stale_evidence(ctx: ProgramContext) -> Any:

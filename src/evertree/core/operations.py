@@ -346,7 +346,7 @@ class CoreOperations:
             )
         elif method == "evidence.withdraw":
             result = GraphEvidence(self.graph, self.memory, self.beliefs).withdraw(
-                payload["source_ref"], payload["by"]
+                payload["source_ref"], payload["by"], payload.get("keep", ())
             )
         elif method == "evidence.stale":
             result = GraphEvidence(self.graph, self.memory, self.beliefs).stale()

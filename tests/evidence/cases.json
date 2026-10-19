@@ -145,9 +145,11 @@
           "scanner": "RFID-ворота",
           "asset": "Н-2",
           "zone": "цех 5",
-          "at": "10:00Z"
+          "in_zone_since": "2026-10-01",
+          "last_seen": "сегодня 10:00Z",
+          "exits_from_zone": 0
         },
-        "analysis": "RFID-ворота фиксируют Н-2 в цехе 5."
+        "analysis": "RFID: Н-2 находится в цехе 5 непрерывно с 1 октября и не покидал его."
       },
       {
         "kind": "user",
@@ -767,6 +769,26 @@
         "strength": [
           "<",
           0.5
+        ],
+        "optional": true,
+        "why": "integration may delete the contradicted fact instead"
+      },
+      {
+        "at": 2,
+        "select": {
+          "kind": "relation_instance",
+          "all": [
+            "Н-6",
+            "П-2"
+          ],
+          "none": [
+            "IDENTITY_TYPE",
+            "SUBTYPE_OF"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
         ]
       },
       {
@@ -1321,14 +1343,24 @@
           ],
           "none": [
             "IDENTITY_TYPE",
-            "SUBTYPE_OF"
+            "SUBTYPE_OF",
+            "Петров",
+            "Petrov",
+            "сообщ",
+            "report",
+            "said",
+            "не проверял",
+            "not check",
+            "did not"
           ]
         },
         "strength": [
           "between",
           0.5,
           0.7
-        ]
+        ],
+        "optional": true,
+        "why": "only when integration stores the unverified claim itself, not the fact of the report"
       },
       {
         "change": [
@@ -1352,10 +1384,42 @@
           ],
           "none": [
             "IDENTITY_TYPE",
-            "SUBTYPE_OF"
+            "SUBTYPE_OF",
+            "Петров",
+            "Petrov",
+            "сообщ",
+            "report",
+            "said",
+            "не проверял",
+            "not check",
+            "did not"
           ]
         },
-        "strength": "down"
+        "strength": "down",
+        "optional": true
+      },
+      {
+        "at": 2,
+        "select": {
+          "all": [
+            "Н-18",
+            [
+              "в работе",
+              "running",
+              "operat",
+              "12"
+            ]
+          ],
+          "kinds": [
+            "facet",
+            "claim",
+            "relation_instance"
+          ]
+        },
+        "strength": [
+          ">=",
+          0.7
+        ]
       }
     ]
   },
@@ -1491,7 +1555,10 @@
         "at": 3,
         "select": {
           "all": [
-            "Н-30",
+            [
+              "Н-30",
+              "N-30"
+            ],
             [
               "сальник",
               "gland",
@@ -1519,10 +1586,16 @@
         ]
       },
       {
-        "at": 4,
+        "change": [
+          3,
+          4
+        ],
         "select": {
           "all": [
-            "Н-30",
+            [
+              "Н-30",
+              "N-30"
+            ],
             [
               "сальник",
               "gland",
@@ -1541,14 +1614,14 @@
             "бюллетен",
             "bulletin",
             "ниже",
+            "below",
             "IDENTITY_TYPE",
             "SUBTYPE_OF"
           ]
         },
-        "strength": [
-          "<",
-          0.5
-        ]
+        "strength": "down",
+        "mode": "all",
+        "why": "the bulletin outweighs hearsay, though the shared cap keeps it from refuting"
       }
     ]
   },
@@ -1786,7 +1859,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           },
           {
             "all": [
@@ -1804,7 +1878,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           },
           {
             "all": [
@@ -1824,7 +1899,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           }
         ]
       },
@@ -1849,7 +1925,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           },
           ">",
           {
@@ -1868,7 +1945,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           }
         ]
       },
@@ -1893,7 +1971,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           },
           ">",
           {
@@ -1912,7 +1991,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           }
         ]
       },
@@ -1935,7 +2015,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           },
           {
             "all": [
@@ -1953,7 +2034,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           },
           {
             "all": [
@@ -1973,7 +2055,8 @@
             "none": [
               "IDENTITY_TYPE",
               "SUBTYPE_OF"
-            ]
+            ],
+            "in_scope": true
           }
         ]
       }

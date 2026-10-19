@@ -16,7 +16,7 @@ The suite is selected only explicitly and needs the live opt-in plus search cred
    --basetemp=tmp/evidence-cases -o tmp_path_retention_policy=all)
 ```
 
-At most two workers: more hit the model's rate limit (HTTP 429). A full run takes tens of minutes and uses account resources. Each case directory keeps `history.json` (beliefs and origin reliabilities after each step, plus failed expectations), `graph.json`, `trace.json`, `beliefs.json`, `evidence.json` and the model transcripts. Run one case with `-k <id>`, or step through it in the debugger with `python -m evertree.debug_evidence_assessment <id>`.
+At most two workers: more hit the model's rate limit (HTTP 429). A case usually takes 0.5–3 minutes (two model calls per step, integration and assessment, plus integration's graph tools); a full run takes about half an hour and uses account resources. A rate-limited or stalled call (over 5 minutes) reruns the case from scratch after a pause, up to three attempts, each in its own `attempt-N` directory. Each case directory keeps `history.json` (beliefs and origin reliabilities after each step, plus failed expectations), `graph.json`, `trace.json`, `beliefs.json`, `evidence.json` and the model transcripts. Run one case with `-k <id>`, or step through it in the debugger with `python -m evertree.debug_evidence_assessment <id>`.
 
 ## Expectation forms
 
@@ -28,7 +28,7 @@ At most two workers: more hit the model's rate limit (HTTP 429). A full run take
 | `{"at": n, "origin": "sensor:T-7", "reliability": [op, x]}` | reliability belief of a source origin |
 | `{"at": n, "scope": [S1, S2, …]}` | one match of each selector belongs to one competition scope, and their probabilities sum to at most 1 |
 
-A selector `S` is `{"kind" or "kinds", "all": [term or [any-of terms]], "none": [terms]}`, matched case-insensitively against the element's name, its description and, for a relation fact, its relation type and participants.
+A selector `S` is `{"kind" or "kinds", "all": [term or [any-of terms]], "none": [terms], "in_scope"?: true}`, matched case-insensitively against the element's name, its description and, for a relation fact, its relation type and participants.
 
 ## Scenario catalog
 

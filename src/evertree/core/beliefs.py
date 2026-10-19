@@ -303,6 +303,14 @@ class BeliefStore:
             self._withdrawn[key] = freeze(by)
             self._last_changed = utcnow()
 
+    def targets_of(self, source_ref: Any) -> tuple[str, ...]:
+        """Return the targets a source currently contributes to."""
+        key = _source_key(source_ref)
+        with self._lock:
+            return tuple(
+                target for target, mapping in self._current.items() if mapping.get(key) is not None
+            )
+
     def withdrawn_by(self, source_ref: Any) -> Any:
         """Return the source that withdrew a source, or None."""
         return self._withdrawn.get(_source_key(source_ref))

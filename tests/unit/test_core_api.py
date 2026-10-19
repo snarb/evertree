@@ -121,7 +121,7 @@ async def test_wrappers_send_core_methods_and_payload_keys():
                 "retract": [],
             },
         ),
-        ("evidence.withdraw", {"source_ref": {"ref": 1}, "by": {"ref": 2}}),
+        ("evidence.withdraw", {"source_ref": {"ref": 1}, "by": {"ref": 2}, "keep": []}),
         ("evidence.stale", {}),
         (
             "evaluation.match",

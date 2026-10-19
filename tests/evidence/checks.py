@@ -24,6 +24,8 @@ def select(snapshot, selector):
         text = element["text"].lower()
         if kinds and element["kind"] not in kinds:
             continue
+        if selector.get("in_scope") and not element.get("scope"):
+            continue
         if not all(
             any(option.lower() in text for option in (term if isinstance(term, list) else [term]))
             for term in selector.get("all", ())

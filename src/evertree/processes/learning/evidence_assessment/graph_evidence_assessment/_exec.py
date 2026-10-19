@@ -8,11 +8,13 @@ initial heuristic table to be trained on independently resolved cases, and Core 
 its influence under the shared cap for unsupported estimates.
 
 Each source has an origin (the user, a sensor, a journal) whose reliability is itself a
-binary belief: "reports from this origin are correct". The same call judges new
-experience about origins, such as a calibration failure. The table's likelihoods are
-weakened toward non-discrimination by that reliability, and every contribution keeps the
-reliability it was judged under, so when an origin's reliability changes, code revises
-all contributions resting on it without another model call.
+binary belief: "reports from this origin are correct". Its neutral 0.5 means nothing is
+known against the origin, and the table applies as presumed; a doubtful kind of origin
+starts lower, and experience about the origin (a calibration failure, a retraction)
+moves it. The table's likelihoods are weakened toward non-discrimination as reliability
+falls, and every contribution keeps the reliability it was judged under, so when an
+origin's reliability changes, code revises all contributions resting on it without
+another model call.
 
 Elements that answer one question with mutually exclusive alternatives (competing causes,
 values of one property at one time) are judged together as a competition scope: each
@@ -51,9 +53,14 @@ OBSERVATION_MODEL = {
 }
 OBSERVATION_MODEL["document"] = OBSERVATION_MODEL["observation"]
 STANCES = (*OBSERVATION_MODEL["user"], "not_addressed")
-# Presumed reliability of a new origin, the cooperative-user presumption of the belief
-# model; it is also the reliability at which the table above applies unchanged.
-PRESUMED_RELIABILITY = 0.75
+# Reliability of an origin nothing is known against. The table above presumes the
+# cooperative-source correctness of the belief model and applies unchanged at or above it;
+# an origin's reliability belief starts here unless its kind is doubtful. Under the
+# shared cap one unsupported prior and one contrary report only cancel, so a higher
+# starting point would make an origin impossible to discredit by a single report.
+PRESUMED_RELIABILITY = 0.5
+# Reliability at which an origin discriminates nothing, such as a sensor reported faulty.
+DISCREDITED_RELIABILITY = 0.25
 REASSESSMENT_ROUNDS = 3
 SEARCH_LIMIT = 6
 QUERY_CHARACTERS = 400
@@ -72,28 +79,33 @@ Input fields:
   journal DOI, a forum account, "user"); reliability is the current belief that its
   reports are correct, or null for a new origin; active lists sources already counted
   about its reliability and their direction.
-- targets: elements that were created or changed. card is the element (relation facts
-  show relation, args and conditions; facets show their validity interval). grounds are the
-  sources cited when the element was written. active lists sources already counted for it
-  and their direction. new_target means the element has no belief yet.
-- related: existing elements near the changes or found by searching new experience. They
-  may be confirmed, contradicted or unaffected by the new sources.
+- targets: elements to judge. changed is true for an element that was created or changed,
+  false for an existing element near the changes or found by searching new experience,
+  which the new sources may confirm, contradict or leave unaffected. card is the element
+  (relation facts show relation, args and conditions; facets show their validity
+  interval). grounds are the sources cited when a changed element was written. active
+  lists sources already counted for it and their direction. new_target means the element
+  has no belief yet.
 - scopes: competition scopes that batch elements already belong to (an element's scope
   field names it). alternatives are element ids or "other" (none of the listed is
   true); active lists sources already counted for the scope and the alternative each
   favoured.
 
-For every target, assess each of its grounds and active sources, and any other new source
-that bears on it. For a new_target, also assess sources already active for related
-elements when they bear on it (earlier records supporting a pattern stated only now). For a related element, assess only new sources, and only when they bear
-on it. Judge what the source actually says about the element's assertion as a whole,
+Answer every target, with an empty evidence list when no source bears on it. For a
+changed target, assess each of its grounds and active sources, and any other new source
+that bears on it; for a changed new_target, also sources already active for unchanged
+targets when they bear on it (earlier records supporting a pattern stated only now). For
+an unchanged target, assess only new sources, and only when they bear on it. Judge what the source actually says about the element's assertion as a whole,
 including its time interval, conditions and qualifications. Wording that attributes the
 assertion to someone ("the user reports that X", "according to the log, X", "not
 independently verified") does not change what is assessed: judge X, not whether the
-report was made. A related element is often contradicted or confirmed only indirectly,
-for example a stated pattern by counts in a log; do not omit it then:
+report was made: "Petrov said N-18 is broken; I did not check" is about whether N-18 is
+broken, so Petrov's word is weak_support and a measurement showing N-18 running opposes
+it. An unchanged target is often contradicted or confirmed only indirectly, for example a
+stated pattern by counts in a log:
 - supports / opposes: the source clearly asserts or denies the element;
-- weak_support / weak_opposition: hedged, partial, indirect or approximate statements;
+- weak_support / weak_opposition: hedged, partial, indirect or approximate statements,
+  and hearsay the speaker has not checked ("Petrov says it is broken; I did not check");
 - non_discriminating: the source is about the element but would be equally expected
   whether the element is true or false;
 - not_addressed: the source does not bear on this element (for example a classification
@@ -118,24 +130,29 @@ knowledge clearly makes the assertion more or less likely (a well-known classifi
 is likely). A specific event, time or value you have never heard of is not unlikely for
 that reason: the sources, not the prior, are what establish such facts.
 unresolved: a short reason when you cannot tell how the sources bear on a target; else null.
-Omit related elements that no new source bears on. Write reasons in the sources' language.
+Write reasons in the sources' language.
 
 origins (output): for each origin that a new source says something about, or that is new:
-- prior: for a new origin other than "user", how often reports from this kind of origin
-  are correct, from background knowledge and the origin's name and texts alone: a
-  peer-reviewed journal or official record is high (0.9), a calibrated plant sensor high,
-  an anonymous comment, rumour or repost low (0.3–0.5). Otherwise null.
+- prior: for a new origin other than "user", null unless its kind is clearly less
+  trustworthy than an ordinary source; null means nothing is known against it, the
+  normal case for a sensor, log, report, journal or named person. A doubtful kind gets a
+  number from 0.3 to 0.45: an anonymous comment or review, a rumour, a repost or
+  second-hand retelling, a self-reported home test.
 - evidence: new sources that bear on whether this origin's reports are correct, with
   stance as above: a source reporting that a sensor was faulty or miscalibrated, or that
   an author fabricated data, opposes; a source confirming calibration or accuracy
-  supports. Set withdraws when the source retracts an earlier statement about the origin.
+  supports. When a new source corrects an earlier statement about the origin (one listed
+  in the origin's active, for example "the metrologist was wrong: T-7 is fine"), set
+  withdraws to that earlier source's key, and judge what the new source itself says.
   A source never judges its own origin. Agreement with other sources is not evidence of
   reliability here: it is already counted for the elements themselves.
 Do not judge an element's evidence by its origin's reliability: code applies it.
 
 scopes (output): group elements that answer one question with mutually exclusive
 alternatives, exactly one of which is true at a time: competing hypotheses about a single
-cause, different values of one property of one object at the same time. Never group
+cause, different values of one property of one object at the same time. Values stated
+as current or without a time (a location now, a log entry for today) overlap unless a
+source says the value changed in between. Never group
 assertions that can be true together: states at different times, an object and its
 classification, independent facts. For an existing scope repeat its key and list all its
 alternatives; adding or removing an alternative creates a new version, and then judge
@@ -268,13 +285,14 @@ SCHEMA = {
 def likelihoods(kind, stance, reliability):
     """Table likelihoods of a stance, moved toward 0.5 for an origin of lower reliability.
 
-    An origin no better than chance (reliability ≤ 0.5) discriminates nothing; at the
-    presumed reliability or above the table applies unchanged.
+    At or above the presumed reliability the table applies unchanged; a discredited
+    origin discriminates nothing.
     """
     true, false = OBSERVATION_MODEL.get(kind, OBSERVATION_MODEL["user"])[stance]
     if reliability is None:
         reliability = PRESUMED_RELIABILITY
-    weight = min(max((reliability - 0.5) / (PRESUMED_RELIABILITY - 0.5), 0.0), 1.0)
+    span = PRESUMED_RELIABILITY - DISCREDITED_RELIABILITY
+    weight = min(max((reliability - DISCREDITED_RELIABILITY) / span, 0.0), 1.0)
     return {"true": 0.5 + (true - 0.5) * weight, "false": 0.5 + (false - 0.5) * weight}
 
 
@@ -330,21 +348,20 @@ def _for_model(batch):
             {key: item.get(key, []) for key in ("key", "origin", "reliability", "active")}
             for item in batch["origins"]
         ],
+        # Changed and related elements form one list: the model reliably answers every
+        # listed target but tends to skip a separate list of related elements.
         "targets": [
             {
-                key: item[key]
-                for key in ("element", "card", "new_target", "grounds", "active", "scope")
-                if key in item
+                "element": item["element"],
+                "changed": changed,
+                **{
+                    key: item[key]
+                    for key in ("card", "new_target", "grounds", "active", "scope")
+                    if key in item
+                },
             }
-            for item in batch["targets"]
-        ],
-        "related": [
-            {
-                key: item[key]
-                for key in ("element", "card", "new_target", "active", "scope")
-                if key in item
-            }
-            for item in batch["related"]
+            for changed, items in ((True, batch["targets"]), (False, batch["related"]))
+            for item in items
         ],
         "scopes": [
             {key: item[key] for key in ("key", "question", "alternatives", "active")}
@@ -370,6 +387,29 @@ def _withdrawals(batch, judgement):
         and entry["withdraws"] != entry["source"]
         and sources[entry["source"]]["new"]
     }
+
+
+def _kept(batch, judgement, key):
+    """Targets for which the judgement still gives a withdrawn source a stance."""
+    scopes = {item["key"]: item["scope"] for item in batch["scopes"]}
+    origins = {item["key"]: item["origin"] for item in batch["origins"]}
+    origins.update({item["origin"]: item["origin"] for item in batch["origins"]})
+    kept = []
+    for answer in judgement.get("targets", ()):
+        if any(e["source"] == key and e["stance"] != "not_addressed" for e in answer["evidence"]):
+            kept.append(f"graph:{answer['element']}")
+    for answer in judgement.get("origins", ()):
+        if answer["origin"] in origins and any(
+            e["source"] == key and e["stance"] != "not_addressed" for e in answer["evidence"]
+        ):
+            kept.append(f"origin:{origins[answer['origin']]}")
+    for answer in judgement.get("scopes", ()):
+        if answer["scope"] in scopes and any(
+            e["source"] == key and any(s["stance"] != "not_addressed" for s in e["stances"])
+            for e in answer["evidence"]
+        ):
+            kept.append(scopes[answer["scope"]])
+    return kept
 
 
 def _plan(batch, judgement, reliability, members=frozenset(), withdrawn=frozenset()):
@@ -537,14 +577,17 @@ async def _assess_origins(ctx, batch, judgement):
             if entry["stance"] in {"not_addressed", "non_discriminating"}:
                 continue
             assign.append(_evidence(source, entry["stance"], reliability.get(source["origin"])))
-        # A new origin without evidence is registered only for a judged prior: until then
-        # it reads as presumed, and the user origin always starts presumed.
+        # A new origin is registered when first seen, so later experience about it finds
+        # it; the user origin only once something is said about it. A prior never starts
+        # above the presumption.
         prior = None
         if item["new_target"]:
-            prior = None if name == "user" else answer["prior"]
-            if prior is None and (assign or retract):
-                prior = PRESUMED_RELIABILITY
-        if prior is None and not assign and not retract:
+            if name == "user" and not assign and not retract:
+                continue
+            prior = PRESUMED_RELIABILITY
+            if name != "user" and answer["prior"] is not None:
+                prior = min(answer["prior"], PRESUMED_RELIABILITY)
+        elif not assign and not retract:
             continue
         result = await record_origin_evidence(
             ctx, name, prior=prior, assign=assign, retract=retract
@@ -620,7 +663,8 @@ async def run(ctx, experience_refs: list | None = None):
         sources = {source["key"]: source for source in batch["sources"]}
         withdrawn = {key for key, source in sources.items() if source.get("withdrawn_by")}
         for earlier, later in sorted(_withdrawals(batch, judgement["result"])):
-            await withdraw_evidence(ctx, sources[earlier]["ref"], sources[later]["ref"])
+            keep = _kept(batch, judgement["result"], earlier)
+            await withdraw_evidence(ctx, sources[earlier]["ref"], sources[later]["ref"], keep=keep)
             withdrawn.add(earlier)
             # Withdrawing a withdrawal makes the original statements usable again.
             withdrawn -= {

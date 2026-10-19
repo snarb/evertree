@@ -39,7 +39,7 @@ class Judge:
         texts = {source["key"]: source["text"] for source in batch["sources"]}
         keys = {text: key for key, text in texts.items()}
         answers = []
-        for item in batch["targets"] + batch["related"]:
+        for item in batch["targets"]:
             evidence = []
             for text, stance, *options in self.rules.get(item["element"], ()):
                 if text not in keys:
@@ -169,7 +169,8 @@ async def test_independent_confirmation_adds_support_but_a_repeat_does_not():
     sensor_text = json.dumps({"reading": "N-1 current 0 A at 09:05"}, ensure_ascii=False)
     judge = Judge({element: [(sensor_text, "supports")]})
     result = await assess(world, judge, [sensor])
-    assert judge.batches[0]["related"][0]["element"] == element
+    [related] = [item for item in judge.batches[0]["targets"] if not item["changed"]]
+    assert related["element"] == element
     assert [item["element"] for item in result["assessed"]] == [element]
     twice = reading(world, element)
     assert twice.stats.evidence_count == 2 and twice.support > once.support
@@ -239,9 +240,8 @@ async def test_contradiction_lowers_strength_and_withdrawal_retracts_the_earlier
             )
         ]
     }
-    result = await assess(world, Judge(rules), [correction])
-    [record] = result["assessed"]
-    assert record["retracted"] == [said]
+    await assess(world, Judge(rules), [correction])
+    assert world.beliefs.withdrawn_by(TraceOutputRef(said["event_ref"])) is not None
     corrected = reading(world, element)
     assert corrected.stats.evidence_count == 2 and corrected.strength < contested.strength
     sources = {
@@ -455,7 +455,7 @@ async def test_new_state_of_an_instance_offers_the_competing_state_for_assessmen
     second_text = json.dumps({"reading": "N-1 was running at 09:05 UTC."}, ensure_ascii=False)
     judge = Judge({running: [(second_text, "supports")], off: [(second_text, "opposes")]})
     await assess(world, judge, [second])
-    assert off in {item["element"] for item in judge.batches[0]["related"]}
+    assert off in {item["element"] for item in judge.batches[0]["targets"] if not item["changed"]}
     assert reading(world, off).strength < 0.75
     assert reading(world, running).strength > 0.5
 
@@ -543,14 +543,15 @@ async def test_reliable_document_outweighs_an_unreliable_one_and_origins_cannot_
         [post],
     )
     assert world.beliefs.read("origin:forum:user123").stats.evidence_count == 0
-    assert reading(world, element).strength == pytest.approx(0.5)
+    rumoured = reading(world, element).strength
+    assert 0.5 < rumoured < 0.7
 
     index.ids = [element]
     trial = "Nature 2026, randomised trial on 120 pumps: PA-7 did not reduce cavitation."
     [paper] = recorded_sources(world, ("doi:10.1038/x", trial, "document"))
     await assess(world, Judge({element: [(trial, "opposes")]}, origin_priors=priors), [paper])
     belief = reading(world, element)
-    assert belief.strength < 0.3 and belief.stats.evidence_count == 2
+    assert belief.strength < 0.4 and belief.stats.evidence_count == 2
 
 
 def scope_answer(scope, alternatives, other, evidence, prior=()):
@@ -700,3 +701,31 @@ async def test_withdrawn_statement_is_not_reused_against_the_correction():
     assert reading(world, negation).strength < 0.3
     # Withdrawing the withdrawal makes the first statement usable again.
     assert world.beliefs.withdrawn_by(TraceOutputRef(first["event_ref"])) is None
+
+
+async def test_withdrawal_retracts_the_source_everywhere_except_where_it_is_kept():
+    """B3 live finding: a correction must also reach facts outside the current batch."""
+    index = FixedIndex()
+    world = semantic_world(index=index)
+    _, metadata = recorded_experience(world)
+    report = "The metrologist says T-7 overstated N-20 and N-21 by 30 C, so neither overheated."
+    [first] = recorded_messages(world, report)
+    n20, n21, t7 = (
+        claim(world, metadata, [first], name=name, description=f"{name} per the metrologist.")
+        for name in ("N-20 not overheated", "N-21 not overheated", "T-7 exists")
+    )
+    rules = {element: [(report, "supports")] for element in (n20, n21, t7)}
+    await assess(world, Judge(rules), [first])
+    index.ids = [n20, t7]
+    correction = "The metrologist was wrong: T-8 was faulty, T-7 is fine."
+    [second] = recorded_messages(world, correction)
+    rules = {
+        n20: [(correction, "opposes", {"withdraws": report})],
+        t7: [(report, "supports")],
+    }
+    await assess(world, Judge(rules), [second])
+    assert world.beliefs.active_sources(f"graph:{n21}") == ()
+    assert [c.source_ref["event_ref"] for c in world.beliefs.active_sources(f"graph:{t7}")] == [
+        first["event_ref"]
+    ]
+    assert reading(world, n20).strength < 0.5

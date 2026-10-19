@@ -27,16 +27,22 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-# A rate-limited model fails the whole case; it is rerun from the start after a pause.
-RATE_LIMIT_ATTEMPTS = 3
-RATE_LIMIT_PAUSE_SECONDS = 120
+# A rate-limited or stalled model call fails the whole case; it is rerun from the start
+# after a pause. A single call normally takes well under a minute.
+ATTEMPTS = 3
+PAUSE_SECONDS = 120
+CALL_TIMEOUT_SECONDS = 300
 
 
 async def _run(case, directory):
-    """Run a case in a fresh session, retrying from scratch when the model is rate limited."""
-    for attempt in range(1, RATE_LIMIT_ATTEMPTS + 1):
+    """Run a case in a fresh session, retrying from scratch when the model is rate limited
+    or a call stalls."""
+    for attempt in range(1, ATTEMPTS + 1):
         session = EvidenceSession(
-            directory / f"attempt-{attempt}", task=case["task"], steps=case["steps"]
+            directory / f"attempt-{attempt}",
+            task=case["task"],
+            steps=case["steps"],
+            timeout_seconds=CALL_TIMEOUT_SECONDS,
         )
         load_debug_environment(REPOSITORY, session.config)
         missing = [
@@ -48,10 +54,13 @@ async def _run(case, directory):
             pytest.skip("Search needs " + ", ".join(missing))
         try:
             await session.run()
-        except RuntimeError as error:
-            if "429" not in str(error) or attempt == RATE_LIMIT_ATTEMPTS:
+        except (RuntimeError, TimeoutError) as error:
+            transient = isinstance(error, TimeoutError) or any(
+                marker in str(error).lower() for marker in ("429", "timed out", "timeout")
+            )
+            if not transient or attempt == ATTEMPTS:
                 raise
-            await asyncio.sleep(RATE_LIMIT_PAUSE_SECONDS)
+            await asyncio.sleep(PAUSE_SECONDS)
         else:
             return session
 
