@@ -162,7 +162,7 @@ TOOLS = (
     },
     {
         "name": "query",
-        "description": "Find facts by named slots or all facts involving subject. Bind any subset of roles, select values or unique nodes. Reports total before returning a token-bounded page. Keep source facts and qualifications; a match is not proof. Count/exists modes avoid loading cards.",
+        "description": "Find facts by named slots or all facts involving subject. Bind any subset of roles, select values or unique nodes. List reads report total before returning a token-bounded page. Counts return exact totals in one call; exists stops at a definite match and returns true/false/null without totals. Keep source facts and qualifications; a match is not proof.",
         "parameters": _read_object(
             {
                 **_QUERY_COMMON,
@@ -191,7 +191,7 @@ TOOLS = (
     },
     {
         "name": "walk",
-        "description": "Follow one relation from a named node slot to another, breadth-first without cycles. SUBTYPE_OF supertype→type finds descendants; reverse finds ancestors. Returns unique nodes, depth and supporting facts, with total and token-bounded pages.",
+        "description": "Follow one relation from a named node slot to another, breadth-first without cycles. SUBTYPE_OF supertype→type finds descendants; reverse finds ancestors. Returns unique nodes, depth and supporting facts, with total and token-bounded pages. Counts return exact totals in one call; exists stops at a definite match and returns true/false/null without totals.",
         "parameters": _read_object(
             {
                 **_QUERY_COMMON,

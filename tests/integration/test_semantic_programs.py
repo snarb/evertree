@@ -76,6 +76,8 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
                     "query", {"relation": "SUBTYPE_OF", "result": "count_matches"}
                 )
                 assert graph_read["total"] == 0 and graph_read["returned"] == 0
+                exists = await call("query", {"relation": "PART_WHOLE", "result": "exists"})
+                assert exists == {"exists": True, "returned": 0, "has_more": False}
                 first = await call(
                     "query", {"relation": "PART_WHOLE", "max_items": 1, "fields": []}
                 )

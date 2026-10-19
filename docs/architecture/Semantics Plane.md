@@ -93,7 +93,9 @@ recorded condition does not evaluate whether that condition currently holds in t
 `select` names returned slots; omitted selects all arguments. `matches` (default) retains
 one result per fact. `nodes` and `count_nodes` require one selected node-valued slot and
 deduplicate node IDs. List slots expand into participants only for those node result modes.
-`count_matches` counts facts; `exists` reports a match, not the truth of the assertion.
+`count_matches` counts facts. Counts finish in one call and report exact totals.
+`exists` reports a match, not the truth of the assertion, and stops at the first applicable
+match. It returns `exists`, `returned=0` and `has_more=false`, without totals or cards.
 
 `walk` requires node-valued `from_slot` and `to_slot`. For example, `SUBTYPE_OF` from
 `supertype` to `type` finds children; reversing the roles finds parents. `max_depth` defaults
@@ -105,8 +107,9 @@ Walk result modes are `nodes` (default), `count_nodes` and `exists`.
 
 Without `at`, reads include recorded facts without temporal filtering. With `at`, outside
 facts are excluded and unknown applicability remains explicit. Counts split applicable and
-unknown matches when needed. Existence is null if only unknown matches exist (or an unfinished
-scan has no established match). Declared views retain their existing UNKNOWN/cardinality contract.
+unknown matches when needed. Existence is null if only unknown matches exist, false if there
+are no matches, and true if an applicable match exists. Declared views retain their existing
+UNKNOWN/cardinality contract.
 
 Pages start with `total`, `returned`, `has_more`; cursors stay private to Core. They contain
 `items` referencing deduplicated `nodes` and `facts` collections. Fact and projection node
@@ -133,10 +136,13 @@ with `next_page=true`. Core keys selections by their arguments, ignoring optiona
 key order and max_items; explicit `walk.max_depth=null` remains distinct from omitted depth.
 Omitted/false next_page starts fresh. A missing, exhausted or stale continuation
 returns an error, never silently restarts or switches selections. Private cursors belong to a task,
-operation and graph revision and expire at task release/restart or graph changes. Each scan
-advances at most 10,000 work units per request; incomplete scans return `total_at_least` and
-an explicit continuation instead of a false exact total. Full scans establish total before
-serializing cards. Facts never split across pages; an oversized first item returns an explicit
+operation and graph revision and expire at task release/restart or graph changes. Scans finish
+synchronously inside one tool call. No scan progress or continuation is exposed to the model.
+Existence checks iterate facts lazily, without first collecting all candidates, and stop at the
+first applicable match. List reads establish total before serializing
+cards; `next_page` retrieves only remaining result items. Walk existence checks inspect outgoing
+facts directly: any reachable node requires a first hop, so no full adjacency or deeper traversal
+is needed. Facts never split across pages; an oversized first item returns an explicit
 error with its ID. Pagination does not automatically fetch remaining results or guarantee that
 an entire conversation history fits. Count or filter large results before viewing them.
 

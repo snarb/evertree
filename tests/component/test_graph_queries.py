@@ -4,10 +4,10 @@ from dataclasses import replace
 
 import pytest
 
-from evertree.core.graph.types import GraphDelta, Node, RelationType, Slot
+from evertree.core.graph.types import Facet, GraphDelta, Node, RelationType, Slot
 from evertree.core.semantics.config import ReadConfig, SemanticConfig
 from evertree.core.tokens import count_tokens, current_read_context
-from evertree.core.values import ContractError
+from evertree.core.values import ContractError, timestamp
 from evertree.processes.semantic_processing.knowledge_integration._exec import run
 from tests.support.semantics import (
     context,
@@ -279,19 +279,123 @@ async def test_integration_native_reads_keep_projection_and_do_not_record_writes
     assert result["result"]["writes"] == []
 
 
-def test_scan_continuation_reports_lower_bound_and_task_release(monkeypatch):
-    monkeypatch.setattr("evertree.core.semantics.queries._WORK_LIMIT", 2)
+def test_complete_read_and_task_release_discards_result_pages():
     world, parent, _ = parts(5)
     result = read(world, **children_query(parent))
-    assert result["status"] == "scanning" and "total" not in result
-    assert result["total_at_least"] == 2 and result["returned"] == 0
-    while result.get("status") == "scanning":
-        result = read(world, next_page=True)
     assert result["total"] == 5 and result["returned"] == 5
+    assert not result["has_more"] and "status" not in result
     read(world, **children_query(parent), max_items=1)
     world.service.release("task")
     with pytest.raises(ContractError, match="No saved selection"):
         read(world, next_page=True)
+
+
+@pytest.mark.parametrize(
+    ("method", "result", "expected"),
+    [
+        ("query", "count_matches", 10006),
+        ("query", "count_nodes", 10005),
+        ("walk", "count_nodes", 10005),
+    ],
+)
+def test_large_counts_finish_without_result_pages(method, result, expected):
+    world, parent, children = parts(10005)
+    duplicate = world.graph.new_fact("PART_WHOLE", {"part": children[0].id, "whole": parent.id})
+    world.graph.apply(GraphDelta(creates=(duplicate,)), provenance="duplicate")
+    arguments = children_query(parent)
+    if method == "walk":
+        arguments = {
+            "start": parent.id,
+            "relation": "PART_WHOLE",
+            "from_slot": "whole",
+            "to_slot": "part",
+        }
+    response = read(world, method, **{**arguments, "result": result}, max_items=1)
+    assert response["total"] == expected
+    assert response["returned"] == 0 and response["has_more"] is False
+    assert not {"status", "total_at_least", "items", "nodes", "facts"} & response.keys()
+    with pytest.raises(ContractError, match="exhausted"):
+        read(world, method, next_page=True)
+
+
+@pytest.mark.parametrize("method", ["query", "walk"])
+def test_exists_stops_reading_storage_at_first_applicable_fact(monkeypatch, method):
+    world, parent, _ = parts(5)
+    relation = world.graph.find("PART_WHOLE")
+    first = world.graph.facts(relation.id)[0]
+    visited = []
+
+    class TrackedNodes(dict):
+        def values(self):
+            for node in super().values():
+                visited.append(node.id)
+                yield node
+
+    monkeypatch.setattr(world.graph, "_nodes", TrackedNodes(world.graph._nodes))
+    arguments = {"subject": parent.id}
+    if method == "walk":
+        arguments = {
+            "start": parent.id,
+            "relation": relation.id,
+            "from_slot": "whole",
+            "to_slot": "part",
+            "max_depth": None,
+        }
+    response = read(world, method, **arguments, result="exists")
+    assert response == {"exists": True, "returned": 0, "has_more": False}
+    assert visited[-1] == first.id
+
+
+@pytest.mark.parametrize("method", ["query", "walk"])
+def test_exists_preserves_unknown_and_continues_to_a_later_definite_match(method):
+    world = populated_search_world()
+    instance = world.family["daughters"][0]
+    arguments = {
+        "relation": "STATE_IDENTITY",
+        "bindings": [{"slot": "instance", "value": instance.id}],
+    }
+    if method == "walk":
+        arguments = {
+            "start": instance.id,
+            "relation": "STATE_IDENTITY",
+            "from_slot": "instance",
+            "to_slot": "facet",
+            "max_depth": None,
+        }
+    response = read(world, method, **arguments, result="exists", at="2026-01-01T00:00:00Z")
+    assert response == {"exists": None, "returned": 0, "has_more": False}
+    state = Facet(
+        world.graph.reserve_id(),
+        "Known state",
+        valid_from=timestamp("2025-01-01T00:00:00Z"),
+        valid_until=timestamp("2027-01-01T00:00:00Z"),
+    )
+    fact = world.graph.new_fact("STATE_IDENTITY", {"instance": instance.id, "facet": state.id})
+    world.graph.apply(GraphDelta(creates=(state, fact)), provenance="known interval")
+    response = read(world, method, **arguments, result="exists", at="2026-01-01T00:00:00Z")
+    assert response == {"exists": True, "returned": 0, "has_more": False}
+
+
+@pytest.mark.parametrize("method", ["query", "walk"])
+def test_exists_returns_false_after_exhausting_nonmatches_and_self_links(method):
+    world, _, children = parts(5)
+    loop = world.graph.new_fact("PART_WHOLE", {"part": children[0].id, "whole": children[0].id})
+    world.graph.apply(GraphDelta(creates=(loop,)), provenance="self link")
+    arguments = {
+        "relation": "PART_WHOLE",
+        "bindings": [{"slot": "whole", "value": children[0].id}],
+        "where": [{"field": "args.part", "op": "!=", "value": children[0].id}],
+    }
+    if method == "walk":
+        arguments = {
+            "start": children[0].id,
+            "relation": "PART_WHOLE",
+            "from_slot": "whole",
+            "to_slot": "part",
+            "max_depth": None,
+        }
+    response = read(world, method, **arguments, result="exists")
+    assert response == {"exists": False, "returned": 0, "has_more": False}
 
 
 def test_read_config_and_missing_model_budget(tmp_path):

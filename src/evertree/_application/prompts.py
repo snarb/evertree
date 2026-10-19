@@ -66,7 +66,8 @@ references and optional focus. The controller supplies the integrator's task con
 ## Tools and workspace
 Use graph.search to locate objects and graph.describe for their properties/schema.
 Use graph.query for exact named-slot matches and graph.walk for repeated transitions.
-Both report total and a token-bounded page; count modes avoid loading large lists.
+List reads report total and a token-bounded page; counts finish in one call without loading
+large lists. exists returns true/false/null without totals and stops at a definite match.
 Continue only when needed with next_page=true and optional max_items; Core stores cursors.
 This continues the latest selection of that tool; repeat the original filters/fields to continue an earlier one. Recorded qualifications
 and unknown temporal applicability are not established truths. Use graph.read_property

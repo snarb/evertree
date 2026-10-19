@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import math
 import threading
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
 from types import MappingProxyType
@@ -132,17 +132,20 @@ class GraphStore:
 
     def facts(self, relation_type: int | str | None = None) -> tuple[RelationInstance, ...]:
         """Return relation instances, optionally restricted to a relation type."""
+        return tuple(self.iter_facts(relation_type))
+
+    def iter_facts(self, relation_type: int | str | None = None) -> Iterator[RelationInstance]:
+        """Read facts lazily so callers can stop without collecting the remaining graph."""
         if isinstance(relation_type, str):
             relation = self.find(relation_type)
             if relation is None:
-                return ()
+                return
             relation_type = relation.id
-        return tuple(
-            node
-            for node in self._nodes.values()
-            if isinstance(node, RelationInstance)
-            and (relation_type is None or node.relation_type == relation_type)
-        )
+        for node in self._nodes.values():
+            if isinstance(node, RelationInstance) and (
+                relation_type is None or node.relation_type == relation_type
+            ):
+                yield node
 
     def relation(self, relation_type: int | str) -> _BoundRelation:
         """Bind a declared relation type for named access-view calls."""

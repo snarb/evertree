@@ -12,7 +12,6 @@ from ..values import ContractError, json_value, timestamp
 from .actions import validate_action
 from .reading import card, describe, resolve
 
-_WORK_LIMIT = 10_000
 _FIELDS = {"description", "properties", "schema"}
 
 
@@ -22,24 +21,20 @@ class _Query:
     revision: int
     method: str
     arguments: dict
-    iterator: object
     node_result: bool
     items: dict = field(default_factory=dict)
-    complete: bool = False
     ordered: list = field(default_factory=list)
+    existence: bool | None = False
 
-    def advance(self):
-        """Consume a bounded traversal batch, merging duplicate nodes before ordering completed results."""
-        for _ in range(_WORK_LIMIT):
-            try:
-                entry = next(self.iterator)
-            except StopIteration:
-                self.complete = True
-                self.ordered = sorted(
-                    self.items.values(), key=lambda item: (item.get("depth", 0), item["id"])
-                )
-                return
-            if entry is None:
+    def collect(self, iterator):
+        """Collect a complete selection, stopping existence checks at a definite match."""
+        result = self.arguments["result"]
+        for entry in iterator:
+            if result == "exists":
+                if entry["status"] == "applicable":
+                    self.existence = True
+                    return
+                self.existence = None
                 continue
             previous = self.items.get(entry["id"])
             if previous is None:
@@ -50,20 +45,22 @@ class _Query:
                     previous["depth"] = min(previous["depth"], entry["depth"])
                 if entry["status"] == "applicable":
                     previous["status"] = "applicable"
+        if result not in {"count_matches", "count_nodes", "exists"}:
+            self.ordered = sorted(
+                self.items.values(), key=lambda item: (item.get("depth", 0), item["id"])
+            )
 
 
 class GraphQueries:
     def __init__(self, graph, attribution, config):
         self.graph, self.attribution, self.config = graph, attribution, config
         self._pages = {}
-        self._progress = {}
         self._continuations = {}
         self._latest = {}
 
     def release(self, task_id):
-        """Discard all private pagination and traversal state owned by a task."""
+        """Discard all private result pages owned by a task."""
         self._pages = {k: v for k, v in self._pages.items() if v[0].task != task_id}
-        self._progress = {k: v for k, v in self._progress.items() if k in self._pages}
         self._continuations = {k: v for k, v in self._continuations.items() if k[0] != task_id}
         self._latest = {k: v for k, v in self._latest.items() if k[0] != task_id}
 
@@ -76,7 +73,7 @@ class GraphQueries:
         return node
 
     def _prepare(self, method, arguments, task_id):
-        """Validate query or walk selections and construct their incremental traversal iterator."""
+        """Validate and evaluate a query or walk selection."""
         args = {key: value for key, value in arguments.items() if value is not None}
         fields = args.setdefault("fields", ["description"])
         if not isinstance(fields, list) or any(f not in _FIELDS for f in fields):
@@ -144,17 +141,18 @@ class GraphQueries:
             ):
                 raise ContractError("nodes and count_nodes require one node-valued select slot")
             iterator = self._query(args, relation, bindings, clauses, node_result)
-        return _Query(task_id, self.graph.revision, method, args, iterator, node_result)
+        query = _Query(task_id, self.graph.revision, method, args, node_result)
+        query.collect(iterator)
+        return query
 
     def _query(self, args, relation, bindings, clauses, nodes):
-        """Yield matching facts or selected participants, including scan markers for bounded work accounting."""
-        for fact in self.graph.facts(relation.id if relation else None):
+        """Yield matching facts or selected participants without collecting unseen candidates."""
+        for fact in self.graph.iter_facts(relation.id if relation else None):
             schema = relation or self.graph.get(fact.relation_type)
             status = match_fact(self.graph, fact, schema, bindings, clauses, valid_at=args["at"])
             if status is None or (
                 args.get("subject") is not None and args["subject"] not in node_ids(fact, schema)
             ):
-                yield None
                 continue
             if nodes:
                 values = fact.args.get(args["select"][0])
@@ -165,15 +163,14 @@ class GraphQueries:
                 )
                 for identity in values:
                     yield {"id": identity, "status": status, "facts": {fact.id: None}}
-                if not values:
-                    yield None
             else:
                 yield {"id": fact.id, "status": status, "facts": {fact.id: None}}
 
     def _walk(self, args, relation, clauses):
         """Traverse relation neighbors with depth and temporal applicability tracking."""
         adjacency = defaultdict(list)
-        for fact in self.graph.facts(relation.id):
+        exists = args["result"] == "exists"
+        for fact in self.graph.iter_facts(relation.id):
             status = match_fact(self.graph, fact, relation, {}, clauses, valid_at=args["at"])
             if status is not None:
                 sources = fact.args.get(args["from_slot"])
@@ -182,9 +179,23 @@ class GraphQueries:
                     if isinstance(sources, (list, tuple))
                     else (() if sources is None else (sources,))
                 )
-                for source in sources:
-                    adjacency[source].append((fact, status))
-            yield None
+                if exists:
+                    # Every reachable node requires a first hop; deeper paths
+                    # cannot turn an unknown first hop into an applicable one.
+                    if args["start"] in sources:
+                        targets = fact.args.get(args["to_slot"])
+                        targets = (
+                            targets
+                            if isinstance(targets, (list, tuple))
+                            else (() if targets is None else (targets,))
+                        )
+                        if any(target != args["start"] for target in targets):
+                            yield {"status": status}
+                else:
+                    for source in sources:
+                        adjacency[source].append((fact, status))
+        if exists:
+            return
         pending = deque([(args["start"], 0, "applicable")])
         # An applicable path may reach a node after a shorter uncertain path.
         visited = {(args["start"], "applicable")}
@@ -202,7 +213,6 @@ class GraphQueries:
                 )
                 for target in targets:
                     if target == args["start"]:
-                        yield None
                         continue
                     yield {
                         "id": target,
@@ -276,9 +286,11 @@ class GraphQueries:
 
     def _render(self, query, entries, next_cursor):
         """Project selected graph results into model-facing node and fact records."""
+        if query.arguments["result"] == "exists":
+            return {"exists": query.existence, "returned": 0, "has_more": False}
         unknown = sum(item["status"] == "unknown" for item in query.items.values())
         response = {
-            "total" if query.complete else "total_at_least": len(query.items),
+            "total": len(query.items),
             "returned": len(entries),
             "has_more": next_cursor is not None,
         }
@@ -287,18 +299,10 @@ class GraphQueries:
             response["unknown"] = unknown
         if next_cursor:
             response["next_cursor"] = next_cursor
-        if not query.complete:
-            response["status"] = "scanning"
         if query.method == "walk":
             response["max_depth"] = query.arguments["max_depth"]
         result = query.arguments["result"]
-        if result in {"count_matches", "count_nodes", "exists"}:
-            if result == "exists":
-                response["exists"] = (
-                    True
-                    if len(query.items) > unknown
-                    else (None if unknown or not query.complete else False)
-                )
+        if result in {"count_matches", "count_nodes"}:
             return response
         nodes, facts, items = {}, {}, []
         at, fields = query.arguments["at"], query.arguments["fields"]
@@ -393,11 +397,6 @@ class GraphQueries:
                 raise ContractError("Graph changed; repeat the query with next_page=false")
             if any(value is not None for value in payload.values()):
                 raise ContractError("Continue with cursor and optional max_items only")
-            if cursor in self._progress:
-                response = self._progress[cursor]
-                if count_tokens(response, model, self.config.token_encoding) > budget:
-                    raise ContractError("Insufficient model context for graph statistics")
-                return response
         else:
             query = self._prepare(method, payload, task_id)
             if isinstance(query, dict):
@@ -412,42 +411,33 @@ class GraphQueries:
                     raise ContractError("Insufficient model context for graph resolution")
                 return query
             offset = 0
-        if not query.complete:
-            query.advance()
-        next_cursor = uuid4().hex
-        if not query.complete:
-            response = self._render(query, [], next_cursor)
-            self._pages[next_cursor] = (query, offset)
+        if query.arguments["result"] in {"count_matches", "count_nodes", "exists"}:
+            response = self._render(query, [], None)
         else:
+            next_cursor = uuid4().hex
             remaining = query.ordered[offset : offset + maximum]
-            if query.arguments["result"] in {"count_matches", "count_nodes", "exists"}:
-                remaining = []
-                response = self._render(query, [], None)
-            else:
-                # Count the same JSON serialization sent to the model, including
-                # metadata, participant cards and the continuation token.
-                low, high = 0, len(remaining)
-                while low < high:
-                    middle = (low + high + 1) // 2
-                    token = next_cursor if offset + middle < len(query.ordered) else None
-                    candidate = self._render(query, remaining[:middle], token)
-                    if count_tokens(candidate, model, self.config.token_encoding) <= budget:
-                        low = middle
-                    else:
-                        high = middle - 1
-                token = next_cursor if offset + low < len(query.ordered) else None
-                response = self._render(query, remaining[:low], token)
-                if not low and remaining:
-                    response["error"] = (
-                        "One complete item exceeds the token budget; request fewer fields or narrow the query"
-                    )
-                    response["object"] = remaining[0]["id"]
-                if token:
-                    self._pages[token] = (query, offset + low)
+            # Count the same JSON serialization sent to the model, including
+            # metadata, participant cards and the continuation token.
+            low, high = 0, len(remaining)
+            while low < high:
+                middle = (low + high + 1) // 2
+                token = next_cursor if offset + middle < len(query.ordered) else None
+                candidate = self._render(query, remaining[:middle], token)
+                if count_tokens(candidate, model, self.config.token_encoding) <= budget:
+                    low = middle
+                else:
+                    high = middle - 1
+            token = next_cursor if offset + low < len(query.ordered) else None
+            response = self._render(query, remaining[:low], token)
+            if not low and remaining:
+                response["error"] = (
+                    "One complete item exceeds the token budget; request fewer fields or narrow the query"
+                )
+                response["object"] = remaining[0]["id"]
+            if token:
+                self._pages[token] = (query, offset + low)
         if count_tokens(response, model, self.config.token_encoding) > budget:
             raise ContractError(
                 "Insufficient model context for a graph result; compact context before reading"
             )
-        if cursor and response.get("status") == "scanning":
-            self._progress[cursor] = response
         return response
