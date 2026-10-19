@@ -25,6 +25,7 @@ Useful breakpoints:
 import asyncio
 import json
 import os
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
@@ -84,12 +85,58 @@ STEPS = [
     },
 ]
 
+# Other scenarios: python -m evertree.debug_evidence_assessment <name>. Each is (task, steps).
+SCENARIOS = {
+    "location": (
+        "Запомни, где находится насос Н-2: сохрани его местоположение как отдельное состояние.",
+        [
+            {
+                "kind": "user",
+                "content": "Насос Н-2 находится в цехе 3.",
+                "analysis": "Пользователь сообщает, что насос Н-2 находится в цехе 3.",
+            },
+            {
+                "kind": "observation",
+                "content": {"scanner": "инвентаризация", "asset": "Н-2", "zone": "цех 3"},
+                "analysis": "Инвентаризационный сканер независимо видит Н-2 в цехе 3.",
+            },
+            {
+                "kind": "user",
+                "content": "Как я уже говорил, Н-2 стоит в третьем цехе.",
+                "analysis": "Пользователь повторяет, что Н-2 стоит в цехе 3.",
+            },
+            {
+                "kind": "observation",
+                "content": {
+                    "scanner": "RFID-ворота",
+                    "asset": "Н-2",
+                    "zone": "цех 5",
+                    "at": "10:00Z",
+                },
+                "analysis": "RFID-ворота фиксируют Н-2 в цехе 5.",
+            },
+            {
+                "kind": "user",
+                "content": "Кажется, Н-2 могли перевезти в цех 5, но я не уверен.",
+                "analysis": "Пользователь неуверенно предполагает, что Н-2 перевезли в цех 5.",
+            },
+        ],
+    ),
+}
+
 
 class EvidenceSession(DebugSession):
     """Run integration and evidence assessment step by step in one isolated process."""
 
-    def __init__(self, output_dir: Path, *, timeout_seconds: float | None = None):
+    def __init__(
+        self,
+        output_dir: Path,
+        *,
+        timeout_seconds: float | None = None,
+        scenario: str | None = None,
+    ):
         super().__init__(output_dir, timeout_seconds=timeout_seconds)
+        self.task, self.steps = SCENARIOS[scenario] if scenario else (USER_TASK, None)
         self.metadata["task_id"] = "debug-evidence-assessment"
         self.metadata["integration_context"]["task"]["id"] = "debug-evidence-assessment"
         self.evidence = []
@@ -100,7 +147,7 @@ class EvidenceSession(DebugSession):
         run = self.memory.start_run("DebugInput", "debug", {}, run_mode="evaluation")
         refs = []
         if index == 0:
-            event = self.memory.record(run, "user_input", output=USER_TASK)
+            event = self.memory.record(run, "user_input", output=self.task)
             refs.append(json_value(self.memory.output_ref(event)))
         if step["kind"] == "user":
             event = self.memory.record(run, "user_input", output=step["content"])
@@ -174,7 +221,7 @@ class EvidenceSession(DebugSession):
         """Integrate and assess each step, saving artifacts even on failure."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
         try:
-            for index, step in enumerate(STEPS):
+            for index, step in enumerate(self.steps or STEPS):
                 print(f"\n=== Шаг {index + 1}: {step['kind']} ===\n{step['content']}", flush=True)
                 self.metadata["integration_operation_id"] = f"evidence-debug-step-{index + 1}"
                 refs = self.record_step(index, step)
@@ -215,7 +262,7 @@ def main():
     configure_logging()
     repository = Path(__file__).resolve().parents[2]
     output_dir = repository / "tmp" / "debug-evidence-assessment" / uuid4().hex[:12]
-    session = EvidenceSession(output_dir)
+    session = EvidenceSession(output_dir, scenario=sys.argv[1] if len(sys.argv) > 1 else None)
     load_debug_environment(repository, session.config)
     missing = [
         name
