@@ -73,6 +73,29 @@ timeout options are listed in the script's docstring.
 uv run python src/evertree/debug_integration.py
 ```
 
+### Debug attribution learning in PyCharm
+
+Open [`src/evertree/debug_attribution.py`](src/evertree/debug_attribution.py) with the same
+interpreter and environment, then choose **Debug**. Edit `OBSERVATIONS` and `QUESTION` at
+the top. The default case receives separate reports of dogs weighing 8, 5 and 10 kg, then
+asks for their average and relative size, including a hypothetical 7 kg dog.
+
+Each report runs the real integration and evidence assessment Programs. For the question,
+the model discovers or creates a qualitative property through the ordinary semantic tools;
+assessment follows, then a fresh read-only invocation answers from retained knowledge.
+The script supplies no graph IDs, cutoffs or expected answer. The in-process harness covers
+these mechanisms; application scheduling, worker transport and restart are outside it.
+
+Each run writes to `tmp/debug-attribution/<run>/`. Inspect `observation-1/` through
+`observation-3/`, `learned/` and `final/`: `properties.json` contains property definitions,
+norm checkpoints and current readings with BeliefData. `answer.json`, `stages.json`,
+`trace.json`, `tools.json` and `model-*.md/json` preserve the answer and how it was obtained,
+also on failure. Breakpoints do not consume a model deadline in interactive runs.
+
+```sh
+uv run python src/evertree/debug_attribution.py
+```
+
 ### Code conventions
 
 - Keep interfaces and data models minimal: every field, parameter, and option must have a current purpose.

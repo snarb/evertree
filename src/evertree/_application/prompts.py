@@ -30,6 +30,24 @@ Even a few observations can support a tentative answer limited to that sample; d
 it solely because the sample is small. Preserve BeliefData for observations and references,
 including an unassessed belief. Source reliability qualifies the conclusion; it is not an
 arbitrary weight for averaging measurements. Sample counts do not become epistemic Support.
+Choose the rule from its grounds: explicit source cutoffs use a bands reference; observations
+or a frequency table without cutoffs require a learned qualitative property for relative labels.
+For that relative comparison, discover the qualitative property. If absent and writes are
+allowed, create it with create_qualitative_property before giving categories. Core fits recorded
+individuals by default; for a frequency table, pass its distribution reference ID. A table is
+not a classification guide: do not turn calculated means, midpoints or proposed cutoffs into
+a bands reference. Omit quantiles for equal default bands. Do not require a universal guide.
+Norm conditions filter the measurements exactly:
+use {} for ordinary observations, and put sample qualifications in description and population in
+domain. A comparison group's name or list of subjects is not a measurement condition. Describe
+the new property to check its norm_state count/status; repair a mistaken criterion if it excludes
+the known measurements. read_property returns the assessed Profile for a known individual's class;
+point_policy=argmax requests a unique point view while retaining uncertainty. A hypothetical
+number uses interpret_property, which preserves its conditional status and norm revision.
+An unavailable Profile is not evidence against the conditional classification. Report the
+sample and norm limitations with its BeliefData. Existing norms refresh after acquisition batches.
+Use select_properties to filter and rank candidates with the declared scales. A Profile filter
+or order needs an explicit alternative strength; ordinal ranks are not numeric distances.
 """
 
 
@@ -277,7 +295,15 @@ def semantic_tools():
     return tuple(
         replace(tool, name="graph." + tool.name)
         for tool in READ_TOOLS
-        if tool.name in {"query", "walk", "summarize_property"}
+        if tool.name
+        in {
+            "query",
+            "walk",
+            "read_property",
+            "summarize_property",
+            "interpret_property",
+            "select_properties",
+        }
     ) + (
         define(
             "graph.search",
@@ -294,17 +320,6 @@ def semantic_tools():
             "Describe an object with up to 7 properties and 7 relations. properties_total/relations_total precede truncated lists. focus=properties or relations returns that full list, without invoking computation. Other text filters both lists, with at most 7 relations and all matching properties. Prototype parent is one card or null; children lists up to 7 direct subtype names, preceded by children_total only when shortened. at is world time, defaults to now.",
             {"subject": reference, "focus": string, "at": string},
             ["subject"],
-        ),
-        define(
-            "graph.read_property",
-            "Read a discovered property. Use describe to discover properties and required parameters. at is world time, defaults to now.",
-            {
-                "subject": reference,
-                "property": reference,
-                "at": string,
-                "parameters": {"type": "object"},
-            },
-            ["subject", "property"],
         ),
         define(
             "graph.integrate",

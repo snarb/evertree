@@ -4,6 +4,7 @@ Stores define the environment; this module never opens live files, invokes a
 provider, schedules a task or performs an external action.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from evertree.core.evaluation.contracts import exact_json_equal
@@ -39,6 +40,8 @@ MODEL_OPERATIONS = frozenset(
         "graph.describe",
         "graph.read_property",
         "graph.summarize_property",
+        "graph.interpret_property",
+        "graph.select_properties",
         "semantic.lookup",
         "semantic.bm25",
         "semantic.vector",
@@ -53,6 +56,10 @@ MODEL_OPERATIONS = frozenset(
         "attribution.read",
         "attribution.measure",
         "attribution.normalize",
+        "attribution.prepare_read",
+        "attribution.finish_read",
+        "attribution.prepare_selection",
+        "attribution.finish_selection",
         "topology.inspect",
     }
 )
@@ -76,6 +83,9 @@ class CoreOperations:
     learning: LearningStore
     observation_ids: set[int] | frozenset[int]
     protected_nodes: set[int] | frozenset[int] = field(default_factory=frozenset)
+
+    def __post_init__(self):
+        self.attribution.memory = self.memory
 
     def predictions(self, run_mode="live") -> PredictionEvaluator:
         """Build a prediction evaluator using this gateway's stores and observation authority."""
@@ -236,6 +246,13 @@ class CoreOperations:
             from .semantics.reading import summarize_property
 
             result = summarize_property(self.graph, self.attribution, **payload)
+        elif method in {"graph.interpret_property", "graph.select_properties"}:
+            from .semantics.reading import interpret_property, select_properties
+
+            reader = (
+                interpret_property if method == "graph.interpret_property" else select_properties
+            )
+            result = reader(self.graph, self.attribution, **payload)
         elif method in {"graph.read", "graph.get"}:
             result = self.graph.get(payload["id"])
         elif method == "graph.view":
@@ -292,6 +309,50 @@ class CoreOperations:
             result = self.attribution.read_property(**payload)
         elif method == "attribution.normalize":
             result = self.attribution.normalize(**payload)
+        elif method == "attribution.prepare_read":
+            from .attribution_sources import prepare_program_read
+
+            result = prepare_program_read(self.attribution, **payload)
+        elif method == "attribution.finish_read":
+            from .attribution_sources import finish_program_read
+
+            result = finish_program_read(self.attribution, **payload)
+        elif method == "attribution.prepare_selection":
+            from .attribution_sources import prepare_selection
+
+            result = prepare_selection(self.attribution, **payload)
+        elif method == "attribution.finish_selection":
+            from .attribution_sources import finish_selection
+
+            result = finish_selection(self.attribution, **payload)
+        elif method == "attribution.refresh_norms":
+            from .attribution_norms import refresh_norm
+
+            refreshed = []
+            with self.graph.transaction(), self.memory.transaction():
+                for node in self.graph.nodes(kind="property"):
+                    if "qualitative_norm" not in node.properties:
+                        continue
+                    delta = refresh_norm(self.attribution, node.id)
+                    if not delta.updates:
+                        continue
+                    dependencies = delta.updates[0].changes["properties"]["norm_state"][
+                        "dependencies"
+                    ]
+                    sources = []
+                    for dependency in dependencies:
+                        provenance = self.graph.changes_of(dependency["object"])[-1].provenance
+                        if isinstance(provenance, Mapping) and "event_ref" in provenance:
+                            sources.append(TraceOutputRef(**provenance))
+                    self.apply_delta(
+                        delta,
+                        task_id=task_id,
+                        revision=revision,
+                        run_mode=run_mode,
+                        source_refs=tuple(dict.fromkeys(sources)),
+                    )
+                    refreshed.append(node.id)
+            result = {"refreshed": refreshed}
         elif method == "topology.inspect":
             result = inspect_topology(self.graph, **payload)
         elif method == "evidence.assess":
@@ -319,6 +380,15 @@ class CoreOperations:
                 payload.get("candidates", ()),
                 limit=payload.get("limit", 24),
                 related_limit=payload.get("related_limit", 16),
+            )
+        elif method in {"evidence.pending_properties", "evidence.record_property"}:
+            from .attribution_evidence import AttributionEvidence
+
+            assessment = AttributionEvidence(self.attribution, self.memory)
+            result = (
+                assessment.pending(**payload)
+                if method == "evidence.pending_properties"
+                else assessment.record(**payload, created_by=metadata.get("run_id"))
             )
         elif method == "evidence.record":
             result = GraphEvidence(self.graph, self.memory, self.beliefs).record(

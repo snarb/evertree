@@ -25,8 +25,10 @@ alternative's probability in the scope's Profile.
 from evertree.common.structured import ask
 from evertree.core.learning.api import (
     pending_evidence,
+    pending_property_evidence,
     record_evidence,
     record_origin_evidence,
+    record_property_evidence,
     record_scope_evidence,
     stale_evidence,
     withdraw_evidence,
@@ -53,6 +55,76 @@ OBSERVATION_MODEL = {
 }
 OBSERVATION_MODEL["document"] = OBSERVATION_MODEL["observation"]
 STANCES = (*OBSERVATION_MODEL["user"], "not_addressed")
+
+PROPERTY_INSTRUCTIONS = """Assess the declared qualitative properties of recorded subjects.
+Each question has mutually exclusive, exhaustive class alternatives. The numeric reading,
+fitted population norm and conditional interpretation are supplied by deterministic code.
+They are context for judging the subject's actual class, not calibrated confidence.
+Count describes the norm's sample size; it is never epistemic support. A norm fitted to a
+few reported subjects does not establish a reliable norm for the whole population.
+The training-evidence preview preserves assessed beliefs of individual inputs and the
+reference, prioritizing assessed inputs with lower Strength; its total may exceed the
+preview. This ordering does not reweight training data. Missing assessments are not refutations.
+
+For every question, judge the primary sources with role measurement against every class:
+supports/opposes for clear applicable evidence, weak_support/weak_opposition for hedged,
+indirect or uncertain evidence, non_discriminating when it does not distinguish the
+alternatives, not_addressed when it does not bear on the claim. Account for numeric and
+criterion uncertainty, its declared domain and conditions, and the supplied norm belief.
+Do not multiply confidence numbers. Source origin reliability is applied by code.
+Norm-context sources explain the rule and its population; do not assign them independent
+votes about this individual. Never assign withdrawn sources. A criterion or a computed
+bin alone does not prove an object's actual class. Keep all alternatives even without a
+winning class; an empty evidence list preserves the prior.
+
+Set repeats to another source key only when the measurement source restates that source.
+Return one answer per question; class values are the supplied integer class ids. Reasons
+explain a semantic judgment in the source's language. No graph facts are requested.
+"""
+
+PROPERTY_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "scopes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "scope": {"type": "string"},
+                    "evidence": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "source": {"type": "string"},
+                                "stances": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": False,
+                                        "properties": {
+                                            "class": {"type": "integer"},
+                                            "stance": {"type": "string", "enum": list(STANCES)},
+                                        },
+                                        "required": ["class", "stance"],
+                                    },
+                                },
+                                "repeats": {"type": ["string", "null"]},
+                                "reason": {"type": "string"},
+                            },
+                            "required": ["source", "stances", "repeats", "reason"],
+                        },
+                    },
+                },
+                "required": ["scope", "evidence"],
+            },
+        }
+    },
+    "required": ["scopes"],
+}
 # Reliability of an origin nothing is known against. The table above presumes the
 # cooperative-source correctness of the belief model and applies unchanged at or above it;
 # an origin's reliability belief starts here unless its kind is doubtful. Under the
@@ -633,6 +705,108 @@ async def _reassess(ctx, revision):
     return revised
 
 
+def _training_priority(item):
+    """Keep assessed weak inputs visible even when the full sample exceeds the preview."""
+    belief = item["belief"]
+    if belief and belief["stats"]["evidence_count"] > 0:
+        return 0, belief["data"]["strength"]
+    return 1, 0
+
+
+def _property_sources(item, training):
+    """Retain all measurement sources and a bounded preview of the norm's source texts."""
+    sources = {source["key"]: source for source in item["sources"]}
+    preferred = list(dict.fromkeys(key for record in training for key in record["source_keys"]))
+    ordered = preferred + [key for key in sources if key not in preferred]
+    context = [sources[key] for key in ordered if sources[key]["role"] == "norm_context"][:20]
+    return [source for source in item["sources"] if source["role"] == "measurement"] + context
+
+
+async def _assess_properties(ctx):
+    """Use the same source observation model for declared qualitative scopes."""
+    pending = await pending_property_evidence(ctx)
+    scopes = {f"P{index + 1}": item for index, item in enumerate(pending["scopes"])}
+    if not scopes:
+        return []
+    questions = []
+    for key, item in scopes.items():
+        training = sorted(item["norm"]["training_evidence"], key=_training_priority)[:20]
+        questions.append(
+            {
+                "scope": key,
+                "subject": item["subject_name"],
+                "property": item["property_name"],
+                "classes": item["class_meanings"],
+                "conditions": item["parameters"],
+                "reading": item["reading"],
+                "norm": {
+                    "definition": item["norm"]["definition"],
+                    "state": {
+                        field: value
+                        for field, value in item["norm"]["state"].items()
+                        if field not in {"semantic_revision", "revision"}
+                    },
+                    "belief_data": item["norm"]["belief_data"],
+                    "belief_status": item["norm"]["belief_status"],
+                    "training_evidence": training,
+                    "training_evidence_total": len(item["norm"]["training_evidence"]),
+                },
+                "conditional_interpretation": item["conditional_interpretation"],
+                "sources": [
+                    {
+                        field: source[field]
+                        for field in ("key", "kind", "origin", "role", "text", "withdrawn_by")
+                    }
+                    for source in _property_sources(item, training)
+                ],
+                "sources_total": len(item["sources"]),
+            }
+        )
+    judged = await ask(
+        ctx,
+        instructions=PROPERTY_INSTRUCTIONS,
+        data={"questions": questions},
+        schema=PROPERTY_SCHEMA,
+    )
+    recorded, answered = [], set()
+    for answer in judged["result"]["scopes"]:
+        key = answer["scope"]
+        if key not in scopes or key in answered:
+            continue
+        answered.add(key)
+        item = scopes[key]
+        sources = {source["key"]: source for source in item["sources"]}
+        assign = []
+        for evidence in answer["evidence"]:
+            source = sources.get(evidence["source"])
+            if source is None or source["role"] != "measurement" or source["withdrawn_by"]:
+                continue
+            given = {str(entry["class"]): entry["stance"] for entry in evidence["stances"]}
+            stances = {
+                str(identity): given.get(str(identity), "not_addressed")
+                for identity in item["classes"]
+            }
+            if all(stance == "not_addressed" for stance in stances.values()):
+                continue
+            prior = source["origin_belief"]
+            reliability = prior["data"]["strength"] if prior is not None else None
+            repeat = sources.get(evidence["repeats"])
+            root = repeat["ref"] if repeat is not None else source["dependency_root"]
+            assign.append(_evidence(source, stances, reliability, root))
+        recorded.append(
+            await record_property_evidence(
+                ctx,
+                item["subject"],
+                item["property"],
+                item["input_revision"],
+                parameters=item["parameters"],
+                at=item["at"],
+                assign=assign,
+            )
+        )
+    return recorded
+
+
 async def run(ctx, experience_refs: list | None = None):
     """Assess one batch of changed and related graph elements and record their evidence."""
     experience_refs = experience_refs or []
@@ -681,12 +855,14 @@ async def run(ctx, experience_refs: list | None = None):
         for record in scope_records:
             scopes.append(await record_scope_evidence(ctx, batch["revision"], **record))
     reassessed = await _reassess(ctx, batch["revision"])
+    properties = await _assess_properties(ctx)
     return {
         "result": {
             "assessed": assessed,
             "origins": origins,
             "scopes": scopes,
             "reassessed": reassessed,
+            "properties": properties,
             "unresolved": unresolved,
             "remaining": batch["remaining"],
             "search_errors": search_errors,

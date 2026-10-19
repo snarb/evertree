@@ -112,3 +112,8 @@ async def call_semantic_search(ctx: ProgramContext, query: str) -> Any:
     Contract Program: see CALLED_PROGRAMS in evertree.core.contracts.
     """
     return (await ctx.call("semantic_search", {"query": query})).result
+
+
+async def refresh_property_norms(ctx: ProgramContext) -> Any:
+    """Fit stale learned norms once after an acquisition batch, leaving reads effect-free."""
+    return await ctx.step("attribution.refresh_norms", {})

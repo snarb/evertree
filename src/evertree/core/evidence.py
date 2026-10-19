@@ -177,14 +177,26 @@ class GraphEvidence:
 
     def assessable(self, node) -> bool:
         """Tell whether a node is a semantic graph element this program assesses as binary."""
-        if node.kind not in ASSESSABLE_KINDS or node.properties.get("process"):
+        qualitative = node.kind == "property" and "qualitative_norm" in node.properties
+        if (not qualitative and node.kind not in ASSESSABLE_KINDS) or node.properties.get(
+            "process"
+        ):
             return False
         # Explicit bindings (attribution scopes) belong to their own updaters.
         return not (isinstance(node, RelationInstance) and node.belief_target)
 
     def _grounds(self, identity: int, sources: _Sources, assessed: int) -> list[str]:
         keys = []
-        for change in self.graph.changes_of(identity):
+        changes = list(self.graph.changes_of(identity))
+        node = self.graph.get(identity)
+        if "qualitative_norm" in node.properties:
+            for dependency in node.properties["norm_state"].get("dependencies", ()):
+                changes.extend(
+                    change
+                    for change in self.graph.changes_of(dependency["object"])
+                    if change.seq == dependency["revision"]
+                )
+        for change in changes:
             reference = _reference(change.provenance)
             if reference is None:
                 continue
@@ -213,6 +225,42 @@ class GraphEvidence:
         return result
 
     def _card(self, node) -> dict:
+        if "attribution_result" in node.properties:
+            result = json_value(node.properties["attribution_result"])
+            value = result["value_U"]
+            if isinstance(value, dict) and len(value.get("quantiles", ())) > 20:
+                value["quantiles_total"] = len(value["quantiles"])
+                value["quantiles"] = value["quantiles"][:20]
+                value["truncated"] = True
+            return {**card(node), "attribution_result": result}
+        if "qualitative_norm" in node.properties:
+            definition, state = node.properties["qualitative_norm"], node.properties["norm_state"]
+            return {
+                **card(node),
+                "criterion": json_value(definition),
+                "class_meanings": [
+                    card(self.graph.get(identity)) for identity in definition["classes"]
+                ],
+                "fitted_norm": {
+                    key: json_value(state[key])
+                    for key in (
+                        "status",
+                        "boundaries",
+                        "boundary_bounds",
+                        "count",
+                        "unit",
+                        "approximate",
+                    )
+                    if key in state
+                },
+                "dependency_count": len(state.get("dependencies", ())),
+                "assessment_question": "Does this fitted criterion describe its stated population?",
+            }
+        if "numeric_reference" in node.properties:
+            return {
+                **card(node),
+                "numeric_reference": json_value(node.properties["numeric_reference"]),
+            }
         if isinstance(node, RelationInstance):
             relation = self.graph.get(node.relation_type)
             args = {}

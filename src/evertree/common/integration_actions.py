@@ -121,14 +121,30 @@ class SemanticTools:
         elif name == "create_prototype" and action["parent"] is not None:
             subjects = [action["parent"], "SUBTYPE_OF"]
         elif name == "create_property":
-            subjects = action["applies_to"]
+            subjects = [
+                *action["applies_to"],
+                *action.get("classes", []),
+                action.get("program"),
+                action.get("relation_type"),
+            ]
         elif name == "create_property_reference":
             subjects = [action["property"], action["domain"], *action["classes"]]
+        elif name in {"create_qualitative_property", "revise_property_norm"}:
+            subjects = [
+                action["property"],
+                action["domain"],
+                *action["classes"],
+                action.get("reference"),
+                action.get("object"),
+            ]
+        elif name == "save_property_result":
+            subjects = [action["subject"], action["property"]]
         elif name == "update":
             subjects = [action["object"]]
         elif name == "delete":
             subjects = action["objects"]
         elif name == "relate":
+            subjects = [action.get("criterion")]
             result = await self._describe(action["relation"], reads)
             schema = result.get("schema", result["subject"])
             kinds = {slot["label"]: slot["value_type"] for slot in schema["signature"]}
@@ -173,7 +189,7 @@ class SemanticTools:
                 arguments.get(k) is not None for k in ("focus", "at")
             ):
                 result = await self._describe(action["subject"], reads)
-            elif name in {"query", "walk", "read_property", "summarize_property", "describe"}:
+            elif TOOLS_BY_NAME[name].read_only:
                 if self._read_port is None:
                     raise ValueError("This invocation has no graph read port")
                 result = await self._read_port(name, arguments)

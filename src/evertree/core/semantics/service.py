@@ -186,10 +186,16 @@ class SemanticService:
                     raise ContractError("Graph writes require sources")
                 for ref in sources:
                     if not any(self._contains(parent, ref) for parent in inputs):
-                        raise ContractError("Write source is outside supplied experience")
+                        raise ContractError(
+                            "Write source is outside supplied experience. Choose a supplied "
+                            "experience reference or its actual nested part and retry; a supplied "
+                            "reading or analytical note already retains its earlier source dependencies."
+                        )
                 material = self.sources(json_value(sources), metadata=metadata)
                 self._check_search(action, metadata)
-                delta, identity = compile_action(self.graph, action, material)
+                delta, identity = compile_action(
+                    self.graph, action, material, attribution=self.attribution
+                )
                 for embedded in _references(json_value(delta)):
                     if not any(self._contains(source, embedded) for source in sources):
                         raise ContractError(

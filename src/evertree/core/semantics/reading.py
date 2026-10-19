@@ -87,7 +87,9 @@ def fact_card(graph, fact):
     return result
 
 
-def read_property(graph, attribution, subject, property, at=None, parameters=None):
+def read_property(
+    graph, attribution, subject, property, at=None, parameters=None, point_policy=None
+):
     """Resolve semantic names and read a property, reporting missing parameters explicitly."""
     node, prop = resolve(graph, subject), resolve(graph, property)
     if isinstance(node, dict):
@@ -101,7 +103,40 @@ def read_property(graph, attribution, subject, property, at=None, parameters=Non
         return {"status": "needs_parameters", "required_parameters": sorted(missing)}
     return json_value(
         attribution.read_property(
-            node.id, prop.id, valid_at=timestamp(at) if at else utcnow(), **parameters
+            node.id,
+            prop.id,
+            valid_at=timestamp(at) if at else None,
+            point_policy=point_policy,
+            **parameters,
+        )
+    )
+
+
+def interpret_property(graph, attribution, property, value, unit=None, parameters=None):
+    """Resolve a learned property and apply its retained norm to a hypothetical value."""
+    from ..attribution_norms import interpret_norm
+
+    prop = resolve(graph, property)
+    if isinstance(prop, dict):
+        return prop
+    return json_value(interpret_norm(attribution, prop.id, value, unit=unit, parameters=parameters))
+
+
+def select_properties(
+    graph, attribution, subjects, filters=(), order_by=None, limit=20, at=None, parameters=None
+):
+    """Select candidates through their declared property readings, preserving unknown results."""
+    from ..attribution_selection import select_properties as select
+
+    return json_value(
+        select(
+            attribution,
+            subjects,
+            filters=filters,
+            order_by=order_by,
+            limit=limit,
+            valid_at=timestamp(at) if at else None,
+            parameters=parameters,
         )
     )
 
@@ -153,7 +188,14 @@ def describe(graph, attribution, subject, focus=None, at=None):
     definitions = () if focus == "relations" else attribution.properties_for(node.id, at=when)
     for definition in definitions:
         prop = graph.get(definition.id)
-        item = {**card(prop), "required_parameters": list(definition.required_parameters)}
+        item = {
+            **card(prop),
+            "scale": definition.scale,
+            "unit": definition.unit,
+            "classes": list(definition.classes),
+            "required_parameters": list(definition.required_parameters),
+            "parameter_types": json_value(definition.parameter_types),
+        }
         if definition.required_parameters:
             item["status"] = "needs_parameters"
         else:
@@ -173,9 +215,21 @@ def describe(graph, attribution, subject, focus=None, at=None):
         result["subject"]["belief"] = belief
     definitions = {
         key: json_value(node.properties[key])
-        for key in ("attribution", "numeric_reference")
+        for key in (
+            "attribution",
+            "numeric_reference",
+            "qualitative_norm",
+            "norm_state",
+            "attribution_result",
+        )
         if key in node.properties
     }
+    if state := definitions.get("norm_state"):
+        for field in ("rows", "dependencies"):
+            if len(state.get(field, [])) > 20:
+                state[field + "_total"] = len(state[field])
+                state[field] = state[field][:20]
+                state["truncated"] = True
     if reference := definitions.get("numeric_reference"):
         for field, limit in (
             ("samples", 20),

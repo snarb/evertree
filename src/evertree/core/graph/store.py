@@ -269,7 +269,9 @@ class GraphStore:
                     raise ContractError("canonical names must be unique and contain 1–3 words")
                 names.add(key)
         from ..attribution import PropertyDefinition, validate_parameters
+        from ..attribution_norms import validate_norm
         from ..attribution_population import finite_number, validate_reference
+        from ..attribution_sources import validate_saved_result
 
         for node in nodes.values():
             binding = node.properties.get("attribution") if node.kind == "property" else None
@@ -277,6 +279,23 @@ class GraphStore:
                 definition = PropertyDefinition(id=node.id, **binding)
                 if any(identity not in nodes for identity in definition.applies_to):
                     raise ContractError("Property domain references a missing node")
+                if any(
+                    type(identity) is not int
+                    or identity not in nodes
+                    or nodes[identity].kind not in {"concept", "prototype"}
+                    for identity in definition.classes
+                ):
+                    raise ContractError("Property classes must reference existing concepts")
+                if definition.source == "norm" and "qualitative_norm" not in node.properties:
+                    raise ContractError("Learned properties require a fitted qualitative criterion")
+                if definition.program is not None:
+                    program = nodes.get(definition.program)
+                    if (
+                        program is None
+                        or program.kind != "program"
+                        or program.properties.get("role") != "model"
+                    ):
+                        raise ContractError("Computed property requires an existing model Program")
                 if definition.source == "relation":
                     matches = [
                         n
@@ -288,16 +307,9 @@ class GraphStore:
                             and normalize_name(n.name) == normalize_name(definition.relation_type)
                         )
                     ]
-                    if len(matches) != 1 or not any(
-                        v.name == definition.view for v in matches[0].views
-                    ):
+                    if len(matches) != 1:
                         raise ContractError("Property requires an existing declared relation view")
-                    view = next(v for v in matches[0].views if v.name == definition.view)
-                    if set(view.inputs) != {
-                        definition.subject_slot,
-                        *definition.required_parameters,
-                    }:
-                        raise ContractError("Property parameters must match relation view inputs")
+                    definition.validate_relation(matches[0])
         parents: dict[int, int] = {}
         instance_types: dict[int, int] = {}
         facet_instances: dict[int, int] = {}
@@ -319,6 +331,17 @@ class GraphStore:
             if relation.name == "HAS_NUMERIC_VALUE":
                 finite_number(node.args.get("value"))
                 validate_parameters(node.properties.get("conditions", {}))
+            if (criterion := node.properties.get("criterion")) is not None:
+                prop = nodes.get(criterion)
+                definition = prop.properties.get("attribution", {}) if prop is not None else {}
+                if (
+                    relation.name != "CLASSIFIED_AS"
+                    or definition.get("source") != "classification"
+                    or node.args.get("class") not in definition.get("classes", ())
+                ):
+                    raise ContractError(
+                        "Classification criterion must declare this class and property source"
+                    )
             labels = {slot.label for slot in relation.signature}
             if not set(node.args) <= labels:
                 raise ContractError("fact contains undeclared slots")
@@ -345,6 +368,10 @@ class GraphStore:
                 seen.add(current)
                 current = parents[current]
         for node in nodes.values():
+            if "qualitative_norm" in node.properties:
+                validate_norm(node, nodes, parents)
+            if "attribution_result" in node.properties:
+                validate_saved_result(node.properties["attribution_result"], nodes)
             if "numeric_reference" in node.properties:
                 validate_reference(node.properties["numeric_reference"], nodes, parents)
             if node.kind == "instance" and node.id not in instance_types:
