@@ -18,6 +18,7 @@ from ..core.programs.layout import process_directory, process_slug, validate_pro
 from ..core.programs.lifecycle import ProgramLifecycleRuntime, git
 from ..core.provider import LLMRequest, ToolDefinition
 from ..core.values import json_value
+from .integration import EVIDENCE_ASSESSMENT_SLUGS
 
 
 class ProgramsMixin:
@@ -308,6 +309,7 @@ class ProgramsMixin:
                             "task_framing",
                             "resource_control",
                             "semantic_search",
+                            *EVIDENCE_ASSESSMENT_SLUGS,
                         }
                     ):
                         for note in [product["analysis"], *product.get("findings", [])]:

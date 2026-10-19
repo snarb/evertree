@@ -63,14 +63,16 @@ async def test_normal_integration_completion_needs_no_core_receipt(app, monkeypa
     app.observe("Source", source_id="source", task_id=task.id)
     calls = []
 
-    async def completed_program(*args, **kwargs):
-        calls.append(1)
+    async def completed_program(task_id, identity, arguments):
+        calls.append((identity, arguments))
         return {"result": {"writes": []}, "feedback": None}
 
     monkeypatch.setattr(app, "_run_program", completed_program)
     await app._integrate_step(task)
     await app._integrate_step(task)
-    assert len(calls) == 1
+    # Evidence assessment follows the integrated packet with the same experience.
+    assert [identity for identity, _ in calls] == ["knowledge_integration", "evidence_assessment"]
+    assert calls[1][1]["experience_refs"] == calls[0][1]["experience_refs"]
     assert task.status != "waiting"
     assert "last_integration_receipt" not in task.step_state
 
@@ -82,18 +84,20 @@ async def test_failed_integration_is_not_retried_at_every_step(app, monkeypatch)
     app.observe("Source", source_id="source", task_id=task.id)
     calls = []
 
-    async def failed_program(*args, **kwargs):
-        calls.append(1)
+    async def failed_program(task_id, identity, arguments):
+        calls.append(identity)
         raise RuntimeError("Temporary outage")
 
     monkeypatch.setattr(app, "_run_program", failed_program)
     await app._integrate_step(task)
     await app._integrate_step(task)
-    assert len(calls) == 1
+    assert calls.count("knowledge_integration") == 1
     assert task.status != "waiting"
+    diagnostics = {run.program for run in app.memory.runs if run.status == "failed"}
+    assert {"KnowledgeIntegrationDiagnostic", "EvidenceAssessmentDiagnostic"} <= diagnostics
     app.observe("New insight", source_id="follow-up", task_id=task.id)
     await app._integrate_step(task)
-    assert len(calls) == 2
+    assert calls.count("knowledge_integration") == 2
 
 
 async def test_temporary_budget_clamp_does_not_overwrite_requested_step_budget(app, monkeypatch):

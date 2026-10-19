@@ -10,6 +10,13 @@ from uuid import uuid4
 from ..core.cognition.steps import trace_reference
 from ..core.values import json_value
 
+# Service Programs run after integration; their outputs are not experience to integrate.
+EVIDENCE_ASSESSMENT_SLUGS = (
+    "evidence_assessment",
+    "graph_evidence_assessment",
+    "program_evidence_assessment",
+)
+
 
 class KnowledgeIntegrationMixin:
     """Runtime owns boundaries and context; the Program owns semantic selection."""
@@ -157,6 +164,7 @@ class KnowledgeIntegrationMixin:
                 "task_framing",
                 "resource_control",
                 "semantic_search",
+                *EVIDENCE_ASSESSMENT_SLUGS,
             }
         }
         excluded = set()
@@ -173,6 +181,7 @@ class KnowledgeIntegrationMixin:
                     "GraphMutation",
                     "SemanticWrite",
                     "KnowledgeIntegrationDiagnostic",
+                    "EvidenceAssessmentDiagnostic",
                 }
                 or parent in excluded
                 or run.arguments.get("owner_run") in excluded
@@ -327,4 +336,28 @@ class KnowledgeIntegrationMixin:
             state, checkpoint["specification_revision"], checkpoint["experience_refs"]
         )
         work.pop("integration")
+        await self.backup()
+        await self._assess_evidence(state, checkpoint["experience_refs"])
+
+    async def _assess_evidence(self, state, experience_refs):
+        """Assess integrated experience as evidence; failures stay diagnostics, not step errors.
+
+        Elements left unassessed by a failure stay pending for the next assessment.
+        """
+        if state.hard_limit_reached or state.budget_exhausted:
+            return
+        try:
+            await self._run_program(
+                state.id, "evidence_assessment", {"experience_refs": experience_refs}
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 -- assessment cannot block conscious work
+            run = self.memory.start_run(
+                "EvidenceAssessmentDiagnostic", self._program_revision(), {"task_id": state.id}
+            )
+            self.memory.record(run, "evidence_assessment_error", output={"error": str(exc)})
+            self.memory.finish_run(run, status="failed")
+            if self._pending_programs.get(state.id, {}).get("identity") == "evidence_assessment":
+                self._pending_programs.pop(state.id, None)
         await self.backup()

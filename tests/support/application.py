@@ -12,6 +12,12 @@ def is_integration_request(request):
     return {"save_note", "update"} <= {tool.name for tool in request.tools}
 
 
+def is_evidence_request(request):
+    """Recognize the graph evidence assessment judgement by its output schema."""
+    targets = (request.output_schema or {}).get("properties", {}).get("targets", {})
+    return "evidence" in targets.get("items", {}).get("properties", {})
+
+
 async def tool_events(request_id, request, handler, calls):
     """Exercise the provider's native callback boundary with correlated events."""
     declared = {tool.name for tool in request.tools}
@@ -35,13 +41,25 @@ async def tool_events(request_id, request, handler, calls):
 
 
 class IntegrationScriptedProvider(ScriptedProvider):
-    """Complete automatic selection with no writes unless a test selects knowledge."""
+    """Complete automatic selection with no writes and assessment with no evidence.
+
+    Tests that select knowledge or judge evidence script those requests themselves.
+    """
 
     @property
     def task_requests(self):
-        return [request for request in self.requests if not is_integration_request(request)]
+        return [
+            request
+            for request in self.requests
+            if not is_integration_request(request) and not is_evidence_request(request)
+        ]
 
     async def run(self, request_id, request, **kwargs):
+        if is_evidence_request(request):
+            self.requests.append(request)
+            for event in completed({"targets": []}):
+                yield event
+            return
         if not is_integration_request(request):
             async for event in super().run(request_id, request, **kwargs):
                 yield event

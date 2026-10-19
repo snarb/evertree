@@ -49,6 +49,8 @@ async def test_wrappers_send_core_methods_and_payload_keys():
     await learning.prepare(ctx, {"id": 1})
     await learning.learn(ctx, {"s": 1}, "target")
     await learning.assess_evidence(ctx, "target", {"ref": 1}, {"true": 0.9})
+    await learning.pending_evidence(ctx, experience_refs=["ref"], candidates=[3])
+    await learning.record_evidence(ctx, 7, 4, prior=0.6, retract=["ref"])
     await evaluation.match(ctx, [1], context={}, metrics=["m"])
     await evaluation.review(ctx, cases=[], credits=[])
     assert ctx.steps == [
@@ -89,6 +91,14 @@ async def test_wrappers_send_core_methods_and_payload_keys():
                 "likelihoods": {"true": 0.9},
                 "dependency_root": None,
             },
+        ),
+        (
+            "evidence.pending",
+            {"experience_refs": ["ref"], "candidates": [3], "limit": 24, "related_limit": 16},
+        ),
+        (
+            "evidence.record",
+            {"element": 7, "revision": 4, "prior": 0.6, "assign": [], "retract": ["ref"]},
         ),
         (
             "evaluation.match",

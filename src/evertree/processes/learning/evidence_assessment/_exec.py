@@ -1,21 +1,12 @@
-"""Submit source likelihoods keyed by scope alternatives or binary false/true.
+"""Run evidence assessment for graph elements, then for Programs, one after the other."""
 
-The keys identify the target state; dictionary insertion order has no meaning.
-Core retains dependency semantics.
-"""
-
-from evertree.core.learning.api import assess_evidence
+from evertree.core.runtime.api import call_program
 
 
-async def run(
-    ctx,
-    target: str,
-    source_ref,
-    likelihoods: dict,
-    dependency_root: str | None = None,
-):
-    """Submit source-backed likelihoods for a declared belief target through Core validation."""
-    result = await assess_evidence(
-        ctx, target, source_ref, likelihoods, dependency_root=dependency_root
+async def run(ctx, experience_refs: list | None = None):
+    """Assess newly integrated experience; each child awaits the previous one."""
+    graph = await call_program(
+        ctx, "graph_evidence_assessment", {"experience_refs": experience_refs or []}
     )
-    return {"result": result, "feedback": None}
+    programs = await call_program(ctx, "program_evidence_assessment", {})
+    return {"result": {"graph": graph.result, "programs": programs.result}, "feedback": None}

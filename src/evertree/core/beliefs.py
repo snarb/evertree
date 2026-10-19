@@ -22,6 +22,11 @@ def _source_key(source: Any) -> str:
     return json.dumps(json_value(source), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
+def element_target(element: Any) -> str:
+    """Return the belief target of a graph element: its explicit binding or its identity."""
+    return getattr(element, "belief_target", None) or f"graph:{element.id}"
+
+
 def _sigmoid(value: float) -> float:
     if value >= 0:
         return 1.0 / (1.0 + math.exp(-value))
@@ -137,6 +142,10 @@ class BeliefStore:
         self._next_id = 1
         self._lock = threading.RLock()
         self._last_changed: datetime | None = None
+        # Graph revision at which each target was last assessed, and the graph history
+        # sequence below which every assessable change has been assessed.
+        self._assessed: dict[str, int] = {}
+        self._assessment_cursor = 0
 
     def register_binary(
         self, target: str, prior: float = 0.5, *, prior_backed: bool = False
@@ -206,6 +215,30 @@ class BeliefStore:
                 current, upstream=upstream, applicability=applicability
             )
             self._last_changed = utcnow()
+
+    def assessed_revision(self, target: str) -> int | None:
+        """Return the graph revision at which a target was last assessed, if ever."""
+        return self._assessed.get(str(target))
+
+    def mark_assessed(self, target: str, revision: int) -> None:
+        """Record that evidence for a target was assessed against this graph revision."""
+        with self._lock:
+            self._assessed[str(target)] = max(revision, self._assessed.get(str(target), 0))
+
+    @property
+    def assessment_cursor(self) -> int:
+        """Return the graph history sequence up to which all changes were assessed."""
+        return self._assessment_cursor
+
+    def advance_assessment_cursor(self, seq: int) -> None:
+        """Move the assessment cursor forward; it never moves back."""
+        with self._lock:
+            self._assessment_cursor = max(self._assessment_cursor, seq)
+
+    def active_sources(self, target: str) -> tuple[EvidenceComponent, ...]:
+        """Return the currently active per-source evidence components of a target."""
+        with self._lock:
+            return tuple(self._active_components(str(target)))
 
     def _contribution(
         self, target: BeliefTarget, contribution: float | Mapping[str, float] | Sequence[float]
@@ -548,6 +581,8 @@ class BeliefStore:
                 "current": json_value(self._current),
                 "next_id": self._next_id,
                 "last_changed": self._last_changed.isoformat() if self._last_changed else None,
+                "assessed": dict(self._assessed),
+                "assessment_cursor": self._assessment_cursor,
             }
 
     @classmethod
@@ -575,6 +610,8 @@ class BeliefStore:
         store._current = {target: dict(mapping) for target, mapping in data["current"].items()}
         store._next_id = data["next_id"]
         store._last_changed = timestamp(data["last_changed"]) if data.get("last_changed") else None
+        store._assessed = dict(data["assessed"])
+        store._assessment_cursor = data["assessment_cursor"]
         for target, mapping in store._current.items():
             if target not in store._targets or any(
                 identity is not None

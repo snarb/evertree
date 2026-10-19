@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping
 
+from ..beliefs import element_target
 from ..values import UNKNOWN, ContractError
 from .types import Clause, Slot
 
@@ -128,12 +129,12 @@ def predicate_matches(graph, fact, relation, clauses, *, valid_at=None, known_at
         elif field in {"id", "name"}:
             value = getattr(fact, field)
         else:
-            if graph.belief_reader is None or fact.belief_target is None:
+            if graph.belief_reader is None:
                 unknown = True
                 continue
             try:
                 belief = graph.belief_reader(
-                    fact.belief_target, valid_at=valid_at, known_at=known_at
+                    element_target(fact), valid_at=valid_at, known_at=known_at
                 )
             except KeyError:
                 belief = UNKNOWN

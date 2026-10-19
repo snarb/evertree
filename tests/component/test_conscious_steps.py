@@ -130,7 +130,11 @@ async def test_preserved_insight_uses_note_without_self_reinforcing_belief(app):
     assert result["status"] == "succeeded"
     notes = app.graph.nodes(kind="note")
     assert len(notes) == 1 and notes[0].description == insight
-    assert app.beliefs.snapshot() == before
+    after = app.beliefs.snapshot()
+    # Evidence assessment ran and found only agent reasoning, which is not evidence.
+    assert after["assessment_cursor"] > before["assessment_cursor"]
+    for key in ("targets", "assignments", "current", "assessed"):
+        assert after[key] == before[key]
     task = app.tasks.get(result["task_id"])
     assert "last_integration_receipt" not in task.step_state
     assert len([r for r in app.provider.requests if is_integration_request(r)]) == 1

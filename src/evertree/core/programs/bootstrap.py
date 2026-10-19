@@ -50,6 +50,12 @@ PROCESS_GROUPS = {
     ),
 }
 
+# Subprocesses are SUBTYPE_OF their parent process and live in its directory.
+SUBPROCESSES = {
+    "graph_evidence_assessment": "evidence_assessment",
+    "program_evidence_assessment": "evidence_assessment",
+}
+
 
 def bootstrap_catalog() -> tuple[dict, ...]:
     """Describe the seed Program names, roles and source paths used by agent bootstrap."""
@@ -190,7 +196,19 @@ def bootstrap_catalog() -> tuple[dict, ...]:
             "EvidenceAssessment",
             "evidence_assessment",
             "exec",
-            "Submit explicit source likelihoods to dependency-aware protected belief storage.",
+            "Assess new experience as evidence for graph elements, then for Programs, in sequence.",
+        ),
+        (
+            "GraphEvidenceAssessment",
+            "graph_evidence_assessment",
+            "exec",
+            "Turn experience behind changed or related graph elements into capped binary evidence.",
+        ),
+        (
+            "ProgramEvidenceAssessment",
+            "program_evidence_assessment",
+            "exec",
+            "Placeholder for assessing evidence about Program revisions; assesses nothing yet.",
         ),
         (
             "CreditAssignment",
@@ -212,6 +230,9 @@ def bootstrap_catalog() -> tuple[dict, ...]:
         ),
     )
     parents = {slug: group for group, (_, slugs) in PROCESS_GROUPS.items() for slug in slugs}
+    directories = {slug: f"{group}/{slug}" for slug, group in parents.items()}
+    for slug, parent in SUBPROCESSES.items():
+        directories[slug] = f"{directories[parent]}/{slug}"
     meta = {
         "planning",
         "cognition_control",
@@ -227,7 +248,7 @@ def bootstrap_catalog() -> tuple[dict, ...]:
             "slug": slug,
             "role": role,
             "roles": (role, "meta") if slug in meta else (role,),
-            "git_path": f"src/evertree/processes/{parents[slug]}/{slug}/_{role}.py",
+            "git_path": f"src/evertree/processes/{directories[slug]}/_{role}.py",
             "entrypoint": "run",
             "description": description,
         }
@@ -254,6 +275,7 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
         creates.extend(
             (group, graph.new_fact("SUBTYPE_OF", {"type": group.id, "supertype": root.id}))
         )
+    processes = {}
     for descriptor in bootstrap_catalog():
         name, role = descriptor["name"], descriptor["role"]
         process = Prototype(graph.reserve_id(), name, properties={"process": True})
@@ -276,12 +298,14 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
         process = dataclasses.replace(
             process, properties={"process": True, "active_" + role: program.id}
         )
-        group = descriptor["git_path"].split("/")[3]
+        processes[descriptor["slug"]] = process.id
+        parent = SUBPROCESSES.get(descriptor["slug"])
+        supertype = processes[parent] if parent else groups[descriptor["git_path"].split("/")[3]]
         creates.extend(
             (
                 process,
                 program,
-                graph.new_fact("SUBTYPE_OF", {"type": process.id, "supertype": groups[group]}),
+                graph.new_fact("SUBTYPE_OF", {"type": process.id, "supertype": supertype}),
                 graph.new_fact(
                     "PROGRAM_FOR_PROCESS", {"program": program.id, "process": process.id}
                 ),

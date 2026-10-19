@@ -1,5 +1,6 @@
 """Compact named reads shared by consciousness and semantic Programs."""
 
+from ..beliefs import element_target
 from ..graph.types import Facet, Prototype, RelationInstance, RelationType
 from ..values import UNKNOWN, ContractError, json_value, timestamp, utcnow
 
@@ -12,6 +13,27 @@ def card(node):
             valid_from=node.valid_from.isoformat() if node.valid_from else None,
             valid_until=node.valid_until.isoformat() if node.valid_until else None,
         )
+    return result
+
+
+def belief_summary(graph, node):
+    """Read an element's current belief compactly, or None when it has not been assessed."""
+    if graph.belief_reader is None:
+        return None
+    try:
+        reading = graph.belief_reader(element_target(node))
+    except KeyError:
+        return None
+    if reading is UNKNOWN:
+        return {"status": "unknown"}
+    result = {
+        "strength": round(reading.strength, 3),
+        "support": round(reading.support, 3),
+        "prior_support": round(reading.prior_support, 3),
+        "evidence_count": reading.stats.evidence_count,
+    }
+    if reading.profile is not None:
+        result["profile"] = {key: round(value, 3) for key, value in reading.profile.items()}
     return result
 
 
@@ -59,6 +81,8 @@ def fact_card(graph, fact):
     }
     if fact.properties:
         result["properties"] = json_value(fact.properties)
+    if (belief := belief_summary(graph, fact)) is not None:
+        result["belief"] = belief
     return result
 
 
@@ -108,6 +132,8 @@ def describe(graph, attribution, subject, focus=None, at=None):
         "subject": card(node),
         "at": when.isoformat() if at is not None else None,
     }
+    if not isinstance(node, RelationInstance) and (belief := belief_summary(graph, node)):
+        result["subject"]["belief"] = belief
     if focus not in (None, "", "properties", "relations"):
         term = focus.casefold()
         properties = [p for p in properties if term in str(p).casefold()]

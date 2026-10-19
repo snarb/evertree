@@ -475,6 +475,10 @@ class GraphStore:
             return UNKNOWN
         return tuple(self.get(match.value) for match in matches)
 
+    def changes_since(self, seq: int) -> tuple[GraphChange, ...]:
+        """Return retained changes whose history sequence is greater than seq."""
+        return tuple(self._history[max(seq, 0) :])
+
     def changes_of(self, identity: int) -> tuple[GraphChange, ...]:
         """Return retained changes that created, updated or deleted this identity."""
         return tuple(

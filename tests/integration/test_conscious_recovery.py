@@ -188,6 +188,7 @@ async def test_restored_search_child_authorizes_creation_only_in_resumed_invocat
         await restored.resume(identity)
         answer, _ = await wait_for_event(restored, "answer")
         assert restored.graph.find("Recovered pump category") is not None
-        assert second_index.reads == []
+        # Integration's cached search is not repeated; evidence assessment searches anew.
+        assert "Recovered pump category" not in second_index.reads
         await restored.acknowledge_delivery(answer.data["delivery_id"])
         await wait_for_event(restored, "task_completed")

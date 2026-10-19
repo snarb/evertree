@@ -30,6 +30,7 @@ class EmptyIndex:
 def semantic_world(*, index=None, config=None):
     graph, memory, beliefs = GraphStore(), TraceStore(), BeliefStore()
     graph.bootstrap(provenance="seed")
+    graph.belief_reader = beliefs.read
     attribution = AttributionRuntime(graph, beliefs)
     operations = CoreOperations(
         graph, memory, beliefs, attribution, EvaluationStore(), LearningStore(), set()
@@ -38,7 +39,12 @@ def semantic_world(*, index=None, config=None):
         graph, memory, attribution, config or SemanticConfig(), index or EmptyIndex(), operations
     )
     return SimpleNamespace(
-        graph=graph, memory=memory, attribution=attribution, service=service, operations=operations
+        graph=graph,
+        memory=memory,
+        beliefs=beliefs,
+        attribution=attribution,
+        service=service,
+        operations=operations,
     )
 
 
@@ -58,6 +64,23 @@ def recorded_experience(world, *contents, run_mode="live", context=None):
         "integration_operation_id": "packet",
         "integration_context": context or {},
     }
+
+
+def recorded_messages(world, *texts, kind="user"):
+    """Record user messages or tool observations the way the application stores them."""
+    refs = []
+    for index, text in enumerate(texts):
+        run = world.memory.start_run("Observation", "revision", {"task_id": "task"})
+        if kind == "user":
+            source_id, value = f"input:{uuid4().hex}", {"role": "user", "content": text}
+        else:
+            source_id, value = f"sensor:{index}", {"reading": text}
+        event = world.memory.record(
+            run, "observation", arguments={"source_id": source_id}, output=value
+        )
+        world.memory.finish_run(run)
+        refs.append(json_value(world.memory.output_ref(event)))
+    return refs
 
 
 def write_action(world, refs, metadata, action, *, key="write", searched=True):

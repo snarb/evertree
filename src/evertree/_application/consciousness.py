@@ -14,6 +14,7 @@ from evertree.core.memory.types import MemoryQuery, TraceOutputRef
 
 from ..core.provider import LLMRequest
 from ..core.values import json_value
+from .integration import EVIDENCE_ASSESSMENT_SLUGS
 from .prompts import (
     ANSWER_VERIFICATION_INSTRUCTIONS,
     CONSCIOUSNESS_INSTRUCTIONS,
@@ -55,6 +56,10 @@ class ConsciousnessMixin:
                     )
                     # Budget review can run before the interrupted workflow resumes.
                     checkpoint["pending_program"] = self._pending_programs.pop(identity)
+                    pending = None
+                elif pending and pending["identity"] == "evidence_assessment":
+                    # Assessment follows integration as a service step, not a step result.
+                    await self._assess_evidence(state, pending["arguments"]["experience_refs"])
                     pending = None
                 if pending:
                     if pending["identity"] in {"task_framing", "resource_control"}:
@@ -529,7 +534,12 @@ class ConsciousnessMixin:
             node.id
             for node in self.graph.nodes(kind="program")
             if node.properties.get("slug")
-            in {"knowledge_integration", "task_framing", "resource_control"}
+            in {
+                "knowledge_integration",
+                "task_framing",
+                "resource_control",
+                *EVIDENCE_ASSESSMENT_SLUGS,
+            }
         }
         excluded = {
             event.program_run
@@ -544,7 +554,12 @@ class ConsciousnessMixin:
             if (
                 run.program in service_programs
                 or run.program
-                in {"KnowledgeIntegrationDiagnostic", "SemanticWrite", "AnswerVerification"}
+                in {
+                    "KnowledgeIntegrationDiagnostic",
+                    "EvidenceAssessmentDiagnostic",
+                    "SemanticWrite",
+                    "AnswerVerification",
+                }
                 or parent in excluded
                 or run.arguments.get("owner_run") in excluded
             ):

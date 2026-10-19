@@ -1591,6 +1591,29 @@ When a regime changes, previous checks are not automatically transferred to the 
 | Contradictory observations | Retain both sides with provenance, check source, dependencies, and regime; contradiction does not automatically make a rare outcome unreliable. |
 | Parameters of the assessed model change | Evidence about a fixed version does not automatically support the new version; evidence about the learning mechanism applies only under the relevant Criterion and context. |
 
+#### MVP Graph Evidence Assessment
+
+#topic_details
+
+The first implementation covers the most common case: experience stated by a user or recorded as an observation bears on graph elements that integration wrote or that already exist. `EvidenceAssessment.exec` runs after every integration packet, in the same sequential chain, and calls two subprocesses in order: `GraphEvidenceAssessment` and `ProgramEvidenceAssessment`. The latter is a placeholder for `(Program, revision)` targets and assesses nothing yet.
+
+```text
+KnowledgeIntegration(packet)
+→ EvidenceAssessment(packet)
+  → GraphEvidenceAssessment: one batch, one model judgement
+  → ProgramEvidenceAssessment: placeholder
+```
+
+- **Target.** Each assessable element (relation fact, Claim, Note, Facet, Instance, Concept, Prototype) has the binary target `graph:<id>`: the element's assertion, definition or content is correct. An explicit `belief_target` binding, such as a scope-backed property, belongs to its own updater and is skipped. A content change keeps the target; all of the element's sources are reassessed and any that no longer apply are retracted, so confidence in an old version is not carried over.
+- **What is assessed.** Core keeps, per target, the graph revision at which it was last assessed and a cursor over graph history. An element is pending when it changed after its assessed revision and its change carries experience; bootstrap and lifecycle changes do not. Related elements join the batch: facts competing with a changed fact (same relation type and a shared participant, with that fact's other participants, such as the competing Facet) and elements found by searching the text of the new experience. Related elements are judged only against new experience.
+- **Sources.** Grounds are the sources of each semantic write. Agent-derived results, such as analytical Notes, conscious steps and Program outputs, are expanded to the primary experience they cite, so a restatement adds no support. Primary sources are user messages and observations (tool results and recorded observations).
+- **Judgement and observation model.** One model call returns, per element and source, a stance: `supports`, `weak_support`, `non_discriminating`, `weak_opposition`, `opposes` or `not_addressed`; optional `repeats` (the source restates an earlier one; it shares that source's dependency root) and `withdraws` (the source retracts an earlier one; that assignment is retracted); and, for a new target, a background prior. Code maps `(source kind, stance)` to `P(stance | true)` and `P(stance | false)` through an initial table that is to be trained on independently resolved cases. A relevant `non_discriminating` source is recorded with `Δ = 0`; `not_addressed` creates no assignment.
+- **Influence.** All contributions and the prior are unsupported (`backed = False`) until the table is independently validated, so the [[#Limiting Unsupported Influence|shared limit]] keeps binary strength within `[0.25, 0.75]`; `Support` and `EvidenceStats` still distinguish investigated, confirmed and contested elements.
+- **Failure.** A failed or interrupted assessment marks nothing assessed; pending elements are found again by the next run. Invalid keys in the judgement are ignored. Failures are diagnostics and do not block the conscious step.
+- **Reads.** `belief.read` accepts an element id; fact cards and described subjects include the element's `belief` once assessed.
+
+Not covered yet: CompetitionScope targets, evidence from `EVIDENCE_DEPENDS_ON`, training the observation table, RelationType definitions, deleted elements and Program targets.
+
 #### Evidence for TRIGGER and CONDITION
 
 #topic_details

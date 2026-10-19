@@ -19,7 +19,8 @@ from evertree.core.memory.store import TraceStore
 from evertree.core.memory.types import TraceOutputRef
 
 from .attribution import AttributionRuntime
-from .beliefs import BeliefStore
+from .beliefs import BeliefStore, element_target
+from .evidence import GraphEvidence
 from .predictions import PredictionEvaluator, protect_prediction_delta
 from .topology import inspect_topology
 from .values import json_value
@@ -278,7 +279,10 @@ class CoreOperations:
             self.memory.delete(payload["event_id"])
             result = {"pending_deletion": payload["event_id"]}
         elif method == "belief.read":
-            result = self.beliefs.read(payload["target"])
+            target = payload.get("target")
+            if "element" in payload:
+                target = element_target(self.graph.get(payload["element"]))
+            result = self.beliefs.read(target)
         elif method in {"attribution.read", "attribution.measure"}:
             result = self.attribution.read_property(**payload)
         elif method == "attribution.normalize":
@@ -304,6 +308,22 @@ class CoreOperations:
                 created_by=metadata["run_id"],
             )
             self.memory.retain(source, "evidence:" + target)
+        elif method == "evidence.pending":
+            result = GraphEvidence(self.graph, self.memory, self.beliefs).pending(
+                payload.get("experience_refs", ()),
+                payload.get("candidates", ()),
+                limit=payload.get("limit", 24),
+                related_limit=payload.get("related_limit", 16),
+            )
+        elif method == "evidence.record":
+            result = GraphEvidence(self.graph, self.memory, self.beliefs).record(
+                payload["element"],
+                payload["revision"],
+                prior=payload.get("prior"),
+                assign=payload.get("assign", ()),
+                retract=payload.get("retract", ()),
+                created_by=metadata["run_id"],
+            )
         elif method == "learning.predict":
             result = self.learning.predict(payload["state_id"], payload.get("inputs"))
         elif method == "learning.learn":

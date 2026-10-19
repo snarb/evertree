@@ -80,6 +80,58 @@ async def assess_evidence(
     )
 
 
+async def pending_evidence(
+    ctx: ProgramContext,
+    *,
+    experience_refs: list | None = None,
+    candidates: list[int] | None = None,
+    limit: int = 24,
+    related_limit: int = 16,
+) -> Any:
+    """Read one batch of graph elements awaiting evidence assessment.
+
+    Returns {revision, sources, targets, related, remaining}. Sources are primary
+    experience keyed S1, S2, …; agent-derived results are expanded to what they cite.
+    candidates are element ids, such as search results, to offer as related targets.
+    """
+    return await ctx.step(
+        "evidence.pending",
+        {
+            "experience_refs": experience_refs or [],
+            "candidates": candidates or [],
+            "limit": limit,
+            "related_limit": related_limit,
+        },
+    )
+
+
+async def record_evidence(
+    ctx: ProgramContext,
+    element: int,
+    revision: int,
+    *,
+    prior: float | None = None,
+    assign: list[dict] | None = None,
+    retract: list[dict] | None = None,
+) -> Any:
+    """Record assessed evidence for one graph element and mark it assessed at revision.
+
+    assign items are {source_ref, likelihoods: {false, true}, dependency_root?}; retract
+    lists source refs whose active contribution no longer applies. prior is used only
+    when the element's target is first registered; Core caps its unsupported influence.
+    """
+    return await ctx.step(
+        "evidence.record",
+        {
+            "element": element,
+            "revision": revision,
+            "prior": prior,
+            "assign": assign or [],
+            "retract": retract or [],
+        },
+    )
+
+
 async def call_credit_assignment(
     ctx: ProgramContext, *, target: str, observation_ids: list[str], context: dict
 ) -> Any:
