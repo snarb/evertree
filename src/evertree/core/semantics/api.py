@@ -79,6 +79,33 @@ async def write(
     )
 
 
+async def summarize_property(
+    ctx: ProgramContext,
+    domain: str | int,
+    property: str | int,
+    *,
+    value: float | None = None,
+    unit: str | None = None,
+    reference: str | int | None = None,
+    at: str | None = None,
+    parameters: dict | None = None,
+) -> Any:
+    """Read separate observed statistics and source-backed references for a numeric property."""
+    return await ctx.step(
+        "graph.summarize_property",
+        {
+            "domain": domain,
+            "property": property,
+            "value": value,
+            "unit": unit,
+            "reference": reference,
+            "at": at,
+            "parameters": parameters,
+        },
+        journal=False,
+    )
+
+
 async def call_semantic_search(ctx: ProgramContext, query: str) -> Any:
     """Run the semantic_search Program and return its result.
 

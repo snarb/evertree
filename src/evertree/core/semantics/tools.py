@@ -6,13 +6,13 @@ from evertree.core.provider import ToolDefinition
 from evertree.core.values import ContractError
 
 
-def _object(properties):
-    """Strict JSON-schema object: every listed property is required, no extras."""
+def _object(properties, *, optional=()):
+    """Strict JSON-schema object with explicit optional fields and no extras."""
     return {
         "type": "object",
         "additionalProperties": False,
         "properties": properties,
-        "required": list(properties),
+        "required": [name for name in properties if name not in optional],
     }
 
 
@@ -215,9 +215,135 @@ READ_TOOLS = (
         ),
         read_only=True,
     ),
+    ToolDefinition(
+        "summarize_property",
+        (
+            "Summarize observed numeric values for a domain and its compatible source-backed "
+            "references. Optionally interpret a value using declared bands or statistics. "
+            "Observations and external references stay separate; conditional classifications "
+            "are not established beliefs. Omit at for the latest recorded measurement per "
+            "individual, not a current census; explicit at selects applicable world-time states. "
+            "count_below_value counts reported values below the supplied value; count_above_value "
+            "counts values above it. Overlapping intervals do not establish either direction. "
+            "With a comparison value, observations.nearest identifies all individuals tied for "
+            "the smallest absolute distance in the property's unit; use their returned IDs "
+            "when choosing the nearest observed individual."
+        ),
+        _read_object(
+            {
+                "domain": {
+                    "type": ["integer", "string"],
+                    "description": "Existing population Prototype ID or name, such as Dog; not a plain Concept or a source.",
+                },
+                "property": {"type": ["integer", "string"]},
+                "value": {"type": ["number", "null"]},
+                "unit": _OPTIONAL_TEXT,
+                "reference": {"type": ["integer", "string", "null"]},
+                "at": _OPTIONAL_TEXT,
+                "parameters": {
+                    "type": ["object", "null"],
+                    "description": (
+                        "Varying applicability inputs matching saved conditions, such as "
+                        "exercise_state. Omit when none apply; source identity and publication "
+                        "metadata are not query parameters."
+                    ),
+                },
+            },
+            ("domain", "property"),
+        ),
+        read_only=True,
+    ),
 )
 
 WRITE_TOOLS = (
+    ToolDefinition(
+        "create_property",
+        "Define a reusable numeric property with its canonical unit and applicable subjects or types.",
+        _object(
+            {
+                **_NAMED,
+                "name": {**_TEXT, "description": "Unique canonical property name, 1–3 words."},
+                "unit": {
+                    **_OPTIONAL_TEXT,
+                    "description": "Canonical unit symbol, preferably kg, g, m or s; null for unitless values.",
+                },
+                "applies_to": {
+                    "type": "array",
+                    "items": _ID,
+                    "description": (
+                        "Existing subject or Prototype IDs. For a population use its shared "
+                        "Prototype, such as Dog, not a plain Concept or a guide-specific group."
+                    ),
+                },
+            }
+        ),
+        read_only=False,
+    ),
+    ToolDefinition(
+        "create_property_reference",
+        (
+            "Save a source's numeric classification bands or statistical table for one property "
+            "and domain. Bands use ordered boundaries and one more class than boundaries; "
+            "boundary_inclusive preserves which class owns each endpoint. Distribution rows "
+            "preserve lower/upper bounds and counts; an exact "
+            "value has lower=upper. Use empty arrays for the other reference kind. Preserve "
+            "source qualifications in description; conditions are only varying query inputs, "
+            "otherwise {}. Do not invent thresholds or samples."
+        ),
+        _object(
+            {
+                **_NAMED,
+                "name": {**_TEXT, "description": "Unique canonical reference name, 1–3 words."},
+                "property": {
+                    **_ID,
+                    "description": "Existing numeric property ID whose applies_to includes this population.",
+                },
+                "domain": {
+                    **_ID,
+                    "description": (
+                        "Existing population Prototype ID within the property's applies_to, "
+                        "such as Dog or Chihuahua. Reuse the same population across guides; "
+                        "a plain Concept or the source itself is not a population type."
+                    ),
+                },
+                "unit": _OPTIONAL_TEXT,
+                "reference_kind": {"type": "string", "enum": ["bands", "distribution"]},
+                "boundaries": {"type": "array", "items": {"type": "number"}},
+                "boundary_inclusive": {
+                    "type": "array",
+                    "items": {"type": "boolean"},
+                    "description": (
+                        "One flag per boundary: true assigns equality to the lower class, false "
+                        "to the next class. Omit for all true; [] for a distribution. For Small <6, "
+                        "Medium 6..9 inclusive, Large >9, use boundaries [6,9] and [false,true]."
+                    ),
+                },
+                "classes": {"type": "array", "items": _ID},
+                "samples": {
+                    "type": "array",
+                    "items": _object(
+                        {
+                            "lower": {"type": "number"},
+                            "upper": {"type": "number"},
+                            "count": {"type": "integer", "minimum": 1},
+                        }
+                    ),
+                },
+                "conditions": {
+                    "type": "object",
+                    "description": (
+                        "Only varying query inputs required to apply this reference, for example "
+                        '{"exercise_state": "resting"} or {"load": "high"}; default {}. '
+                        "Matching is exact. Do not duplicate source identity, population, "
+                        "publication status, sample count or who measured it here: use domain, "
+                        "description, sources and samples instead."
+                    ),
+                },
+            },
+            optional=("boundary_inclusive",),
+        ),
+        read_only=False,
+    ),
     ToolDefinition(
         "create_concept",
         "Save a useful distinction not expressed by an existing concept.",
@@ -336,7 +462,14 @@ WRITE_TOOLS = (
                 "conditions": {
                     "type": "array",
                     "description": "Conditions under which the assertion applies, with unique names.",
-                    "items": _object({"parameter": _TEXT, "value": _VALUE}),
+                    "items": _object(
+                        {
+                            "parameter": _TEXT,
+                            "value": {
+                                "type": ["string", "number", "boolean", "null", "object", "array"]
+                            },
+                        }
+                    ),
                 },
                 "description": _OPTIONAL_TEXT,
                 "sources": _SOURCES,
@@ -441,6 +574,8 @@ CREATE_ACTIONS = frozenset(
         "create_instance",
         "create_facet",
         "create_claim",
+        "create_property",
+        "create_property_reference",
         "define_relation",
     }
 )
@@ -455,9 +590,8 @@ def validate_action(action):
         TOOLS_BY_NAME[action["action"]].input_schema,
     )
     if action["action"] == "relate":
-        # The schema allows any JSON in values; relation values must be scalars or scalar lists.
-        for field in ("arguments", "conditions"):
-            for item in action[field]:
-                value = item["value"]
-                for part in value if isinstance(value, list) else [value]:
-                    validate(part, _SCALAR)
+        # Relation roles remain scalar or scalar lists; conditions can carry structured inputs.
+        for item in action["arguments"]:
+            value = item["value"]
+            for part in value if isinstance(value, list) else [value]:
+                validate(part, _SCALAR)

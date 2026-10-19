@@ -725,6 +725,53 @@ The result is a qualitative reading under the [[#Numeric Normalization|normaliza
 > [!note]
 > Normalization does not have to materialize a derived fact. It may return a result lazily; whether to write it to the graph is governed by the Materialization Policy.
 
+### Descriptive Summaries and Conditional Interpretation
+
+`summarize_property` describes recorded numeric data and applies source-backed reference rules without asserting a new belief about an object's true class:
+
+```text
+summarize_property(domain, property, *, value?, unit?, reference?, at?, parameters?)
+    -> descriptive summary with sources and conditional interpretations
+```
+
+Three forms of acquired knowledge remain distinct:
+
+- **Individual observations:** ordinary `HAS_NUMERIC_VALUE` facts attached to known objects. A summary includes at most one selected measurement per individual; repeated reports or measurements of one object do not become additional individuals.
+- **Reference bands:** a source's declared boundaries, ordered classes, units, domain and conditions. Applying them means "according to this rule," not that the source has been independently validated.
+- **Reference distributions:** a source's numeric samples or frequency table, retaining its population and conditions. Aggregate rows do not create fictitious individual objects.
+
+A source's rule must remain reusable independently of its current examples. Saving classifications for those examples does not preserve the boundaries needed to interpret a new value; it is not a substitute for the reference record.
+
+Property definitions use the existing graph-backed contract. The initial summary reader supports numeric properties with `source=numeric`; it must not replace a Program or relation source with arbitrary numeric facts. A reference may be stored as a Concept with a validated `properties.numeric_reference` record containing `property`, `domain`, `unit`, `conditions` and `reference_kind`. A `bands` record carries `boundaries` and `classes`, with optional per-boundary `boundary_inclusive` flags. By default equality belongs to the lower band; a false flag assigns equality to the next band. A `distribution` record carries `samples[{lower, upper, count}]`. Equal bounds denote an exact value with a frequency; unequal bounds denote an interval. Ordinary graph history and provenance retain the source and revisions; a second independently mutable store is unnecessary.
+
+A reference requires an explicit graph-backed declaration with both `scale=numeric` and `source=numeric`; a bare property identity is insufficient. Conditions use exact structured equality across saved and supplied JSON values, preserving the distinction between booleans and numbers. Names that collide with the read interface are rejected on write as well as read.
+
+With `at` omitted, the summary uses the latest recorded measurement for each included individual and identifies its time basis as `latest_recorded`. A historical or temporally incomplete report may be included as a recorded observation, with its source time bounds. This does not claim to be a census of current states. An explicit `at` instead requires applicable world-time readings and follows the property's `latest`, `max_support` or `unique` selection policy; unknown temporal applicability is not treated as applicable. The default time semantics of `read_property` remain unchanged.
+
+Latest-record ordering includes substantive fact corrections to arguments, relation type or conditions. Metadata-only edits do not promote an older measurement. Ordinary property reads use the same recency order for `latest` selection and support ties.
+
+Newly saved observations are available to subsequent summaries without a separate training or refresh command. The summary computes from the selected graph state: it does not write facts, scopes, evidence assignments or model state, run an LLM, or train a mapper. A saved result retains the data and rule versions actually used through ordinary provenance.
+
+Local observations and external references are reported separately. Different sources, potentially overlapping populations, breed strata and incompatible conditions are not silently pooled. When several rules apply, retain their separate identities rather than choosing an authoritative one without a selection policy. A table of breed means without population counts is not a sample of individual dogs.
+
+The report separates `observations`, applicable `references`, inapplicable `reference_candidates` and `excluded` facts. A candidate's different population or unmatched parameters remain visible without being assumed to apply. Evidence lists are bounded previews, currently at most 20 records with corresponding totals; statistics use all included data. A reference may be selected explicitly by identity. Truncating a preview does not turn its first records into the entire population.
+
+`describe` also bounds the nested `properties.numeric_reference` preview: at most 20 samples, boundaries or boundary flags and 21 classes. Truncated arrays expose their original totals, and the result marks truncation with a pointer to `query(fields=["properties"])` for the complete record. This read projection does not change the stored reference or the PropertyDefinition.
+
+For exact values with frequencies, the descriptive mean is `sum(value × count) / sum(count)`. Interval bins do not determine an exact mean or a distribution within each bin; any midpoint approximation must be identified as an approximation. Missing data, incompatible units and unavailable readings are not zeros.
+
+When a comparison value is supplied, `observations.nearest` may report the minimum absolute distance and the matching individual identities, using all included observations rather than only the preview. It returns every tied minimum with a bounded item preview and total; without a value or observations it is null. Unknown observations and anonymous distribution rows are not candidates. Nonzero ties allow only bounded floating-point roundoff; a zero distance requires an exact numeric match. The result is a conditional numeric comparison, not a new belief or qualitative membership.
+
+For example, three recorded dog masses `8, 5, 10 kg` have mean `23/3 kg`, median `8 kg` and range `[5, 10] kg`. A supplied value `7 kg` is `2/3 kg` below that mean. The query does not add a fourth observation, and these three dogs do not establish a norm for all dogs or a universal meaning of "small." A separate guide defining `Small ≤ 10 kg` permits the conditional result "7 kg is Small according to this guide."
+
+**Epistemic boundary:** this descriptive report is not a substitute for `PropertyReading` or its `Profile`. Preserve the source readings' `BeliefData`, where available; do not average their `Strength`, convert sample counts into `Support`, or infer a source's reliability from its presence in the graph. Belief that a sample or reference represents a wider population is a separate semantic target from belief in an individual measurement. If that target is already defined and assessed, its reading may be reported separately. An unassessed target is not a refuted one, and an arbitrary initial prior is not calibrated confidence.
+
+A target without its own evidence is reported as `prior_only`, not `assessed`; `evidence_count > 0` distinguishes an assessment from a prior-only reading. Support alone cannot make this distinction because a non-discriminating assessment may have zero support. Neither status certifies the reliability of the source or the assessment model.
+
+Retracting evidence changes its belief contribution, not the existence of the recorded observation. A conditional summary may still include that observation with its revised BeliefData. Correcting or deleting the numeric fact is a separate operation; weakened belief is not a sample-count decrement.
+
+A small sample remains usable for a conditional description of those observations. It does not justify a broad population claim. Ordinary household reports need no invented error model merely to compute their recorded mean. A claim about the object's actual qualitative class still follows the shared belief contract: exclusive and exhaustive alternatives require a `Profile` supported by a suitable evidence assessment. Conditional arithmetic and labels do not create that evidence automatically.
+
 ### Reading State Properties
 
 #topic_details

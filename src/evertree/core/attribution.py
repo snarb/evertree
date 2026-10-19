@@ -8,11 +8,39 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import Any
 
+from evertree.core.graph.matching import values_equal
 from evertree.core.graph.store import GraphStore
 from evertree.core.graph.types import Facet, Node, RelationInstance
 
 from .beliefs import BeliefData, BeliefReading, BeliefStore
 from .values import UNKNOWN, ContractError, freeze, json_value, restore_value, timestamp, utcnow
+
+_READ_ARGUMENTS = frozenset(
+    {
+        "self",
+        "runtime",
+        "subject",
+        "property",
+        "property_id",
+        "domain",
+        "value",
+        "unit",
+        "reference",
+        "at",
+        "valid_at",
+        "known_at",
+        "_compute",
+    }
+)
+
+
+def validate_parameters(parameters: Mapping) -> None:
+    """Reject condition names that cannot pass through property read interfaces."""
+    if not isinstance(parameters, Mapping) or any(
+        not isinstance(name, str) or not name.strip() or name in _READ_ARGUMENTS
+        for name in parameters
+    ):
+        raise ContractError("Property parameters require nonempty non-reserved names")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -34,9 +62,11 @@ class PropertyDefinition:
         object.__setattr__(self, "classes", tuple(self.classes))
         object.__setattr__(self, "required_parameters", tuple(self.required_parameters))
         object.__setattr__(self, "applies_to", tuple(self.applies_to))
-        reserved = {"subject", "property", "valid_at", "known_at", "_compute"}
+        if self.unit is not None and (not isinstance(self.unit, str) or not self.unit.strip()):
+            raise ContractError("Property unit must be a nonempty unit or null")
         if any(
-            not isinstance(p, str) or not p or p in reserved for p in self.required_parameters
+            not isinstance(p, str) or not p.strip() or p in _READ_ARGUMENTS
+            for p in self.required_parameters
         ) or len(set(self.required_parameters)) != len(self.required_parameters):
             raise ContractError("Property parameters must be unique non-reserved names")
         if self.scale not in {"nominal", "ordinal", "numeric", "circular"} or self.source not in {
@@ -68,6 +98,7 @@ class PropertyReading:
     valid_at: datetime | None = None
     known_at: datetime | None = None
     conditions: Any = None
+    unit: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -200,7 +231,7 @@ class AttributionRuntime:
 
     def register_normalization(self, rule: NormalizationRule) -> None:
         """Register domain-specific normalization for a declared property."""
-        self._properties[rule.property_id]
+        self.definitions()[rule.property_id]
         self._rules[(rule.property_id, rule.domain)] = rule
 
     def _belief(
@@ -215,6 +246,21 @@ class AttributionRuntime:
         if reading is UNKNOWN:
             return UNKNOWN
         return reading if reading.profile is not None else reading.data
+
+    def _fact_recency(self, fact: RelationInstance) -> tuple:
+        """Rank substantive fact corrections without promoting metadata-only edits."""
+        for change in reversed(self.graph.changes_of(fact.id)):
+            before, after = change.before.get(fact.id), change.after[fact.id]
+            if (
+                before is None
+                or not values_equal(before.args, after.args)
+                or before.relation_type != after.relation_type
+                or not values_equal(
+                    before.properties.get("conditions", {}), after.properties.get("conditions", {})
+                )
+            ):
+                return change.at, change.seq, fact.id
+        raise AssertionError("Fact has no retained creation")
 
     def read_property(
         self,
@@ -233,6 +279,7 @@ class AttributionRuntime:
         Program-backed computation requests.
         """
         subject_id = subject.id if isinstance(subject, Node) else subject
+        validate_parameters(parameters)
         property_id = property.id if isinstance(property, Node) else property
         definition = self.definitions().get(property_id)
         if definition is None:
@@ -298,22 +345,31 @@ class AttributionRuntime:
             return scope_readings[0] if len(scope_readings) == 1 else UNKNOWN
         candidates: list[tuple[RelationInstance, Any]] = []
         if definition.source == "numeric":
+            from .attribution_population import convert_value
+
             if definition.scale not in {"numeric", "circular"}:
                 raise ContractError("numeric source requires numeric or circular reading")
             for fact in self.graph.facts("HAS_NUMERIC_VALUE"):
                 if (
                     fact.args["entity"] in subjects
                     and fact.args["property"] == property_id
-                    and (definition.unit is None or fact.args.get("unit") == definition.unit)
-                    and dict(fact.properties.get("conditions", {})) == parameters
+                    and values_equal(fact.properties.get("conditions", {}), parameters)
                 ):
-                    candidates.append((fact, fact.args["value"]))
+                    try:
+                        value = convert_value(
+                            fact.args["value"],
+                            fact.args.get("unit"),
+                            definition.unit or fact.args.get("unit"),
+                        )
+                    except ContractError:
+                        continue
+                    candidates.append((fact, value))
         elif definition.source == "classification":
             for fact in self.graph.facts("CLASSIFIED_AS"):
                 if (
                     fact.args["entity"] in subjects
                     and fact.args["class"] in definition.classes
-                    and dict(fact.properties.get("conditions", {})) == parameters
+                    and values_equal(fact.properties.get("conditions", {}), parameters)
                 ):
                     candidates.append((fact, fact.args["class"]))
         elif definition.source == "relation":
@@ -352,16 +408,54 @@ class AttributionRuntime:
                 if belief is UNKNOWN:
                     return UNKNOWN
                 support = getattr(belief, "support", 0.0) if belief is not None else 0.0
-                ranked.append((support, self.graph.created_at(fact.id), fact.id, fact, value))
-            _, _, _, fact, value = max(ranked, key=lambda item: item[:3])
+                ranked.append((support, self._fact_recency(fact), fact, value))
+            _, _, fact, value = max(ranked, key=lambda item: item[:2])
         else:
-            fact, value = max(
-                candidates, key=lambda item: (self.graph.created_at(item[0].id), item[0].id)
-            )
+            fact, value = max(candidates, key=lambda item: self._fact_recency(item[0]))
         belief = self._belief(fact, at, known_at)
         if belief is UNKNOWN:
             return UNKNOWN
-        return PropertyReading(value, belief, (fact.id,), at, known_at, freeze(parameters))
+        return PropertyReading(
+            value,
+            belief,
+            (fact.id,),
+            at,
+            known_at,
+            freeze(parameters),
+            definition.unit or fact.args.get("unit")
+            if definition.source == "numeric"
+            else definition.unit,
+        )
+
+    def summarize_property(
+        self,
+        domain: int,
+        property: int,
+        *,
+        value: float | None = None,
+        unit: str | None = None,
+        reference: int | None = None,
+        valid_at: datetime | None = None,
+        **parameters: Any,
+    ) -> dict:
+        """Compare reported individuals and numeric references, preserving their separate beliefs.
+
+        No valid_at selects the latest recorded observation per individual, including historical
+        reports. An explicit instant selects world-time applicable measurements only.
+        """
+        from .attribution_population import summarize_property
+
+        validate_parameters(parameters)
+        return summarize_property(
+            self,
+            domain,
+            property,
+            value=value,
+            unit=unit,
+            reference=reference,
+            valid_at=valid_at,
+            **parameters,
+        )
 
     def measure(
         self, subject: int | Node, property: int | Node, **parameters: Any
@@ -422,6 +516,9 @@ class AttributionRuntime:
         known_at: datetime | None = None,
     ) -> PropertyReading | Any:
         """Apply a domain's class boundaries or standardization rule, or return UNKNOWN."""
+        from .attribution_population import finite_number
+
+        value = finite_number(value)
         if known_at is not None and self.graph.known_at != timestamp(known_at):
             if self.historical_loader is None:
                 return UNKNOWN

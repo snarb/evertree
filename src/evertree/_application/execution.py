@@ -200,6 +200,7 @@ class TaskExecutionMixin:
                                 "graph.query",
                                 "graph.walk",
                                 "graph.read_property",
+                                "graph.summarize_property",
                             }:
                                 semantic_tools.remember_read(
                                     name.removeprefix("graph."), args, output

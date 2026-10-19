@@ -8,7 +8,11 @@ from evertree.core.values import ContractError, json_value
 
 from .tools import CREATE_ACTIONS, validate_action
 
-_NODE_CREATES = CREATE_ACTIONS - {"define_relation"}
+_NODE_CREATES = CREATE_ACTIONS - {
+    "define_relation",
+    "create_property",
+    "create_property_reference",
+}
 
 
 class _DeltaBuilder:
@@ -118,6 +122,51 @@ def _compile_relation_type(graph, action, material):
     return builder.result(identity)
 
 
+def _compile_property(graph, action, material):
+    builder = _DeltaBuilder(graph)
+    identity = builder.node(
+        kind="property",
+        name=action["name"],
+        description=action["description"],
+        properties={
+            "attribution": {
+                "scale": "numeric",
+                "source": "numeric",
+                "unit": action["unit"],
+                "applies_to": action["applies_to"],
+            }
+        },
+    )
+    return builder.result(identity)
+
+
+def _compile_property_reference(graph, action, material):
+    builder = _DeltaBuilder(graph)
+    reference = {
+        key: action[key]
+        for key in (
+            "property",
+            "domain",
+            "unit",
+            "reference_kind",
+            "boundaries",
+            "classes",
+            "samples",
+            "conditions",
+        )
+    }
+    reference["boundary_inclusive"] = action.get(
+        "boundary_inclusive", [True] * len(action["boundaries"])
+    )
+    identity = builder.node(
+        kind="concept",
+        name=action["name"],
+        description=action["description"],
+        properties={"numeric_reference": reference},
+    )
+    return builder.result(identity)
+
+
 def _compile_relate(graph, action, material):
     builder = _DeltaBuilder(graph)
     arguments = {item["role"]: item["value"] for item in action["arguments"]}
@@ -164,6 +213,8 @@ _COMPILERS = {
     "update": _compile_update,
     "delete": _compile_delete,
     "define_relation": _compile_relation_type,
+    "create_property": _compile_property,
+    "create_property_reference": _compile_property_reference,
     "relate": _compile_relate,
     "save_note": _compile_note,
     **dict.fromkeys(_NODE_CREATES, _compile_node),
