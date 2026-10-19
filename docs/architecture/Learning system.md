@@ -650,7 +650,7 @@ Note / Claim
 → EvaluationChoice.
 ```
 
-Reasoning may set an initial prior, but not `Support`; activating a new Claim or making a structural change requires subsequent evidence.
+Proposing or restating an idea may inform an initial prior, but does not by itself create `Support`. A grounded check or derived result may contribute under the shared [[Uncertainty and Belief Tracking in the World Model#Evidence Sources|evidence rules]], retaining its dependencies. Treating a Claim as established or adopting a structural correction requires applicable grounds; a semantic correction may already be justified by reassessing retained evidence through the [[Uncertainty and Belief Tracking in the World Model#Common Assessment and Update Cycle|common update cycle]]. Reassessment does not create independent experience. Obtain additional independent checks when needed to justify the conclusion, including generalization to new cases. These grounds do not replace the applicable `Evaluation` requirements for [[Process Plane/Program Lifecycle and Evolution#Structural Revision|structural changes to models or Programs]], or `EvaluationChoice` for Program activation.
 
 ---
 

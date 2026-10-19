@@ -74,7 +74,7 @@ Claim
 → an explicitly stated, checkable claim for which no suitable structured representation exists yet.
 ```
 
-[[Core data structures#^def-Note|`Note`]] and [[Core data structures#^def-Prompt|`Prompt`]] may also be complete semantic targets under the [[Core data structures#^note-claim-prompt-evaluation|shared evaluation contract]], with specified `Criterion` and scope. An arbitrary Python object or technical structure cannot be a `BeliefTarget`.
+The current definition or model expressed by a [[Core data structures#^def-Concept|`Concept`]] or [[Core data structures#^def-Prototype|`Prototype`]], and the content of a [[Core data structures#^def-Note|`Note`]] or [[Core data structures#^def-Prompt|`Prompt`]], may also be evaluated as semantic targets, with specified content or version, `Criterion`, and scope. Their evaluation contracts are defined with those concepts in [[Core data structures]]. An arbitrary Python object or technical structure cannot be a `BeliefTarget`.
 
 Existing semantic structure also defines **which values are allowed**:
 
@@ -93,6 +93,34 @@ Claim
 ```
 
 Conditions defining the meaning of a question must be unambiguous in the target's semantic representation. For example, the reliability of one source in programming and in medicine concerns different targets. Additional observations or switching estimators for the same question do not by themselves change the target; the current belief value is not part of its identity either.
+
+---
+
+#### Evaluating Definitions, Models, and Content
+#topic_core
+
+Assessment considers internal consistency, including compatibility with relevant semantic relations and related objects, and how well the evaluated content accounts for relevant experience under its stated purpose and scope. External grounds include the agent's direct experience and information from other sources, accounting for reliability, applicability, and dependencies. Compare meanings rather than wording: equivalent formulations agree. Different conditions or states are considered according to what each assertion actually says; split concepts only when grounds indicate different meanings.
+
+A definition's or model's adequacy is not determined solely by agreement with conventional or encyclopedic definitions. The agent may refine the same concept beyond accepted definitions when traceable evidence and clear arguments justify the difference. A difference from a source's definition carries no automatic penalty: assess the underlying claims and grounds against the actual question. If the question specifically concerns established usage or fidelity to a source, the source's definition is relevant to that question. An argument for improvement does not exempt a model from counterevidence or create independent support merely by restating its own conclusions.
+
+`Concept` and `Prototype` use the same assessment, prior resolution, contribution calculation, belief updating, and revision procedure. Choose the evidence model and updater by the semantic question and its allowed values, not by the node's kind. Different contents and scopes require different checks. This common procedure preserves the [[#Beliefs Across Abstraction Levels|greater caution required for class-level revision than for a local Facet or episode]]; a Concept expressing an equally general model requires the same scrutiny as a Prototype.
+
+A conflict may remain unresolved. Retain the conflicting assertions and their grounds, and use their target-specific discriminative contributions to compute `Strength`, `Support`, and, where applicable, `Profile`. An uncertain relation may be wrong while the definition remains well supported; do not automatically lower belief in every connected object or discard opposing evidence. If attribution is ambiguous, follow the [[#^def-EvidenceAssessmentProgram|evidence assessment rules]] for ambiguity. Conflict details remain in the semantic assertions, evidence, and provenance; `BeliefData` summarizes their epistemic effect.
+
+An unresolved conflict does not by itself require `Strength = 0.5` or an `unknown` read. If the available assessment accounts for the conflict, return the computed belief even if its cause remains unresolved. If a material conflict requires a new assessment that is not yet available, return `unknown` under the [[#Read-Time Freshness|freshness rules]]; the old confidence must not conceal the pending assessment.
+
+Consistency alone does not create independent confirmation. A definition, a relation derived from it, and a Note restating it share their original grounds. A check that finds a contradiction may provide opposing evidence; finding no contradiction supports correctness only to the extent justified by the checking method. Confirmation of one part does not automatically confirm all other parts. Separate targets are needed when parts require independent checking or revision; whole-content evaluation does not require a target for every sentence.
+
+##### Common Assessment and Update Cycle
+
+The same high-level cycle applies to semantic targets across the graph, including definitions, models, relations, classifications, and Note content:
+
+1. **Specify the question.** Identify the evaluated meaning/content or version, allowed values, scope, and criterion. For a definition, assess whether it adequately captures the intended meaning and class boundaries; for a model, its descriptive or predictive adequacy; for an instruction, its effectiveness under the stated goals and constraints. Keep independently revisable questions separate, including physical existence and fidelity to conventional usage when relevant.
+2. **Collect applicable grounds.** Gather direct experience, external observations and arguments, and checks of internal and graph consistency. Include confirming and opposing cases, nearby nonmembers, and boundary cases as appropriate. Retain provenance, source reliability, uncertain classifications, selection effects, and dependencies. A definition and relations derived from it do not supply independent confirmation of each other.
+3. **Assess each ground against this target.** [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] determines how expected the observation or check result is under the possible target states, then creates target-specific assignments using the [[#Evidence → Contribution Calculation|existing contribution rules]]. Do not count matching definitions or sources as votes. Account for ambiguity; a relevant but nondiscriminating check contributes zero, and an assessment that cannot yet be justified may remain unresolved.
+4. **Compute the current belief.** Resolve the prior and its traceable backing, then combine active assignments under temporal, dependency, and unsupported-influence policies through the [[#Belief Updating|shared updater]]. `Strength` expresses confidence in the evaluated value; `Support` is the effective mass of own evidence from both sides; `PriorSupport` records transferable prior backing without double counting. Return `Profile` where the target requires alternatives. Model parameters or other estimated `value_U` are computed separately. `BeliefData` is a read result, not a field manually increased after a successful check.
+5. **Review a challenged definition or model.** Low `Strength` with high `Support` is a reason to investigate what needs correction; it does not determine the correction. Consider the [[Core data structures#Revising Concepts and Prototypes|shared structural revision options]], affected uses, and cost of error. Compare a proposed correction with the current model on relevant cases and earlier counterexamples, adding checks where needed. Do not discard inconvenient evidence or invent a narrower meaning merely to raise confidence. If no correction is justified, retain the unresolved conflict and its assessed effect on belief.
+6. **Update through evidence and semantic revision.** New experience creates assignments; a changed assessment revises or retracts affected assignments through the [[#Evidence Reassessment and Belief Recalculation|existing evidence lifecycle]]. When a justified definition, model, or relation correction changes the graph, synchronize the relevant description, relations, and classifications and reassess dependent priors and conclusions through the ordinary Learning pipeline. Recompute derived results and reassess independently supported facts rather than deleting them automatically. Rewording without changing the evaluated assertions does not itself invalidate evidence; changed assertions, meaning, or applicability require checking which old grounds still apply under [[#Semantic Target Revision|semantic target revision]], without resetting away earlier failures. Reads then return the recomputed belief or `unknown` under the freshness rules above.
 
 ---
 
@@ -144,7 +172,7 @@ BeliefData = <Strength, Support, PriorSupport>
 
 #topic_details
 
-`Support` counts only the target's own evidence; it does not include the prior.
+`Support` counts the target's own discriminative evidence, including both supporting and opposing evidence; it does not include the prior. Strong refuting evidence can therefore produce low `Strength` with high `Support`. `Support` measures evidence mass, not agreement or resolution of a conflict.
 
 `PriorSupport` distinguishes beliefs with the same `Strength` and `Support` but different prior foundations:
 
@@ -1378,7 +1406,7 @@ policy / action-selection mechanism
 → evidence about the quality of the choice made.
 ```
 
-Evidence is first assigned to the most directly checked level. A more general belief gets a separate `EvidenceAssignment` only when local explanations are insufficient and repeated independent results are genuinely informative about the general mechanism.
+Evidence is first assigned to the most directly checked level. A more general belief gets a separate `EvidenceAssignment` only when the check is genuinely informative about that general target. For a result from one implementation, examine local explanations before attributing it to a general mechanism; repeated independent checks can justify that attribution. A reliable counterexample to a universal claim may provide opposing evidence immediately, once its applicability is established. An expected exception to a statistical regularity does not by itself refute that regularity.
 
 Provenance limits the set of possible `BeliefTarget` instances, but by itself does not prove which target the evidence applies to.
 
@@ -1870,6 +1898,8 @@ or CompetitionScope changed
 
 A change to current `value_U` by itself does not create a new target. See [[Attribution Plane#^def-Criterion|Criterion]] for its canonical definition; its read representations remain [[#^def-BeliefData|`BeliefData`]] and [[#^def-Profile|`Profile`]].
 
+Preserving a Concept's or Prototype's identity does not automatically preserve belief in a revised definition. The evaluation must identify the content or version actually checked. If its checkable assertions change, reassess the applicability of old grounds even when the node and its intended referent remain the same; create a new target when the identity of the evaluated question changes, as above. Confidence in an old version must not be copied to its replacement.
+
 #topic_details
 
 For example:
@@ -2194,7 +2224,8 @@ Strength
 → how strongly the agent believes the claim;
 
 Support
-→ how much effective evidence supports it.
+→ total effective discriminative evidence mass,
+  including supporting and opposing evidence.
 ```
 
 [[#^def-Evidence|Evidence]] initially applies to the level it directly supports.
@@ -2213,6 +2244,10 @@ experience across objects of one type
 ```
 
 Transfer of evidence to a more general level is performed through [[#^def-EvidenceAssessmentProgram|`EvidenceAssessmentProgram`]] only when the generalization is justified.
+
+Facet / episode beliefs may change quickly when reliable evidence changes the interpretation of that particular case. Prototype / class beliefs are normally more stable and revised more cautiously: their scope is broader, their accumulated grounds usually cover more cases, and their definitions and priors affect many dependent beliefs. Before attributing a local result to the class, check the observation, classification, conditions, and possible local exceptions. Establishing a revised class model requires sufficient applicable grounds for the general claim, including independent cases and boundary checks where generalization remains uncertain. A Concept expressing a model of the same scope follows these same requirements.
+
+The responsibility of a broadly reused model increases the scrutiny and grounds required before adopting and propagating a replacement. Consider `Strength`, `Support`, `PriorSupport`, evidence coverage, and affected uses; a high `Support` alone is insufficient because it includes opposing evidence. This caution does not permit keeping an old confidence after applicable evidence has undermined it. A reliable counterexample can promptly lower belief in a universal claim once its observation, classification, and scope are established, but does not by itself validate a replacement model. An expected exception to a statistical regularity is not such a counterexample.
 
 Conversely, a more general level may be used as a prior:
 

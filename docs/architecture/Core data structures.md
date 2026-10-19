@@ -94,7 +94,7 @@ A Python reference is not a persistent address by itself. After loading or trans
 
 #### Required Fields
 
-The following technical fields always exist on every node and never change:
+Every node has the following technical field definitions; `description` may be absent. The `id` is stable, while the other values may change:
 
 - `id: <int>` — a unique node ID slot (monotonic counter/generator); a technical field hidden from System 1 and System 2, used for addressing and references.
 - `activations: <dict[Axis, float]>` — the node's current activation levels along different axes/relationship types. It indicates “how relevant/active” the node is in each channel (causality, mereology, association, temporal proximity, and so on).
@@ -171,7 +171,19 @@ Much of what is known about an entity exists as **uncertainty** distributed acro
   - `Bias` (`b`): prior probability of activation (tendency to fire).
   - `Stability` (`S_tab`): resistance to forgetting (`0..1`).
   - `Alpha` (`α`): activation threshold (Policy Threshold).
-  - `Belief_State`: optional [[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`Belief_data`]] structure; see “Uncertainty and Belief Tracking in the World Model.”
+  - `Belief_State`: optional computed [[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] evaluating the current definition as described below.
+
+A Concept's definition is its `name` and `description` together. They compactly express its meaning and classification boundary: what belongs to the concept, what does not, and how it differs from nearby concepts. The relevant semantic relations express this same model in more detail. Keep the definition and these relations synchronized in both directions; the description summarizes essential structure, not every incidental association or source link. Its belief evaluates how adequately this model captures the intended meaning and relevant experience in a stated scope. Different wording with the same meaning is agreement, not a conflict. An omitted detail is not by itself a denial of that detail.
+
+A definition need not reproduce a conventional or encyclopedic definition. The agent may develop a more precise definition of the same concept when traceable experience and evidence, together with clear arguments, justify the difference. Record what differs and why it better captures the intended meaning or explains the relevant cases. Disagreement with accepted wording or a source's definition is not by itself evidence against this adequacy; assess the underlying claims and grounds, including counterarguments. Fidelity to a particular source or established usage is a separate evaluation question when needed. Refining the same meaning does not require a new Concept; a materially different meaning may warrant a separate Concept and a distinguishing name. For a definition introduced by convention, also check clarity and consistency with that convention.
+
+For example, reliable cases whose class membership is established independently may show that a feature treated by a source as necessary is only typical. Correcting that constraint can improve the definition of the same class; neither the source's authority nor the agent's preference decides the result by itself.
+
+Assessment checks the definition against the meaning of its semantic relations, the definitions of related parents and subtypes, and facts about related Instances and their Facets. These must be compatible with the definition and with one another under their stated conditions. For example, a definition requiring exactly one horn conflicts with a subtype requiring two horns or a reliable observation of two horns on an instance in that class. The conflict may concern the definition, the subtype relation, the instance's classification, or the observation.
+
+The agent's own experience and external definitions, usages, examples, and counterexamples provide grounds for this assessment, accounting for source reliability, applicability, and dependencies. Calculation, unresolved conflicts, and changes to dependent knowledge follow the [[Uncertainty and Belief Tracking in the World Model#Evaluating Definitions, Models, and Content|shared assessment and update procedure]]. Definition belief does not automatically establish every relation attached to the Concept; independently checkable relations retain their own targets and grounds.
+
+A Concept need not have Instances or Facets in the physical world. Abstract, fictional, and hypothetical concepts are valid; for example, a well-supported definition of a unicorn does not establish that unicorns physically exist. Where relevant to the meaning or its use, the description and/or semantic relations must make this status and scope explicit and agree with each other. Merely having found no instances does not establish nonexistence. Both textual and relational representations can enable additional checks, but repeating the same grounds in both does not itself increase belief.
 
 A concept's field is its local edge structure, their weights, and shared activation-propagation rules.
 
@@ -297,8 +309,14 @@ close_facet_state
 
 (def_id:: entity.Prototype)
 > [!definition]
-> **`Prototype`** (schema) — a **statistically generalized model of a class of objects**, formed by compressing many unique **Identities** into their common (invariant) features. It provides predictions (priors) for any object assigned to the group, filling gaps in perception with default values.
+> **`Prototype`** (schema) — a **generalized model of a class of objects**, describing its defining constraints and statistically typical properties and regularities. It provides applicable predictions (priors) for objects assigned to the class, filling gaps in perception with default values.
 ^def-Prototype
+
+A Prototype uses exactly the same [[Uncertainty and Belief Tracking in the World Model#Evaluating Definitions, Models, and Content|belief assessment and update procedure]] and [[#Revising Concepts and Prototypes|structural revision rules]] as any other [[#^def-Concept|Concept]]. There is no additional mandatory belief score or Prototype-specific calculation. Its content is a class model, so relevant checks concern how accurately its definition and relations describe what its members have in common, distinguish nonmembers, and predict new cases in the stated scope. These are checks of that content under the shared procedure. Revising such a generalization requires [[Uncertainty and Belief Tracking in the World Model#Beliefs Across Abstraction Levels|greater caution than revising a local Facet belief]]; this requirement applies equally to a Concept expressing a model of the same scope.
+
+Check consistency with its parent, subtypes, instances, and their Facets. Defining constraints must hold for members and subtypes; statistical defaults may have exceptions. An exception to a typical property does not by itself invalidate the class definition. Property frequencies and model parameters belong to `value_U`; `BeliefData` expresses confidence in their correctness under the specified criterion. These distinctions apply to any Concept expressing such constraints or regularities.
+
+Evidence may concern class boundaries or a particular regularity; these receive separate targets when they need independent checking or revision. Check new members and boundary cases, accounting for uncertain membership, dependencies, and how cases were selected. Selecting children solely because they match the model does not independently validate that model. Instances and subtypes are different units: an average over subtypes does not automatically describe the distribution over instances. Generalization follows the [[Process Plane/Program Evaluation and Testing#Prediction Evaluation Protocol|prediction evaluation protocol]].
 
 #### Entity
 
@@ -575,6 +593,8 @@ Evaluate content through the shared [[Uncertainty and Belief Tracking in the Wor
 - a process model expressed in text — how accurately it describes and predicts the process;
 - a behavior rule or instruction — how reliably applying it achieves specified goals and target signals while meeting constraints.
 
+For a Note, assessment checks internal consistency, compatibility with the relevant linked concepts, facts, and models, and how well its content is justified by the agent's own experience and external grounds under its evaluation question. External sources are fallible evidence, not a required standard of agreement; apply the [[Uncertainty and Belief Tracking in the World Model#Evaluating Definitions, Models, and Content|shared assessment and update procedure]], including source reliability, applicability, and dependencies. Confirming that a quotation faithfully preserves a source's words does not establish the truth of those words. Creating, saving, or rereading a Note adds no evidence by itself.
+
 A composite Note may be evaluated as a whole, as a model or policy, without extracting a Claim for every sentence. The target specifies the content or version being evaluated, its applicability scope, and, for quality or effectiveness evaluation, a [[Attribution Plane#^def-Criterion|`Criterion`]]. For example: “the described model achieves the required accuracy on this class of cases” or “following these rules reliably achieves the goal under these conditions.” Different evaluation questions are not mixed into one vague confidence value.
 
 Parts may receive independent targets when needed. Evaluation of the whole is not automatically the average of evaluations of its parts: the truth of individual claims does not confirm the reasoning that connects them, and successful use of an instruction does not prove every explanation it contains. Shared bases retain [[Uncertainty and Belief Tracking in the World Model#Evidence Dependencies|evidence dependencies]]; extracting parts or restating them does not create independent confirmation from the same experience.
@@ -609,6 +629,14 @@ ALIAS_OF
 ```
 
 The same mechanism and goals apply to `RelationType` and `TransitionType` concepts.
+
+#### Revising Concepts and Prototypes
+
+Low `Strength` with high `Support` means substantial effective evidence gives little confidence in the current definition or model. It is a reason to investigate revision, not an instruction to delete the node or a diagnosis of which part is wrong. Low `Support` instead indicates little own evidence; also consider the prior's grounds, unresolved conflicts, and the importance of the affected uses.
+
+For both Concepts and Prototypes, consider the smallest sufficient correction: rename or refine the description; correct or move relations, children, or classifications; split or merge concepts; create an additional concept; or retire/delete an unnecessary representation under the ordinary graph and memory lifecycle. Search existing concepts before creating replacements. A better definition of the same meaning may refine the existing concept; preserve a separate concept when a useful difference in meaning remains.
+
+Compare a candidate with the current model on representative cases, previous counterexamples, and additional cases when needed. Do not improve its score merely by removing inconvenient children or narrowing the scope without justification. Apply only a grounded correction, keeping the description, relevant relations, and classifications consistent. Retain the reasons, applicable evidence, and revision history needed to reassess dependent knowledge through the [[Uncertainty and Belief Tracking in the World Model#Evaluating Definitions, Models, and Content|shared update cycle]]. If no correction is yet justified, the conflict may remain open and its epistemic effect stays visible in belief.
 
 ---
 
@@ -745,6 +773,8 @@ DBOS uses local SQLite; a separate graph database or database server is not requ
 ## Graph Identity and Canonical Names
 
 Stable positive integer IDs are identity; canonical names are the default human/LLM address. For `concept`, `prototype`, `property`, `process` and `relation_type`, names contain 1–3 whitespace-separated words and are unique across that canonical namespace. Comparison uses Unicode NFC, trimmed/collapsed whitespace and `casefold`. These invariants are validated atomically on creation and rename. Semantically similar names do not authorize automatic merging.
+
+Prefer a one-word canonical name when it is precise and unambiguous; two- or three-word names are equally valid when they express the intended distinction more clearly.
 
 Instances, Facets, fact instances and technical records may have repeated or longer names. `GraphStore.lookup(name_or_id, kind?)` returns exact matches and never chooses arbitrarily among ambiguous names. A canonical name takes precedence over fact names unless `kind` explicitly selects facts. `find` is a strict internal convenience and rejects ambiguity. Strings containing digits are still names; only an integer argument denotes an ID.
 

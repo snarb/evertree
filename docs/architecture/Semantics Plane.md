@@ -817,21 +817,22 @@ An ordinary domain program uses `read_property` when its question concerns a def
 
 - **[[Semantics Plane#STATE_IDENTITY (Facet ↔ Instance)|Facet]] / Episode** — the current posterior for a particular case: “what exactly is happening / what happened now?” This is the most flexible level.
 - **[[Semantics Plane#IDENTITY_TYPE (Instance ↔ Type)|Instance]]** — stable characteristics of a particular object/system relative to a general prototype: “this particular object behaves differently.” This is the level of individual parameters and local exceptions.
-- **Prototype / Type** — generalized confidence in typical relationships, mechanisms, and priors: “how the world usually works and how confident we are in that.” This is the most inert level.
+- **Prototype / Type** — confidence in class definitions, typical relationships, mechanisms, and priors: “how the class is defined, how its members usually behave, and how confident we are in that.” This is normally more stable than an episode interpretation and requires grounds covering the generalization across relevant objects and conditions.
 
 In the Semantics Plane, [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]] is conceptually similar to [[#Views: Projections Over One Fact|`AccessView`]] in its role, but is not an `AccessView` object. It is a computed epistemic view of one `CompetitionScope`, not a new semantic fact or a set of copied [[Uncertainty and Belief Tracking in the World Model#^def-BeliefData|`BeliefData`]] records for alternatives.
 
 **Interpreting scalar `Strength` / `Support` by level:**
 
+At every level, [[Uncertainty and Belief Tracking in the World Model#BeliefData|`Support`]] is the total effective discriminative mass of the target's own evidence, including both supporting and opposing evidence. It does not measure agreement or include the prior; transferable prior backing is represented by `PriorSupport`.
+
+Concepts and Prototypes follow the same [[Uncertainty and Belief Tracking in the World Model#Evaluating Definitions, Models, and Content|assessment and update procedure]]. Their content, scope, and applicable evidence determine the checks. This equivalence preserves the distinction between revising a local Facet / episode belief and a broadly reused class belief.
+
 - **[[Semantics Plane#STATE_IDENTITY (Facet ↔ Instance)|Facet]] / Episode:**
   - [[Uncertainty and Belief Tracking in the World Model#BeliefData|`Strength`]] = scalar confidence in a specific semantic value / relation instance / hypothesis in the current context.
-  - [[Uncertainty and Belief Tracking in the World Model#Belief Representations|`Support`]] = quality of current evidence: sensors, observations, confirmations.
 - **[[Semantics Plane#IDENTITY_TYPE (Instance ↔ Type)|Instance]]:**
   - `Strength` = confidence in a local characteristic/correction for this object relative to the prototype.
-  - `Support` = how consistently this characteristic has appeared for this instance.
 - **Prototype / Type:**
-  - `Strength` = confidence in a typical relation, rule, prior, or mechanism.
-  - `Support` = amount and quality of confirmation: statistics, experiments, reliable sources.
+  - `Strength` = confidence in a class definition, typical relation, rule, prior, or mechanism under its evaluation contract.
 
 > [!note]
 > For a `CompetitionScope`, one `LevelBelief` contains the scope's shared [[Uncertainty and Belief Tracking in the World Model#^def-Profile|`Profile`]]. `SemanticBeliefProfile` remains a view across levels, not a separate epistemic updater.
@@ -844,7 +845,7 @@ In the Semantics Plane, [[Uncertainty and Belief Tracking in the World Model#^de
 >   - Profile view: `{rain: 0.55, washing: 0.35, other/mixed: 0.10}`, shared `Support: low`.
 > - **Prototype level:**
 >   - the relation `rain → wet` has generalized `Strength`;
->   - `Support` accumulates slowly from repeated confirmations.
+>   - `Support` includes effective evidence from informative observations and checks, including counterexamples; it can increase while `Strength` decreases.
 
 ##### `Belief_data` → Semantic Runtime
 
@@ -854,7 +855,7 @@ Runtime uses `SemanticBeliefProfile` levels differently:
 - **Instance level** — local exceptions, individual corrections, and instance-specific priors.
 - **Prototype level** — general semantic priors, hierarchies, mereology, planning, and generalized mechanisms.
 
-**Update rule:** episode-level belief may change quickly, but must not directly overwrite prototype-level belief. Prototype-level belief changes more slowly and requires sufficient Support.
+**Update rule:** Facet / episode belief may change quickly from applicable evidence about that case. Prototype / class belief normally changes more slowly and cautiously, requiring sufficient grounds for the general claim and its affected uses. An episode must not directly overwrite the prototype: [[Uncertainty and Belief Tracking in the World Model#^def-EvidenceAssessmentProgram|evidence assessment]] checks local explanations and justifies attribution to the class, using independent cases and boundary checks when needed. A verified counterexample may promptly lower confidence in a universal claim, but does not by itself establish a replacement definition or model. See [[Uncertainty and Belief Tracking in the World Model#Beliefs Across Abstraction Levels|revision across abstraction levels]].
 
 ### Taxonomy Axis: Type Taxonomy (Type → SuperType → …)
 #topic_core
