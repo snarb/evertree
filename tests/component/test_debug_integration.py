@@ -82,6 +82,7 @@ async def test_model_forwards_program_request_and_returns_provider_output(
 async def test_debug_integration_forwards_native_tools_and_records_direct_writes(tmp_path):
     session = DebugSession(tmp_path)
     assert session.timeout_seconds is None
+    assert set(session.metadata["integration_context"]) == {"task"}
     session.record_experience()
     refs = session.experience_refs
     session.provider = ScriptedProvider(
@@ -108,6 +109,7 @@ async def test_debug_integration_forwards_native_tools_and_records_direct_writes
         assert len(result["writes"]) == 1
         assert session.graph.find("Retained analysis").description == CONSCIOUS_ANALYSIS
         (request,) = session.provider.requests
+        assert set(json.loads(request.prompt)["material"]["context"]) == {"task"}
         assert request.mode == "exec" and not request.native_coding
         assert request.output_schema is None
         assert {"save_note", "update", "delete"} <= {tool.name for tool in request.tools}

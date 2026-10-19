@@ -288,7 +288,7 @@ def semantic_tools():
         ),
         define(
             "graph.integrate",
-            "Ask KnowledgeIntegration to organize saved experience in the knowledge graph. Supply source_ref values or references returned by record_analysis. The controller provides the task, agent priorities and known capabilities. The integrator independently selects useful knowledge.",
+            "Ask KnowledgeIntegration to organize saved experience in the knowledge graph. Supply source_ref values or references returned by record_analysis. The controller provides the task requirements. The integrator independently selects useful knowledge.",
             {
                 "experience_refs": {
                     "type": "array",

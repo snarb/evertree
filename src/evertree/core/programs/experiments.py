@@ -304,16 +304,6 @@ async def evaluate_pair(
                     metadata["integration_operation_id"] = "evaluation:" + metadata["run_id"]
                     metadata["integration_context"] = {
                         "task": {"id": metadata["task_id"], "mode": "evaluation"},
-                        "values": [
-                            json_value(node)
-                            for node in context.graph.nodes()
-                            if node.name in {"EpistemicQuality", "AgentCapability"}
-                        ],
-                        "self": [
-                            json_value(node)
-                            for node in context.graph.nodes()
-                            if node.name == "Self"
-                        ],
                     }
                     return await semantics.execute(method, payload, metadata)
                 if method == "resolve_program":

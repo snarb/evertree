@@ -65,6 +65,7 @@ INTEGRATION_SOURCE = """
 async def run(name, ctx):
     refs = [{'event_ref': 1, 'output_path': []}]
     material = await ctx.step('semantic.sources', {'experience_refs': refs})
+    assert set(material['context']) == {'task'}
     assert material['context']['task']['mode'] == 'evaluation'
     write = await ctx.step('semantic.write', {
         'experience_refs': refs, 'operation_key': 'rename',

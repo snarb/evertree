@@ -210,7 +210,7 @@ async def test_invalid_native_tool_arguments_are_repaired_with_feedback(argument
     )
 
 
-def test_self_context_retains_fact_conditions_while_resolving_participant_names(app):
+def test_integration_context_excludes_values_and_self_knowledge(app):
     graph = app.graph
     fact = replace(
         graph.new_fact(
@@ -224,15 +224,13 @@ def test_self_context_retains_fact_conditions_while_resolving_participant_names(
     )
     graph.apply(GraphDelta(creates=(fact,)), provenance="test observation")
     task = app.tasks.create_task("Examine the agent's current model")
+    context = app._integration_context(task)
+    assert set(context) == {"task"}
+    assert context["task"]["specification"] == task.specification.to_dict()
     model_context = _material_for_model(
         {
-            "context": app._integration_context(task),
+            "context": context,
             "experience": [],
         }
     )["context"]
-    projected = next(node for node in model_context["self"] if node["id"] == fact.id)
-    assert projected["properties"] == dict(fact.properties)
-    assert projected["relation"] == "PART_WHOLE"
-    assert "relation_type" not in projected
-    assert projected["args"]["part"]["name"] == "SelfModel"
-    assert "provenance" not in projected
+    assert model_context == {"task": {"objective": task.objective}}

@@ -166,11 +166,6 @@ async def test_real_model_integrates_recorded_experience(case, tmp_path):
             "remaining_active_time_minutes": 20,
             "self_improvement_remaining": 0,
         },
-        "values": [
-            {"name": "EpistemicQuality", "description": "Well-supported understanding."},
-            {"name": "AgentCapability", "description": "Reliable and efficient problem solving."},
-        ],
-        "self": [],
     }
     before = {node.id for node in world.graph.nodes()}
     outcome = {}

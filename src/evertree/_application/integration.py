@@ -50,27 +50,7 @@ class KnowledgeIntegrationMixin:
         return ref
 
     def _integration_context(self, state):
-        """Collect task constraints and source-backed Self context for the integration decision."""
-
-        def sourced(node):
-            from ..core.graph.types import RelationInstance
-            from ..core.semantics.reading import fact_card
-
-            changes = self.graph.changes_of(node.id)
-            readable = {}
-            if isinstance(node, RelationInstance):
-                readable = fact_card(self.graph, node)
-            return {
-                **json_value(node),
-                **readable,
-                "provenance": json_value(changes[-1].provenance) if changes else None,
-            }
-
-        selected = [self.graph.find(name) for name in ("Self", "SelfModel", "SelfRegulation")]
-        selected_ids = {node.id for node in selected if node is not None}
-        from ..core.semantics.reading import fact_nodes
-
-        facts = [fact for fact in self.graph.facts() if fact_nodes(self.graph, fact) & selected_ids]
+        """Collect task requirements and budget for the integration decision."""
         return {
             "task": {
                 "id": state.id,
@@ -80,14 +60,6 @@ class KnowledgeIntegrationMixin:
                     "active_time_minutes", self_improvement=True
                 ),
             },
-            "values": [
-                sourced(node)
-                for node in self.graph.nodes(kind="value")
-                if node.id in self._protected_nodes
-            ],
-            "self": [sourced(node) for node in selected if node is not None]
-            + [sourced(fact) for fact in facts[:12]],
-            "self_selection": "Core Self identities and their first twelve registered adjacent facts; not exhaustive.",
         }
 
     def _semantic_metadata(self, state, payload, metadata):
