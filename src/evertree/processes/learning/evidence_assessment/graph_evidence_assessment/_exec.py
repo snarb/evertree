@@ -484,20 +484,34 @@ def _plan_scopes(batch, judgement, reliability, withdrawn=frozenset()):
     existing = {scope["key"]: scope for scope in batch["scopes"]}
     records, members, answered = [], set(), set()
     for answer in judgement.get("scopes", ()):
+        # A listed element already in a scope brings that scope along, whatever scope key the
+        # judgement names (or none for a new version).
+        declared = existing.get(answer["scope"]) or next(
+            (
+                existing[items[element]["scope"]]
+                for element in answer["alternatives"]
+                if element in items and items[element].get("scope") in existing
+            ),
+            None,
+        )
+        # A scope keeps its alternatives unless the judgement adds to them: a model that
+        # lists only some of them would otherwise silently split the scope.
+        kept = [label for label in declared["alternatives"] if label != "other"] if declared else []
         alternatives = [
             element
-            for element in dict.fromkeys(answer["alternatives"])
-            if element in items and element not in members
+            for element in dict.fromkeys([*kept, *answer["alternatives"]])
+            if (element in items or element in kept) and element not in members
         ]
-        labels = [str(element) for element in alternatives] + (["other"] if answer["other"] else [])
+        other = answer["other"] or bool(declared and "other" in declared["alternatives"])
+        labels = [str(element) for element in alternatives] + (["other"] if other else [])
         if len(alternatives) < 1 or len(labels) < 2:
             continue
-        declared = existing.get(answer["scope"])
         scope_active = {entry["source"] for entry in declared["active"]} if declared else set()
         allowed = set(new) | scope_active
         for element in alternatives:
-            allowed.update(items[element].get("grounds", ()))
-            allowed.update(entry["source"] for entry in items[element]["active"])
+            if element in items:
+                allowed.update(items[element].get("grounds", ()))
+                allowed.update(entry["source"] for entry in items[element]["active"])
         assign, retract = {}, {}
         for entry in answer["evidence"]:
             key = entry["source"]
@@ -524,7 +538,7 @@ def _plan_scopes(batch, judgement, reliability, withdrawn=frozenset()):
             {
                 "scope": declared["scope"] if declared else None,
                 "alternatives": alternatives,
-                "other": answer["other"],
+                "other": other,
                 "question": answer["question"],
                 "prior": prior if set(prior) == set(labels) else None,
                 "assign": list(assign.values()),

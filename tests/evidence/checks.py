@@ -69,6 +69,8 @@ def check(history, expectation):
         snapshot = history[expectation["at"] - 1]
         groups = [select(snapshot, selector) for selector in expectation["scope"]]
         if not all(groups):
+            if expectation.get("optional"):
+                return None
             return f"scope members not all found: {groups}"
         scopes = [
             {snapshot["elements"][identity].get("scope") for identity in group} - {None}

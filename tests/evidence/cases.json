@@ -850,7 +850,7 @@
         },
         "strength": [
           ">=",
-          0.6
+          0.55
         ]
       },
       {
@@ -1038,7 +1038,9 @@
             "relation_instance"
           ]
         },
-        "strength": "same"
+        "strength": "same",
+        "optional": true,
+        "why": "a running-state element may be absent when integration records only the stop event"
       },
       {
         "at": 2,
@@ -1922,11 +1924,17 @@
               "relation_instance",
               "facet"
             ],
+            "in_scope": true,
             "none": [
               "IDENTITY_TYPE",
-              "SUBTYPE_OF"
-            ],
-            "in_scope": true
+              "SUBTYPE_OF",
+              "подшип",
+              "bearing",
+              "кавитац",
+              "cavitation",
+              "фильтр",
+              "filter"
+            ]
           },
           ">",
           {
@@ -1942,11 +1950,19 @@
               "relation_instance",
               "facet"
             ],
+            "in_scope": true,
             "none": [
               "IDENTITY_TYPE",
-              "SUBTYPE_OF"
-            ],
-            "in_scope": true
+              "SUBTYPE_OF",
+              "двигат",
+              "motor",
+              "изоляц",
+              "insulation",
+              "кавитац",
+              "cavitation",
+              "фильтр",
+              "filter"
+            ]
           }
         ]
       },
@@ -1968,11 +1984,17 @@
               "relation_instance",
               "facet"
             ],
+            "in_scope": true,
             "none": [
               "IDENTITY_TYPE",
-              "SUBTYPE_OF"
-            ],
-            "in_scope": true
+              "SUBTYPE_OF",
+              "подшип",
+              "bearing",
+              "кавитац",
+              "cavitation",
+              "фильтр",
+              "filter"
+            ]
           },
           ">",
           {
@@ -1988,11 +2010,19 @@
               "relation_instance",
               "facet"
             ],
+            "in_scope": true,
             "none": [
               "IDENTITY_TYPE",
-              "SUBTYPE_OF"
-            ],
-            "in_scope": true
+              "SUBTYPE_OF",
+              "двигат",
+              "motor",
+              "изоляц",
+              "insulation",
+              "подшип",
+              "bearing",
+              "фильтр",
+              "filter"
+            ]
           }
         ]
       },
@@ -2127,7 +2157,9 @@
               "SUBTYPE_OF"
             ]
           }
-        ]
+        ],
+        "optional": true,
+        "why": "integration may record only one of the two locations; the scope is checked when both exist"
       }
     ]
   }
