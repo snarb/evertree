@@ -4,6 +4,7 @@ Stores define the environment; this module never opens live files, invokes a
 provider, schedules a task or performs an external action.
 """
 
+import random
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
@@ -65,12 +66,14 @@ MODEL_OPERATIONS = frozenset(
 )
 
 
-def authorize_operation(method: str, role: str) -> None:
+def authorize_operation(method: str, role: str, *, meta: bool = False) -> None:
     """Reject gateway operations outside the calling Program role's authority."""
     if role not in {"model", "exec"}:
         raise PermissionError("Unknown Program role")
     if role == "model" and method not in MODEL_OPERATIONS:
         raise PermissionError("A model Program cannot perform effects or obtain new observations")
+    if method.startswith("program.") and not (role == "exec" and meta):
+        raise PermissionError("Only a meta exec Program can manage the Program lifecycle")
 
 
 @dataclass
@@ -223,7 +226,9 @@ class CoreOperations:
 
     def execute(self, method: str, payload: dict, *, metadata: dict):
         """Authorize and dispatch a Program operation to the appropriate Core subsystem."""
-        authorize_operation(method, metadata["program"]["role"])
+        authorize_operation(
+            method, metadata["program"]["role"], meta=metadata["program"].get("meta", False)
+        )
         payload = dict(payload)
         task_id = metadata["task_id"]
         revision = metadata["program"]["revision"]
@@ -289,7 +294,10 @@ class CoreOperations:
             self.memory.finish_run(run)
             result = self.memory.output_ref(event)
         elif method == "memory.resolve":
-            result = self.memory.resolve(TraceOutputRef(**payload["reference"]))
+            reference = TraceOutputRef(**payload["reference"])
+            if reference.event_ref in self.memory.sealed:
+                raise PermissionError("This experience is held out as a hidden evaluation outcome")
+            result = self.memory.resolve(reference)
         elif method == "memory.review":
             result = self.memory.review_batch(limit=payload.get("limit", 100))
         elif method == "memory.complete_review":
@@ -353,6 +361,21 @@ class CoreOperations:
                     )
                     refreshed.append(node.id)
             result = {"refreshed": refreshed}
+        elif method == "policy.sample":
+            from .policy.contracts import validate_distribution
+
+            distribution = validate_distribution(payload["distribution"], payload.get("allowed"))
+            # The step is saved, so recovery replays this draw instead of drawing again.
+            threshold, total = random.SystemRandom().random(), 0.0
+            candidate, probability = next(
+                choice for choice in reversed(distribution["choices"]) if choice[1] > 0
+            )
+            for item, weight in distribution["choices"]:
+                total += weight
+                if weight > 0 and threshold < total:
+                    candidate, probability = item, weight
+                    break
+            result = {"candidate": candidate, "probability": probability}
         elif method == "topology.inspect":
             result = inspect_topology(self.graph, **payload)
         elif method == "evidence.assess":

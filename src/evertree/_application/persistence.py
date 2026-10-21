@@ -54,6 +54,8 @@ class PersistenceMixin:
         self._evaluation_bindings: dict[str, dict] = {}
         self._pending_programs: dict[str, dict] = {}
         self._observations: set[int] = set()
+        # Trace events whose content reached a model or a live Program.
+        self._surfaced: set[int] = set()
         self._predictions: dict[str, float] = {}
 
     def _bootstrap(self):
@@ -174,6 +176,7 @@ class PersistenceMixin:
             "evaluation_bindings": self._evaluation_bindings,
             "pending_programs": self._pending_programs,
             "observations": sorted(self._observations),
+            "surfaced": sorted(self._surfaced),
             "predictions": self._predictions,
         }
 
@@ -221,6 +224,7 @@ class PersistenceMixin:
             setattr(self, "_" + name, data.get(name, {}))
         self._protected_nodes = set(data["protected_nodes"])
         self._observations = set(data.get("observations", ()))
+        self._surfaced = set(data.get("surfaced", ()))
         for state in self.tasks.all():
             if not state.terminal:
                 state.execution_stopped = True

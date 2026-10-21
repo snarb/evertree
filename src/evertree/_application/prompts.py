@@ -114,7 +114,9 @@ Load specialized tool sets when needed; they expire after this invocation. Addit
 for future reuse must fit state.self_improvement_remaining; necessary task work uses the
 main allowance. Modify agent state and reusable Programs only through EverTree tools.
 For reusable code changes, load program_development_tools and follow candidate development,
-evaluation and selection. Native coding tools operate in the task workspace; use absolute
+evaluation and selection. A read-only sandbox of this invocation limits only your own native
+commands; develop_candidate and other EverTree tools write in their own authorized checkouts,
+which is the sanctioned way to change Programs. Native coding tools operate in the task workspace; use absolute
 file paths. This workspace is deleted when the task ends. Save lasting artifacts under
 artifacts/ in a candidate through those development tools. After restart, recover missing
 temporary files and check saved action receipts before repeating external effects.
@@ -152,19 +154,71 @@ CANDIDATE_INSTRUCTIONS = (
     "evaluation separately. Do not activate or claim acceptance of the candidate."
 )
 
+DESIGN_INSTRUCTIONS = (
+    "Declare a module-level literal DESIGN = {{...}} in the entry module answering {profile}: "
+    "applicability, adaptation, learning{exploration}. Each answer names a local mechanism, a "
+    "responsible Program, or why the question does not apply."
+)
+
+
+def candidate_instructions(program: dict, evaluation: dict | None) -> str:
+    """Tell the coding provider the contract its role, meta authority and evaluation impose."""
+    roles = program.get("roles", (program["role"],))
+    parts = [CANDIDATE_INSTRUCTIONS]
+    if program["role"] == "model":
+        parts.append(
+            "This is a model Program: it describes or predicts a process. It must not take "
+            "actions, change the graph or call exec Programs; Core rejects such operations."
+        )
+    policy = bool(evaluation and evaluation["rule"] == "policy")
+    if policy:
+        parts.append(
+            "This is a policy: result is an action distribution "
+            '{"choices": [[candidate, probability], ...]} with unique candidates and '
+            "probabilities summing to 1, never a bare action. Build it with "
+            "evertree.core.policy.api (certain, greedy_distribution, softmax_distribution, "
+            "validate_distribution); callers sample with sample_action."
+        )
+    if "meta" in roles:
+        parts.append(
+            "This is a meta Program: it manages other Programs only through "
+            "evertree.core.programs.api. Core forbids it to change its own candidates or "
+            "acceptance criteria, and compares its candidates on a history of past situations."
+        )
+    if policy or "meta" in roles:
+        parts.append(
+            DESIGN_INSTRUCTIONS.format(profile="PolicyDesign", exploration=", exploration")
+        )
+    if evaluation:
+        parts.append(
+            "Protected evaluation uses rule "
+            + evaluation["rule"]
+            + " with metrics "
+            + ", ".join(evaluation["metrics"])
+            + " and calls the entrypoint with keyword arguments "
+            + ", ".join(evaluation["input_keys"])
+            + "."
+        )
+    return "\n\n".join(parts)
+
+
+LIFECYCLE_TOOLS = (
+    "create_candidate",
+    "propose_program",
+    "develop_candidate",
+    "evaluate_candidate",
+    "compare_candidates",
+    "refresh_candidate",
+    "choose_candidate",
+    "derive_holdout",
+)
+
 
 def _all_tools():
     """Assemble the conscious agent's capability catalog before selecting direct and loadable tools."""
 
     def tool(name, description, properties, required=()):
-        if name in {
-            "run_program",
-            "create_candidate",
-            "propose_program",
-            "develop_candidate",
-            "evaluate_candidate",
-            "choose_candidate",
-        }:
+        if name in {"run_program", *LIFECYCLE_TOOLS}:
             properties = {
                 **properties,
                 "purpose": {
@@ -208,13 +262,13 @@ def _all_tools():
         ),
         tool(
             "create_candidate",
-            "Create an isolated candidate branch for a reusable Program change. Give candidate_name a specific change label of one to three words.",
+            "Create an isolated candidate branch for a reusable Program change. Give candidate_name a specific change label of one to three words. Open competing candidates before evaluating any of them: a slot's holdout, once evaluated, is spent for candidates opened later.",
             {"program": integer, "claim": string, "candidate_name": string},
             ("program", "claim", "candidate_name"),
         ),
         tool(
             "propose_program",
-            "Propose a missing role for an existing process by name, or create a new process under parent (ID or name; defaults to SelfProcess). Omit parent for existing processes. Give candidate_name a specific label of one to three words. Independent evidence is required before activation.",
+            "Propose a missing role for an existing process by name, or create a new process under parent (ID or name; defaults to SelfProcess). Omit parent for existing processes. For an occupied role, set alternative_to to the Program it competes with when the solution principle differs; improve the same principle with create_candidate instead. meta marks an exec Program that manages other Programs' lifecycle. Give candidate_name a specific label of one to three words. Independent evidence is required before activation.",
             {
                 "name": string,
                 "role": {"enum": ["model", "exec"], "type": "string"},
@@ -222,6 +276,8 @@ def _all_tools():
                 "description": string,
                 "candidate_name": string,
                 "parent": {"type": ["integer", "string", "null"]},
+                "alternative_to": {"type": ["integer", "null"]},
+                "meta": {"type": "boolean"},
             },
             ("name", "role", "claim", "description", "candidate_name"),
         ),
@@ -233,13 +289,31 @@ def _all_tools():
         ),
         tool(
             "evaluate_candidate",
-            "Evaluate a committed candidate against its independently registered held-out dataset.",
+            "Evaluate a committed candidate against its slot's independently registered held-out dataset.",
+            {"candidate": string},
+            ("candidate",),
+        ),
+        tool(
+            "compare_candidates",
+            "Rank evaluated candidates of one Program slot on the same holdout by its fixed target metric.",
+            {"candidates": {"type": "array", "items": string}},
+            ("candidates",),
+        ),
+        tool(
+            "derive_holdout",
+            "Let Core extend a Program slot's protected holdout with outcomes of its live runs that no model has seen. Returns only case counts; outcomes stay hidden.",
+            {"program": integer},
+            ("program",),
+        ),
+        tool(
+            "refresh_candidate",
+            "Reopen a paused candidate, or move a stale one onto the current main by reapplying its change; evaluate it again before choosing.",
             {"candidate": string},
             ("candidate",),
         ),
         tool(
             "choose_candidate",
-            "Record conscious EvaluationChoice; core independently enforces fixed acceptance gates.",
+            "Record conscious EvaluationChoice; core independently enforces fixed acceptance gates. Branches of the active Program use merge_branch, continue_branch, reject_branch or archive_branch. New and alternative Programs use activate_program, keep_alternatives, reject_program or archive_program. Activation is refused while a verified sibling is better on the same holdout.",
             {
                 "candidate": string,
                 "decision": {
@@ -249,6 +323,10 @@ def _all_tools():
                         "continue_branch",
                         "reject_branch",
                         "archive_branch",
+                        "activate_program",
+                        "keep_alternatives",
+                        "reject_program",
+                        "archive_program",
                     ],
                 },
                 "reason": string,
@@ -379,13 +457,7 @@ def tool_sets():
     reference = {"type": ["string", "integer"]}
     string = {"type": "string"}
     catalog = _all_tools()
-    development = {
-        "create_candidate",
-        "propose_program",
-        "develop_candidate",
-        "evaluate_candidate",
-        "choose_candidate",
-    }
+    development = set(LIFECYCLE_TOOLS)
     return (
         ToolSet(
             "graph_write_tools",

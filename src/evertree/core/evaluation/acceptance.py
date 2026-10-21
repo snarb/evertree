@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from .contracts import _number
@@ -70,6 +70,24 @@ class AcceptanceCriteria:
             _number(self.threshold)
         if not self.required_checks:
             raise ValueError("Acceptance needs at least one mandatory check")
+
+
+# A meta Program changes how other mechanisms evolve, so its own changes need
+# more evidence: a fixed history check and no regression on past situations.
+META_MIN_CASES = 3
+
+
+def meta_criteria(criteria: AcceptanceCriteria) -> AcceptanceCriteria:
+    """Tighten a slot's criteria for a meta Program candidate; the binding cannot relax this."""
+    guardrails = list(criteria.guardrails)
+    if criteria.target_metric:
+        guardrails.append(MetricGuardrail("history:" + criteria.target_metric, criteria.direction))
+    return replace(
+        criteria,
+        required_checks=tuple(dict.fromkeys((*criteria.required_checks, "improvement_history"))),
+        guardrails=tuple(guardrails),
+        require_independent=True,
+    )
 
 
 def assess_candidate(

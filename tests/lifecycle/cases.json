@@ -1,0 +1,2940 @@
+[
+  {
+    "id": "PLC-01",
+    "covers": [
+      "new exec Program",
+      "activate_program"
+    ],
+    "title": "Create a new exec Program from scratch and activate it",
+    "setup": {
+      "proposals": {
+        "order": {
+          "name": "OrderTotal",
+          "role": "exec",
+          "claim": "Order totals can be computed by one reusable deterministic Program",
+          "description": "Total cost of order items after a percentage discount, rounded to cents.",
+          "candidate_name": "order total",
+          "holdout": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "items": [
+                    {
+                      "price": 1.25,
+                      "quantity": 4
+                    }
+                  ],
+                  "discount_percent": 0
+                },
+                5.0
+              ],
+              [
+                {
+                  "items": [
+                    {
+                      "price": 19.99,
+                      "quantity": 2
+                    },
+                    {
+                      "price": 5,
+                      "quantity": 3
+                    }
+                  ],
+                  "discount_percent": 10
+                },
+                49.48
+              ],
+              [
+                {
+                  "items": [],
+                  "discount_percent": 25
+                },
+                0.0
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "task": "Program {order} (OrderTotal) is a new reusable Program with open candidate {order.candidate} and an independently bound holdout. Implement it: the entrypoint run(items, discount_percent=0) receives items with price and quantity and returns the subtotal sum(price * quantity) reduced by discount_percent percent, rounded to 2 decimals. Develop the candidate, evaluate it with the protected checks and activate the Program only if acceptance passes. Then run it on items [{\"price\": 3, \"quantity\": 2}] with discount_percent 50 and report the result.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{order.candidate}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Total cost of order items after a percentage discount.\"\"\"\n\n\ndef run(items: list, discount_percent: float = 0):\n    subtotal = sum(item[\"price\"] * item[\"quantity\"] for item in items)\n    return {\"result\": round(subtotal * (1 - discount_percent / 100), 2), \"feedback\": None}\n",
+            "tests/test_order_total.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/order_total/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"order_total_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass OrderTotalTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'items': [{'price': 2.5, 'quantity': 4}]}, 10.0), ({'items': [{'price': 10, 'quantity': 1}], 'discount_percent': 10}, 9.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{order.candidate}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{order.candidate}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Unsupported EvaluationChoice"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{order.candidate}",
+            "decision": "activate_program",
+            "reason": "Protected evaluation decided"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "slot",
+        "program": "order"
+      },
+      {
+        "kind": "status",
+        "program": "order",
+        "lifecycle_status": "active"
+      },
+      {
+        "kind": "choices",
+        "program": "order",
+        "decisions": [
+          "activate_program"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{order}",
+        "arguments": {
+          "items": [
+            {
+              "price": 3,
+              "quantity": 2
+            }
+          ],
+          "discount_percent": 50
+        },
+        "result": 3.0
+      },
+      {
+        "kind": "step_error",
+        "op": "choose_candidate",
+        "match": "Unsupported EvaluationChoice",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-02",
+    "covers": [
+      "improve active exec Program",
+      "merge_branch",
+      "baseline comparison"
+    ],
+    "title": "Improve an active exec Program after an observed failure",
+    "setup": {
+      "programs": {
+        "ship": {
+          "name": "ShippingCost",
+          "role": "exec",
+          "description": "Shipping cost of an order total.",
+          "source": "\"\"\"Shipping cost of an order.\"\"\"\n\n\ndef run(total: float):\n    return {\"result\": 5.0, \"feedback\": None}\n",
+          "files": {
+            "tests/test_shipping_cost.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/shipping_cost/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"shipping_cost_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass ShippingCostTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'total': 20.0}, 5.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "total": 20.0
+                },
+                5.0
+              ],
+              [
+                {
+                  "total": 10.0
+                },
+                5.0
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "ship": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "total": 20.0
+              },
+              5.0
+            ],
+            [
+              {
+                "total": 49.99
+              },
+              5.0
+            ],
+            [
+              {
+                "total": 50.0
+              },
+              0.0
+            ],
+            [
+              {
+                "total": 120.0
+              },
+              0.0
+            ]
+          ]
+        }
+      }
+    },
+    "task": "Customers report that ShippingCost (Program {ship}) charges 5.0 for an order total of 80.0, but orders of 50.0 or more ship free; smaller orders still cost 5.0. Improve the Program through a candidate, evaluate it and merge it only if protected acceptance passes. Then run it for total 80.0 and report the cost.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{ship}",
+            "claim": "Orders of 50.0 or more ship free",
+            "candidate_name": "free threshold"
+          },
+          "as": "c1"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Shipping cost of an order: orders of 50.0 or more ship free.\"\"\"\n\n\ndef run(total: float):\n    return {\"result\": 0.0 if total >= 50 else 5.0, \"feedback\": None}\n",
+            "tests/test_shipping_cost.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/shipping_cost/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"shipping_cost_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass ShippingCostTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'total': 80.0}, 0.0), ({'total': 20.0}, 5.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{c1}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "ship",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "ship",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "improved",
+        "program": "ship",
+        "metric": "accuracy",
+        "direction": "maximize"
+      },
+      {
+        "kind": "probe",
+        "program": "{ship}",
+        "arguments": {
+          "total": 80.0
+        },
+        "result": 0.0
+      },
+      {
+        "kind": "probe",
+        "program": "{ship}",
+        "arguments": {
+          "total": 10.0
+        },
+        "result": 5.0
+      }
+    ]
+  },
+  {
+    "id": "PLC-03",
+    "covers": [
+      "rejected candidate",
+      "contract regression",
+      "source validation",
+      "failing tests"
+    ],
+    "title": "Reject candidates that break the protected contract",
+    "setup": {
+      "programs": {
+        "slug": {
+          "name": "TextSlug",
+          "role": "exec",
+          "description": "URL slug of a title: lowercase alphanumeric words joined by hyphens.",
+          "source": "\"\"\"URL slug of a title: lowercase words joined by hyphens.\"\"\"\n\nimport re\n\n\ndef run(title: str):\n    words = re.findall(r\"[a-z0-9]+\", title.lower())\n    return {\"result\": \"-\".join(words), \"feedback\": None}\n",
+          "files": {
+            "tests/test_text_slug.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/text_slug/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"text_slug_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass TextSlugTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'title': 'Hello, World!'}, 'hello-world')]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "title": "A B"
+                },
+                "a-b"
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "slug": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "title": "Release Notes 2026"
+              },
+              "release-notes-2026"
+            ],
+            [
+              {
+                "title": "  Many   spaces "
+              },
+              "many-spaces"
+            ],
+            [
+              {
+                "title": "C'est la vie"
+              },
+              "c-est-la-vie"
+            ]
+          ]
+        }
+      }
+    },
+    "task": "Someone asked to change TextSlug (Program {slug}) so it joins words with underscores instead of hyphens. Try this as a candidate and evaluate it with the protected checks, which encode the published URL contract. If acceptance fails, reject the candidate, keep the active Program unchanged and explain why.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{slug}",
+            "claim": "Join slug words with underscores",
+            "candidate_name": "underscores"
+          },
+          "as": "a"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{slug}",
+            "claim": "Trace slug creation",
+            "candidate_name": "direct runtime"
+          },
+          "as": "b"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{slug}",
+            "claim": "Uppercase slugs",
+            "candidate_name": "shout"
+          },
+          "as": "c"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{a}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"URL slug of a title: lowercase words joined by underscores.\"\"\"\n\nimport re\n\n\ndef run(title: str):\n    words = re.findall(r\"[a-z0-9]+\", title.lower())\n    return {\"result\": \"_\".join(words), \"feedback\": None}\n",
+            "tests/test_text_slug.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/text_slug/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"text_slug_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass TextSlugTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'title': 'A B'}, 'a_b')]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{b}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"URL slug that asks the runtime directly (forbidden).\"\"\"\n\nimport re\n\n\nasync def run(title: str, ctx):\n    await ctx.step(\"trace\", {\"operator\": \"slug\", \"arguments\": {}, \"output\": None})\n    return {\"result\": \"-\".join(re.findall(r\"[a-z0-9]+\", title.lower())), \"feedback\": None}\n",
+            "tests/test_text_slug.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/text_slug/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"text_slug_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass TextSlugTest(unittest.TestCase):\n    def test_examples(self):\n        self.assertTrue(True)\n        for arguments, expected in []:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{c}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"URL slug of a title: lowercase words joined by hyphens.\"\"\"\n\nimport re\n\n\ndef run(title: str):\n    words = re.findall(r\"[a-z0-9]+\", title.lower())\n    return {\"result\": \"-\".join(words).upper(), \"feedback\": None}\n",
+            "tests/test_text_slug.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/text_slug/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"text_slug_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass TextSlugTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'title': 'Hello, World!'}, 'hello-world')]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{a}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{a}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Acceptance checks failed"
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{b}"
+          },
+          "error": "Direct ctx.step"
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{c}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{c}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Mandatory check failed: tests"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{a}",
+            "decision": "reject_branch",
+            "reason": "Breaks the published hyphen contract"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{b}",
+            "decision": "reject_branch",
+            "reason": "Calls the runtime directly"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{c}",
+            "decision": "reject_branch",
+            "reason": "Its own tests fail"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "slug",
+        "changed": false
+      },
+      {
+        "kind": "choices",
+        "program": "slug",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          0,
+          0
+        ]
+      },
+      {
+        "kind": "choices",
+        "program": "slug",
+        "decisions": [
+          "reject_branch",
+          "archive_branch"
+        ],
+        "count": [
+          1,
+          null
+        ]
+      },
+      {
+        "kind": "branches",
+        "program": "slug",
+        "statuses": [
+          "rejected",
+          "archived"
+        ],
+        "count": [
+          1,
+          null
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{slug}",
+        "arguments": {
+          "title": "Hello, World!"
+        },
+        "result": "hello-world"
+      },
+      {
+        "kind": "step_error",
+        "op": "evaluate_candidate",
+        "match": "Direct ctx.step",
+        "mode": "mirror"
+      },
+      {
+        "kind": "step_error",
+        "op": "choose_candidate",
+        "match": "Mandatory check failed: tests",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-04",
+    "covers": [
+      "competing branches",
+      "compare_candidates",
+      "dominance rule",
+      "archive_branch"
+    ],
+    "title": "Compare competing branches of one Program head-to-head",
+    "setup": {
+      "programs": {
+        "dedup": {
+          "name": "Deduplicate",
+          "role": "exec",
+          "description": "Remove repeated values from a list of strings.",
+          "source": "\"\"\"Remove repeated values.\"\"\"\n\n\ndef run(values: list):\n    return {\"result\": sorted(set(values)), \"feedback\": None}\n",
+          "files": {
+            "tests/test_deduplicate.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/deduplicate/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"deduplicate_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass DeduplicateTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'values': ['a', 'a']}, ['a'])]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "values": [
+                    "a",
+                    "a"
+                  ]
+                },
+                [
+                  "a"
+                ]
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "dedup": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "values": [
+                  "pear",
+                  "apple",
+                  "pear"
+                ]
+              },
+              [
+                "pear",
+                "apple"
+              ]
+            ],
+            [
+              {
+                "values": [
+                  "Ab",
+                  "ab",
+                  "Ab"
+                ]
+              },
+              [
+                "Ab",
+                "ab"
+              ]
+            ],
+            [
+              {
+                "values": []
+              },
+              []
+            ],
+            [
+              {
+                "values": [
+                  "z",
+                  "y",
+                  "x",
+                  "y"
+                ]
+              },
+              [
+                "z",
+                "y",
+                "x"
+              ]
+            ]
+          ]
+        }
+      }
+    },
+    "task": "Deduplicate (Program {dedup}) sorts its output, but callers need each value's first occurrence kept in the original order; values are case-sensitive. Create two competing candidates before evaluating either: one implemented with a seen-set loop and one with dict.fromkeys. Develop and evaluate both, compare them with compare_candidates, merge the better one (either if they tie) and archive the other.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{dedup}",
+            "claim": "Keep first occurrences with a seen set",
+            "candidate_name": "seen loop"
+          },
+          "as": "loop"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{dedup}",
+            "claim": "Keep first occurrences ignoring case",
+            "candidate_name": "casefold"
+          },
+          "as": "fold"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{loop}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Remove repeated values, keeping each value's first occurrence in order.\"\"\"\n\n\ndef run(values: list):\n    seen, result = set(), []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return {\"result\": result, \"feedback\": None}\n",
+            "tests/test_deduplicate.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/deduplicate/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"deduplicate_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass DeduplicateTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'values': ['b', 'a', 'b']}, ['b', 'a'])]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{fold}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Remove repeated values ignoring letter case, keeping first occurrences.\"\"\"\n\n\ndef run(values: list):\n    seen, result = set(), []\n    for value in values:\n        key = value.casefold()\n        if key not in seen:\n            seen.add(key)\n            result.append(value)\n    return {\"result\": result, \"feedback\": None}\n",
+            "tests/test_deduplicate.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/deduplicate/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"deduplicate_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass DeduplicateTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'values': ['b', 'a', 'b']}, ['b', 'a'])]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{loop}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{fold}"
+          }
+        },
+        {
+          "op": "compare_candidates",
+          "args": {
+            "candidates": [
+              "{fold}",
+              "{loop}"
+            ]
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{fold}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "is better on the same holdout"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{loop}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{fold}",
+            "decision": "archive_branch",
+            "reason": "The seen-set loop was verified and better"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "evaluations",
+        "program": "dedup",
+        "count": [
+          2,
+          null
+        ],
+        "same_dataset": true
+      },
+      {
+        "kind": "choices",
+        "program": "dedup",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "branches",
+        "program": "dedup",
+        "statuses": [
+          "archived",
+          "rejected"
+        ],
+        "count": [
+          1,
+          null
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{dedup}",
+        "arguments": {
+          "values": [
+            "b",
+            "B",
+            "a",
+            "b"
+          ]
+        },
+        "result": [
+          "b",
+          "B",
+          "a"
+        ]
+      },
+      {
+        "kind": "step_error",
+        "op": "choose_candidate",
+        "match": "is better on the same holdout",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-05",
+    "covers": [
+      "alternative Program",
+      "alternative_to",
+      "activate_program",
+      "keep_alternatives",
+      "paused candidate"
+    ],
+    "title": "Replace the active Program with an alternative solution principle",
+    "setup": {
+      "programs": {
+        "words": {
+          "name": "WordCount",
+          "role": "exec",
+          "description": "Count the words of a text.",
+          "source": "\"\"\"Count words by splitting on whitespace.\"\"\"\n\n\ndef run(text: str):\n    return {\"result\": len(text.split()), \"feedback\": None}\n",
+          "files": {
+            "tests/test_word_count.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/word_count/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"word_count_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass WordCountTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'text': 'a b'}, 2)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "text": "a b"
+                },
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "words": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "text": "hello , world"
+              },
+              2
+            ],
+            [
+              {
+                "text": "well-known fact"
+              },
+              3
+            ],
+            [
+              {
+                "text": "don't stop"
+              },
+              2
+            ],
+            [
+              {
+                "text": ""
+              },
+              0
+            ]
+          ]
+        }
+      }
+    },
+    "task": "WordCount (Program {words}) splits on whitespace, so punctuation-only tokens count as words and hyphenated words count once. A word is a maximal run of letters, digits and apostrophes. Propose an alternative Program for the existing WordCount process (propose_program with name WordCount, role exec and alternative_to {words}) that tokenizes with a regular expression: a different solution principle. Develop and evaluate it against the active Program and activate it if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "propose_program",
+          "args": {
+            "name": "WordCount",
+            "role": "exec",
+            "claim": "Regex tokenization counts words by the documented definition",
+            "description": "Count words as runs of letters, digits and apostrophes.",
+            "candidate_name": "regex tokens",
+            "alternative_to": "{words}"
+          },
+          "as": "regex"
+        },
+        {
+          "op": "propose_program",
+          "args": {
+            "name": "WordCount",
+            "role": "exec",
+            "claim": "A character scan counts words without regular expressions",
+            "description": "Count words by scanning characters.",
+            "candidate_name": "character scan",
+            "alternative_to": "{words}"
+          },
+          "as": "scan"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{regex}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Count words as runs of letters, digits and apostrophes.\"\"\"\n\nimport re\n\n\ndef run(text: str):\n    return {\"result\": len(re.findall(r\"[A-Za-z0-9']+\", text)), \"feedback\": None}\n",
+            "tests/test_word_count.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/word_count/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"word_count_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass WordCountTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'text': 'well-known fact'}, 3)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{scan}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Count words by scanning characters for runs of letters, digits and apostrophes.\"\"\"\n\n\ndef run(text: str):\n    count, inside = 0, False\n    for character in text:\n        word = character.isalnum() or character == \"'\"\n        count += word and not inside\n        inside = word\n    return {\"result\": count, \"feedback\": None}\n",
+            "tests/test_word_count.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/word_count/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"word_count_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass WordCountTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'text': 'well-known fact'}, 3)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{regex}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{scan}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{regex}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Unsupported EvaluationChoice"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{scan}",
+            "decision": "keep_alternatives",
+            "reason": "Equally verified; keep it for later evidence"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{regex}",
+            "decision": "activate_program",
+            "reason": "Verified on the protected holdout"
+          }
+        },
+        {
+          "op": "end_task"
+        },
+        {
+          "op": "refresh_candidate",
+          "args": {
+            "candidate": "{scan}"
+          },
+          "error": "patch"
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "slot",
+        "program": "alternative:words"
+      },
+      {
+        "kind": "status",
+        "program": "alternative:words",
+        "lifecycle_status": "active"
+      },
+      {
+        "kind": "status",
+        "program": "words",
+        "lifecycle_status": "candidate"
+      },
+      {
+        "kind": "choices",
+        "program": "alternative:words",
+        "decisions": [
+          "activate_program"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "WordCount",
+        "arguments": {
+          "text": "it's a well-known fact"
+        },
+        "result": 5
+      },
+      {
+        "kind": "branches",
+        "program": "alternative:words",
+        "statuses": [
+          "paused"
+        ],
+        "count": [
+          1,
+          1
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "step_error",
+        "op": "refresh_candidate",
+        "match": "patch",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-06",
+    "covers": [
+      "model Program",
+      "proper scoring rule",
+      "model effect ban"
+    ],
+    "title": "Improve a model Program on a proper scoring rule",
+    "setup": {
+      "programs": {
+        "rain": {
+          "name": "RainChance",
+          "role": "model",
+          "description": "Probability of rain from relative humidity in percent.",
+          "source": "\"\"\"Probability of rain from relative humidity.\"\"\"\n\n\ndef run(humidity: float):\n    return {\"result\": 0.5, \"feedback\": None}\n",
+          "files": {
+            "tests/test_rain_chance.py": "import importlib.util\nimport math\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/rain_chance/_model.py\"\nSPEC = importlib.util.spec_from_file_location(\"rain_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass RainChanceTest(unittest.TestCase):\n    def test_probability_rises_with_humidity(self):\n        low, high = program.run(humidity=20)[\"result\"], program.run(humidity=95)[\"result\"]\n        self.assertTrue(0 <= low <= high <= 1)\n"
+          },
+          "seed": {
+            "rule": "prediction",
+            "metrics": [
+              "brier"
+            ],
+            "criteria": {
+              "target_metric": "brier",
+              "direction": "minimize",
+              "threshold": 0.26
+            },
+            "cases": [
+              [
+                {
+                  "humidity": 50
+                },
+                1
+              ],
+              [
+                {
+                  "humidity": 40
+                },
+                0
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "rain": {
+          "rule": "prediction",
+          "metrics": [
+            "brier"
+          ],
+          "criteria": {
+            "target_metric": "brier",
+            "direction": "minimize"
+          },
+          "cases": [
+            [
+              {
+                "humidity": 95
+              },
+              1
+            ],
+            [
+              {
+                "humidity": 85
+              },
+              1
+            ],
+            [
+              {
+                "humidity": 78
+              },
+              1
+            ],
+            [
+              {
+                "humidity": 60
+              },
+              0
+            ],
+            [
+              {
+                "humidity": 30
+              },
+              0
+            ],
+            [
+              {
+                "humidity": 20
+              },
+              0
+            ]
+          ]
+        }
+      }
+    },
+    "task": "RainChance (model Program {rain}) always predicts a rain probability of 0.5. Improve it to predict the probability of rain from relative humidity in percent: rain becomes likely above roughly 70%. It is a model Program, so it must only predict. Evaluate the candidate with the protected Brier score and merge it only if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{rain}",
+            "claim": "A logistic curve in humidity lowers the Brier score",
+            "candidate_name": "logistic humidity"
+          },
+          "as": "good"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{rain}",
+            "claim": "Announce forecasts while predicting",
+            "candidate_name": "announce rain"
+          },
+          "as": "effect"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{good}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Probability of rain from relative humidity in percent: a logistic curve around 70%.\"\"\"\n\nimport math\n\n\ndef run(humidity: float):\n    return {\"result\": round(1 / (1 + math.exp(-(humidity - 70) / 6)), 4), \"feedback\": None}\n",
+            "tests/test_rain_chance.py": "import importlib.util\nimport math\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/rain_chance/_model.py\"\nSPEC = importlib.util.spec_from_file_location(\"rain_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass RainChanceTest(unittest.TestCase):\n    def test_probability_rises_with_humidity(self):\n        low, high = program.run(humidity=20)[\"result\"], program.run(humidity=95)[\"result\"]\n        self.assertTrue(0 <= low < 0.5 < high <= 1)\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{effect}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Probability of rain that also tries to act on the world (forbidden for a model).\"\"\"\n\nfrom evertree.core.runtime.api import take_action\n\n\nasync def run(humidity: float, ctx):\n    await take_action(ctx, \"weather\", {\"announce\": humidity})\n    return {\"result\": 0.9 if humidity > 70 else 0.1, \"feedback\": None}\n",
+            "tests/test_rain_chance.py": "import pathlib\nimport unittest\n\n\nclass RainChanceTest(unittest.TestCase):\n    def test_source_exists(self):\n        path = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/rain_chance/_model.py\"\n        self.assertIn(\"take_action\", path.read_text())\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{good}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{effect}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{effect}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Mandatory check failed: contracts"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{good}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{effect}",
+            "decision": "reject_branch",
+            "reason": "A model Program cannot take actions"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "rain",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "rain",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "improved",
+        "program": "rain",
+        "metric": "brier",
+        "direction": "minimize"
+      },
+      {
+        "kind": "probe",
+        "program": "{rain}",
+        "arguments": {
+          "humidity": 95
+        },
+        "range": [
+          0.5,
+          1.0
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{rain}",
+        "arguments": {
+          "humidity": 20
+        },
+        "range": [
+          0.0,
+          0.5
+        ]
+      },
+      {
+        "kind": "step_error",
+        "op": "choose_candidate",
+        "match": "Mandatory check failed: contracts",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-07",
+    "covers": [
+      "policy Program",
+      "ActionDistribution",
+      "expected utility",
+      "PolicyDesign"
+    ],
+    "title": "Improve a policy that returns an action distribution",
+    "setup": {
+      "programs": {
+        "route": {
+          "name": "RouteChoice",
+          "role": "exec",
+          "description": "Choose a route among the offered ones as an action distribution over route names.",
+          "source": "\"\"\"Choose a route: every route is equally likely.\"\"\"\n\nDESIGN = {\n    \"applicability\": \"Routes with known travel minutes; unknown minutes are not supported.\",\n    \"adaptation\": \"Travel times arrive with each call, so the choice follows current traffic.\",\n    \"learning\": \"Nothing is learned; the rule is fixed and checked by protected evaluation.\",\n    \"exploration\": \"Not used: travel times are observed directly for every route.\",\n}\n\n\ndef run(routes: list):\n    names = [route[\"name\"] for route in routes]\n    return {\"result\": {\"choices\": [[name, 1 / len(names)] for name in names]}, \"feedback\": None}\n",
+          "files": {
+            "tests/test_route_choice.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/route_choice/_exec.py\"\nSPEC = importlib.util.spec_from_file_location(\"route_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass RouteChoiceTest(unittest.TestCase):\n    def test_returns_named_choices(self):\n        result = program.run(routes=[{\"name\": \"A\", \"minutes\": 5}, {\"name\": \"B\", \"minutes\": 9}])\n        self.assertIn(\"A\", [name for name, _ in result[\"result\"][\"choices\"]])\n"
+          },
+          "seed": {
+            "rule": "policy",
+            "metrics": [
+              "expected_utility"
+            ],
+            "criteria": {
+              "target_metric": "expected_utility",
+              "threshold": -1000
+            },
+            "cases": [
+              [
+                {
+                  "routes": [
+                    {
+                      "name": "A",
+                      "minutes": 30
+                    },
+                    {
+                      "name": "B",
+                      "minutes": 20
+                    },
+                    {
+                      "name": "C",
+                      "minutes": 45
+                    }
+                  ]
+                },
+                {
+                  "utilities": [
+                    [
+                      "A",
+                      -30
+                    ],
+                    [
+                      "B",
+                      -20
+                    ],
+                    [
+                      "C",
+                      -45
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "route": {
+          "rule": "policy",
+          "metrics": [
+            "expected_utility"
+          ],
+          "criteria": {
+            "target_metric": "expected_utility"
+          },
+          "cases": [
+            [
+              {
+                "routes": [
+                  {
+                    "name": "A",
+                    "minutes": 30
+                  },
+                  {
+                    "name": "B",
+                    "minutes": 20
+                  },
+                  {
+                    "name": "C",
+                    "minutes": 45
+                  }
+                ]
+              },
+              {
+                "utilities": [
+                  [
+                    "A",
+                    -30
+                  ],
+                  [
+                    "B",
+                    -20
+                  ],
+                  [
+                    "C",
+                    -45
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "routes": [
+                  {
+                    "name": "North",
+                    "minutes": 12
+                  },
+                  {
+                    "name": "South",
+                    "minutes": 12
+                  }
+                ]
+              },
+              {
+                "utilities": [
+                  [
+                    "North",
+                    -12
+                  ],
+                  [
+                    "South",
+                    -12
+                  ]
+                ]
+              }
+            ],
+            [
+              {
+                "routes": [
+                  {
+                    "name": "Ring",
+                    "minutes": 50
+                  },
+                  {
+                    "name": "Center",
+                    "minutes": 35
+                  }
+                ]
+              },
+              {
+                "utilities": [
+                  [
+                    "Ring",
+                    -50
+                  ],
+                  [
+                    "Center",
+                    -35
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "task": "RouteChoice (policy Program {route}) receives routes with name and minutes and returns an action distribution over route names, but it spreads probability uniformly. Improve it so the fastest route gets the probability (shared equally between equally fast routes). Keep returning an action distribution and keep its DESIGN declaration. Evaluate the candidate with the protected expected-utility check and merge it only if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{route}",
+            "claim": "Choosing the fastest route raises expected utility",
+            "candidate_name": "fastest route"
+          },
+          "as": "good"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{route}",
+            "claim": "Overweight the fastest route",
+            "candidate_name": "heavy weight"
+          },
+          "as": "bad"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{route}",
+            "claim": "Fastest route without a design",
+            "candidate_name": "no design"
+          },
+          "as": "nodesign"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{good}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Choose a route: probability goes to the fastest routes, shared on ties.\"\"\"\n\nDESIGN = {\n    \"applicability\": \"Routes with known travel minutes; unknown minutes are not supported.\",\n    \"adaptation\": \"Travel times arrive with each call, so the choice follows current traffic.\",\n    \"learning\": \"Nothing is learned; the rule is fixed and checked by protected evaluation.\",\n    \"exploration\": \"Not used: travel times are observed directly for every route.\",\n}\n\n\ndef run(routes: list):\n    fastest = min(route[\"minutes\"] for route in routes)\n    best = [route[\"name\"] for route in routes if route[\"minutes\"] == fastest]\n    return {\"result\": {\"choices\": [[name, 1 / len(best)] for name in best]}, \"feedback\": None}\n",
+            "tests/test_route_choice.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/route_choice/_exec.py\"\nSPEC = importlib.util.spec_from_file_location(\"route_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass RouteChoiceTest(unittest.TestCase):\n    def test_returns_named_choices(self):\n        result = program.run(routes=[{\"name\": \"A\", \"minutes\": 5}, {\"name\": \"B\", \"minutes\": 9}])\n        self.assertIn(\"A\", [name for name, _ in result[\"result\"][\"choices\"]])\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{bad}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Choose a route: probability goes to the fastest routes, with an unnormalized weight.\"\"\"\n\nDESIGN = {\n    \"applicability\": \"Routes with known travel minutes; unknown minutes are not supported.\",\n    \"adaptation\": \"Travel times arrive with each call, so the choice follows current traffic.\",\n    \"learning\": \"Nothing is learned; the rule is fixed and checked by protected evaluation.\",\n    \"exploration\": \"Not used: travel times are observed directly for every route.\",\n}\n\n\ndef run(routes: list):\n    fastest = min(route[\"minutes\"] for route in routes)\n    best = [route[\"name\"] for route in routes if route[\"minutes\"] == fastest]\n    return {\"result\": {\"choices\": [[name, 1.2 / len(best)] for name in best]}, \"feedback\": None}\n",
+            "tests/test_route_choice.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/route_choice/_exec.py\"\nSPEC = importlib.util.spec_from_file_location(\"route_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass RouteChoiceTest(unittest.TestCase):\n    def test_returns_named_choices(self):\n        result = program.run(routes=[{\"name\": \"A\", \"minutes\": 5}, {\"name\": \"B\", \"minutes\": 9}])\n        self.assertIn(\"A\", [name for name, _ in result[\"result\"][\"choices\"]])\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{nodesign}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Choose a route: probability goes to the fastest routes, shared on ties.\"\"\"\n\n\n\ndef run(routes: list):\n    fastest = min(route[\"minutes\"] for route in routes)\n    best = [route[\"name\"] for route in routes if route[\"minutes\"] == fastest]\n    return {\"result\": {\"choices\": [[name, 1 / len(best)] for name in best]}, \"feedback\": None}\n",
+            "tests/test_route_choice.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/route_choice/_exec.py\"\nSPEC = importlib.util.spec_from_file_location(\"route_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass RouteChoiceTest(unittest.TestCase):\n    def test_returns_named_choices(self):\n        result = program.run(routes=[{\"name\": \"A\", \"minutes\": 5}, {\"name\": \"B\", \"minutes\": 9}])\n        self.assertIn(\"A\", [name for name, _ in result[\"result\"][\"choices\"]])\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{good}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{bad}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{nodesign}"
+          },
+          "error": "must declare DESIGN"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{bad}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Mandatory check failed: contracts"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{good}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{bad}",
+            "decision": "reject_branch",
+            "reason": "Probabilities do not sum to one"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{nodesign}",
+            "decision": "reject_branch",
+            "reason": "Missing PolicyDesign"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "route",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "route",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "improved",
+        "program": "route",
+        "metric": "expected_utility",
+        "direction": "maximize"
+      },
+      {
+        "kind": "probe",
+        "program": "{route}",
+        "arguments": {
+          "routes": [
+            {
+              "name": "X",
+              "minutes": 9
+            },
+            {
+              "name": "Y",
+              "minutes": 4
+            }
+          ]
+        },
+        "best_choice": "Y"
+      },
+      {
+        "kind": "step_error",
+        "op": "evaluate_candidate",
+        "match": "must declare DESIGN",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-08",
+    "covers": [
+      "meta Program drives lifecycle",
+      "program.* gateway",
+      "meta authority",
+      "self-target ban"
+    ],
+    "title": "The ProgramImprovement meta Program improves another Program",
+    "setup": {
+      "existing": {
+        "plm": "ProgramImprovement.exec"
+      },
+      "programs": {
+        "pct": {
+          "name": "PercentFormat",
+          "role": "exec",
+          "description": "Format a ratio (0..1) as a percentage string.",
+          "source": "\"\"\"Format a ratio as a percentage.\"\"\"\n\n\ndef run(ratio: float):\n    return {\"result\": f\"{round(ratio * 100)}%\", \"feedback\": None}\n",
+          "files": {
+            "tests/test_percent_format.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/percent_format/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"percent_format_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass PercentFormatTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'ratio': 0.5}, '50%')]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "ratio": 0.5
+                },
+                "50%"
+              ]
+            ]
+          }
+        },
+        "rogue": {
+          "name": "RogueLister",
+          "role": "exec",
+          "description": "An exec Program without meta authority.",
+          "source": "\"\"\"An ordinary exec Program that tries to manage the lifecycle.\"\"\"\n\nfrom evertree.core.programs.api import list_programs\n\n\nasync def run(ctx, manage: bool = False):\n    if not manage:\n        return {\"result\": 0, \"feedback\": None}\n    return {\"result\": len(await list_programs(ctx)), \"feedback\": None}\n",
+          "files": {
+            "tests/test_rogue_lister.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/rogue_lister/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"rogue_lister_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass RogueListerTest(unittest.TestCase):\n    def test_examples(self):\n        self.assertTrue(callable(program.run))\n        for arguments, expected in []:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {},
+                0
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "pct": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "ratio": 0.256
+              },
+              "25.6%"
+            ],
+            [
+              {
+                "ratio": 1
+              },
+              "100.0%"
+            ],
+            [
+              {
+                "ratio": 0
+              },
+              "0.0%"
+            ],
+            [
+              {
+                "ratio": 0.0333
+              },
+              "3.3%"
+            ]
+          ]
+        }
+      }
+    },
+    "task": "Use the ProgramImprovement Program ({plm}), which manages Program lifecycles, to improve PercentFormat (Program {pct}): ratios must be formatted as percentages with exactly one decimal, for example 0.256 becomes '25.6%' and 1 becomes '100.0%'. Run it with run_program, passing program {pct} and that objective, then report which decisions it made.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "run_program",
+          "args": {
+            "program": "{plm}",
+            "arguments": {
+              "program": "{pct}",
+              "objective": "Format with one decimal"
+            }
+          },
+          "answers": [
+            {
+              "candidates": [
+                {
+                  "claim": "Formatting with one decimal matches the percentage contract",
+                  "candidate_name": "one decimal",
+                  "instruction": "Format ratio*100 with one decimal and a percent sign"
+                }
+              ]
+            }
+          ],
+          "coding": {
+            "one-decimal": {
+              "$program": "\"\"\"Format a ratio as a percentage with exactly one decimal.\"\"\"\n\n\ndef run(ratio: float):\n    return {\"result\": f\"{ratio * 100:.1f}%\", \"feedback\": None}\n",
+              "tests/test_percent_format.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/percent_format/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"percent_format_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass PercentFormatTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'ratio': 0.256}, '25.6%')]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+            }
+          }
+        },
+        {
+          "op": "run_program",
+          "args": {
+            "program": "{rogue}",
+            "arguments": {
+              "manage": true
+            }
+          },
+          "error": "Only a meta exec Program"
+        },
+        {
+          "op": "run_program",
+          "args": {
+            "program": "{plm}",
+            "arguments": {
+              "program": "{plm}",
+              "objective": "Improve yourself"
+            }
+          },
+          "answers": [
+            {
+              "candidates": [
+                {
+                  "claim": "x",
+                  "candidate_name": "self",
+                  "instruction": "x"
+                }
+              ]
+            }
+          ],
+          "error": "cannot manage its own candidates"
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "runs",
+        "program": "plm",
+        "status": "completed",
+        "count": [
+          1,
+          null
+        ]
+      },
+      {
+        "kind": "revision",
+        "program": "pct",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "pct",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{pct}",
+        "arguments": {
+          "ratio": 0.256
+        },
+        "result": "25.6%"
+      },
+      {
+        "kind": "step_error",
+        "op": "run_program",
+        "match": "Only a meta exec Program",
+        "mode": "mirror"
+      },
+      {
+        "kind": "step_error",
+        "op": "run_program",
+        "match": "cannot manage its own candidates",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-09",
+    "covers": [
+      "meta Program candidate",
+      "lifecycle_replay",
+      "improvement history guardrail"
+    ],
+    "title": "Change a meta Program under the stricter meta acceptance",
+    "setup": {
+      "programs": {
+        "triage": {
+          "name": "CandidateTriage",
+          "role": "exec",
+          "meta": true,
+          "description": "Decide evaluated candidates of one slot from compare_candidates rankings.",
+          "source": "\"\"\"Decide evaluated candidates of one slot from their protected comparison.\"\"\"\n\nfrom evertree.core.programs.api import choose_candidate, compare_candidates\n\nDESIGN = {\n    \"applicability\": \"Evaluated candidates of one slot that compare_candidates can rank.\",\n    \"adaptation\": \"Each call reads fresh rankings and verification, so decisions follow evidence.\",\n    \"learning\": \"Nothing is learned; changes go through the meta lifecycle with history checks.\",\n    \"exploration\": \"Undecided candidates are kept open so later evidence can settle them.\",\n}\n\n\nasync def run(ctx, candidates: list):\n    ranking = (await compare_candidates(ctx, candidates))[\"ranking\"]\n    status = {row[\"candidate\"]: row[\"verification\"][\"status\"] for row in ranking}\n    winner = candidates[0] if status.get(candidates[0]) == \"verified\" else None\n    decisions = {}\n    for candidate in candidates:\n        if candidate == winner:\n            decision = \"merge_branch\"\n        elif winner is not None:\n            decision = \"archive_branch\"\n        elif status.get(candidate) == \"failed\":\n            decision = \"reject_branch\"\n        else:\n            decision = \"continue_branch\"\n        await choose_candidate(ctx, candidate, decision, reason=\"Triage\")\n        decisions[candidate] = decision\n    return {\"result\": decisions, \"feedback\": None}\n",
+          "files": {
+            "tests/test_candidate_triage.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/candidate_triage/_exec.py\"\nSPEC = importlib.util.spec_from_file_location(\"triage_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass Context:\n    def __init__(self, ranking):\n        self.ranking, self.chosen = ranking, {}\n\n    async def step(self, method, payload, **_):\n        if method == \"program.compare_candidates\":\n            return {\"ranking\": self.ranking}\n        self.chosen[payload[\"candidate\"]] = payload[\"decision\"]\n        return {\"decision\": payload[\"decision\"]}\n\n\nclass TriageTest(unittest.TestCase):\n    def test_single_verified_candidate_merges(self):\n        ctx = Context([{\"candidate\": \"a\", \"verification\": {\"status\": \"verified\"}}])\n        result = asyncio.run(program.run(ctx, [\"a\"]))\n        self.assertEqual(result[\"result\"], {\"a\": \"merge_branch\"})\n"
+          },
+          "seed": {
+            "rule": "lifecycle_replay",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "candidates": [
+                    "a",
+                    "b"
+                  ]
+                },
+                {
+                  "replay": {
+                    "compare_candidates": [
+                      {
+                        "ranking": [
+                          {
+                            "candidate": "a",
+                            "verification": {
+                              "status": "verified"
+                            }
+                          },
+                          {
+                            "candidate": "b",
+                            "verification": {
+                              "status": "verified"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "decisions": {
+                    "a": "merge_branch",
+                    "b": "archive_branch"
+                  }
+                }
+              ],
+              [
+                {
+                  "candidates": [
+                    "a"
+                  ]
+                },
+                {
+                  "replay": {
+                    "compare_candidates": [
+                      {
+                        "ranking": [
+                          {
+                            "candidate": "a",
+                            "verification": {
+                              "status": "verified"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "decisions": {
+                    "a": "merge_branch"
+                  }
+                }
+              ],
+              [
+                {
+                  "candidates": [
+                    "a",
+                    "b"
+                  ]
+                },
+                {
+                  "replay": {
+                    "compare_candidates": [
+                      {
+                        "ranking": [
+                          {
+                            "candidate": "a",
+                            "verification": {
+                              "status": "verified"
+                            }
+                          },
+                          {
+                            "candidate": "b",
+                            "verification": {
+                              "status": "failed"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "decisions": {
+                    "a": "merge_branch",
+                    "b": "archive_branch"
+                  }
+                }
+              ]
+            ],
+            "history": [
+              [
+                {
+                  "candidates": [
+                    "a"
+                  ]
+                },
+                {
+                  "replay": {
+                    "compare_candidates": [
+                      {
+                        "ranking": [
+                          {
+                            "candidate": "a",
+                            "verification": {
+                              "status": "need_checks"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "decisions": {
+                    "a": "continue_branch"
+                  }
+                }
+              ],
+              [
+                {
+                  "candidates": [
+                    "a",
+                    "b"
+                  ]
+                },
+                {
+                  "replay": {
+                    "compare_candidates": [
+                      {
+                        "ranking": [
+                          {
+                            "candidate": "a",
+                            "verification": {
+                              "status": "failed"
+                            }
+                          },
+                          {
+                            "candidate": "b",
+                            "verification": {
+                              "status": "need_checks"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "decisions": {
+                    "a": "reject_branch",
+                    "b": "continue_branch"
+                  }
+                }
+              ],
+              [
+                {
+                  "candidates": [
+                    "a",
+                    "b"
+                  ]
+                },
+                {
+                  "replay": {
+                    "compare_candidates": [
+                      {
+                        "ranking": [
+                          {
+                            "candidate": "a",
+                            "verification": {
+                              "status": "failed"
+                            }
+                          },
+                          {
+                            "candidate": "b",
+                            "verification": {
+                              "status": "failed"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "decisions": {
+                    "a": "reject_branch",
+                    "b": "reject_branch"
+                  }
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "triage": {
+          "rule": "lifecycle_replay",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "candidates": [
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "b",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        },
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "archive_branch",
+                  "b": "merge_branch"
+                }
+              }
+            ],
+            [
+              {
+                "candidates": [
+                  "a",
+                  "b",
+                  "c"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "c",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        },
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        },
+                        {
+                          "candidate": "b",
+                          "verification": {
+                            "status": "failed"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "archive_branch",
+                  "b": "archive_branch",
+                  "c": "merge_branch"
+                }
+              }
+            ],
+            [
+              {
+                "candidates": [
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "b",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        },
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "failed"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "archive_branch",
+                  "b": "merge_branch"
+                }
+              }
+            ],
+            [
+              {
+                "candidates": [
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        },
+                        {
+                          "candidate": "b",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "merge_branch",
+                  "b": "archive_branch"
+                }
+              }
+            ]
+          ],
+          "history": [
+            [
+              {
+                "candidates": [
+                  "a"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "need_checks"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "continue_branch"
+                }
+              }
+            ],
+            [
+              {
+                "candidates": [
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "failed"
+                          }
+                        },
+                        {
+                          "candidate": "b",
+                          "verification": {
+                            "status": "need_checks"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "reject_branch",
+                  "b": "continue_branch"
+                }
+              }
+            ],
+            [
+              {
+                "candidates": [
+                  "a",
+                  "b"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "failed"
+                          }
+                        },
+                        {
+                          "candidate": "b",
+                          "verification": {
+                            "status": "failed"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "reject_branch",
+                  "b": "reject_branch"
+                }
+              }
+            ],
+            [
+              {
+                "candidates": [
+                  "a"
+                ]
+              },
+              {
+                "replay": {
+                  "compare_candidates": [
+                    {
+                      "ranking": [
+                        {
+                          "candidate": "a",
+                          "verification": {
+                            "status": "verified"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "decisions": {
+                  "a": "merge_branch"
+                }
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "task": "CandidateTriage (meta Program {triage}, entrypoint run(ctx, candidates)) merges the first verified candidate in input order even when compare_candidates ranks another verified candidate higher. Create two candidates before evaluating either. 'ranked winner': choose the best-ranked verified candidate and keep every other rule (archive the others when there is a winner; otherwise reject failed and continue undecided candidates). 'strict triage': choose the best-ranked verified candidate and reject every candidate that is not chosen. Both must keep the DESIGN declaration and use evertree.core.programs.api. Develop and evaluate both, merge the one that passes protected acceptance and reject the other.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{triage}",
+            "claim": "Choosing the best-ranked verified candidate decides better",
+            "candidate_name": "ranked winner"
+          },
+          "as": "ranked"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{triage}",
+            "claim": "Reject everything not chosen",
+            "candidate_name": "strict triage"
+          },
+          "as": "strict"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{ranked}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Decide evaluated candidates of one slot from their protected comparison.\"\"\"\n\nfrom evertree.core.programs.api import choose_candidate, compare_candidates\n\nDESIGN = {\n    \"applicability\": \"Evaluated candidates of one slot that compare_candidates can rank.\",\n    \"adaptation\": \"Each call reads fresh rankings and verification, so decisions follow evidence.\",\n    \"learning\": \"Nothing is learned; changes go through the meta lifecycle with history checks.\",\n    \"exploration\": \"Undecided candidates are kept open so later evidence can settle them.\",\n}\n\n\nasync def run(ctx, candidates: list):\n    ranking = (await compare_candidates(ctx, candidates))[\"ranking\"]\n    status = {row[\"candidate\"]: row[\"verification\"][\"status\"] for row in ranking}\n    winner = next((row[\"candidate\"] for row in ranking if status[row[\"candidate\"]] == \"verified\"), None)\n    decisions = {}\n    for candidate in candidates:\n        if candidate == winner:\n            decision = \"merge_branch\"\n        elif winner is not None:\n            decision = \"archive_branch\"\n        elif status.get(candidate) == \"failed\":\n            decision = \"reject_branch\"\n        else:\n            decision = \"continue_branch\"\n        await choose_candidate(ctx, candidate, decision, reason=\"Triage\")\n        decisions[candidate] = decision\n    return {\"result\": decisions, \"feedback\": None}\n",
+            "tests/test_candidate_triage.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/candidate_triage/_exec.py\"\nSPEC = importlib.util.spec_from_file_location(\"triage_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass Context:\n    def __init__(self, ranking):\n        self.ranking, self.chosen = ranking, {}\n\n    async def step(self, method, payload, **_):\n        if method == \"program.compare_candidates\":\n            return {\"ranking\": self.ranking}\n        self.chosen[payload[\"candidate\"]] = payload[\"decision\"]\n        return {\"decision\": payload[\"decision\"]}\n\n\nclass TriageTest(unittest.TestCase):\n    def test_single_verified_candidate_merges(self):\n        ctx = Context([{\"candidate\": \"a\", \"verification\": {\"status\": \"verified\"}}])\n        result = asyncio.run(program.run(ctx, [\"a\"]))\n        self.assertEqual(result[\"result\"], {\"a\": \"merge_branch\"})\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{strict}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Decide evaluated candidates of one slot from their protected comparison.\"\"\"\n\nfrom evertree.core.programs.api import choose_candidate, compare_candidates\n\nDESIGN = {\n    \"applicability\": \"Evaluated candidates of one slot that compare_candidates can rank.\",\n    \"adaptation\": \"Each call reads fresh rankings and verification, so decisions follow evidence.\",\n    \"learning\": \"Nothing is learned; changes go through the meta lifecycle with history checks.\",\n    \"exploration\": \"Undecided candidates are kept open so later evidence can settle them.\",\n}\n\n\nasync def run(ctx, candidates: list):\n    ranking = (await compare_candidates(ctx, candidates))[\"ranking\"]\n    status = {row[\"candidate\"]: row[\"verification\"][\"status\"] for row in ranking}\n    winner = next((row[\"candidate\"] for row in ranking if status[row[\"candidate\"]] == \"verified\"), None)\n    decisions = {}\n    for candidate in candidates:\n        if candidate == winner:\n            decision = \"merge_branch\"\n        elif winner is not None:\n            decision = \"archive_branch\"\n        else:\n            decision = \"reject_branch\"\n        await choose_candidate(ctx, candidate, decision, reason=\"Triage\")\n        decisions[candidate] = decision\n    return {\"result\": decisions, \"feedback\": None}\n",
+            "tests/test_candidate_triage.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / \"src/evertree/processes/candidate_triage/_exec.py\"\nSPEC = importlib.util.spec_from_file_location(\"triage_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass Context:\n    def __init__(self, ranking):\n        self.ranking, self.chosen = ranking, {}\n\n    async def step(self, method, payload, **_):\n        if method == \"program.compare_candidates\":\n            return {\"ranking\": self.ranking}\n        self.chosen[payload[\"candidate\"]] = payload[\"decision\"]\n        return {\"decision\": payload[\"decision\"]}\n\n\nclass TriageTest(unittest.TestCase):\n    def test_single_verified_candidate_merges(self):\n        ctx = Context([{\"candidate\": \"a\", \"verification\": {\"status\": \"verified\"}}])\n        result = asyncio.run(program.run(ctx, [\"a\"]))\n        self.assertEqual(result[\"result\"], {\"a\": \"merge_branch\"})\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{ranked}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{strict}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{strict}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Guardrail regression: history:accuracy"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{ranked}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{strict}",
+            "decision": "reject_branch",
+            "reason": "Regresses past lifecycle situations"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "triage",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "triage",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "choices",
+        "program": "triage",
+        "decisions": [
+          "reject_branch",
+          "archive_branch"
+        ],
+        "count": [
+          1,
+          null
+        ]
+      },
+      {
+        "kind": "improved",
+        "program": "triage",
+        "metric": "accuracy",
+        "direction": "maximize"
+      },
+      {
+        "kind": "verification",
+        "program": "triage",
+        "match": "Guardrail regression: history:accuracy",
+        "count": [
+          1,
+          null
+        ]
+      },
+      {
+        "kind": "step_error",
+        "op": "choose_candidate",
+        "match": "Guardrail regression: history:accuracy",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-10",
+    "covers": [
+      "memory-derived holdout",
+      "sealed outcomes",
+      "surfaced exclusion"
+    ],
+    "title": "Improve a Program on a holdout derived from unseen live outcomes",
+    "setup": {
+      "programs": {
+        "tip": {
+          "name": "TipAmount",
+          "role": "exec",
+          "description": "Tip for a restaurant bill.",
+          "source": "\"\"\"Tip for a restaurant bill.\"\"\"\n\n\ndef run(bill: float):\n    return {\"result\": round(bill * 0.10, 2), \"feedback\": None}\n",
+          "files": {
+            "tests/test_tip_amount.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/tip_amount/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"tip_amount_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass TipAmountTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'bill': 100.0}, 10.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "bill": 100.0
+                },
+                10.0
+              ]
+            ]
+          }
+        }
+      },
+      "experience": [
+        {
+          "program": "tip",
+          "arguments": {
+            "bill": 40.0
+          },
+          "outcome": 6.0
+        },
+        {
+          "program": "tip",
+          "arguments": {
+            "bill": 80.0
+          },
+          "outcome": 12.0
+        },
+        {
+          "program": "tip",
+          "arguments": {
+            "bill": 66.0
+          },
+          "outcome": 9.9
+        },
+        {
+          "program": "tip",
+          "arguments": {
+            "bill": 12.5
+          },
+          "outcome": 1.88,
+          "surfaced": true
+        }
+      ]
+    },
+    "task": "The restaurant changed its tip policy to 15% of the bill, rounded to cents, and has been reporting the correct tip for recent TipAmount (Program {tip}) runs. First call derive_holdout for Program {tip} so its protected holdout includes those reported outcomes (do not try to read them), then improve TipAmount through a candidate, evaluate it and merge it only if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "derive_holdout",
+          "args": {
+            "program": "{tip}"
+          }
+        },
+        {
+          "op": "recall",
+          "args": {
+            "query": "observation outcome tip"
+          }
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{tip}",
+            "claim": "The tip policy is 15% of the bill",
+            "candidate_name": "fifteen percent"
+          },
+          "as": "c1"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Tip for a restaurant bill: 15% rounded to cents.\"\"\"\n\n\ndef run(bill: float):\n    return {\"result\": round(bill * 0.15, 2), \"feedback\": None}\n",
+            "tests/test_tip_amount.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/tip_amount/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"tip_amount_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass TipAmountTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'bill': 100.0}, 15.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{c1}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "derived",
+        "program": "tip",
+        "count": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "sealed",
+        "count": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "hidden",
+        "mode": "mirror"
+      },
+      {
+        "kind": "choices",
+        "program": "tip",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "improved",
+        "program": "tip",
+        "metric": "accuracy",
+        "direction": "maximize"
+      },
+      {
+        "kind": "probe",
+        "program": "{tip}",
+        "arguments": {
+          "bill": 200.0
+        },
+        "result": 30.0
+      }
+    ]
+  },
+  {
+    "id": "PLC-11",
+    "covers": [
+      "stale base",
+      "refresh_candidate",
+      "recertification"
+    ],
+    "title": "Merge two candidates after main moved underneath one of them",
+    "setup": {
+      "programs": {
+        "vat": {
+          "name": "VatAmount",
+          "role": "exec",
+          "description": "VAT of a net amount.",
+          "source": "\"\"\"VAT of a net amount.\"\"\"\n\n\ndef run(amount: float):\n    return {\"result\": round(amount * 0.20, 2), \"feedback\": None}\n",
+          "files": {
+            "tests/test_vat_amount.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/vat_amount/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"vat_amount_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass VatAmountTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'amount': 10.0}, 2.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "amount": 10.0
+                },
+                2.0
+              ]
+            ]
+          }
+        },
+        "miles": {
+          "name": "KmToMiles",
+          "role": "exec",
+          "description": "Convert kilometres to miles.",
+          "source": "\"\"\"Kilometres to miles.\"\"\"\n\n\ndef run(km: float):\n    return {\"result\": round(km * 0.6, 2), \"feedback\": None}\n",
+          "files": {
+            "tests/test_km_to_miles.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/km_to_miles/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"km_to_miles_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass KmToMilesTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'km': 10.0}, 6.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "km": 10.0
+                },
+                6.0
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "vat": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "amount": 100.0
+              },
+              21.0
+            ],
+            [
+              {
+                "amount": 19.99
+              },
+              4.2
+            ],
+            [
+              {
+                "amount": 0.0
+              },
+              0.0
+            ]
+          ]
+        },
+        "miles": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "km": 10.0
+              },
+              6.21
+            ],
+            [
+              {
+                "km": 42.195
+              },
+              26.22
+            ],
+            [
+              {
+                "km": 0.0
+              },
+              0.0
+            ]
+          ]
+        }
+      }
+    },
+    "task": "Two Programs need fixes: VatAmount (Program {vat}) must use the new 21% rate, rounded to cents, and KmToMiles (Program {miles}) must use 0.621371 miles per km, rounded to 2 decimals. Create a candidate for each, develop and evaluate both, then merge both. If a merge is refused because the active code changed, refresh that candidate, evaluate it again and merge it.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{vat}",
+            "claim": "VAT is 21%",
+            "candidate_name": "new rate"
+          },
+          "as": "v"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{miles}",
+            "claim": "A mile is 1/0.621371 km",
+            "candidate_name": "exact factor"
+          },
+          "as": "m"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{v}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"VAT at 21% of a net amount.\"\"\"\n\n\ndef run(amount: float):\n    return {\"result\": round(amount * 0.21, 2), \"feedback\": None}\n",
+            "tests/test_vat_amount.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/vat_amount/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"vat_amount_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass VatAmountTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'amount': 100.0}, 21.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{m}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Kilometres to miles at 0.621371 miles per km.\"\"\"\n\n\ndef run(km: float):\n    return {\"result\": round(km * 0.621371, 2), \"feedback\": None}\n",
+            "tests/test_km_to_miles.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/km_to_miles/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"km_to_miles_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass KmToMilesTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'km': 10.0}, 6.21)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{v}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{m}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{v}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{m}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "refresh"
+        },
+        {
+          "op": "refresh_candidate",
+          "args": {
+            "candidate": "{m}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{m}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{m}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "vat",
+        "changed": true
+      },
+      {
+        "kind": "revision",
+        "program": "miles",
+        "changed": true
+      },
+      {
+        "kind": "refreshed",
+        "program": "miles",
+        "count": [
+          1,
+          null
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "choices",
+        "program": "vat",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "choices",
+        "program": "miles",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{vat}",
+        "arguments": {
+          "amount": 50.0
+        },
+        "result": 10.5
+      },
+      {
+        "kind": "probe",
+        "program": "{miles}",
+        "arguments": {
+          "km": 5.0
+        },
+        "result": 3.11
+      }
+    ]
+  }
+]

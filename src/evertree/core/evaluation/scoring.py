@@ -138,3 +138,35 @@ def evaluate_prediction(
         observed_at=observed_at,
         comparison_key=comparison_key,
     )
+
+
+POLICY_METRICS = ("action_log_loss", "reference_probability", "expected_utility")
+
+
+def evaluate_policy(result: Any, outcomes: Mapping[str, Any], metrics) -> dict[str, float]:
+    """Score an action distribution against a hidden reference action or utility table.
+
+    outcomes holds "reference" (the action that should be chosen), "utilities"
+    ([[action, utility], ...]) or both, and optionally "allowed". A utility table
+    also bounds the admissible actions. A violated distribution contract raises.
+    action_log_loss is the proper log score; zero probability on the reference is
+    infinite and therefore never averages into an acceptable mean.
+    """
+    from ..policy.contracts import action_key, probability_of, validate_distribution
+
+    allowed = outcomes.get("allowed")
+    if allowed is None and "utilities" in outcomes:
+        allowed = [action for action, _ in outcomes["utilities"]]
+    distribution = validate_distribution(result, allowed)
+    samples = {}
+    if "reference" in outcomes:
+        probability = probability_of(distribution, outcomes["reference"])
+        samples["reference_probability"] = probability
+        samples["action_log_loss"] = -math.log(probability) if probability > 0 else math.inf
+    if "utilities" in outcomes:
+        table = {action_key(action): float(value) for action, value in outcomes["utilities"]}
+        samples["expected_utility"] = sum(
+            probability * table[action_key(candidate)]
+            for candidate, probability in distribution["choices"]
+        )
+    return {metric: samples[metric] for metric in metrics if metric in samples}

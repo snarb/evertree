@@ -17,7 +17,7 @@ from typing import Any
 from uuid import uuid4
 
 from evertree.core.evaluation.contracts import exact_json_equal
-from evertree.core.evaluation.scoring import evaluate_prediction
+from evertree.core.evaluation.scoring import POLICY_METRICS, evaluate_policy, evaluate_prediction
 from evertree.core.evaluation.store import EvaluationStore
 from evertree.core.graph.store import GraphStore
 from evertree.core.learning.state import LearningStore
@@ -32,6 +32,7 @@ from ..datasets import DatasetRevision, content_revision, thaw_json, validate_ho
 from ..operations import CoreOperations, authorize_operation
 from ..serialization import decode_snapshot, encode_snapshot
 from ..values import json_value
+from .layout import program_active
 from .lifecycle import EvaluationReport, ProgramBranch
 from .tests import run_candidate_tests
 
@@ -51,6 +52,34 @@ class ExperimentContext:
 class EvaluationExperiment:
     report: EvaluationReport
     traces: tuple[dict[str, Any], ...]
+
+
+PREDICTION_METRICS = {
+    "brier",
+    "squared_error",
+    "mse",
+    "absolute_error",
+    "mae",
+    "residual",
+    "log_loss",
+    "exact_match",
+}
+# Each rule fixes how a case's hidden outcomes judge a result and which metrics exist.
+RULE_METRICS = {
+    "exact": {"accuracy"},
+    "prediction": PREDICTION_METRICS,
+    "policy": set(POLICY_METRICS),
+    # A meta Program meets a recorded lifecycle situation: Core answers its
+    # program.* calls from the case and compares its decisions with the label.
+    "lifecycle_replay": {"accuracy"},
+}
+
+
+def _redact_sealed(snapshot: dict, sealed: frozenset[int]) -> None:
+    """Remove hidden outcome contents from a side's memory; their identities stay valid."""
+    for event in snapshot["events"]:
+        if event["id"] in sealed:
+            event["arguments"], event["output"] = {}, None
 
 
 def _compile_changed(repository: Path, base: str, revision: str) -> list[dict[str, str]]:
@@ -90,6 +119,7 @@ async def evaluate_pair(
     protected_nodes: frozenset[int] = frozenset(),
     semantic_config=None,
     search_index_factory=None,
+    sealed: frozenset[int] = frozenset(),
 ) -> EvaluationExperiment:
     """Run a holdout without giving Programs labels, live state, or live effects.
 
@@ -98,37 +128,29 @@ async def evaluate_pair(
     forces model mode and does not pass evaluation outcomes to this adapter.
     ``runtime_factory`` is an injection point for deterministic runtime tests;
     production callers use Runtime, which requires the native OS sandbox.
+    ``sealed`` names memory events held out as hidden outcomes; their contents are
+    removed from both sides, so cases may cite them as sources.
     """
     validate_holdout(dataset)
     rules = {case.evaluation_rule for case in dataset.cases}
-    if rules not in ({"exact"}, {"prediction"}):
-        raise ValueError("Use one fixed evaluation rule per dataset: exact or prediction")
+    if len(rules) != 1 or not rules <= set(RULE_METRICS):
+        raise ValueError(
+            "Use one fixed evaluation rule per dataset: " + ", ".join(sorted(RULE_METRICS))
+        )
+    (rule,) = rules
     requested_metrics = dataset.target_metrics or ("accuracy",)
-    supported = (
-        {"accuracy"}
-        if rules == {"exact"}
-        else {
-            "brier",
-            "squared_error",
-            "mse",
-            "absolute_error",
-            "mae",
-            "residual",
-            "log_loss",
-            "exact_match",
-        }
-    )
-    if set(requested_metrics) - supported:
+    if set(requested_metrics) - RULE_METRICS[rule]:
         raise ValueError("Dataset requests metrics unsupported by its evaluation rule")
     if program.program_id != branch.program_id:
         raise ValueError("Evaluation Program does not match candidate identity")
     # A case source already accessible through initial memory compromises the
     # holdout even when its outcome is hidden from the case inputs.
     heldout_sources = {source for case in dataset.cases for source in case.source_ids}
-    memory_sources = {str(event.id) for event in memory.events}
+    visible = [event for event in memory.events if event.id not in sealed]
+    memory_sources = {str(event.id) for event in visible}
     memory_sources.update(
         event.arguments["source_id"]
-        for event in memory.events
+        for event in visible
         if isinstance(event.arguments, Mapping)
         and isinstance(event.arguments.get("source_id"), str)
     )
@@ -151,6 +173,7 @@ async def evaluate_pair(
         # A serialization round trip rejects incidental shared mutable references.
         encoded = encode_snapshot(snapshots)
         snapshots = decode_snapshot(encoded)
+        _redact_sealed(snapshots["memory"], sealed)
         # Freeze the executable registry before either side runs. A callback into
         # the live application is never consulted while an experiment is executing.
         initial_graph = GraphStore.from_snapshot(snapshots["graph"])
@@ -158,7 +181,7 @@ async def evaluate_pair(
         for node in initial_graph.nodes(kind="program"):
             if node.id == program.program_id:
                 resolved = program
-            elif node.properties.get("active", True):
+            elif program_active(node):
                 resolved = resolve_program(node.id)
                 if inspect.isawaitable(resolved):
                     resolved = await resolved
@@ -250,6 +273,7 @@ async def evaluate_pair(
             )
             run_map: dict[str, int] = {}
             side_events: list[dict[str, Any]] = []
+            replay: dict[str, Any] = {}
 
             async def record(event, *, context=context, run_map=run_map, events=side_events):
                 events.append(json.loads(json.dumps(event, allow_nan=False)))
@@ -285,14 +309,24 @@ async def evaluate_pair(
                         )
 
             async def gateway(
-                method, payload, *, context=context, operations=operations, semantics=semantics
+                method,
+                payload,
+                *,
+                context=context,
+                operations=operations,
+                semantics=semantics,
+                replay=replay,
             ):
                 payload = dict(payload)
                 metadata = payload.pop("_runtime")
                 # The default ready-model protocol must not train on held-out cases.
                 if method in {"learning.learn", "learning.coordinate"}:
                     raise PermissionError("Learning is disabled during ready-model evaluation")
-                authorize_operation(method, metadata["program"]["role"])
+                authorize_operation(
+                    method,
+                    metadata["program"]["role"],
+                    meta=metadata["program"].get("meta", False),
+                )
                 if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
                     admitted = registry.get("knowledge_integration")
                     metadata["knowledge_integration_authorized"] = bool(
@@ -309,6 +343,17 @@ async def evaluate_pair(
                 if method == "resolve_program":
                     resolved = registry[payload["program_id"]]
                     return asdict(replace(resolved, revision=context.revision))
+                if method.startswith("program."):
+                    operation = method.removeprefix("program.")
+                    if operation == "choose_candidate":
+                        replay["decisions"][payload["candidate"]] = payload["decision"]
+                        return {"revision": None, "decision": payload["decision"]}
+                    responses = replay.get("responses", {}).get(operation)
+                    if not responses:
+                        raise PermissionError(
+                            "Unrecorded lifecycle continuation in replay: " + operation
+                        )
+                    return responses.pop(0)
                 if method == "llm.run":
                     if model_call is None:
                         raise PermissionError("No isolated model adapter was supplied")
@@ -333,6 +378,10 @@ async def evaluate_pair(
                         "dataset_revision": dataset.revision,
                         "inputs": case.program_inputs(),
                     }
+                    if rule == "lifecycle_replay":
+                        recorded = thaw_json(case.outcomes)
+                        replay.clear()
+                        replay.update(responses=recorded["replay"], decisions={})
                     try:
                         outcome = await runtime.execute(
                             "evaluation-" + uuid4().hex,
@@ -348,6 +397,17 @@ async def evaluate_pair(
                                 outcome.result, thaw_json(case.outcomes)
                             )
                             samples = {"accuracy": float(audit["correct"])}
+                        elif rule == "lifecycle_replay":
+                            audit["decisions"] = dict(replay["decisions"])
+                            audit["correct"] = exact_json_equal(
+                                audit["decisions"], thaw_json(case.outcomes)["decisions"]
+                            )
+                            samples = {"accuracy": float(audit["correct"])}
+                        elif rule == "policy":
+                            samples = evaluate_policy(
+                                outcome.result, thaw_json(case.outcomes), requested_metrics
+                            )
+                            audit["evaluation"] = samples
                         else:
                             evaluation = evaluate_prediction(
                                 outcome.result,
@@ -372,7 +432,7 @@ async def evaluate_pair(
                         all_valid = False
                         audit["error"] = f"{type(error).__name__}: {error}"
                         audit["correct"] = False
-                        if case.evaluation_rule == "exact":
+                        if rule in {"exact", "lifecycle_replay"}:
                             measured["accuracy"] += 1
                     audit["events"] = side_events[start_event:]
                     traces.append(audit)

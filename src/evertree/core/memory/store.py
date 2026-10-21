@@ -40,6 +40,8 @@ class TraceStore:
         self._reviews: dict[int, int] = {}
         self._pending_reviews: set[int] = set()
         self._early_reviews: dict[int, tuple[datetime, str]] = {}
+        # Events held out of all retrieval because they serve as hidden evaluation outcomes.
+        self._sealed: set[int] = set()
         self._lock = threading.RLock()
 
     @contextmanager
@@ -58,6 +60,7 @@ class TraceStore:
                 "_reviews",
                 "_pending_reviews",
                 "_early_reviews",
+                "_sealed",
             )
             before = {}
             for name in fields:
@@ -331,10 +334,30 @@ class TraceStore:
         for event in self._walk(event_id, downstream=False):
             self.restore_deleted(event.id)
 
+    @property
+    def sealed(self) -> frozenset[int]:
+        """Events reserved as hidden evaluation outcomes."""
+        return frozenset(self._sealed)
+
+    def seal(self, event_ids) -> None:
+        """Hide events from retrieval so they can serve as hidden holdout outcomes."""
+        with self._lock:
+            identities = {int(identity) for identity in event_ids}
+            if any(identity not in self._events for identity in identities):
+                raise ContractError("Only stored events can be sealed")
+            self._sealed.update(identities)
+
+    def retention_reasons(self, event_id: int) -> frozenset[str]:
+        """Return why an event is retained; a reason names each use of its content."""
+        return frozenset(self._protections.get(event_id, ()))
+
     def retrieve(
         self, query: MemoryQuery | str | Mapping, limit: int = 10
     ) -> tuple[MemoryCandidateGroup, ...]:
-        """Rank matching experience by reference and text overlap, grouping only identical content."""
+        """Rank matching experience by reference and text overlap, grouping only identical content.
+
+        Sealed events are never returned.
+        """
         if limit < 0:
             raise ContractError("retrieval limit must not be negative")
         if isinstance(query, str):
@@ -356,7 +379,7 @@ class TraceStore:
         groups: dict[str, list[TraceEvent]] = {}
         scores: dict[str, float] = {}
         for event in self._events.values():
-            if event.id in self._deleted:
+            if event.id in self._deleted or event.id in self._sealed:
                 continue
             run = self._runs[event.program_run]
             if (
@@ -636,6 +659,7 @@ class TraceStore:
                     str(key): [value[0].isoformat(), value[1]]
                     for key, value in self._early_reviews.items()
                 },
+                "sealed": sorted(self._sealed),
                 "policy": {
                     "ladder": [
                         value.total_seconds() for value in self.policy.memory_compaction_ladder
@@ -681,6 +705,7 @@ class TraceStore:
             int(key): (timestamp(value[0]), value[1])
             for key, value in data["early_reviews"].items()
         }
+        store._sealed = set(data.get("sealed", ()))
         store.validate()
         return store
 

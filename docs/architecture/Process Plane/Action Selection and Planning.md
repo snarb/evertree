@@ -55,6 +55,8 @@ Contract conditions:
 - If an allowed candidate set is supplied, the result is limited to that set; otherwise, candidates created by the policy are checked against the task and action contracts.
 - The calling program handles violations; there is no implicit random fallback.
 
+The JSON form is `{"choices": [[candidate, probability], ...]}`; candidate uniqueness compares canonical JSON. `evertree.core.policy.api` provides `validate_distribution`, `certain`, `greedy_distribution`, `softmax_distribution` and `probability_of` as pure functions. `sample_action(ctx, distribution, allowed)` lets Core check the distribution and draw the action as one saved step, so a recovered run replays the same choice instead of drawing again. Only an `exec` Program can sample. A policy slot is evaluated with the `policy` rule ([[Program Evaluation and Testing#Evaluation Rules]]).
+
 Inputs are defined by the [[Program Layer#^def-ArgumentPreparation|contract of the particular policy]], not by a universal opaque `ctx`:
 
 ```python

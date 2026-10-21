@@ -192,7 +192,9 @@ class DemoProvider:
                         "choose_candidate",
                         {
                             "candidate": self.candidate["id"],
-                            "decision": "merge_branch",
+                            "decision": "activate_program"
+                            if self.stage == "initial"
+                            else "merge_branch",
                             "reason": "The independent fixed acceptance criteria passed for this exact committed revision",
                         },
                     ),
@@ -291,7 +293,7 @@ async def run_demo(
             f"Develop candidate {proposal['candidate']['id']} for Program {identity} at {path}. "
             "Implement sorting distinct integers ascending with sorted(set(values)); initial scope explicitly excludes duplicates. "
             "First use develop_candidate to implement the Program, then evaluate_candidate to run the protected checks. "
-            "Only after evaluation passes, use choose_candidate with merge_branch. "
+            "Only after evaluation passes, use choose_candidate with activate_program. "
             "Then run_program with values [9,2,5]. Return the actual output. The independent evaluation is already bound."
         )
         initial = await agent.run(initial_request)

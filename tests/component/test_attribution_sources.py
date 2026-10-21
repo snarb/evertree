@@ -40,7 +40,7 @@ def source_world(source="program", **binding):
         world.graph.reserve_id(),
         "Mass.model",
         kind="program",
-        properties={"role": "model", "active": True},
+        properties={"role": "model", "lifecycle_status": "active"},
     )
     prop = Node(
         world.graph.reserve_id(),
@@ -479,7 +479,12 @@ def test_unavailable_computation_is_unknown_but_malformed_output_is_an_error():
     assert finish_program_read(world.attribution, request, {"$unknown": True}) is UNKNOWN
     world.graph.apply(
         GraphDelta(
-            updates=(NodeUpdate(world.program, {"properties": {"role": "model", "active": False}}),)
+            updates=(
+                NodeUpdate(
+                    world.program,
+                    {"properties": {"role": "model", "lifecycle_status": "candidate"}},
+                ),
+            )
         ),
         provenance="deactivate",
     )

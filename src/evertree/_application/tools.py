@@ -5,15 +5,13 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import json
-from pathlib import Path
 
 from evertree.core.memory.types import TraceOutputRef
 
-from ..core.programs.lifecycle import git
 from ..core.provider import LLMRequest, ToolDefinition
 from ..core.runtime.coordination import semantic_scope
 from ..core.values import json_value
-from .prompts import CANDIDATE_INSTRUCTIONS, CODING_INSTRUCTIONS
+from .prompts import CODING_INSTRUCTIONS, LIFECYCLE_TOOLS
 
 
 class ToolsMixin:
@@ -111,60 +109,11 @@ class ToolsMixin:
         if name.startswith("graph."):
             return await self._graph_tool(task_id, name, args)
         if name == "recall":
-            return json_value(self.memory.retrieve(args["query"], limit=10))
-        if name == "create_candidate":
-            program = self._program(args["program"], allow_inactive=True)
-            candidate = self.lifecycle.create_candidate(
-                program.program_id, args["claim"], candidate_name=args.get("candidate_name")
-            )
-            self._candidate_owners[candidate.id] = task_id
-            self.datasets.inherit_exposure("program:" + str(program.program_id), candidate.id)
-            return dataclasses.asdict(candidate)
-        if name == "propose_program":
-            result = self.propose_program(**args)
-            self._candidate_owners[result["candidate"]["id"]] = task_id
-            return result
-        if name == "develop_candidate":
-            candidate = self.lifecycle.candidate(args["candidate"])
-            result = await self._invoke(
-                task_id,
-                LLMRequest(
-                    json.dumps(
-                        {
-                            "instruction": args["instruction"],
-                            "candidate": dataclasses.asdict(candidate),
-                            "program": json_value(self.graph.get(candidate.program_id)),
-                        },
-                        ensure_ascii=False,
-                    ),
-                    Path(candidate.workspace),
-                    mode="exec",
-                    native_coding=True,
-                    instructions=CANDIDATE_INSTRUCTIONS,
-                    timeout_seconds=self._remaining_seconds(self.tasks.get(task_id)),
-                ),
-            )
-            if git(Path(candidate.workspace), "status", "--porcelain"):
-                git(Path(candidate.workspace), "add", "--all")
-                git(Path(candidate.workspace), "commit", "-m", candidate.change_claim)
-            self.lifecycle.retain_candidate(candidate.id)
-            return {
-                "candidate": candidate.id,
-                "revision": git(Path(candidate.workspace), "rev-parse", "HEAD"),
-                "result": result["text"],
-            }
-        if name == "evaluate_candidate":
-            return await self.evaluate_candidate(args["candidate"], task_id=task_id)
-        if name == "choose_candidate":
-            candidate = self.lifecycle.candidate(args["candidate"])
-            binding = self._evaluation_bindings.get(str(candidate.program_id))
-            revision = await self.lifecycle.choose(
-                args["candidate"],
-                args["decision"],
-                reason=args["reason"],
-                expected_dataset_revision=binding["dataset_revision"] if binding else None,
-            )
-            return {"revision": revision, "decision": args["decision"]}
+            groups = self.memory.retrieve(args["query"], limit=10)
+            self._surfaced.update(event.id for group in groups for event in group.events)
+            return json_value(groups)
+        if name in LIFECYCLE_TOOLS:
+            return await self._lifecycle_operation(task_id, name, args)
         if name == "list_actions":
             return await self.actions.list(args["session"], task_id=task_id)
         if name == "take_action":
@@ -179,6 +128,74 @@ class ToolsMixin:
                 approved=approved,
             )
         raise ValueError("Unknown EverTree tool: " + name)
+
+    async def _lifecycle_operation(self, task_id, name, args, *, caller=None):
+        """Serve one lifecycle operation for consciousness tools or a meta Program.
+
+        caller is the meta Program's id. A meta Program never manages its own
+        candidates: its changes need an independent decision.
+        """
+        if caller is not None:
+            target = (
+                args.get("program")
+                if name in {"create_candidate", "propose_program", "derive_holdout"}
+                else None
+            )
+            targets = [target] if target is not None else []
+            targets.extend(
+                self.lifecycle.candidate(identity).program_id
+                for identity in [args.get("candidate"), *args.get("candidates", ())]
+                if identity is not None
+            )
+            if name == "propose_program" and args.get("alternative_to") is not None:
+                targets.append(args["alternative_to"])
+            if any(
+                self._program(identity, allow_inactive=True).program_id == caller
+                for identity in targets
+            ):
+                raise PermissionError("A meta Program cannot manage its own candidates")
+        if name == "list_programs":
+            return [
+                {
+                    "id": node.id,
+                    "name": node.name,
+                    "description": node.description,
+                    **{
+                        key: node.properties.get(key)
+                        for key in (
+                            "process",
+                            "role",
+                            "roles",
+                            "lifecycle_status",
+                            "alternative_to",
+                        )
+                    },
+                }
+                for node in self.graph.nodes(kind="program")
+            ]
+        if name == "create_candidate":
+            return self.create_candidate(
+                task_id, args["program"], args["claim"], candidate_name=args.get("candidate_name")
+            )
+        if name == "propose_program":
+            result = self.propose_program(**args)
+            self._own(task_id, result["candidate"]["id"])
+            return result
+        if name == "develop_candidate":
+            return await self.develop_candidate(task_id, args["candidate"], args["instruction"])
+        if name == "evaluate_candidate":
+            return await self.evaluate_candidate(args["candidate"], task_id=task_id)
+        if name == "compare_candidates":
+            return self.compare_candidates(args["candidates"])
+        if name == "derive_holdout":
+            return self.derive_holdout(args["program"])
+        if name == "refresh_candidate":
+            return self.refresh_candidate(task_id, args["candidate"])
+        if name == "choose_candidate":
+            return await self.choose_candidate(
+                task_id, args["candidate"], args["decision"], args["reason"]
+            )
+        raise ValueError("Unknown lifecycle operation: " + name)
 
     def _semantics(self):
         from ..core.semantics.service import SemanticService
@@ -283,7 +300,18 @@ class ToolsMixin:
         state = self.tasks.get(task_id)
         if state.terminal or state.hard_limit_reached:
             raise PermissionError("Task is stopped or its explicit resource limit was reached")
-        authorize_operation(method, metadata["program"]["role"])
+        authorize_operation(
+            method, metadata["program"]["role"], meta=metadata["program"].get("meta", False)
+        )
+        if method.startswith("program."):
+            if metadata["run_mode"] != "live":
+                raise PermissionError("Lifecycle operations run only in live execution")
+            return await self._lifecycle_operation(
+                task_id,
+                method.removeprefix("program."),
+                payload,
+                caller=metadata["program"]["program_id"],
+            )
         if method == "memory.note":
             return self._record_analysis(
                 task_id,
@@ -359,6 +387,12 @@ class ToolsMixin:
                 approved=approved,
             )
         result = self._core_operations().execute(method, payload, metadata=metadata)
+        if method in {"memory.retrieve", "memory.rank"}:
+            self._surfaced.update(
+                event["id"] for group in result for event in group.get("events", ())
+            )
+        elif method == "memory.resolve":
+            self._surfaced.add(payload["reference"]["event_ref"])
         if method == "evaluation.review" and result["queued"]:
             reference = TraceOutputRef(**result["review_ref"])
             self._inputs.setdefault(task_id, []).append(

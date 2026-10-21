@@ -12,6 +12,7 @@ from evertree.core.learning.contracts import LearningObjective, LearningSignal
 from evertree.core.learning.coordinator import LearningCoordinator
 from evertree.core.memory.types import MemoryQuery, TraceOutputRef
 
+from ..core.programs.layout import program_active
 from ..core.provider import LLMRequest
 from ..core.values import json_value
 from .integration import EVIDENCE_ASSESSMENT_SLUGS
@@ -626,7 +627,7 @@ class ConsciousnessMixin:
             "programs": [
                 {"id": node.id, "name": node.name, "description": node.description}
                 for node in self.graph.nodes(kind="program")
-                if node.properties.get("active", True)
+                if program_active(node)
             ],
             "recent_results": self._prompt_results(state),
         }

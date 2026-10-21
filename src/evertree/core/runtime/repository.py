@@ -17,6 +17,10 @@ class ProgramExecutionError(RuntimeError):
     pass
 
 
+class ProgramFailed(ProgramExecutionError):
+    """The Program run finished by raising; recovery would only replay the same failure."""
+
+
 def _validate_git_metadata(repository: Path, *, initializing: bool = False) -> Path:
     """Keep Git's authority inside this repository before Git reads any config."""
     metadata = repository / ".git"
@@ -86,6 +90,12 @@ def _git(repository: Path, *arguments: str) -> bytes:
         "core.longpaths=true",
         "-c",
         "core.pager=",
+        # Detached auto-gc deletes loose-object directories while the next command
+        # walks the metadata, so automatic housekeeping runs in the foreground.
+        "-c",
+        "gc.autoDetach=false",
+        "-c",
+        "maintenance.autoDetach=false",
         "-c",
         "commit.gpgSign=false",
         "-c",

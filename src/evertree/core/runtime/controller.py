@@ -21,6 +21,7 @@ from .coordination import semantic_scope
 from .llm import ProgramLLMInvocations
 from .repository import (
     ProgramExecutionError,
+    ProgramFailed,
     extract_revision,
 )
 
@@ -41,6 +42,8 @@ class ProgramSpec:
     revision: str
     entrypoint: str = "run"
     role: Literal["model", "exec"] = "exec"
+    # Meta authority to drive other Programs' lifecycle; only an exec Program may hold it.
+    meta: bool = False
 
     def __post_init__(self):
         path = Path(self.git_path)
@@ -50,6 +53,8 @@ class ProgramSpec:
             raise ValueError("Program revision must be an exact Git commit SHA")
         if not self.entrypoint.isidentifier() or self.role not in ("model", "exec"):
             raise ValueError("Invalid Program entrypoint or role")
+        if self.meta and self.role != "exec":
+            raise ValueError("Only an exec Program can have the meta role")
 
 
 @dataclass(frozen=True)
@@ -228,7 +233,13 @@ class Runtime:
                     try:
                         result = await asyncio.wait_for(asyncio.shield(reader_task), timeout)
                     except ExceptionGroup as exc:
-                        raise ProgramExecutionError(str(exc.exceptions[0])) from exc
+                        first = exc.exceptions[0]
+                        kind = (
+                            ProgramFailed
+                            if isinstance(first, ProgramFailed)
+                            else ProgramExecutionError
+                        )
+                        raise kind(str(first)) from exc
                     return RunResult(run_id, result["result"], result.get("feedback"))
                 except TimeoutError as exc:
                     raise ProgramExecutionError(f"Execution exceeded {timeout:g} seconds") from exc
@@ -316,7 +327,7 @@ class Runtime:
                     if kind == "result":
                         return message
                     if kind == "error":
-                        raise ProgramExecutionError(message.get("error", "Worker execution failed"))
+                        raise ProgramFailed(message.get("error", "Worker execution failed"))
                     if kind != "request" or message.get("method") != "gateway":
                         raise ProgramExecutionError("Unknown worker request")
                     if not isinstance(message.get("id"), str):

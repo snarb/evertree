@@ -1,24 +1,43 @@
-"""Program lookup, execution, traces and candidate evaluation."""
+"""Program lookup, execution, traces and the candidate lifecycle shared by tools and meta Programs."""
 
 from __future__ import annotations
 
 import dataclasses
 import io
+import json
+import re
 import zipfile
+from collections.abc import Mapping
 from pathlib import Path
 from uuid import uuid4
 
-from evertree.core.evaluation.acceptance import AcceptanceCriteria, MetricGuardrail
+from evertree.core.evaluation.acceptance import (
+    META_MIN_CASES,
+    AcceptanceCriteria,
+    MetricGuardrail,
+    meta_criteria,
+)
 from evertree.core.graph.types import GraphDelta, Node, NodeUpdate, Prototype
 from evertree.core.runtime.controller import ProgramSpec
-from evertree.core.runtime.repository import _git
+from evertree.core.runtime.repository import ProgramFailed, _git
 
 from ..core.anchors import AnchorResolver, parse_anchors
-from ..core.programs.layout import process_directory, process_slug, validate_process_layout
-from ..core.programs.lifecycle import ProgramLifecycleRuntime, git
+from ..core.datasets import EvaluationCase, thaw_json, validate_holdout
+from ..core.memory.types import TraceOutputRef
+from ..core.programs.design import check_design, design_profile
+from ..core.programs.layout import (
+    process_directory,
+    process_slug,
+    program_active,
+    validate_process_layout,
+)
+from ..core.programs.lifecycle import LifecycleError, ProgramLifecycleRuntime, git
 from ..core.provider import LLMRequest, ToolDefinition
 from ..core.values import json_value
 from .integration import EVIDENCE_ASSESSMENT_SLUGS
+from .prompts import candidate_instructions
+
+ACTIVATING = {"merge_branch", "activate_program"}
 
 
 class ProgramsMixin:
@@ -58,14 +77,50 @@ class ProgramsMixin:
                 lambda path: sources.read(path).decode("utf-8"),
                 candidate_program_id=int(branch.program_id) if branch else None,
             )
+            if branch is not None:
+                self._validate_design(branch, revision, sources)
+
+    def _validate_design(self, branch, revision, sources):
+        """Require the design profile of a policy or meta Program whose entry module changed."""
+        node = self.graph.get(int(branch.program_id))
+        binding = self._binding(node.id)
+        policy = bool(
+            binding
+            and self.datasets.get(binding["dataset_revision"]).cases[0].evaluation_rule == "policy"
+        )
+        profile = design_profile(meta=self._is_meta(node.id), policy=policy)
+        path = node.properties["git_path"]
+        changed = git(
+            Path(branch.workspace),
+            "diff",
+            "--name-only",
+            branch.base_revision,
+            revision,
+            "--",
+            path,
+        )
+        if profile is not None and changed:
+            check_design(sources.read(path).decode("utf-8"), path, profile)
+
+    def _slot(self, program_id) -> str:
+        """Name the process role a Program competes for; alternatives and branches share it."""
+        node = self.graph.get(int(program_id))
+        return f"slot:{node.properties['process']}:{node.properties['role']}"
+
+    def _binding(self, program_id):
+        return self._evaluation_bindings.get(self._slot(program_id))
+
+    def _is_meta(self, program_id) -> bool:
+        return "meta" in self.graph.get(int(program_id)).properties.get("roles", ())
 
     def _acceptance_criteria(self, candidate):
-        binding = self._evaluation_bindings.get(str(candidate.program_id))
+        binding = self._binding(candidate.program_id)
         if binding is None:
             raise ValueError("No independent evaluation is bound to this Program")
         values = dict(binding["criteria"])
         values["guardrails"] = tuple(MetricGuardrail(**item) for item in values["guardrails"])
-        return AcceptanceCriteria(**values)
+        criteria = AcceptanceCriteria(**values)
+        return meta_criteria(criteria) if self._is_meta(candidate.program_id) else criteria
 
     def _program_revision(self):
         return git(self.repository, "rev-parse", "main")
@@ -79,13 +134,14 @@ class ProgramsMixin:
         """Resolve a Program or active process role into a spec pinned to the current repository revision."""
         node = self.graph.get(identity) if isinstance(identity, int) else self.graph.find(identity)
         if node is None and isinstance(identity, str):
-            node = next(
-                (
-                    item
-                    for item in self.graph.nodes(kind="program")
-                    if item.properties.get("slug") == identity
-                ),
-                None,
+            # Alternatives share their slot's slug; the active one answers to it.
+            matches = [
+                item
+                for item in self.graph.nodes(kind="program")
+                if item.properties.get("slug") == identity
+            ]
+            node = next((item for item in matches if program_active(item)), None) or next(
+                iter(matches), None
             )
         if node is None:
             raise ValueError(f"Unknown Program/process: {identity}")
@@ -96,7 +152,7 @@ class ProgramsMixin:
             node = self.graph.get(program_id)
         if node.kind != "program":
             raise ValueError("Selected object is not a Program")
-        if not node.properties.get("active", True) and not allow_inactive:
+        if not program_active(node) and not allow_inactive:
             raise PermissionError("Program has not passed activation")
         return ProgramSpec(
             node.id,
@@ -104,11 +160,19 @@ class ProgramsMixin:
             self._program_revision(),
             node.properties.get("entrypoint", "run"),
             node.properties["role"],
+            "meta" in node.properties.get("roles", ()),
         )
 
     def programs(self):
         """List graph-registered Programs as serializable records."""
         return [json_value(node) for node in self.graph.nodes(kind="program")]
+
+    def _lifecycle_event(self, name, output):
+        """Record a lifecycle decision as trace provenance for the graph change it causes."""
+        run = self.memory.start_run("ProgramLifecycle", self._program_revision(), {"name": name})
+        event = self.memory.record(run, name, output=output)
+        self.memory.finish_run(run)
+        return self.memory.output_ref(event)
 
     def propose_program(
         self,
@@ -119,25 +183,55 @@ class ProgramsMixin:
         description="",
         candidate_name: str | None = None,
         parent: int | str | None = None,
+        alternative_to: int | None = None,
+        meta: bool = False,
     ):
-        """Propose a role for an existing process or a new subtype of parent."""
+        """Propose a role for a process, a new subtype of parent, or an alternative Program.
+
+        An alternative competes for an occupied slot with a different solution
+        principle. It shares the slot's source path; its code lives on its own branch
+        until an EvaluationChoice activates it.
+        """
         if role not in {"exec", "model"} or not name.isidentifier():
             raise ValueError("A Program requires an identifier name and model/exec role")
+        if meta and role != "exec":
+            raise ValueError("Only an exec Program can have the meta role")
         process = self.graph.find(name)
         creates = []
         slug = process_slug(name)
+        program_name = name + "." + role
+        roles = (role, "meta") if meta else (role,)
+        extra = {}
         if process is not None:
             if parent is not None:
                 raise ValueError("parent is only used when creating a new process")
             if process.properties.get("process") is not True:
                 raise ValueError("The existing name must identify a process in Self/Process")
             directory = process_directory(self.graph, process.id).rstrip("/")
-            if any(
-                node.properties.get("process") == process.id and node.properties.get("role") == role
+            git_path = f"{directory}/_{role}.py"
+            occupants = [
+                node
                 for node in self.graph.nodes(kind="program")
-            ):
-                raise ValueError("Process already has this Program role; use create_candidate")
+                if node.properties.get("process") == process.id
+                and node.properties.get("role") == role
+            ]
+            if occupants and alternative_to is None:
+                raise ValueError(
+                    "Process already has this Program role; use create_candidate to change it, "
+                    "or alternative_to for a different solution principle"
+                )
+            if occupants:
+                target = next((node for node in occupants if node.id == int(alternative_to)), None)
+                if target is None:
+                    raise ValueError("alternative_to must name a Program in the same process role")
+                words = re.findall(r"[^\W_]+", (candidate_name or claim).casefold())[:3]
+                program_name = f"{program_name}.{'_'.join(words)}"
+                git_path = target.properties["git_path"]
+                roles = tuple(target.properties.get("roles", (role,)))
+                extra = {"alternative_to": target.id}
         else:
+            if alternative_to is not None:
+                raise ValueError("alternative_to requires an existing process")
             parent_node = (
                 self.graph.find("SelfProcess")
                 if parent is None
@@ -148,6 +242,7 @@ class ProgramsMixin:
             if parent_node is None or parent_node.properties.get("process") is not True:
                 raise ValueError("parent must identify a process in Self/Process")
             directory = process_directory(self.graph, parent_node.id).rstrip("/") + "/" + slug
+            git_path = f"{directory}/_{role}.py"
             if slug.startswith("_") or any(
                 process_directory(self.graph, node.id).rstrip("/") == directory
                 for node in self.graph.descendants(self.graph.find("SelfProcess").id)
@@ -162,7 +257,7 @@ class ProgramsMixin:
                     ),
                 )
             )
-        if self.graph.find(name + "." + role):
+        if self.graph.find(program_name):
             raise ValueError("Program name is already registered")
         run = self.memory.start_run("ProgramProposal", self._program_revision(), {"name": name})
         event = self.memory.record(
@@ -170,17 +265,18 @@ class ProgramsMixin:
         )
         program = Node(
             self.graph.reserve_id(),
-            name + "." + role,
+            program_name,
             kind="program",
             description=description,
             properties={
-                "git_path": f"{directory}/_{role}.py",
+                "git_path": git_path,
                 "process": process.id,
                 "role": role,
-                "roles": (role,),
+                "roles": roles,
                 "slug": slug,
-                "active": False,
+                "lifecycle_status": "candidate",
                 "entrypoint": "run",
+                **extra,
             },
         )
         delta = GraphDelta(
@@ -199,6 +295,7 @@ class ProgramsMixin:
         candidate = self.lifecycle.create_candidate(
             program.id, claim, candidate_name=candidate_name
         )
+        self.datasets.inherit_exposure(self._slot(program.id), candidate.id)
         if self._current_task:
             self._candidate_owners[candidate.id] = self._current_task
         return {"program": json_value(program), "candidate": dataclasses.asdict(candidate)}
@@ -235,6 +332,10 @@ class ProgramsMixin:
                 )
             self._pending_programs.pop(task_id, None)
             return dataclasses.asdict(result)
+        except ProgramFailed:
+            # A finished failure is not resumable work; it must not block the task's next run.
+            self._pending_programs.pop(task_id, None)
+            raise
         finally:
             self._operations -= 1
 
@@ -322,33 +423,48 @@ class ProgramsMixin:
                             )
 
     def _activated(self, branch, revision):
-        """Record accepted Program activation and update the process role binding with provenance."""
+        """Record accepted Program activation and move the process role binding with provenance.
+
+        An activated alternative displaces the slot's previous Program, which stays
+        a candidate with its last revision so a later choice can reactivate it.
+        """
         self._validate_program_layout(branch, revision)
         node = self.graph.get(int(branch.program_id))
+        role = node.properties["role"]
+        process = self.graph.get(node.properties["process"])
+        displaced = process.properties.get("active_" + role)
         run = self.memory.start_run("EvaluationChoice", revision, {"candidate": branch.id})
         event = self.memory.record(
-            run, "activate_program", output={"program": node.id, "revision": revision}
+            run,
+            "activate_program",
+            output={"program": node.id, "revision": revision, "displaced": displaced},
         )
-        process = self.graph.get(node.properties["process"])
-        self.graph.apply(
-            GraphDelta(
-                updates=(
-                    NodeUpdate(
-                        node.id,
-                        {"properties": {**node.properties, "revision": revision, "active": True}},
-                    ),
-                    NodeUpdate(
-                        process.id,
-                        {
-                            "properties": {
-                                **process.properties,
-                                "active_" + node.properties["role"]: node.id,
-                            }
-                        },
-                    ),
-                )
+        updates = [
+            NodeUpdate(
+                node.id,
+                {
+                    "properties": {
+                        **node.properties,
+                        "revision": revision,
+                        "lifecycle_status": "active",
+                    }
+                },
             ),
-            provenance=self.memory.output_ref(event),
+            NodeUpdate(
+                process.id,
+                {"properties": {**process.properties, "active_" + role: node.id}},
+            ),
+        ]
+        if displaced is not None and displaced != node.id:
+            previous = self.graph.get(displaced)
+            updates.append(
+                NodeUpdate(
+                    previous.id,
+                    {"properties": {**previous.properties, "lifecycle_status": "candidate"}},
+                )
+            )
+        self.graph.apply(
+            GraphDelta(updates=tuple(updates)), provenance=self.memory.output_ref(event)
         )
         self.memory.retain(self.memory.output_ref(event), "graph:" + str(node.id))
         self.memory.finish_run(run)
@@ -359,16 +475,16 @@ class ProgramsMixin:
         dataset_revision: str,
         *,
         criteria: AcceptanceCriteria | None = None,
+        history_dataset_revision: str | None = None,
     ):
-        """Developer API: fix independent acceptance cases before candidate development.
+        """Developer API: fix independent acceptance cases for a Program's slot before development.
 
         Deliberately not an agent tool. Candidate-owned checks cannot certify
-        their own code or redefine the protected acceptance criteria.
+        their own code or redefine the protected acceptance criteria. Every branch
+        and alternative of the slot meets the same holdout. A meta Program also
+        needs a history dataset of past lifecycle situations on which it must not regress.
         """
         self._program(program_id, allow_inactive=True)
-        dataset = self.datasets.get(dataset_revision)
-        if dataset.purpose != "evaluation" or not dataset.cases:
-            raise ValueError("Acceptance needs a nonempty evaluation dataset")
         criteria = criteria or AcceptanceCriteria(
             required_checks=("contracts", "tests", "holdout"),
             target_metric="accuracy",
@@ -379,97 +495,392 @@ class ProgramsMixin:
             or not criteria.require_independent
         ):
             raise ValueError("Independent holdout, contracts and tests are mandatory core checks")
-        metrics = set(dataset.target_metrics or ("accuracy",))
+        revisions = [dataset_revision]
+        if self._is_meta(program_id):
+            if history_dataset_revision is None:
+                raise ValueError("A meta Program needs a history dataset of past improvements")
+            revisions.append(history_dataset_revision)
+        elif history_dataset_revision is not None:
+            raise ValueError("Only a meta Program is checked against an improvement history")
         required_metrics = {guardrail.metric for guardrail in criteria.guardrails}
         if criteria.target_metric:
             required_metrics.add(criteria.target_metric)
-        if required_metrics - metrics:
-            raise ValueError("Acceptance metrics must be fixed in the evaluation dataset")
-        for case in dataset.cases:
-            for reference in case.source_refs:
-                self.memory.resolve(reference)
-        for case in dataset.cases:
-            for reference in case.source_refs:
-                self.memory.retain(reference, "dataset:" + dataset_revision)
-        self._evaluation_bindings[str(program_id)] = {
+        for revision in revisions:
+            dataset = self.datasets.get(revision)
+            if dataset.purpose != "evaluation" or not dataset.cases:
+                raise ValueError("Acceptance needs a nonempty evaluation dataset")
+            if len(revisions) > 1 and len(dataset.cases) < META_MIN_CASES:
+                raise ValueError(
+                    f"A meta Program needs at least {META_MIN_CASES} cases per dataset"
+                )
+            if required_metrics - set(dataset.target_metrics or ("accuracy",)):
+                raise ValueError("Acceptance metrics must be fixed in the evaluation dataset")
+            for case in dataset.cases:
+                for reference in case.source_refs:
+                    self.memory.resolve(reference)
+        for revision in revisions:
+            for case in self.datasets.get(revision).cases:
+                for reference in case.source_refs:
+                    self.memory.retain(reference, "dataset:" + revision)
+        self._evaluation_bindings[self._slot(program_id)] = {
             "dataset_revision": dataset_revision,
+            "history_dataset_revision": history_dataset_revision,
             "criteria": dataclasses.asdict(criteria),
         }
 
+    def _own(self, task_id, candidate_id):
+        if task_id:
+            self._candidate_owners[candidate_id] = task_id
+
+    def create_candidate(self, task_id, program, claim, *, candidate_name=None):
+        """Open a candidate branch of an existing Program in the slot's holdout lineage."""
+        spec = self._program(program, allow_inactive=True)
+        candidate = self.lifecycle.create_candidate(
+            spec.program_id, claim, candidate_name=candidate_name
+        )
+        self._own(task_id, candidate.id)
+        self.datasets.inherit_exposure(self._slot(spec.program_id), candidate.id)
+        return dataclasses.asdict(candidate)
+
+    async def develop_candidate(self, task_id, candidate_id, instruction):
+        """Let the coding provider change the candidate checkout, then commit and retain it."""
+        candidate = self.lifecycle.candidate(candidate_id)
+        if candidate.status != "active":
+            raise LifecycleError("Candidate is not open; refresh it first")
+        workspace = Path(candidate.workspace)
+        node = self.graph.get(int(candidate.program_id))
+        binding = self._binding(candidate.program_id)
+        evaluation = None
+        if binding:
+            dataset = self.datasets.get(binding["dataset_revision"])
+            # The contract of the protected evaluation, never its cases or labels.
+            evaluation = {
+                "rule": dataset.cases[0].evaluation_rule,
+                "metrics": list(dataset.target_metrics or ("accuracy",)),
+                "input_keys": sorted({key for case in dataset.cases for key in case.inputs}),
+            }
+        result = await self._invoke(
+            task_id,
+            LLMRequest(
+                json.dumps(
+                    {
+                        "instruction": instruction,
+                        "candidate": dataclasses.asdict(candidate),
+                        "program": json_value(node),
+                        "evaluation": evaluation,
+                    },
+                    ensure_ascii=False,
+                ),
+                workspace,
+                mode="exec",
+                native_coding=True,
+                instructions=candidate_instructions(node.properties, evaluation),
+                timeout_seconds=self._remaining_seconds(self.tasks.get(task_id)),
+            ),
+        )
+        if git(workspace, "status", "--porcelain"):
+            git(workspace, "add", "--all")
+            git(workspace, "commit", "-m", candidate.change_claim)
+        self.lifecycle.retain_candidate(candidate.id)
+        return {
+            "candidate": candidate.id,
+            "revision": git(workspace, "rev-parse", "HEAD"),
+            "result": result["text"],
+        }
+
+    def _holdout(self, candidate_id, revision):
+        """Require independence, except for an unchanged refreshed change meeting its holdout again."""
+        if self.lifecycle.recertifiable(candidate_id, revision):
+            dataset = self.datasets.get(revision)
+            validate_holdout(dataset)
+            return dataset
+        return self.datasets.require_holdout(candidate_id, revision)
+
     async def evaluate_candidate(self, candidate_id: str, *, task_id: str):
-        """Compare a candidate with its baseline using the Program's protected independent dataset."""
+        """Compare a candidate with its baseline on the slot's protected independent dataset.
+
+        A meta Program's candidate is also compared on the improvement history;
+        those metrics carry a history: prefix and feed the fixed meta guardrail.
+        """
         from ..core.programs.experiments import evaluate_pair
 
         candidate = self.lifecycle.candidate(candidate_id)
-        binding = self._evaluation_bindings.get(str(candidate.program_id))
+        binding = self._binding(candidate.program_id)
         if binding is None:
             return {
                 "status": "unresolved",
                 "reason": "No independent evaluation dataset is bound to this Program",
             }
-        dataset = self.datasets.require_holdout(candidate_id, binding["dataset_revision"])
+        datasets = [self._holdout(candidate_id, binding["dataset_revision"])]
+        if self._is_meta(candidate.program_id):
+            datasets.append(self._holdout(candidate_id, binding["history_dataset_revision"]))
         program = self._program(candidate.program_id, allow_inactive=True)
 
-        async def evaluate(branch, revision):
-            async def model_call(payload, context):
-                if payload.get("tools") and not callable(payload.get("_tool_handler")):
-                    raise PermissionError("Evaluation tools require a scoped runtime handler")
-                profile_name = payload.get("profile")
-                if profile_name not in {None, "remember"}:
-                    raise ValueError("Unknown model profile")
-                profile = getattr(self.semantic_config, profile_name) if profile_name else None
-                return await self._invoke(
-                    task_id,
-                    LLMRequest(
-                        payload["prompt"],
-                        context.workspace,
-                        model=profile.model if profile else None,
-                        effort=profile.effort if profile else None,
-                        instructions=payload.get("instructions", ""),
-                        mode=payload.get("mode", "model"),
-                        tools=tuple(ToolDefinition(**tool) for tool in payload.get("tools", [])),
-                        output_schema=payload.get("output_schema"),
-                        timeout_seconds=self._remaining_seconds(self.tasks.get(task_id)),
-                    ),
-                    tool_handler=payload.get("_tool_handler"),
-                )
-
-            experiment = await evaluate_pair(
-                branch,
-                revision,
-                program,
-                dataset,
-                self.state_dir / "evaluations",
-                self.repository,
-                self.graph,
-                self.memory,
-                self.learning,
-                self._program,
-                runtime_factory=self._runtime_factory,
-                model_call=model_call,
-                semantic_config=self.semantic_config,
-                observation_ids=frozenset(self._observations),
-                beliefs=self.beliefs,
-                attribution=self.attribution,
-                evaluations=self.evaluations,
-                protected_nodes=frozenset(self._protected_nodes),
-                timeout=self._remaining_seconds(self.tasks.get(task_id)),
+        async def model_call(payload, context):
+            if payload.get("tools") and not callable(payload.get("_tool_handler")):
+                raise PermissionError("Evaluation tools require a scoped runtime handler")
+            profile_name = payload.get("profile")
+            if profile_name not in {None, "remember"}:
+                raise ValueError("Unknown model profile")
+            profile = getattr(self.semantic_config, profile_name) if profile_name else None
+            return await self._invoke(
+                task_id,
+                LLMRequest(
+                    payload["prompt"],
+                    context.workspace,
+                    model=profile.model if profile else None,
+                    effort=profile.effort if profile else None,
+                    instructions=payload.get("instructions", ""),
+                    mode=payload.get("mode", "model"),
+                    tools=tuple(ToolDefinition(**tool) for tool in payload.get("tools", [])),
+                    output_schema=payload.get("output_schema"),
+                    timeout_seconds=self._remaining_seconds(self.tasks.get(task_id)),
+                ),
+                tool_handler=payload.get("_tool_handler"),
             )
+
+        async def evaluate(branch, revision):
+            reports, traces = [], []
+            for dataset in datasets:
+                experiment = await evaluate_pair(
+                    branch,
+                    revision,
+                    program,
+                    dataset,
+                    self.state_dir / "evaluations",
+                    self.repository,
+                    self.graph,
+                    self.memory,
+                    self.learning,
+                    self._program,
+                    runtime_factory=self._runtime_factory,
+                    model_call=model_call,
+                    semantic_config=self.semantic_config,
+                    observation_ids=frozenset(self._observations),
+                    beliefs=self.beliefs,
+                    attribution=self.attribution,
+                    evaluations=self.evaluations,
+                    protected_nodes=frozenset(self._protected_nodes),
+                    sealed=frozenset(self.memory.sealed),
+                    timeout=self._remaining_seconds(self.tasks.get(task_id)),
+                )
+                reports.append(experiment.report)
+                traces.extend(experiment.traces)
             trace_run = self.memory.start_run(
                 "CandidateEvaluation", revision, {"candidate": branch.id}
             )
             event = self.memory.record(
                 trace_run,
                 "evaluation",
-                output={"traces": experiment.traces, "report": json_value(experiment.report)},
+                output={"traces": traces, "reports": [json_value(item) for item in reports]},
             )
             self.memory.retain(event.id, "evaluation:" + branch.id)
             self.memory.finish_run(trace_run)
-            return dataclasses.replace(experiment.report, trace_ids=(str(event.id),))
+            report = reports[0]
+            if len(reports) > 1:
+                history = reports[1]
+                report = dataclasses.replace(
+                    report,
+                    checks={**report.checks, "improvement_history": history.checks["contracts"]},
+                    metrics={
+                        **report.metrics,
+                        **{"history:" + key: value for key, value in history.metrics.items()},
+                    },
+                    baseline_metrics=None
+                    if report.baseline_metrics is None
+                    else {
+                        **report.baseline_metrics,
+                        **{
+                            "history:" + key: value
+                            for key, value in (history.baseline_metrics or {}).items()
+                        },
+                    },
+                    source_ids=tuple(sorted({*report.source_ids, *history.source_ids})),
+                )
+            return dataclasses.replace(report, trace_ids=(str(event.id),))
 
         try:
             result = await self.lifecycle.evaluate(candidate_id, evaluate)
-            return {"status": "evaluated", **dataclasses.asdict(result)}
+            receipt = self.lifecycle.receipt(candidate_id)
+            return {
+                "status": "evaluated",
+                **dataclasses.asdict(result),
+                "verification": receipt["verification"],
+            }
         finally:
-            self.datasets.mark_exposed(candidate_id, dataset.revision)
-            self.datasets.mark_exposed("program:" + str(candidate.program_id), dataset.revision)
+            for dataset in datasets:
+                self.datasets.mark_exposed(candidate_id, dataset.revision)
+                self.datasets.mark_exposed(self._slot(candidate.program_id), dataset.revision)
+
+    def compare_candidates(self, candidate_ids):
+        """Rank evaluated candidates of one slot on its fixed target metric and holdout."""
+        rows, keys = [], set()
+        for identity in dict.fromkeys(candidate_ids):
+            candidate = self.lifecycle.candidate(identity)
+            receipt = self.lifecycle.receipt(identity)
+            if receipt is None:
+                raise ValueError(f"Candidate {identity} has no evaluation of its current revision")
+            keys.add((self._slot(candidate.program_id), receipt["report"]["dataset_revision"]))
+            rows.append((candidate, receipt))
+        if len(keys) != 1:
+            raise ValueError("Compare only candidates of one slot evaluated on the same holdout")
+        criteria = self._acceptance_criteria(rows[0][0])
+        metric, sign = criteria.target_metric, 1 if criteria.direction == "maximize" else -1
+
+        def score(row):
+            value = row[1]["report"]["metrics"].get(metric)
+            return float("-inf") if value is None else sign * value
+
+        ranking = [
+            {
+                "candidate": candidate.id,
+                "program": candidate.program_id,
+                "status": candidate.status,
+                "base_revision": candidate.base_revision,
+                "metrics": receipt["report"]["metrics"],
+                "baseline_metrics": receipt["report"]["baseline_metrics"],
+                "verification": receipt["verification"],
+            }
+            for candidate, receipt in sorted(rows, key=score, reverse=True)
+        ]
+        return {
+            "dataset_revision": next(iter(keys))[1],
+            "target_metric": metric,
+            "direction": criteria.direction,
+            "ranking": ranking,
+        }
+
+    def refresh_candidate(self, task_id, candidate_id):
+        """Reopen a paused or stale candidate on the current main for further work or evaluation."""
+        candidate = self.lifecycle.refresh_candidate(candidate_id)
+        self._own(task_id, candidate.id)
+        return dataclasses.asdict(candidate)
+
+    def _dominating_sibling(self, candidate):
+        """Find an undecided verified sibling that beats the candidate on the same holdout."""
+        receipt = self.lifecycle.receipt(candidate.id)
+        if receipt is None:
+            return None
+        criteria = self._acceptance_criteria(candidate)
+        metric, sign = criteria.target_metric, 1 if criteria.direction == "maximize" else -1
+        own = receipt["report"]["metrics"].get(metric)
+        if metric is None or own is None:
+            return None
+        slot = self._slot(candidate.program_id)
+        for sibling in self.lifecycle.branches():
+            other = self.lifecycle.receipt(sibling.id)
+            if (
+                sibling.id == candidate.id
+                or sibling.status not in {"active", "paused"}
+                or other is None
+                or self._slot(sibling.program_id) != slot
+                or other["report"]["dataset_revision"] != receipt["report"]["dataset_revision"]
+                or other["verification"]["status"] != "verified"
+            ):
+                continue
+            value = other["report"]["metrics"].get(metric)
+            if value is not None and sign * (value - own) > 0:
+                return sibling.id
+        return None
+
+    async def choose_candidate(self, task_id, candidate_id, decision, reason):
+        """Record an EvaluationChoice; Core checks it against the candidate kind and its siblings."""
+        candidate = self.lifecycle.candidate(candidate_id)
+        node = self.graph.get(int(candidate.program_id))
+        holds_slot = program_active(node)
+        binding = self._binding(candidate.program_id)
+        if decision in ACTIVATING:
+            better = self._dominating_sibling(candidate)
+            if better is not None:
+                raise LifecycleError(
+                    f"Verified candidate {better} is better on the same holdout; "
+                    "choose it, or reject or archive it first"
+                )
+        revision = await self.lifecycle.choose(
+            candidate_id,
+            decision,
+            reason=reason,
+            expected_dataset_revision=binding["dataset_revision"] if binding else None,
+            holds_slot=holds_slot,
+        )
+        status = {"reject_program": "rejected", "archive_program": "archived"}.get(decision)
+        if status and not holds_slot:
+            ref = self._lifecycle_event(decision, {"program": node.id, "reason": reason})
+            self.graph.apply(
+                GraphDelta(
+                    updates=(
+                        NodeUpdate(
+                            node.id, {"properties": {**node.properties, "lifecycle_status": status}}
+                        ),
+                    )
+                ),
+                provenance=ref,
+            )
+            self.memory.retain(ref, "graph:" + str(node.id))
+        return {"revision": revision, "decision": decision}
+
+    def derive_holdout(self, program):
+        """Extend a slot's holdout with outcomes of its live runs that no model has seen.
+
+        An outcome is an observation recorded with outcome_of and no task. It is
+        eligible only while it was never surfaced and nothing else uses it. Core
+        seals eligible outcomes, keeps the bound cases the slot has not yet seen,
+        and rebinds the slot under the same criteria. Only counts are returned.
+        """
+        spec = self._program(program, allow_inactive=True)
+        slot = self._slot(spec.program_id)
+        binding = self._evaluation_bindings.get(slot)
+        if binding is None:
+            raise ValueError("Bind a developer holdout first; derived cases share its criteria")
+        base = self.datasets.get(binding["dataset_revision"])
+        rule = base.cases[0].evaluation_rule
+        members = {
+            node.id for node in self.graph.nodes(kind="program") if self._slot(node.id) == slot
+        }
+        runs = {
+            run.id: run
+            for run in self.memory.runs
+            if run.program in members and run.run_mode == "live" and run.status == "completed"
+        }
+        known = {case.id for case in base.cases}
+        derived, excluded = [], 0
+        for event in self.memory.events:
+            arguments = event.arguments
+            if (
+                event.id not in self._observations
+                or not isinstance(arguments, Mapping)
+                or arguments.get("outcome_of") not in runs
+                or f"experience:{event.id}" in known
+            ):
+                continue
+            uses = self.memory.retention_reasons(event.id)
+            if (
+                event.id in self._surfaced
+                or self.memory.get_run(event.program_run).arguments.get("task_id") is not None
+                or any(not reason.startswith("observation:") for reason in uses)
+                or len(self.memory.dependents_of(TraceOutputRef(event.id))) > 1
+            ):
+                excluded += 1
+                continue
+            derived.append(
+                EvaluationCase(
+                    f"experience:{event.id}",
+                    thaw_json(runs[arguments["outcome_of"]].arguments),
+                    json_value(event.output),
+                    rule,
+                    (f"trace:{event.id}",),
+                )
+            )
+        if not derived:
+            return {"dataset_revision": base.revision, "derived": 0, "excluded": excluded}
+        self.memory.seal(int(case.id.removeprefix("experience:")) for case in derived)
+        unseen = self.datasets.independent_cases(slot, base.revision)
+        dataset = self.datasets.create(
+            base.name,
+            (*unseen, *derived),
+            dataset_id=base.dataset_id,
+            target_metrics=base.target_metrics,
+            description=base.description,
+        )
+        self._evaluation_bindings[slot] = {**binding, "dataset_revision": dataset.revision}
+        return {"dataset_revision": dataset.revision, "derived": len(derived), "excluded": excluded}

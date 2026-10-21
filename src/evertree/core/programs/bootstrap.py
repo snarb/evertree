@@ -46,6 +46,7 @@ PROCESS_GROUPS = {
             "credit_assignment",
             "update_planning",
             "learning_coordinator",
+            "program_improvement",
         ),
     ),
 }
@@ -228,19 +229,25 @@ def bootstrap_catalog() -> tuple[dict, ...]:
             "exec",
             "Apply selected evaluated experience through the atomic standard learning pipeline.",
         ),
+        (
+            "ProgramImprovement",
+            "program_improvement",
+            "exec",
+            "Program lifecycle management. Arguments: program (target Program ID), objective (the improvement to achieve), optional max_candidates (default 2). Plans candidates, develops and evaluates them, and records EvaluationChoices.",
+        ),
     )
     parents = {slug: group for group, (_, slugs) in PROCESS_GROUPS.items() for slug in slugs}
     directories = {slug: f"{group}/{slug}" for slug, group in parents.items()}
     for slug, parent in SUBPROCESSES.items():
         directories[slug] = f"{directories[parent]}/{slug}"
+    # Meta Programs build, train or manage other learnable mechanisms.
     meta = {
-        "planning",
-        "cognition_control",
         "reflection",
         "skill_development",
         "credit_assignment",
         "update_planning",
         "learning_coordinator",
+        "program_improvement",
     }
     return tuple(
         {
@@ -292,7 +299,7 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
                 "process": process.id,
                 "slug": descriptor["slug"],
                 "entrypoint": descriptor["entrypoint"],
-                "active": True,
+                "lifecycle_status": "active",
             },
         )
         process = dataclasses.replace(

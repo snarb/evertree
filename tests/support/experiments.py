@@ -87,7 +87,7 @@ def register_integration(graph, revision):
                     properties={
                         "git_path": INTEGRATION_PATH,
                         "slug": "knowledge_integration",
-                        "active": True,
+                        "lifecycle_status": "active",
                     },
                 ),
             )

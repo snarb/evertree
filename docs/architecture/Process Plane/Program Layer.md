@@ -43,8 +43,8 @@ Program: Concept {
   active_branches?: <ProgramBranch[]>
     "Live change branches for this program, pending an EvaluationChoice."
 
-  lifecycle_status: "idea" | "initial_code_version" | "verified_by_cognition" | "active" | "candidate" | "rejected" | "archived"
-    "The program's current lifecycle state."
+  lifecycle_status: "candidate" | "active" | "rejected" | "archived"
+    "candidate: proposed, or displaced by an activated alternative; active: holds its process slot."
 
   belief_data?: <BeliefData>
     "Computed belief view for the active program revision."
@@ -169,7 +169,7 @@ Program contracts describe what a specific implementation actually reads, predic
 
 **`ProgramDesign`** is a typed description of a program's design decisions. Required fields help an LLM explicitly consider material questions when creating or revising code. Each `Program` uses an appropriate profile; internal helper functions do not need separate descriptions.
 
-The profile and completed `design` object are stored with the code and apply to `(Program, program_revision)`. They are available to the generator and reviewer before the program runs. These are version metadata; a separate graph identity and retransmission on every call are unnecessary.
+The profile and completed `design` object are stored with the code and apply to `(Program, program_revision)`: the Program's entry module declares a module-level literal `DESIGN = {...}`, which Core reads from source without importing it. They are available to the generator and reviewer before the program runs. These are version metadata; a separate graph identity and retransmission on every call are unnecessary.
 
 ```python
 from pydantic import BaseModel, ConfigDict, Field
@@ -212,7 +212,7 @@ class PolicyDesign(ProgramDesign):
 
 Fields have no default values. Each answer explicitly describes a local mechanism, delegation to a named responsible program, or a justified statement that the field does not apply. These cases may be combined. `adaptation` does not require a separate mode-change detector: reconsideration may be triggered by environmental events, Evaluation results, or control-program rules.
 
-When a program is generated and reviewed, the LLM receives the schema and its `description` fields, the completed `design`, and the implementation. Pydantic checks that answers are present and correctly shaped; [[Program Lifecycle and Evolution|Program Lifecycle]] checks their substance and correspondence to the code, including early branching and the actual learning path. A nonempty string alone does not prove that a mechanism works.
+Candidate validation requires a valid `PolicyDesign` when a candidate changes the entry module of a Program with the `meta` role or of a slot evaluated with the `policy` rule. Other Programs may declare a `ProgramDesign` but are not yet required to. When a program is generated and reviewed, the LLM receives the schema and its `description` fields, the completed `design`, and the implementation. Pydantic checks that answers are present and correctly shaped; [[Program Lifecycle and Evolution|Program Lifecycle]] checks their substance and correspondence to the code, including early branching and the actual learning path. A nonempty string alone does not prove that a mechanism works.
 
 The description refers to existing [[Cognition and Attention#Goal, Task, and Task Specification|task goals, constraints, and budgets]], contracts, and subprograms without redefining them. Parameters and references used by runtime belong in the typed executable interface; `design` text explains the decision. A docstring may add explanation without duplicating these fields. [[#Program Input Requirements|`Program.requirements`]] retains its separate role in input preparation.
 
@@ -618,7 +618,7 @@ The material is retained so that different representations can be prepared for s
 
 #### Typed Core API
 
-Programs and shared helpers reach Core and the outside world through typed functions: `evertree.core.<domain>.api` (`semantics`, `graph`, `memory`, `learning`, `evaluation`) for Core operations, and `evertree.core.runtime.api` for boundaries: `call_program`, `llm`, `llm_with_tools`, `next_observation`, `list_actions`, `take_action` and `checkpoint`. Each function takes the `ProgramContext` first. Program code only passes `ctx` on; candidate validation rejects any `ctx` method call in `processes` and `common`.
+Programs and shared helpers reach Core and the outside world through typed functions: `evertree.core.<domain>.api` (`semantics`, `graph`, `memory`, `learning`, `evaluation`) for Core operations, and `evertree.core.runtime.api` for boundaries: `call_program`, `llm`, `llm_with_tools`, `next_observation`, `list_actions`, `take_action` and `checkpoint`. `evertree.core.policy.api` builds, checks and samples [[Action Selection and Planning#Semantic Types for Arguments and Results|action distributions]]. `evertree.core.programs.api` is the lifecycle boundary for meta Programs (see [[Program Lifecycle and Evolution#Meta-Program Lifecycle Safety]]). Each function takes the `ProgramContext` first. Program code only passes `ctx` on; candidate validation rejects any `ctx` method call in `processes` and `common`. Candidate unit tests can import `evertree.core.contracts` and the policy and programs API wrappers, which only forward to `ctx`, so a test supplies its own `ctx` double; `core.runtime` and the rest of Core stay outside the test environment.
 
 The durability contract for Program authors: **write ordinary async Python.** Results of Core writes, LLM calls, external actions, observation waits and child Program calls are saved; after a worker restart they are returned from the journal and local computation runs again. Cheap, repeatable Core reads (graph and memory reads, semantic search channels, update planning, `checkpoint`) are not journaled: recovery runs them again, so they may return newer data and appear again in the Core trace. Code must therefore reach the same calls in the same order from the same inputs: do not branch on wall-clock time, randomness or other unsaved external state. `take_action` derives its idempotency key from the action's order in the run unless one is given. Long pure computation is not checkpointed by time; `checkpoint` only gives Core a point to pause for backup or stop a cancelled run.
 

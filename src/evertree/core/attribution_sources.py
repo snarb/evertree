@@ -286,7 +286,7 @@ def prepare_program_read(
     if (
         program.kind != "program"
         or program.properties.get("role") != "model"
-        or program.properties.get("active", True) is not True
+        or program.properties.get("lifecycle_status", "active") != "active"
     ):
         return UNKNOWN
     return {

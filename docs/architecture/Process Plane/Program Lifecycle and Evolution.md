@@ -250,6 +250,17 @@ archive_program
 
 Active process slots (`ProcessConcept.active_model` and `ProcessConcept.active_exec`) are updated only through `EvaluationChoice`.
 
+Core decides which decisions apply from the candidate's kind; the chooser cannot pick the other vocabulary:
+
+| Candidate | Activate | Keep for more evidence | Refuse | Retire |
+|---|---|---|---|---|
+| Branch of the slot's active Program | `merge_branch` | `continue_branch` | `reject_branch` | `archive_branch` |
+| New Program, or alternative of the active one | `activate_program` | `keep_alternatives` | `reject_program` | `archive_program` |
+
+`create_new_program` is not a recorded decision: the chooser proposes the new Program, which then starts its own candidate. Both activating decisions pass the same fixed gates: a verified receipt for the exact committed revision, unchanged criteria and holdout, and `main` still at the candidate's base. Rejecting or archiving a new or alternative Program also sets its `lifecycle_status`.
+
+Competing candidates of one slot meet the same holdout. A holdout that an evaluation has shown counts as exposed to the slot, and candidates opened afterwards inherit that exposure, so competitors are opened before any of them is evaluated. `compare_candidates` ranks evaluated candidates of one slot on the slot's target metric. Core refuses to activate a candidate while an undecided verified sibling is strictly better on the same holdout; ties are allowed.
+
 #### Operational Flows
 
 Improving the current program:
@@ -272,14 +283,18 @@ Evaluating an alternative program:
 create new Program
 → create PROGRAM_FOR_PROCESS(new_program, process)
 → Program.alternative_to = current active Program
-→ write code in its own git_path
-→ run comparable Evaluation
+→ write code on its own branch at the slot's git_path
+→ run comparable Evaluation on the slot's holdout
 → compare EvaluationRuns
 → activate if better
 → reject or keep as candidate if support is insufficient
 ```
 
+An alternative shares the slot's `git_path` and keeps its code on its own branch until activation (see [[#Repository Organization]]). The baseline of its Evaluation is the slot's active code at the candidate's base. `activate_program` merges the alternative into `main`, points the slot at it and returns the displaced Program to `lifecycle_status="candidate"` with its last revision, so a later choice can reactivate it.
+
 The current active Program remains active until `EvaluationChoice`. A candidate Program or ProgramBranch does not replace the active slot automatically.
+
+When `main` moves while a candidate is undecided (another slot's candidate merged, for example), the candidate's base is stale and activation is refused. `refresh_candidate` replays its committed change onto the current `main` as a patch, never a rebase, keeping its identity and holdout lineage. A refreshed candidate is evaluated again. It may meet the holdout it has already seen only if its change is unchanged: the same files with the same pre- and post-image contents. Any other change needs a holdout it has not seen. A patch that no longer applies leaves the candidate paused.
 
 #### Meta-Program Lifecycle Safety
 
@@ -300,6 +315,19 @@ Meta-programs affect many future decisions and may change the mechanisms used fo
 ```
 
 For permitted changes to meta mechanisms, strong evidence is first required that the new version improves lifecycle quality, cost, stability, or safety. Accumulating such evidence does not remove the MVP restriction on changing the final review and acceptance of improvements.
+
+Core enforces this minimum for a candidate of a Program with the `meta` role:
+
+```text
+- the slot binding also names a history dataset of past lifecycle situations,
+  and both datasets have at least META_MIN_CASES cases;
+- the candidate runs on both; the history metrics carry a history: prefix;
+- required check improvement_history: the candidate meets its contracts on the history;
+- guardrail history:<target metric>: no regression against the active version;
+- the target metric must still improve strictly over the baseline.
+```
+
+A meta Program drives other Programs' lifecycles through the typed `evertree.core.programs.api` (`program.*` operations). They are available only to an `exec` Program with the `meta` role, only in live runs, and with the same rules as the conscious agent's tools. A meta Program cannot manage its own candidates or derive its own holdout, and no operation binds or changes acceptance criteria. In Evaluation, its `program.*` calls are answered from a recorded situation (`lifecycle_replay`); see [[Program Evaluation and Testing#Evaluation Rules]].
 
 Modeling self-improvement does not by itself make a `Program` meta. For example:
 
@@ -657,7 +685,9 @@ ProgramBranch: Node {
 
   source_memory?: <MemoryFact>
 
-  status: "active" | "merged" | "rejected" | "archived"
+  status: "active" | "paused" | "merged" | "rejected" | "archived"
+    # active: its workspace is open; paused: undecided, kept as a branch after its task ended
+  refreshed_from?: <commit>  # the revision replayed onto a newer main
 
   created_at: <datetime>
   closed_at?: <datetime>
@@ -675,7 +705,7 @@ refactor/negotiation_state_tracking
 ---
 ### Active Code
 
-The active version of a program is always read from `main`. Once a branch passes verification successfully, merge it into `main`; it then becomes active automatically.
+The active version of a program is always read from `main`. Code reaches `main` only through an activating `EvaluationChoice` (`merge_branch` or `activate_program`) after the fixed gates; passing verification alone activates nothing.
 
 ---
 ### Repository Organization

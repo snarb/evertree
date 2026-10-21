@@ -243,6 +243,19 @@ Inputs, outcomes, and rules are [[Datasets#Versions and Usage Rules|fixed in the
 
 A metric defines how something is measured; a channel defines what a signal means. `weight` is set by [[Datasets#Versions and Usage Rules|weighting rules]] and does not automatically represent case frequency or importance.
 
+#### Evaluation Rules
+
+One protected holdout uses one rule; the rule fixes how hidden outcomes judge a result and which metrics exist:
+
+| Rule | Hidden outcome | Metrics |
+|---|---|---|
+| `exact` | the expected result | `accuracy` |
+| `prediction` | the observed value | `brier`, `log_loss`, `squared_error`/`mse`, `absolute_error`/`mae`, `residual`, `exact_match` |
+| `policy` | `reference` action, `utilities` table `[[action, utility], ...]`, optional `allowed` | `action_log_loss`, `reference_probability`, `expected_utility` |
+| `lifecycle_replay` | a recorded lifecycle situation: responses per `program.*` operation and the expected decision per candidate | `accuracy` |
+
+Under `policy`, the result must satisfy the [[Action Selection and Planning#Semantic Types for Arguments and Results|ActionDistribution contract]]. A utility table also bounds the admissible actions, and a violation fails the case's contract check. `action_log_loss` is the proper log score; zero probability on the reference is infinite and blocks acceptance. Under `lifecycle_replay`, a meta Program's `program.*` calls are answered in order from the case, and its `choose_candidate` calls are recorded instead of executed. A call the situation did not record fails the case: the data do not cover that continuation. A failed case leaves its metric unmeasured, so a partial mean never passes acceptance.
+
 #### EvaluationResult
 
 **`EvaluationResult`** is the shared result of evaluating one case or prediction, whether evaluation was run on a saved `EvaluationCase` or after a real-time observation arrived. Fields contain objects under the [[Core data structures#Objects and References|shared object and reference rule]]. The schema describes a payload; when returned from a `Program`, it is in `result` of the shared [[Program Layer#^def-ProgramResult|`ProgramResult`]].
@@ -339,6 +352,18 @@ For example, a past episode in which an engine stalled after water entered it ma
 Case reliability is determined by the quality and applicability of its source evidence through `Belief_data`.
 
 Replay is not required. Replay may independently analyze the same episode and produce a new `EvaluationCase` if a useful evaluation scenario is formulated during analysis.
+
+Core builds holdout cases from a slot's live experience without exposing them (`derive_holdout`):
+
+```text
+live ProgramRun of a Program in the slot (its arguments become the case inputs)
+→ observation recorded by the host with outcome_of=<run> and no task (the hidden outcome)
+→ eligible only if no model or Program has seen it and nothing else uses it
+→ sealed: hidden from retrieval and Program reads, redacted from both evaluation sides
+→ new holdout = bound cases the slot has not seen + derived cases, same criteria
+```
+
+The requester learns only the case counts and the new dataset revision. Core keeps a ledger of the events whose content reached a model or a live Program (retrieval results, resolved references, references in prompts). Outcomes delivered to a task are seen by its consciousness and are never eligible.
 
 #### Goal / Expectation / Reasoning / Imagination Tests
 

@@ -22,6 +22,17 @@ def _key(value) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()[:16]
 
 
+CANDIDATE_TEST_MODULES = (
+    "core/__init__.py",
+    "core/contracts.py",
+    "core/programs/__init__.py",
+    "core/programs/api.py",
+    "core/policy/__init__.py",
+    "core/policy/api.py",
+    "core/policy/contracts.py",
+)
+
+
 def _sources(include_core):
     package_root = Path(__file__).resolve().parents[2]
     if include_core:
@@ -31,10 +42,12 @@ def _sources(include_core):
             if not set(path.relative_to(package_root).parts)
             & {"processes", "common", "__pycache__"}
         }
+    # The public environment (candidate tests, coding tools) gets the Program contracts
+    # and the policy and lifecycle API wrappers. They only forward to ctx, which a test
+    # supplies itself; core.runtime, the lifecycle and the rest of Core stay absent.
     return {
         Path("__init__.py"): b"",
-        Path("core/__init__.py"): b"",
-        Path("core/contracts.py"): (package_root / "core" / "contracts.py").read_bytes(),
+        **{Path(name): (package_root / name).read_bytes() for name in CANDIDATE_TEST_MODULES},
     }
 
 

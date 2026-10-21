@@ -12,6 +12,12 @@ from evertree.core.graph.store import GraphStore
 
 PREFIX = "src/evertree/processes/"
 ROLES = {"_exec": "exec", "_model": "model"}
+LIFECYCLE_STATUSES = ("candidate", "active", "rejected", "archived")
+
+
+def program_active(node) -> bool:
+    """Tell whether a Program node holds its process slot; unlabelled nodes are active seeds."""
+    return node.properties.get("lifecycle_status", "active") == "active"
 
 
 def process_slug(name: str) -> str:
@@ -98,14 +104,22 @@ def validate_process_layout(
         if node.properties.get("process") in own_processes
     ]
     selected = [
-        node
-        for node in programs
-        if node.properties.get("active", True) or node.id == candidate_program_id
+        node for node in programs if program_active(node) or node.id == candidate_program_id
     ]
     if candidate_program_id is not None and candidate_program_id not in {
         node.id for node in selected
     }:
         raise ValueError("Candidate Program must belong to Self/Process")
+    if candidate_program_id is not None:
+        # An alternative candidate takes its slot in the commit being validated.
+        candidate = graph.get(candidate_program_id)
+        slot = (candidate.properties.get("process"), candidate.properties.get("role"))
+        selected = [
+            node
+            for node in selected
+            if node.id == candidate_program_id
+            or (node.properties.get("process"), node.properties.get("role")) != slot
+        ]
     inactive_processes = {node.properties["process"] for node in programs} - {
         node.properties["process"] for node in selected
     }

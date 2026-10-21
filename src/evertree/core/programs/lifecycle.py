@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import asyncio
+import hashlib
 import importlib.util
 import json
 import os
@@ -215,8 +216,26 @@ def initialize_seed_repository(source: Path, destination: Path) -> str:
     return git(destination, "rev-parse", "HEAD")
 
 
+# Activation, pause, rejection and archival per candidate kind. A branch of the
+# slot's active Program merges; a new or alternative Program activates.
+BRANCH_DECISIONS = {
+    "merge_branch": "merged",
+    "continue_branch": "active",
+    "reject_branch": "rejected",
+    "archive_branch": "archived",
+}
+PROGRAM_DECISIONS = {
+    "activate_program": "merged",
+    "keep_alternatives": "active",
+    "reject_program": "rejected",
+    "archive_program": "archived",
+}
+
+
 @dataclass(frozen=True)
 class ProgramBranch:
+    """A candidate change; status is active (open workspace), paused, merged, rejected or archived."""
+
     id: str
     program_id: str | int
     git_ref: str
@@ -224,6 +243,8 @@ class ProgramBranch:
     base_revision: str
     change_claim: str
     status: str = "active"
+    # The revision this candidate was replayed from onto a newer main.
+    refreshed_from: str | None = None
 
 
 @dataclass(frozen=True)
@@ -372,10 +393,84 @@ class ProgramLifecycleRuntime:
                 self.retain_candidate(identity)
                 safe_remove_tree(workspace, self.state_dir / "candidates")
             if candidate["status"] == "active":
-                candidate["status"] = "abandoned"
+                candidate["status"] = "paused"
         if identities is None:
             safe_remove_tree(self.state_dir / "candidates", self.state_dir)
         self._persist()
+
+    def refresh_candidate(self, candidate_id: str) -> ProgramBranch:
+        """Reopen an undecided candidate on the current main by reapplying its committed change.
+
+        The candidate keeps its identity and holdout lineage. Its evaluation receipt
+        is dropped because the evaluated tree no longer matches. A change that no
+        longer applies leaves the candidate paused.
+        """
+        candidate = self.candidate(candidate_id)
+        if candidate.status not in {"active", "paused"}:
+            raise LifecycleError("Only an undecided candidate can be refreshed")
+        workspace = self.state_dir / "candidates" / candidate_id
+        if workspace.exists():
+            if git(workspace, "status", "--porcelain"):
+                raise LifecycleError("Commit all candidate changes before refreshing")
+            self.retain_candidate(candidate_id)
+        revision = git(self.repository, "rev-parse", "refs/heads/" + candidate.git_ref)
+        base = git(self.repository, "rev-parse", "main")
+        # Apply a patch instead of rebasing so no candidate merge driver ever runs.
+        patch = _git(self.repository, "diff", "--binary", candidate.base_revision, revision)
+        fresh = self.state_dir / "candidates" / (candidate_id + ".refresh")
+        safe_remove_tree(fresh, self.state_dir / "candidates")
+        fresh.mkdir(parents=True)
+        try:
+            git(fresh, "init", "-b", "main")
+            git(fresh, "fetch", "--no-tags", str(self.repository), base)
+            git(fresh, "switch", "-c", candidate.git_ref, base)
+            git(fresh, "config", "user.name", "EverTree")
+            git(fresh, "config", "user.email", "evertree@localhost")
+            if patch:
+                (fresh.parent / (candidate_id + ".patch")).write_bytes(patch)
+                try:
+                    git(fresh, "apply", "--index", str(fresh.parent / (candidate_id + ".patch")))
+                finally:
+                    (fresh.parent / (candidate_id + ".patch")).unlink()
+                git(fresh, "commit", "-m", candidate.change_claim)
+        except BaseException:
+            safe_remove_tree(fresh, self.state_dir / "candidates")
+            raise
+        if workspace.exists():
+            safe_remove_tree(workspace, self.state_dir / "candidates")
+        fresh.replace(workspace)
+        record = self._data["branches"][candidate_id]
+        record.update(
+            workspace=str(workspace),
+            base_revision=base,
+            status="active",
+            refreshed_from=revision if revision != candidate.base_revision else None,
+        )
+        self._data["evaluations"].pop(candidate_id, None)
+        self._persist()
+        self.retain_candidate(candidate_id)
+        return self.candidate(candidate_id)
+
+    def change_fingerprint(self, candidate_id: str) -> str:
+        """Identify the committed change by its changed paths and their pre- and post-image blobs.
+
+        A refreshed candidate keeps its fingerprint only if main did not touch
+        the files it changes, so its earlier evaluation still describes this change.
+        """
+        candidate = self.candidate(candidate_id)
+        workspace = Path(candidate.workspace)
+        revision = git(workspace, "rev-parse", "HEAD")
+        raw = git(workspace, "diff", "--raw", "--no-abbrev", candidate.base_revision, revision)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def receipt(self, candidate_id: str) -> dict | None:
+        """Return the stored evaluation report, verification and criteria for a candidate."""
+        receipt = self._data["evaluations"].get(candidate_id)
+        return json.loads(json.dumps(receipt)) if receipt else None
+
+    def branches(self) -> list[ProgramBranch]:
+        """List every recorded candidate."""
+        return [ProgramBranch(**item) for item in self._data["branches"].values()]
 
     def _validate_candidate(self, candidate: ProgramBranch) -> str:
         """Require a changed, clean descendant commit confined to allowed candidate paths and imports."""
@@ -442,8 +537,27 @@ class ProgramLifecycleRuntime:
                 "verification": verification.to_dict(),
                 "criteria": asdict(criteria),
             }
+            self._data.setdefault("certificates", {})[candidate_id] = {
+                "dataset_revision": report.dataset_revision,
+                "fingerprint": self.change_fingerprint(candidate_id),
+            }
             self._persist()
             return report
+
+    def recertifiable(self, candidate_id: str, dataset_revision: str) -> bool:
+        """Whether a refreshed candidate may meet its already seen holdout again.
+
+        Only the unchanged change that was evaluated on that holdout qualifies,
+        so the holdout's exposure taught this lineage nothing new.
+        """
+        candidate = self.candidate(candidate_id)
+        certificate = self._data.get("certificates", {}).get(candidate_id)
+        return bool(
+            candidate.refreshed_from
+            and certificate
+            and certificate["dataset_revision"] == dataset_revision
+            and certificate["fingerprint"] == self.change_fingerprint(candidate_id)
+        )
 
     async def choose(
         self,
@@ -452,27 +566,34 @@ class ProgramLifecycleRuntime:
         *,
         reason: str,
         expected_dataset_revision: str | None = None,
+        holds_slot: bool = True,
     ) -> str | None:
-        """Record an explicit candidate lifecycle choice; only merge_branch activates its code."""
-        if decision not in ("merge_branch", "continue_branch", "reject_branch", "archive_branch"):
-            raise ValueError("Unsupported EvaluationChoice")
+        """Record an explicit EvaluationChoice; only merge_branch or activate_program activates code.
+
+        holds_slot tells whether the candidate's Program is the active Program of
+        its slot. Its branches use branch decisions; a new or alternative Program
+        uses Program decisions.
+        """
+        decisions = BRANCH_DECISIONS if holds_slot else PROGRAM_DECISIONS
+        if decision not in decisions:
+            raise ValueError(
+                "Unsupported EvaluationChoice for this candidate; use one of: "
+                + ", ".join(decisions)
+            )
         if not reason.strip():
             raise ValueError("EvaluationChoice requires a reason")
         async with self._lock:
             candidate = self.candidate(candidate_id)
             if candidate.status != "active":
-                raise LifecycleError("Candidate is no longer active")
+                raise LifecycleError("Candidate is not open; refresh it first")
             self.retain_candidate(candidate_id)
-            if decision != "merge_branch":
-                if decision != "continue_branch":
-                    self._data["branches"][candidate_id]["status"] = (
-                        "rejected" if decision == "reject_branch" else "archived"
-                    )
+            if decisions[decision] != "merged":
+                self._data["branches"][candidate_id]["status"] = decisions[decision]
                 self._data["choices"].append(
                     {"candidate_id": candidate_id, "decision": decision, "reason": reason}
                 )
                 self._persist()
-                if decision != "continue_branch":
+                if decisions[decision] != "active":
                     self.discard_candidates([candidate_id])
                 return None
             revision = self._validate_candidate(candidate)
@@ -508,7 +629,7 @@ class ProgramLifecycleRuntime:
             previous = git(self.repository, "rev-parse", "main")
             if previous != candidate.base_revision:
                 raise LifecycleError(
-                    "Active code changed; rebase and independently reevaluate candidate"
+                    "Active code changed; refresh and independently reevaluate candidate"
                 )
             if git(self.repository, "status", "--porcelain"):
                 raise LifecycleError("Active Program repository is dirty")

@@ -190,6 +190,8 @@ ImprovementOutcomeModel
    └── roles = {model}
 ```
 
+The bootstrap seeds `ProgramImprovement` under `SelfProcess/Learning` with its `exec` Program (graph name `ProgramImprovement.exec`) playing `ProgramLifecycleManagement`. It plans candidates for a target Program, develops and evaluates them, and records EvaluationChoices through `evertree.core.programs.api`.
+
 ### Routing Observations
 
 (def_id:: entity.ProcessRouter)

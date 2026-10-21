@@ -148,7 +148,7 @@ async def run(ctx, subject, property, valid_at, known_at, parameters):
         world.graph.reserve_id(),
         "Mass.model",
         kind="program",
-        properties={"role": "model", "active": True},
+        properties={"role": "model", "lifecycle_status": "active"},
     )
     parent = Node(
         world.graph.reserve_id(), "Property reader", kind="program", properties={"role": "model"}
@@ -267,7 +267,7 @@ def test_historical_bound_program_cannot_borrow_current_executable():
         world.graph.reserve_id(),
         "Mass.model",
         kind="program",
-        properties={"role": "model", "active": True},
+        properties={"role": "model", "lifecycle_status": "active"},
     )
     prop = Node(
         world.graph.reserve_id(),

@@ -218,15 +218,27 @@ class EverTree(
         task_id: str | None = None,
         projections: dict | None = None,
         context: dict | None = None,
+        outcome_of: str | None = None,
     ) -> TraceOutputRef:
-        """Record a host-supplied observation. Provider text cannot call this trust boundary."""
+        """Record a host-supplied observation. Provider text cannot call this trust boundary.
+
+        outcome_of names the ProgramRun (the run_id run_program returned) whose
+        correct result this observation reports. Recorded without a task, no model
+        sees it, so Core may later hold it out as an evaluation outcome.
+        """
         if not source_id:
             raise ValueError("Observation source identity is required")
+        if outcome_of is not None:
+            if outcome_of not in self._run_map:
+                raise ValueError("outcome_of must name a recorded ProgramRun")
+            projection_extra = {"outcome_of": self._run_map[outcome_of]}
+        else:
+            projection_extra = {}
         projection = (
             self.prediction_evaluator().project_observation(value, projections or {}, context)
             if context is not None
             else {}
-        )
+        ) | projection_extra
         if projections and context is None:
             raise ValueError("Semantic observation projections require a prediction context")
         for event in self.memory.events:

@@ -105,6 +105,8 @@ def test_learning_requires_the_same_immutable_evaluation_in_each_environment():
 def test_external_source_names_are_not_implicitly_memory_addresses(tmp_path, monkeypatch):
     app = EverTree(tmp_path, provider=ScriptedProvider([]))
     monkeypatch.setattr(app, "_program", lambda *args, **kwargs: None)
+    monkeypatch.setattr(app, "_is_meta", lambda program: False)
+    monkeypatch.setattr(app, "_slot", lambda program: f"slot:{program}")
     external = EvaluationCase("external", {}, 1, "exact", ("123",))
     dataset = app.datasets.create("external", [external], target_metrics=("accuracy",))
     app.bind_evaluation(1, dataset.revision)
@@ -147,3 +149,51 @@ def test_binding_facts_cannot_bypass_lifecycle_and_mutations_keep_run_mode():
     )
     mutation = next(event for event in operations.memory.events if event.operator == "graph_delta")
     assert operations.memory.get_run(mutation.program_run).run_mode == "evaluation"
+
+
+def test_sealed_outcomes_are_hidden_from_retrieval_and_program_reads():
+    operations = environment()
+    memory = operations.memory
+    run = memory.start_run("Observation", "commit", {"task_id": None})
+    shown = memory.record(run, "observation", arguments={"source_id": "s1"}, output=12.0)
+    hidden = memory.record(run, "observation", arguments={"source_id": "s2"}, output=18.0)
+    memory.finish_run(run)
+    memory.seal([hidden.id])
+    found = {
+        event.id for group in memory.retrieve("observation", limit=10) for event in group.events
+    }
+    assert found == {shown.id}
+    metadata = {"task_id": "t", "program": {"role": "exec", "revision": "commit"}}
+    with pytest.raises(PermissionError, match="hidden evaluation outcome"):
+        operations.execute(
+            "memory.resolve", {"reference": {"event_ref": hidden.id}}, metadata=metadata
+        )
+    assert (
+        operations.execute(
+            "memory.resolve", {"reference": {"event_ref": shown.id}}, metadata=metadata
+        )
+        == 12.0
+    )
+    assert TraceStore.from_snapshot(memory.snapshot()).sealed == {hidden.id}
+
+
+def test_core_samples_only_valid_distributions_and_never_a_zero_choice():
+    operations = environment()
+    metadata = {"task_id": "t", "program": {"role": "exec", "revision": "commit"}}
+    for _ in range(20):
+        sample = operations.execute(
+            "policy.sample",
+            {"distribution": {"choices": [["a", 0.0], ["b", 1.0]]}, "allowed": ["a", "b"]},
+            metadata=metadata,
+        )
+        assert sample == {"candidate": "b", "probability": 1.0}
+    with pytest.raises(ValueError, match="sum to 1"):
+        operations.execute(
+            "policy.sample", {"distribution": {"choices": [["a", 0.4]]}}, metadata=metadata
+        )
+    with pytest.raises(PermissionError):
+        operations.execute(
+            "policy.sample",
+            {"distribution": {"choices": [["a", 1.0]]}},
+            metadata={**metadata, "program": {"role": "model", "revision": "commit"}},
+        )

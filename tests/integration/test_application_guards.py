@@ -131,7 +131,7 @@ async def test_program_proposal_adds_missing_role_without_replacing_process(agen
     props = proposal["program"]["properties"]
     assert props["process"] == process.id
     assert props["git_path"] == "src/evertree/processes/task_management/planning/_model.py"
-    assert props["active"] is False
+    assert props["lifecycle_status"] == "candidate"
     assert agent.graph.ancestors(process.id) == ancestors
     assert agent.graph.get(process.id).properties["active_exec"] == active_exec
     assert agent.graph.get(process.id).properties.get("active_model") is None

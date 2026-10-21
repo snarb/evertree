@@ -95,7 +95,7 @@ def test_model_and_exec_are_distinct_programs_with_one_version_per_role(seed_tre
             "role": "model",
             "roles": ("model",),
             "git_path": path,
-            "active": True,
+            "lifecycle_status": "active",
         },
     )
     graph.apply(
@@ -121,7 +121,7 @@ def test_role_package_allows_helpers_and_inactive_proposal_does_not_require_main
     sources[old.removesuffix(".py") + "/helper.py"] = "def helper(): return 1"
     update(graph, program, git_path=new)
     validate_process_layout(graph, sources, sources.__getitem__)
-    update(graph, program, active=False)
+    update(graph, program, lifecycle_status="candidate")
     for path in list(sources):
         if (
             path.startswith(old.removesuffix(".py") + "/")
@@ -152,7 +152,7 @@ def test_candidate_subtype_keeps_parent_directory_with_inactive_parent_program(s
     graph, sources = seed_tree
     parent = graph.find("Planning")
     parent_program = graph.find("Planning.exec")
-    update(graph, parent_program, active=False)
+    update(graph, parent_program, lifecycle_status="candidate")
     sources.pop(parent_program.properties["git_path"])
     child = Prototype(graph.reserve_id(), "BudgetPlanning", properties={"process": True})
     path = process_directory(graph, parent.id) + "/budget_planning/_exec.py"
@@ -160,7 +160,12 @@ def test_candidate_subtype_keeps_parent_directory_with_inactive_parent_program(s
         graph.reserve_id(),
         "BudgetPlanning.exec",
         kind="program",
-        properties={"process": child.id, "role": "exec", "git_path": path, "active": False},
+        properties={
+            "process": child.id,
+            "role": "exec",
+            "git_path": path,
+            "lifecycle_status": "candidate",
+        },
     )
     graph.apply(
         GraphDelta(
@@ -197,3 +202,37 @@ def test_core_called_program_must_accept_core_api_arguments(seed_tree, signature
     else:
         with pytest.raises(ValueError, match="Core API arguments"):
             validate_process_layout(graph, sources, sources.__getitem__)
+
+
+def test_alternative_candidate_takes_its_slot_only_in_the_validated_commit(seed_tree):
+    graph, sources = seed_tree
+    active = graph.find("Planning.exec")
+    alternative = Node(
+        graph.reserve_id(),
+        "Planning.exec.search",
+        kind="program",
+        properties={
+            **active.properties,
+            "lifecycle_status": "candidate",
+            "alternative_to": active.id,
+        },
+    )
+    graph.apply(
+        GraphDelta(
+            creates=(
+                alternative,
+                graph.new_fact(
+                    "PROGRAM_FOR_PROCESS",
+                    {"program": alternative.id, "process": active.properties["process"]},
+                ),
+            )
+        ),
+        provenance={"test": True},
+    )
+    validate_process_layout(graph, sources, sources.__getitem__)
+    validate_process_layout(
+        graph, sources, sources.__getitem__, candidate_program_id=alternative.id
+    )
+    update(graph, graph.get(alternative.id), lifecycle_status="active")
+    with pytest.raises(ValueError, match="at most one Program per role"):
+        validate_process_layout(graph, sources, sources.__getitem__)

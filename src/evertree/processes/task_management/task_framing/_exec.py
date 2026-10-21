@@ -21,7 +21,10 @@ Task definition
 - constraints: mandatory limits on the result or the way it is produced.
 - preferences: softer priorities among acceptable solutions.
 Preserve explicit requirements from all applicable user messages, including corrections.
-Do not turn an assumption into a requirement. Use empty lists when no additional criteria,
+Do not turn an assumption into a requirement. The filesystem sandbox of a model invocation
+is an execution setting, not a user constraint: EverTree tools such as candidate development
+write in their own authorized checkouts. State a no-write limit only when the user asks for one.
+Use empty lists when no additional criteria,
 constraints or preferences are needed. If the request is ambiguous, choose a first step
 that resolves the ambiguity instead of inventing a requirement.
 

@@ -127,6 +127,7 @@ class TaskExecutionMixin:
                     try:
                         reference = trace_reference(value)
                         self.memory.resolve(reference)
+                        self._surfaced.add(reference.event_ref)
                         ref = json_value(reference)
                     except ValueError:
                         # Context may contain ordinary data that resembles a trace reference.

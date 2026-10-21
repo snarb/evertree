@@ -302,7 +302,7 @@ async def run(value, ctx):
                     2,
                     "RegisteredChild",
                     kind="program",
-                    properties={"git_path": child_path, "active": True},
+                    properties={"git_path": child_path, "lifecycle_status": "active"},
                 ),
             )
         ),
