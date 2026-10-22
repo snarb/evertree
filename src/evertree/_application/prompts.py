@@ -304,7 +304,7 @@ def _all_tools():
         ),
         tool(
             "propose_program",
-            "Propose a missing role for an existing process by name, or create a new process under parent (ID or name; defaults to SelfProcess). Omit parent for existing processes. For an occupied role, set alternative_to to the Program it competes with when the solution principle differs; improve the same principle with create_candidate instead. meta marks an exec Program that manages other Programs' lifecycle. Give candidate_name a specific label of one to three words. Independent evidence is required before activation.",
+            "Propose a missing role for an existing process by name, or create a new process under parent (ID or name; defaults to SelfProcess). Omit parent for existing processes and never pass it together with alternative_to. For an occupied role, set alternative_to to the Program it competes with when the solution principle differs; improve the same principle with create_candidate instead. meta marks an exec Program that manages other Programs' lifecycle. Give candidate_name a specific label of one to three words. Independent evidence is required before activation.",
             {
                 "name": string,
                 "role": {"enum": ["model", "exec"], "type": "string"},
@@ -325,7 +325,7 @@ def _all_tools():
         ),
         tool(
             "evaluate_candidate",
-            "Evaluate a committed candidate against its slot's independently registered held-out dataset.",
+            "Evaluate a committed candidate against its slot's independently registered held-out dataset. A holdout scores a candidate lineage once: a candidate developed after it was evaluated on the holdout, or opened after another candidate was, fails further evaluation on that holdout with 'sources overlap'. To change a candidate after an evaluation, open a new candidate (create_candidate) or extend the holdout with derive_holdout; do not develop and re-evaluate the same one.",
             {"candidate": string},
             ("candidate",),
         ),
@@ -343,7 +343,7 @@ def _all_tools():
         ),
         tool(
             "refresh_candidate",
-            "Reopen a paused candidate, or move a stale one onto the current main by reapplying its change; evaluate it again before choosing.",
+            "Reopen a paused candidate, or move a stale one onto the current main by reapplying its change. Then call evaluate_candidate on it unchanged, without develop_candidate in between: developing a refreshed candidate spends its holdout and the evaluation is refused.",
             {"candidate": string},
             ("candidate",),
         ),
