@@ -132,7 +132,7 @@ Not every `Goal` immediately becomes a `Task`; [[Self#SelfRegulation|`GoalManage
 
 `TaskFraming` is a `SelfRegulation` [[Process Plane/Process Ontology and Semantic Interface#ProcessConcept|`ProcessConcept`]] whose active meta-[[Process Plane/Program Layer#Program|`Program`]] creates and revises a structured task specification from the original request, signal, and available context.
 
-A `Task` already exists for the first call to `TaskFraming`: its initial `objective` may be “interpret the incoming request,” with a reference to the source. A complete subject-matter specification is not required before entry into the attention queue. Initial framing and later refinement are distinguished in [[#^input-reception|input reception]].
+A `Task` already exists for the first call to `TaskFraming`: its initial `objective` may be “interpret the incoming request,” with a reference to the source. A complete subject-matter specification is not required before entry into the attention queue. Initial framing and later refinement are distinguished in [[#^input-reception|input reception]]. Each framing first asks the model Program `TaskOutcome` for the probability that the task will pass independent completion verification, with the number of past outcomes behind it. Framing uses it to size the budget and choose the first step, and Core scores it when the task stops: succeeded is 1, failed is 0, cancelled is no outcome. The same outcome trains TaskOutcome's [[Process Plane/Program Layer#^learning-declaration|declared estimator]] through the standard learning pipeline.
 
 A minimal semantic task specification contains:
 

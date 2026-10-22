@@ -339,7 +339,7 @@ async def run_demo(
         await agent._pump
         before_restart = {
             "events": len(agent.memory.events),
-            "learning": agent.learning.statistics("verified_task_rate"),
+            "learning": agent.learning_statistics("TaskVerified"),
         }
         offline_calls = [] if live else seed_provider.calls + improved_provider.calls
         incident = None if live else improved_provider.observed_incident
@@ -360,7 +360,7 @@ async def run_demo(
         )
         if reused["status"] != "succeeded":
             raise RuntimeError("Restart reuse failed: " + json.dumps(reused))
-        final_learning = restored.learning.statistics("verified_task_rate")
+        final_learning = restored.learning_statistics("TaskVerified")
         if final_learning["observed_count"] < 3:
             raise RuntimeError(
                 "Verified task outcomes were not learned through the standard pipeline"

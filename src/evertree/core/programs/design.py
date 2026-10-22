@@ -1,6 +1,6 @@
 """Design profiles a Program revision declares as a module-level DESIGN literal.
 
-Core reads the literal from source without importing candidate code. Pydantic
+Core reads module literals from source without importing candidate code. Pydantic
 checks presence and shape; reviewers and Evaluation check substance.
 """
 
@@ -44,29 +44,29 @@ def design_profile(*, meta: bool, policy: bool) -> type[ProgramDesign] | None:
     return PolicyDesign if meta or policy else None
 
 
-def read_design(source: str, path: str) -> dict | None:
-    """Extract the module-level DESIGN literal, or None when the module declares none."""
+def read_literal(source: str, path: str, name: str) -> dict | None:
+    """Extract a module-level literal mapping, or None when the module declares none."""
     tree = ast.parse(source, filename=path)
     for node in tree.body:
         if (
             isinstance(node, ast.Assign)
             and len(node.targets) == 1
             and isinstance(node.targets[0], ast.Name)
-            and node.targets[0].id == "DESIGN"
+            and node.targets[0].id == name
         ):
             try:
                 value = ast.literal_eval(node.value)
             except ValueError as error:
-                raise ValueError(f"DESIGN must be a literal mapping: {path}") from error
+                raise ValueError(f"{name} must be a literal mapping: {path}") from error
             if not isinstance(value, dict):
-                raise ValueError(f"DESIGN must be a literal mapping: {path}")
+                raise ValueError(f"{name} must be a literal mapping: {path}")
             return value
     return None
 
 
 def check_design(source: str, path: str, profile: type[ProgramDesign]) -> None:
     """Require a complete design of the profile in the Program's entry module."""
-    design = read_design(source, path)
+    design = read_literal(source, path, "DESIGN")
     if design is None:
         raise ValueError(f"{path} must declare DESIGN answering {profile.__name__}")
     try:

@@ -32,6 +32,8 @@ pytestmark = [
 # A rate-limited model call fails the whole case; it reruns from scratch after a pause.
 ATTEMPTS = 2
 PAUSE_SECONDS = 120
+# A stuck provider or worker must fail its case instead of holding the suite indefinitely.
+CASE_TIMEOUT_SECONDS = 45 * 60
 
 
 @pytest.mark.parametrize("case", CASES, ids=[case["id"] for case in CASES])
@@ -39,7 +41,9 @@ async def test_lifecycle_case(case, tmp_path):
     for attempt in range(1, ATTEMPTS + 1):
         directory = tmp_path / f"attempt-{attempt}"
         try:
-            state = await run_live(case, directory / "home", directory)
+            state = await asyncio.wait_for(
+                run_live(case, directory / "home", directory), CASE_TIMEOUT_SECONDS
+            )
         except RuntimeError as error:
             if "429" not in str(error) or attempt == ATTEMPTS:
                 raise

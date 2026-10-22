@@ -197,6 +197,64 @@ def check(state, expectation) -> str | None:
         ]
         if not errors:
             return f"No {expectation['op']} step failed with {expectation['match']!r}"
+    elif kind == "bindings":
+        owners = {str(identity) for identity in programs(state, expectation["program"])}
+        bound = [
+            binding
+            for binding in state["learning"]["bindings"]
+            if binding["target"] == expectation["target"]
+        ]
+        count = sum(binding["owner"] in owners for binding in bound)
+        if not _within(count, expectation["count"]):
+            return f"{count} {expectation['target']} bindings owned by {sorted(owners)}"
+        if expectation.get("exclusive") and count != len(bound):
+            return f"Other Programs still bind {expectation['target']}: {bound}"
+    elif kind == "estimator":
+        owners = {str(identity) for identity in programs(state, expectation["program"])}
+        prefixes = tuple(f"program:{owner}:{expectation['estimator']}:" for owner in owners)
+        states = {
+            identity: item
+            for identity, item in state["learning"]["states"].items()
+            if identity.startswith(prefixes)
+        }
+        if "states" in expectation and not _within(len(states), expectation["states"]):
+            return f"{len(states)} states of estimator {expectation['estimator']}"
+        bound = [
+            states[binding["state"]]
+            for binding in state["learning"]["bindings"]
+            if binding["state"] in states
+        ]
+        if expectation.get("bound", True) is False:
+            return f"Released estimator still bound: {bound}" if bound else None
+        if len(bound) != 1:
+            return f"Estimator {expectation['estimator']} has {len(bound)} bound states"
+        if not _within(bound[0]["observed_count"], expectation.get("observed", [0, None])):
+            return f"Estimator {expectation['estimator']} observed {bound[0]['observed_count']}"
+    elif kind == "variable":
+        if not any(
+            item["target"] == expectation["target"] for item in state["learning"]["variables"]
+        ):
+            return f"No PROCESS_VARIABLE for {expectation['target']}"
+    elif kind == "predictions":
+        count = sum(
+            item["target"] == expectation["target"] for item in state["learning"]["predictions"]
+        )
+        if not _within(count, expectation["count"]):
+            return f"{count} indexed {expectation['target']} forecasts"
+    elif kind == "outcomes":
+        records = [item for item in state["outcomes"] if item["target"] == expectation["target"]]
+        if any("error" in item for item in records):
+            return f"Outcome learning failed: {records}"
+        evaluated = sum(
+            result["status"] == "evaluated" for item in records for result in item["evaluations"]
+        )
+        applied = sum(
+            receipt.get("status") == "applied" for item in records for receipt in item["receipts"]
+        )
+        if not _within(evaluated, expectation["evaluated"]):
+            return f"{evaluated} evaluated forecasts of {expectation['target']}"
+        if not _within(applied, expectation["applied"]):
+            return f"{applied} applied updates: {[item['receipts'] for item in records]}"
     elif kind == "task":
         if state["task"] is None or state["task"]["status"] not in expectation["statuses"]:
             return f"Task ended as {state['task']}"

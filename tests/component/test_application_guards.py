@@ -162,30 +162,24 @@ async def test_programs_cannot_rewrite_runtime_verification_estimator(agent, met
             metrics=("brier",),
             outcome_ids=("claimed_success",),
             provenance=(str(agent.memory.events[0].id),),
-            subject="verified_task_rate",
+            subject="TaskVerified",
         )
     )
     objective = LearningObjective(("brier",), "minimize")
     signal = LearningSignal(evaluation, objective, {"claimed_success": True})
     data = {
-        "target": "verified_task_rate",
+        "target": "TaskVerified",
         "signal": signal.to_dict(),
         "evaluation_id": evaluation.id,
         "objective": objective.to_dict(),
         "outcome_values": {"claimed_success": True},
     }
     if method == "learning.prepare":
-        data = {"credit": LearningCredit("verified_task_rate", signal).to_dict()}
+        data = {"credit": LearningCredit("TaskVerified", signal).to_dict()}
     before = agent.learning.snapshot()
     with pytest.raises(PermissionError, match="core task outcomes"):
         await agent._gateway(method, runtime_payload(task, **data))
     assert agent.learning.snapshot() == before
-    assert (
-        await agent._gateway(
-            "learning.predict", runtime_payload(task, state_id="verified_task_rate")
-        )
-        == 0.5
-    )
 
 
 async def test_process_prototype_cannot_be_deleted_by_semantic_edit(agent):
@@ -254,7 +248,7 @@ async def test_cancel_joins_blocked_sdk_callback_before_publishing_terminal_stat
         assert task.status == "cancelled"
         assert task.execution_stopped
         assert not app.runtime.is_running()
-        assert app.learning.statistics("verified_task_rate")["observed_count"] == 0
+        assert app.learning_statistics("TaskVerified")["observed_count"] == 0
         assert not app._tool_tasks.get(task.id)
         release.set()
         await asyncio.sleep(0)

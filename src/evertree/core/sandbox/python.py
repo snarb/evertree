@@ -25,6 +25,10 @@ def _key(value) -> str:
 CANDIDATE_TEST_MODULES = (
     "core/__init__.py",
     "core/contracts.py",
+    "core/evaluation/__init__.py",
+    "core/evaluation/api.py",
+    "core/learning/__init__.py",
+    "core/learning/api.py",
     "core/programs/__init__.py",
     "core/programs/api.py",
     "core/policy/__init__.py",

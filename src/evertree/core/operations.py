@@ -15,6 +15,7 @@ from evertree.core.graph.store import GraphStore
 from evertree.core.graph.types import GraphDelta
 from evertree.core.learning.contracts import LearningCredit, LearningObjective, LearningSignal
 from evertree.core.learning.coordinator import LearningCoordinator
+from evertree.core.learning.declaration import LearningDeclaration
 from evertree.core.learning.state import LearningStore
 from evertree.core.learning.updates import CreditAssignmentProgram, UpdatePlanner
 from evertree.core.memory.store import TraceStore
@@ -52,6 +53,8 @@ MODEL_OPERATIONS = frozenset(
         "memory.resolve",
         "belief.read",
         "learning.predict",
+        "learning.estimate",
+        "learning.statistics",
         "learning.prepare",
         "evaluation.predict",
         "attribution.read",
@@ -64,6 +67,10 @@ MODEL_OPERATIONS = frozenset(
         "topology.inspect",
     }
 )
+
+
+# Targets that learn only from outcomes Core itself observes, never from Program reports.
+PROTECTED_TARGETS = frozenset({"TaskVerified"})
 
 
 def authorize_operation(method: str, role: str, *, meta: bool = False) -> None:
@@ -233,9 +240,14 @@ class CoreOperations:
         task_id = metadata["task_id"]
         revision = metadata["program"]["revision"]
         run_mode = metadata.get("run_mode", "live")
-        if method.startswith("learning.") and method != "learning.predict":
+        if method in {
+            "learning.learn",
+            "learning.credit",
+            "learning.coordinate",
+            "learning.prepare",
+        }:
             target = payload.get("target", payload.get("credit", {}).get("target"))
-            if target == "verified_task_rate":
+            if target in PROTECTED_TARGETS:
                 raise PermissionError(
                     "Runtime verification statistics can only learn from core task outcomes"
                 )
@@ -450,6 +462,16 @@ class CoreOperations:
             result = GraphEvidence(self.graph, self.memory, self.beliefs).stale()
         elif method == "learning.predict":
             result = self.learning.predict(payload["state_id"], payload.get("inputs"))
+        elif method in {"learning.estimate", "learning.statistics"}:
+            if metadata.get("learning") is None:
+                raise ValueError("The calling Program declares no LEARNING estimators")
+            declaration = LearningDeclaration.model_validate(metadata["learning"])
+            owner = str(metadata["program"]["program_id"])
+            result = self.learning.estimate(
+                owner, declaration, payload["name"], payload.get("inputs")
+            )
+            if method == "learning.statistics":
+                result = self.learning.statistics(result["state"])
         elif method == "learning.learn":
             result = LearningCoordinator(self.learning).learn(
                 self._signal(payload["signal"]),
@@ -487,6 +509,13 @@ class CoreOperations:
         elif method == "evaluation.save_prediction":
             reference = TraceOutputRef(**payload.pop("reference"))
             result = self.predictions(run_mode).save_prediction(reference=reference, **payload)
+        elif method == "evaluation.index_forecasts":
+            result = self.predictions(run_mode).index_forecasts(
+                metadata.get("children", ()),
+                payload["program"],
+                payload["context"],
+                revision=revision,
+            )
         elif method == "evaluation.match":
             result = self.predictions(run_mode).evaluate(**payload, revision=revision)
         elif method == "evaluation.decide_prediction":

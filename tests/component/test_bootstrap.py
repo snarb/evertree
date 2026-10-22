@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from evertree.core.contracts import ProgramResult, task_outcome_context
 from evertree.core.programs.bootstrap import bootstrap_catalog
 from evertree.processes.memory_processing.experience_compaction._exec import run as compact
 from evertree.processes.task_management.episode_step_selection._exec import (
@@ -16,13 +17,23 @@ from evertree.processes.task_management.task_framing._exec import run as frame
 
 
 class Context:
+    task_id = "task-1"
+
     def __init__(self, answer):
         self.answer = answer
         self.calls = []
+        self.forecasts = []
 
     async def step(self, method, payload):
+        if method == "evaluation.index_forecasts":
+            self.forecasts.append(payload)
+            return []
         self.calls.append((method, payload))
         return {"parsed": self.answer, "text": json.dumps(self.answer)}
+
+    async def call(self, program, arguments):
+        assert program == "task_outcome"
+        return ProgramResult({"verified": 0.25, "observed": 3})
 
 
 def framed(minutes=11, improvement=35):
@@ -67,7 +78,12 @@ async def test_framing_keeps_task_specific_budget_and_uses_only_provider_gateway
     method, payload = context.calls[0]
     assert method == "llm.run"
     assert payload["mode"] == "model"
-    assert json.loads(payload["prompt"])["request"] == "Solve the request"
+    prompt = json.loads(payload["prompt"])
+    assert prompt["request"] == "Solve the request"
+    assert prompt["outcome_forecast"] == {"verified": 0.25, "observed": 3}
+    assert context.forecasts == [
+        {"program": "task_outcome", "context": task_outcome_context("task-1")}
+    ]
     assert payload["output_schema"]["required"]
 
 

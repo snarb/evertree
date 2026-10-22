@@ -316,7 +316,7 @@ Observability is determined relative to a specific process, context, and evaluat
 
 The link does not mean that every process model must return a prediction for the variable.
 
-A quantity selected for prediction serves as a [[Program Layer#^def-PredictionTarget|`PredictionTarget`]] in the model contract. This role does not automatically create a separate Concept or estimator.
+A quantity selected for prediction serves as a [[Program Layer#^def-PredictionTarget|`PredictionTarget`]] in the model contract. This role does not automatically create a separate Concept or estimator. When an activated Program's [[Program Layer#^learning-declaration|`LEARNING` declaration]] names a target Concept, Core creates the Concept if it is missing and records `PROCESS_VARIABLE(process, target)` for the Program's process; this is a modeling claim, not a requirement that every Program of the process predict it.
 
 The boundary between process semantic scope and coverage by a specific implementation is defined in [[#^semantic-program-organization|Semantic Organization]]. Anchored claims separately describe the implementation's internal semantic structure.
 

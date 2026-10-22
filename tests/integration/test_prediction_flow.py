@@ -94,7 +94,7 @@ async def test_application_feedback_value_scoring_and_real_evaluator_child_workf
         )
         credit_id = app.graph.find("CreditAssignment.exec").id
         assert any(run.program == credit_id for run in app.memory.runs)
-        assert app.learning.state("verified_task_rate")["parameters"]["observed_count"] == 0
+        assert app.learning_statistics("TaskVerified")["observed_count"] == 0
         forged = record(
             app.memory,
             "observation",

@@ -5,6 +5,8 @@ from evertree.common.structured import ask
 from evertree.common.task_context import task_context
 from evertree.core.cognition.steps import ConsciousStepSpec
 from evertree.core.cognition.tasks import ExecutionBudget, TaskSpecification
+from evertree.core.contracts import task_outcome_context
+from evertree.core.evaluation.api import predict
 
 INSTRUCTIONS = """You define the task and choose its first working step for an agent.
 
@@ -36,6 +38,14 @@ Budget
 - budget_reason: explain the estimate using the scope, urgency and expected work.
 Choose a task-specific amount. Do not assume a standard duration or improvement share.
 
+Outcome forecast
+- outcome_forecast is TaskOutcome's probability that a task like this passes
+  independent completion verification ("verified") and how many past task outcomes it rests on
+  ("observed"). With few observations it is only a base rate: rely on the request.
+- When the probability is low and well supported, prefer a first step that resolves ambiguity
+  or plans the work, and allow enough budget for checking the result. Do not lower the
+  quality bar or drop requirements because of the forecast.
+
 First step
 Set initial_step.local_goal, expected_result and active_time_minutes. Choose one useful
 increment: a plan, an inspection, an experiment or a complete answer for a simple task.
@@ -45,16 +55,35 @@ Return the JSON object required by the response schema.
 """
 
 
+DESIGN = {
+    "applicability": "Every new or revised user request. The LLM frames the task; when the "
+    "request is ambiguous the first step resolves the ambiguity instead of assuming it away.",
+    "adaptation": "Revisions reframe from the latest inputs. Failed or unverified tasks and "
+    "TaskOutcome's Brier loss are signals for ProgramImprovement to revise the framing policy.",
+    "learning": "The framing policy is fixed code and instructions changed through the lifecycle. "
+    "TaskOutcome learns the verification rate this policy uses from Core-observed task outcomes.",
+    "exploration": "Not used: framing does not try budgets or steps to learn about them. New "
+    "experience comes from ordinary tasks, whose outcomes train TaskOutcome.",
+}
+
+
 async def run(ctx, request: str, context: dict | None = None):
     """Turn a user request into a validated task specification, resource budget and bounded initial step."""
     prepared = task_context(context or {})
     inputs = prepared.get("inputs", [])
     if inputs and inputs[-1] == {"role": "user", "content": request}:
         prepared["inputs"] = inputs[:-1]
+    # Core scores each forecast against the task outcome; the estimator learns it once.
+    forecast = await predict(
+        ctx,
+        "task_outcome",
+        {"request": request, "context": prepared},
+        context=task_outcome_context(ctx.task_id),
+    )
     output = await ask(
         ctx,
         instructions=INSTRUCTIONS,
-        data={"request": request, "context": prepared},
+        data={"request": request, "context": prepared, "outcome_forecast": forecast},
         schema=SCHEMA,
     )
     result = output["result"]

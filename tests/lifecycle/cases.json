@@ -70,6 +70,32 @@
             "instruction": "Implement the claim"
           },
           "files": {
+            "$program": "\"\"\"Total cost of order items after a percentage discount.\"\"\"\n\n\ndef run(items: list, discount_percent: float = 0):\n    subtotal = sum(item[\"price\"] * item[\"quantity\"] for item in items)\n    return round(subtotal * (1 - discount_percent / 100), 2)\n",
+            "tests/test_order_total.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/order_total/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"order_total_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass OrderTotalTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'items': [{'price': 2.5, 'quantity': 4}]}, 10.0), ({'items': [{'price': 10, 'quantity': 1}], 'discount_percent': 10}, 9.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments), expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{order.candidate}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{order.candidate}",
+            "decision": "activate_program",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Mandatory check failed: contracts"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{order.candidate}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
             "$program": "\"\"\"Total cost of order items after a percentage discount.\"\"\"\n\n\ndef run(items: list, discount_percent: float = 0):\n    subtotal = sum(item[\"price\"] * item[\"quantity\"] for item in items)\n    return {\"result\": round(subtotal * (1 - discount_percent / 100), 2), \"feedback\": None}\n",
             "tests/test_order_total.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/order_total/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"order_total_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass OrderTotalTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'items': [{'price': 2.5, 'quantity': 4}]}, 10.0), ({'items': [{'price': 10, 'quantity': 1}], 'discount_percent': 10}, 9.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
           }
@@ -146,6 +172,12 @@
         "kind": "step_error",
         "op": "choose_candidate",
         "match": "Unsupported EvaluationChoice",
+        "mode": "mirror"
+      },
+      {
+        "kind": "step_error",
+        "op": "choose_candidate",
+        "match": "Mandatory check failed: contracts",
         "mode": "mirror"
       }
     ]
@@ -2934,6 +2966,1311 @@
           "km": 5.0
         },
         "result": 3.11
+      }
+    ]
+  },
+  {
+    "id": "PLC-12",
+    "covers": [
+      "new model Program",
+      "LEARNING declaration",
+      "learnable estimator",
+      "Core-created target"
+    ],
+    "title": "Create a forecasting model Program with learnable estimators from scratch",
+    "setup": {
+      "proposals": {
+        "late": {
+          "name": "DeliveryLate",
+          "role": "model",
+          "claim": "Late deliveries are forecast best by a learned rate per carrier",
+          "description": "Probability that a parcel delivery is late, by carrier.",
+          "candidate_name": "carrier rates",
+          "holdout": {
+            "rule": "prediction",
+            "metrics": [
+              "brier"
+            ],
+            "criteria": {
+              "target_metric": "brier",
+              "direction": "minimize",
+              "threshold": 0.2
+            },
+            "cases": [
+              [
+                {
+                  "carrier": "post"
+                },
+                1
+              ],
+              [
+                {
+                  "carrier": "post"
+                },
+                0
+              ],
+              [
+                {
+                  "carrier": "post"
+                },
+                0
+              ],
+              [
+                {
+                  "carrier": "post"
+                },
+                1
+              ],
+              [
+                {
+                  "carrier": "post"
+                },
+                0
+              ],
+              [
+                {
+                  "carrier": "courier"
+                },
+                0
+              ],
+              [
+                {
+                  "carrier": "courier"
+                },
+                0
+              ],
+              [
+                {
+                  "carrier": "courier"
+                },
+                1
+              ],
+              [
+                {
+                  "carrier": "courier"
+                },
+                0
+              ],
+              [
+                {
+                  "carrier": "courier"
+                },
+                0
+              ],
+              [
+                {
+                  "carrier": "courier"
+                },
+                0
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "task": "Program {late} (DeliveryLate) is a new model Program with open candidate {late.candidate} and an independently bound holdout scored by the Brier score. Implement it as a forecaster that learns from experience: declare in a module-level LEARNING literal the target DeliveryLate (form probability, result \"\" because the whole result is the probability, metrics [\"brier\"], with subject, horizon and check) and two beta_bernoulli estimators bound to it: post_rate with prior alpha 4, beta 6 and courier_rate with prior alpha 1, beta 9. run(ctx, carrier) returns {\"result\": await evertree.core.learning.api.estimate(ctx, carrier + \"_rate\"), \"feedback\": None}: estimate returns the probability itself and never trains the estimator. Develop the candidate, evaluate it and activate the Program only if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{late.candidate}",
+            "instruction": "Implement it"
+          },
+          "files": {
+            "$program": "\"\"\"Probability that a parcel delivery is late, from a learned rate per carrier.\"\"\"\n\nfrom evertree.core.learning.api import estimate\n\nLEARNING = {\n    \"targets\": {\n        \"DeliveryLate\": {\n            \"form\": \"probability\",\n            \"result\": \"\",\n            \"subject\": \"the parcel\",\n            \"horizon\": \"until delivery\",\n            \"check\": \"The delivery scan is after the promised date (1) or not (0).\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n    \"estimators\": {\n        \"post_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 4, \"beta\": 6}},\n        \"courier_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 1, \"beta\": 9}},\n    },\n}\n\n\nasync def run(ctx, carrier: str):\n    return {\"result\": await estimate(ctx, carrier + \"_rate\"), \"feedback\": None}\n",
+            "tests/test_delivery_late.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_late/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_late_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\nRATES = {\"post_rate\": 0.4, \"courier_rate\": 0.1, \"late_rate\": 0.25}\n\n\nclass Ctx:\n    async def step(self, method, payload=None, *, journal=True):\n        assert method == \"learning.estimate\"\n        return {\"value\": RATES[payload[\"name\"]], \"state\": \"s\", \"revision\": 0, \"observed_count\": 0}\n\n\nclass DeliveryLateTest(unittest.TestCase):\n    def test_examples(self):\n        for carrier, expected in [('post', 0.4), ('courier', 0.1)]:\n            with self.subTest(carrier=carrier):\n                result = asyncio.run(program.run(Ctx(), carrier=carrier))[\"result\"]\n                self.assertAlmostEqual(result, expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{late.candidate}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{late.candidate}",
+            "decision": "activate_program",
+            "reason": "Protected evaluation decided"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "slot",
+        "program": "late"
+      },
+      {
+        "kind": "status",
+        "program": "late",
+        "lifecycle_status": "active"
+      },
+      {
+        "kind": "choices",
+        "program": "late",
+        "decisions": [
+          "activate_program"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "variable",
+        "target": "DeliveryLate"
+      },
+      {
+        "kind": "bindings",
+        "program": "late",
+        "target": "DeliveryLate",
+        "count": [
+          2,
+          2
+        ],
+        "exclusive": true
+      },
+      {
+        "kind": "estimator",
+        "program": "late",
+        "estimator": "post_rate",
+        "observed": [
+          0,
+          0
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{late}",
+        "arguments": {
+          "carrier": "post"
+        },
+        "range": [
+          0.39,
+          0.41
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{late}",
+        "arguments": {
+          "carrier": "courier"
+        },
+        "range": [
+          0.09,
+          0.11
+        ]
+      }
+    ]
+  },
+  {
+    "id": "PLC-13",
+    "covers": [
+      "exec uses its model",
+      "predict",
+      "PREDICTS index",
+      "outcome trains the used estimator"
+    ],
+    "title": "An exec Program acts on its model's forecast; the outcome trains that estimator",
+    "setup": {
+      "programs": {
+        "late": {
+          "name": "DeliveryLate",
+          "role": "model",
+          "description": "Probability that a parcel delivery is late, by carrier.",
+          "source": "\"\"\"Probability that a parcel delivery is late, from a learned rate per carrier.\"\"\"\n\nfrom evertree.core.learning.api import estimate\n\nLEARNING = {\n    \"targets\": {\n        \"DeliveryLate\": {\n            \"form\": \"probability\",\n            \"result\": \"\",\n            \"subject\": \"the parcel\",\n            \"horizon\": \"until delivery\",\n            \"check\": \"The delivery scan is after the promised date (1) or not (0).\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n    \"estimators\": {\n        \"post_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 4, \"beta\": 6}},\n        \"courier_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 1, \"beta\": 9}},\n    },\n}\n\n\nasync def run(ctx, carrier: str):\n    return {\"result\": await estimate(ctx, carrier + \"_rate\"), \"feedback\": None}\n",
+          "files": {
+            "tests/test_delivery_late.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_late/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_late_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\nRATES = {\"post_rate\": 0.4, \"courier_rate\": 0.1, \"late_rate\": 0.25}\n\n\nclass Ctx:\n    async def step(self, method, payload=None, *, journal=True):\n        assert method == \"learning.estimate\"\n        return {\"value\": RATES[payload[\"name\"]], \"state\": \"s\", \"revision\": 0, \"observed_count\": 0}\n\n\nclass DeliveryLateTest(unittest.TestCase):\n    def test_examples(self):\n        for carrier, expected in [('post', 0.4)]:\n            with self.subTest(carrier=carrier):\n                result = asyncio.run(program.run(Ctx(), carrier=carrier))[\"result\"]\n                self.assertAlmostEqual(result, expected)\n"
+          },
+          "seed": {
+            "rule": "prediction",
+            "metrics": [
+              "brier"
+            ],
+            "criteria": {
+              "target_metric": "brier",
+              "direction": "minimize",
+              "threshold": 0.5
+            },
+            "cases": [
+              [
+                {
+                  "carrier": "post"
+                },
+                1
+              ],
+              [
+                {
+                  "carrier": "post"
+                },
+                0
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "late": {
+          "rule": "prediction",
+          "metrics": [
+            "brier"
+          ],
+          "criteria": {
+            "target_metric": "brier",
+            "direction": "minimize",
+            "threshold": 0.2
+          },
+          "cases": [
+            [
+              {
+                "carrier": "post"
+              },
+              1
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              1
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              1
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ]
+          ]
+        }
+      },
+      "proposals": {
+        "notice": {
+          "name": "DeliveryNotice",
+          "role": "exec",
+          "claim": "Customers should be warned when DeliveryLate forecasts a likely delay",
+          "description": "Warn about a parcel whose delivery DeliveryLate forecasts as likely late.",
+          "candidate_name": "late warning",
+          "holdout": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "carrier": "post",
+                  "parcel": "H-1"
+                },
+                "warn"
+              ],
+              [
+                {
+                  "carrier": "courier",
+                  "parcel": "H-2"
+                },
+                "ok"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "task": "Program {notice} (DeliveryNotice) is a new exec Program with open candidate {notice.candidate}. It must use the model Program DeliveryLate (Program {late}, slug \"delivery_late\"): run(ctx, carrier, parcel) gets the late probability with await evertree.core.evaluation.api.predict(ctx, \"delivery_late\", {\"carrier\": carrier}, context={\"process_id\": \"DeliveryLate\", \"subject\": parcel, \"episode\": parcel}), which returns DeliveryLate's result itself (the late probability as a float) and records the forecast, and returns {\"result\": \"warn\", \"feedback\": None} when the probability is above 0.3, otherwise {\"result\": \"ok\", \"feedback\": None}. Develop the candidate, evaluate it and activate the Program only if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{notice.candidate}",
+            "instruction": "Implement it"
+          },
+          "files": {
+            "$program": "\"\"\"Warn about a parcel when its delivery is likely to be late.\"\"\"\n\nfrom evertree.core.evaluation.api import predict\n\n\nasync def run(ctx, carrier: str, parcel: str):\n    late = await predict(\n        ctx,\n        \"delivery_late\",\n        {\"carrier\": carrier},\n        context={\"process_id\": \"DeliveryLate\", \"subject\": parcel, \"episode\": parcel},\n    )\n    return {\"result\": \"warn\" if late > 0.3 else \"ok\", \"feedback\": None}\n",
+            "tests/test_delivery_notice.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_notice/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_notice_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass Result:\n    def __init__(self, value):\n        self.result = value\n\n\nclass Ctx:\n    def __init__(self, late):\n        self.late, self.indexed = late, []\n\n    async def call(self, program, arguments=None):\n        return Result(self.late)\n\n    async def step(self, method, payload=None, *, journal=True):\n        self.indexed.append((method, payload))\n        return []\n\n\nclass DeliveryNoticeTest(unittest.TestCase):\n    def test_warns_only_when_late_is_likely(self):\n        for late, expected in ((0.4, \"warn\"), (0.1, \"ok\")):\n            ctx = Ctx(late)\n            result = asyncio.run(program.run(ctx, carrier=\"post\", parcel=\"X\"))[\"result\"]\n            self.assertEqual(result, expected)\n            self.assertEqual(ctx.indexed[0][0], \"evaluation.index_forecasts\")\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{notice.candidate}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{notice.candidate}",
+            "decision": "activate_program",
+            "reason": "Protected evaluation decided"
+          }
+        }
+      ]
+    },
+    "outcomes": [
+      {
+        "target": "DeliveryLate",
+        "context": {
+          "process_id": "DeliveryLate",
+          "subject": "P-100",
+          "episode": "P-100"
+        },
+        "value": 1
+      }
+    ],
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "status",
+        "program": "notice",
+        "lifecycle_status": "active"
+      },
+      {
+        "kind": "probe",
+        "program": "{notice}",
+        "arguments": {
+          "carrier": "post",
+          "parcel": "P-100"
+        },
+        "result": "warn"
+      },
+      {
+        "kind": "predictions",
+        "target": "DeliveryLate",
+        "count": [
+          1,
+          null
+        ]
+      },
+      {
+        "kind": "outcomes",
+        "target": "DeliveryLate",
+        "evaluated": [
+          1,
+          1
+        ],
+        "applied": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "estimator",
+        "program": "late",
+        "estimator": "post_rate",
+        "observed": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "estimator",
+        "program": "late",
+        "estimator": "courier_rate",
+        "observed": [
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "PLC-14",
+    "covers": [
+      "alternative model Program",
+      "binding release",
+      "proper score comparison"
+    ],
+    "title": "Replace a flat-rate model with an alternative that learns a rate per carrier",
+    "setup": {
+      "programs": {
+        "late": {
+          "name": "DeliveryLate",
+          "role": "model",
+          "description": "Probability that a parcel delivery is late, by carrier.",
+          "source": "\"\"\"Probability that a parcel delivery is late, one learned rate for all carriers.\"\"\"\n\nfrom evertree.core.learning.api import estimate\n\nLEARNING = {\n    \"targets\": {\n        \"DeliveryLate\": {\n            \"form\": \"probability\",\n            \"result\": \"\",\n            \"subject\": \"the parcel\",\n            \"horizon\": \"until delivery\",\n            \"check\": \"The delivery scan is after the promised date (1) or not (0).\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n    \"estimators\": {\n        \"late_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 1, \"beta\": 3}},\n    },\n}\n\n\nasync def run(ctx, carrier: str):\n    return {\"result\": await estimate(ctx, \"late_rate\"), \"feedback\": None}\n",
+          "files": {
+            "tests/test_delivery_late.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_late/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_late_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\nRATES = {\"post_rate\": 0.4, \"courier_rate\": 0.1, \"late_rate\": 0.25}\n\n\nclass Ctx:\n    async def step(self, method, payload=None, *, journal=True):\n        assert method == \"learning.estimate\"\n        return {\"value\": RATES[payload[\"name\"]], \"state\": \"s\", \"revision\": 0, \"observed_count\": 0}\n\n\nclass DeliveryLateTest(unittest.TestCase):\n    def test_examples(self):\n        for carrier, expected in [('post', 0.25)]:\n            with self.subTest(carrier=carrier):\n                result = asyncio.run(program.run(Ctx(), carrier=carrier))[\"result\"]\n                self.assertAlmostEqual(result, expected)\n"
+          },
+          "seed": {
+            "rule": "prediction",
+            "metrics": [
+              "brier"
+            ],
+            "criteria": {
+              "target_metric": "brier",
+              "direction": "minimize",
+              "threshold": 0.5
+            },
+            "cases": [
+              [
+                {
+                  "carrier": "post"
+                },
+                1
+              ],
+              [
+                {
+                  "carrier": "post"
+                },
+                0
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "late": {
+          "rule": "prediction",
+          "metrics": [
+            "brier"
+          ],
+          "criteria": {
+            "target_metric": "brier",
+            "direction": "minimize",
+            "threshold": 0.2
+          },
+          "cases": [
+            [
+              {
+                "carrier": "post"
+              },
+              1
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              1
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              1
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "courier"
+              },
+              0
+            ]
+          ]
+        }
+      }
+    },
+    "task": "DeliveryLate (model Program {late}) forecasts one late-delivery rate for every carrier, but post parcels are late far more often than courier parcels. Propose an alternative model Program for the same process (propose_program with name DeliveryLate, role model and alternative_to {late}) that learns a rate per carrier: declare in a module-level LEARNING literal the target DeliveryLate (form probability, result \"\" because the whole result is the probability, metrics [\"brier\"], with subject, horizon and check) and two beta_bernoulli estimators bound to it: post_rate with prior alpha 4, beta 6 and courier_rate with prior alpha 1, beta 9. run(ctx, carrier) returns {\"result\": await evertree.core.learning.api.estimate(ctx, carrier + \"_rate\"), \"feedback\": None}: estimate returns the probability itself and never trains the estimator. Develop and evaluate it against the active Program on the protected Brier score and activate it if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "propose_program",
+          "args": {
+            "name": "DeliveryLate",
+            "role": "model",
+            "claim": "A rate per carrier lowers the Brier score",
+            "description": "Probability that a parcel delivery is late, from a rate per carrier.",
+            "candidate_name": "carrier rates",
+            "alternative_to": "{late}"
+          },
+          "as": "rates"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{rates}",
+            "instruction": "Implement it"
+          },
+          "files": {
+            "$program": "\"\"\"Probability that a parcel delivery is late, from a learned rate per carrier.\"\"\"\n\nfrom evertree.core.learning.api import estimate\n\nLEARNING = {\n    \"targets\": {\n        \"DeliveryLate\": {\n            \"form\": \"probability\",\n            \"result\": \"\",\n            \"subject\": \"the parcel\",\n            \"horizon\": \"until delivery\",\n            \"check\": \"The delivery scan is after the promised date (1) or not (0).\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n    \"estimators\": {\n        \"post_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 4, \"beta\": 6}},\n        \"courier_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 1, \"beta\": 9}},\n    },\n}\n\n\nasync def run(ctx, carrier: str):\n    return {\"result\": await estimate(ctx, carrier + \"_rate\"), \"feedback\": None}\n",
+            "tests/test_delivery_late.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_late/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_late_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\nRATES = {\"post_rate\": 0.4, \"courier_rate\": 0.1, \"late_rate\": 0.25}\n\n\nclass Ctx:\n    async def step(self, method, payload=None, *, journal=True):\n        assert method == \"learning.estimate\"\n        return {\"value\": RATES[payload[\"name\"]], \"state\": \"s\", \"revision\": 0, \"observed_count\": 0}\n\n\nclass DeliveryLateTest(unittest.TestCase):\n    def test_examples(self):\n        for carrier, expected in [('post', 0.4)]:\n            with self.subTest(carrier=carrier):\n                result = asyncio.run(program.run(Ctx(), carrier=carrier))[\"result\"]\n                self.assertAlmostEqual(result, expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{rates}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{rates}",
+            "decision": "activate_program",
+            "reason": "Lower Brier score on the protected holdout"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "slot",
+        "program": "alternative:late"
+      },
+      {
+        "kind": "status",
+        "program": "late",
+        "lifecycle_status": "candidate"
+      },
+      {
+        "kind": "improved",
+        "program": "alternative:late",
+        "metric": "brier",
+        "direction": "minimize"
+      },
+      {
+        "kind": "bindings",
+        "program": "alternative:late",
+        "target": "DeliveryLate",
+        "count": [
+          2,
+          2
+        ],
+        "exclusive": true
+      },
+      {
+        "kind": "estimator",
+        "program": "late",
+        "estimator": "late_rate",
+        "states": [
+          1,
+          1
+        ],
+        "bound": false
+      },
+      {
+        "kind": "probe",
+        "program": "DeliveryLate",
+        "arguments": {
+          "carrier": "post"
+        },
+        "range": [
+          0.39,
+          0.41
+        ]
+      }
+    ]
+  },
+  {
+    "id": "PLC-15",
+    "covers": [
+      "forecast contract",
+      "distribution form",
+      "contract violation",
+      "invalid LEARNING"
+    ],
+    "title": "Give a model Program a forecast contract and refuse candidates that break it",
+    "setup": {
+      "programs": {
+        "weather": {
+          "name": "WeatherKind",
+          "role": "model",
+          "description": "Kind of weather tomorrow (rain, snow or dry) from humidity and temperature.",
+          "source": "\"\"\"Kind of weather tomorrow from humidity and temperature, as relative weights.\"\"\"\n\n\ndef run(humidity: float, temperature: float):\n    wet = humidity >= 60\n    if temperature < 0:\n        return {\"result\": {\"rain\": 0, \"snow\": 3 if wet else 1, \"dry\": 1 if wet else 3}, \"feedback\": None}\n    return {\"result\": {\"rain\": 3 if wet else 1, \"snow\": 0, \"dry\": 1 if wet else 3}, \"feedback\": None}\n",
+          "files": {
+            "tests/test_weather_kind.py": "import importlib.util\nimport math\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/weather_kind/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"weather_kind_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass WeatherKindTest(unittest.TestCase):\n    def test_returns_all_kinds(self):\n        result = program.run(humidity=80, temperature=10)[\"result\"]\n        self.assertEqual(set(result), {\"rain\", \"snow\", \"dry\"})\n        pass\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "humidity": 80,
+                  "temperature": 10
+                },
+                {
+                  "rain": 3,
+                  "snow": 0,
+                  "dry": 1
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "weather": {
+          "rule": "prediction",
+          "metrics": [
+            "log_loss"
+          ],
+          "criteria": {
+            "target_metric": "log_loss",
+            "direction": "minimize",
+            "threshold": 1.2
+          },
+          "cases": [
+            [
+              {
+                "humidity": 80,
+                "temperature": 10
+              },
+              "rain"
+            ],
+            [
+              {
+                "humidity": 75,
+                "temperature": 12
+              },
+              "rain"
+            ],
+            [
+              {
+                "humidity": 85,
+                "temperature": -5
+              },
+              "snow"
+            ],
+            [
+              {
+                "humidity": 30,
+                "temperature": 20
+              },
+              "dry"
+            ],
+            [
+              {
+                "humidity": 40,
+                "temperature": -3
+              },
+              "dry"
+            ],
+            [
+              {
+                "humidity": 70,
+                "temperature": 15
+              },
+              "dry"
+            ]
+          ]
+        }
+      }
+    },
+    "task": "WeatherKind (model Program {weather}) returns relative weights instead of probabilities, so its forecasts cannot be scored. Give it a forecast contract: declare a module-level LEARNING literal with target TomorrowWeather (form distribution, categories rain, snow and dry, result \"\" because the whole result is the distribution, metrics [\"log_loss\"], with subject, horizon and check). Make run(humidity, temperature) return probabilities that sum to 1: when humidity is at least 60, 0.6 for precipitation (snow below 0 degrees, otherwise rain), 0.2 for the other precipitation and 0.2 for dry; otherwise 0.1, 0.1 and 0.8. Evaluate the candidate on the protected log loss and merge it only if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{weather}",
+            "claim": "Declare the contract and keep weights",
+            "candidate_name": "unnormalized"
+          },
+          "as": "weights"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{weather}",
+            "claim": "Score a distribution with brier",
+            "candidate_name": "bad metric"
+          },
+          "as": "metric"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{weather}",
+            "claim": "Normalized probabilities meet the contract",
+            "candidate_name": "probabilities"
+          },
+          "as": "good"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{weights}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Kind of weather tomorrow with a declared contract it does not meet.\"\"\"\n\nLEARNING = {\n    \"targets\": {\n        \"TomorrowWeather\": {\n            \"form\": \"distribution\",\n            \"result\": \"\",\n            \"categories\": [\"rain\", \"snow\", \"dry\"],\n            \"subject\": \"the place of the forecast\",\n            \"horizon\": \"tomorrow\",\n            \"check\": \"The observed kind of weather tomorrow.\",\n            \"metrics\": [\"log_loss\"],\n        }\n    },\n}\n\n\n\ndef run(humidity: float, temperature: float):\n    wet = humidity >= 60\n    if temperature < 0:\n        return {\"result\": {\"rain\": 0, \"snow\": 3 if wet else 1, \"dry\": 1 if wet else 3}, \"feedback\": None}\n    return {\"result\": {\"rain\": 3 if wet else 1, \"snow\": 0, \"dry\": 1 if wet else 3}, \"feedback\": None}\n",
+            "tests/test_weather_kind.py": "import importlib.util\nimport math\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/weather_kind/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"weather_kind_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass WeatherKindTest(unittest.TestCase):\n    def test_returns_all_kinds(self):\n        result = program.run(humidity=80, temperature=10)[\"result\"]\n        self.assertEqual(set(result), {\"rain\", \"snow\", \"dry\"})\n        pass\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{metric}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Probability of each kind of weather tomorrow from humidity and temperature.\"\"\"\n\nLEARNING = {\n    \"targets\": {\n        \"TomorrowWeather\": {\n            \"form\": \"distribution\",\n            \"result\": \"\",\n            \"categories\": [\"rain\", \"snow\", \"dry\"],\n            \"subject\": \"the place of the forecast\",\n            \"horizon\": \"tomorrow\",\n            \"check\": \"The observed kind of weather tomorrow.\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n}\n\n\ndef run(humidity: float, temperature: float):\n    wet = 0.6 if humidity >= 60 else 0.1\n    other = 0.2 if humidity >= 60 else 0.1\n    dry = round(1 - wet - other, 10)\n    if temperature < 0:\n        return {\"result\": {\"rain\": other, \"snow\": wet, \"dry\": dry}, \"feedback\": None}\n    return {\"result\": {\"rain\": wet, \"snow\": other, \"dry\": dry}, \"feedback\": None}\n",
+            "tests/test_weather_kind.py": "import importlib.util\nimport math\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/weather_kind/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"weather_kind_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass WeatherKindTest(unittest.TestCase):\n    def test_returns_all_kinds(self):\n        result = program.run(humidity=80, temperature=10)[\"result\"]\n        self.assertEqual(set(result), {\"rain\", \"snow\", \"dry\"})\n        pass\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{good}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Probability of each kind of weather tomorrow from humidity and temperature.\"\"\"\n\nLEARNING = {\n    \"targets\": {\n        \"TomorrowWeather\": {\n            \"form\": \"distribution\",\n            \"result\": \"\",\n            \"categories\": [\"rain\", \"snow\", \"dry\"],\n            \"subject\": \"the place of the forecast\",\n            \"horizon\": \"tomorrow\",\n            \"check\": \"The observed kind of weather tomorrow.\",\n            \"metrics\": [\"log_loss\"],\n        }\n    },\n}\n\n\ndef run(humidity: float, temperature: float):\n    wet = 0.6 if humidity >= 60 else 0.1\n    other = 0.2 if humidity >= 60 else 0.1\n    dry = round(1 - wet - other, 10)\n    if temperature < 0:\n        return {\"result\": {\"rain\": other, \"snow\": wet, \"dry\": dry}, \"feedback\": None}\n    return {\"result\": {\"rain\": wet, \"snow\": other, \"dry\": dry}, \"feedback\": None}\n",
+            "tests/test_weather_kind.py": "import importlib.util\nimport math\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/weather_kind/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"weather_kind_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass WeatherKindTest(unittest.TestCase):\n    def test_returns_all_kinds(self):\n        result = program.run(humidity=80, temperature=10)[\"result\"]\n        self.assertEqual(set(result), {\"rain\", \"snow\", \"dry\"})\n        self.assertTrue(math.isclose(sum(result.values()), 1))\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{weights}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{metric}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{good}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{weights}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Mandatory check failed"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{metric}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          },
+          "error": "Mandatory check failed"
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{good}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{weights}",
+            "decision": "reject_branch",
+            "reason": "Forecasts break the declared distribution"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{metric}",
+            "decision": "reject_branch",
+            "reason": "brier does not score a distribution"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "weather",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "weather",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "variable",
+        "target": "TomorrowWeather"
+      },
+      {
+        "kind": "probe",
+        "program": "{weather}",
+        "arguments": {
+          "humidity": 85,
+          "temperature": -5
+        },
+        "result": {
+          "rain": 0.2,
+          "snow": 0.6,
+          "dry": 0.2
+        }
+      },
+      {
+        "kind": "verification",
+        "program": "weather",
+        "match": "contracts",
+        "count": [
+          2,
+          2
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "choices",
+        "program": "weather",
+        "decisions": [
+          "reject_branch"
+        ],
+        "count": [
+          2,
+          2
+        ],
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-16",
+    "covers": [
+      "trained state across revisions",
+      "declaration change resets state",
+      "model outcome holdout"
+    ],
+    "title": "Revise a trained model without losing what its estimators learned",
+    "setup": {
+      "programs": {
+        "late": {
+          "name": "DeliveryLate",
+          "role": "model",
+          "description": "Probability that a parcel delivery is late, by carrier.",
+          "source": "\"\"\"Probability that a parcel delivery is late, from a learned rate per carrier.\"\"\"\n\nfrom evertree.core.learning.api import estimate\n\nLEARNING = {\n    \"targets\": {\n        \"DeliveryLate\": {\n            \"form\": \"probability\",\n            \"result\": \"\",\n            \"subject\": \"the parcel\",\n            \"horizon\": \"until delivery\",\n            \"check\": \"The delivery scan is after the promised date (1) or not (0).\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n    \"estimators\": {\n        \"post_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 4, \"beta\": 6}},\n        \"courier_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 1, \"beta\": 9}},\n    },\n}\n\n\nasync def run(ctx, carrier: str):\n    return {\"result\": await estimate(ctx, carrier + \"_rate\"), \"feedback\": None}\n",
+          "files": {
+            "tests/test_delivery_late.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_late/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_late_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\nRATES = {\"post_rate\": 0.4, \"courier_rate\": 0.1, \"late_rate\": 0.25}\n\n\nclass Ctx:\n    async def step(self, method, payload=None, *, journal=True):\n        assert method == \"learning.estimate\"\n        return {\"value\": RATES[payload[\"name\"]], \"state\": \"s\", \"revision\": 0, \"observed_count\": 0}\n\n\nclass DeliveryLateTest(unittest.TestCase):\n    def test_examples(self):\n        for carrier, expected in [('post', 0.4)]:\n            with self.subTest(carrier=carrier):\n                result = asyncio.run(program.run(Ctx(), carrier=carrier))[\"result\"]\n                self.assertAlmostEqual(result, expected)\n"
+          },
+          "seed": {
+            "rule": "prediction",
+            "metrics": [
+              "brier"
+            ],
+            "criteria": {
+              "target_metric": "brier",
+              "direction": "minimize",
+              "threshold": 0.5
+            },
+            "cases": [
+              [
+                {
+                  "carrier": "post"
+                },
+                1
+              ],
+              [
+                {
+                  "carrier": "post"
+                },
+                0
+              ]
+            ]
+          }
+        },
+        "notice": {
+          "name": "DeliveryNotice",
+          "role": "exec",
+          "description": "Warn about a parcel whose delivery DeliveryLate forecasts as likely late.",
+          "source": "\"\"\"Warn about a parcel when its delivery is likely to be late.\"\"\"\n\nfrom evertree.core.evaluation.api import predict\n\n\nasync def run(ctx, carrier: str, parcel: str):\n    late = await predict(\n        ctx,\n        \"delivery_late\",\n        {\"carrier\": carrier},\n        context={\"process_id\": \"DeliveryLate\", \"subject\": parcel, \"episode\": parcel},\n    )\n    return {\"result\": \"warn\" if late > 0.3 else \"ok\", \"feedback\": None}\n",
+          "files": {
+            "tests/test_delivery_notice.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_notice/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_notice_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass Result:\n    def __init__(self, value):\n        self.result = value\n\n\nclass Ctx:\n    def __init__(self, late):\n        self.late, self.indexed = late, []\n\n    async def call(self, program, arguments=None):\n        return Result(self.late)\n\n    async def step(self, method, payload=None, *, journal=True):\n        self.indexed.append((method, payload))\n        return []\n\n\nclass DeliveryNoticeTest(unittest.TestCase):\n    def test_warns_only_when_late_is_likely(self):\n        for late, expected in ((0.4, \"warn\"), (0.1, \"ok\")):\n            ctx = Ctx(late)\n            result = asyncio.run(program.run(ctx, carrier=\"post\", parcel=\"X\"))[\"result\"]\n            self.assertEqual(result, expected)\n            self.assertEqual(ctx.indexed[0][0], \"evaluation.index_forecasts\")\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "carrier": "post",
+                  "parcel": "H-1"
+                },
+                "warn"
+              ],
+              [
+                {
+                  "carrier": "courier",
+                  "parcel": "H-2"
+                },
+                "ok"
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "late": {
+          "rule": "prediction",
+          "metrics": [
+            "brier"
+          ],
+          "criteria": {
+            "target_metric": "brier",
+            "direction": "minimize",
+            "threshold": 0.3
+          },
+          "cases": [
+            [
+              {
+                "carrier": " POST "
+              },
+              1
+            ],
+            [
+              {
+                "carrier": "Courier"
+              },
+              0
+            ],
+            [
+              {
+                "carrier": "post"
+              },
+              0
+            ]
+          ]
+        }
+      },
+      "trained": [
+        {
+          "program": "notice",
+          "arguments": {
+            "carrier": "post",
+            "parcel": "T-0"
+          },
+          "target": "DeliveryLate",
+          "context": {
+            "process_id": "DeliveryLate",
+            "subject": "T-0",
+            "episode": "T-0"
+          },
+          "outcome": 1
+        },
+        {
+          "program": "notice",
+          "arguments": {
+            "carrier": "post",
+            "parcel": "T-1"
+          },
+          "target": "DeliveryLate",
+          "context": {
+            "process_id": "DeliveryLate",
+            "subject": "T-1",
+            "episode": "T-1"
+          },
+          "outcome": 1
+        },
+        {
+          "program": "notice",
+          "arguments": {
+            "carrier": "post",
+            "parcel": "T-2"
+          },
+          "target": "DeliveryLate",
+          "context": {
+            "process_id": "DeliveryLate",
+            "subject": "T-2",
+            "episode": "T-2"
+          },
+          "outcome": 0
+        }
+      ],
+      "experience": [
+        {
+          "program": "late",
+          "arguments": {
+            "carrier": "courier"
+          },
+          "outcome": 0
+        },
+        {
+          "program": "late",
+          "arguments": {
+            "carrier": "courier"
+          },
+          "outcome": 0
+        },
+        {
+          "program": "late",
+          "arguments": {
+            "carrier": "post"
+          },
+          "outcome": 1
+        }
+      ]
+    },
+    "task": "DeliveryLate (model Program {late}) fails for carrier names in another letter case or with surrounding spaces, such as \" POST \" or \"Courier\". Its estimators post_rate and courier_rate have already learned from real delivery outcomes. First call derive_holdout for Program {late} so its protected holdout includes recent reported outcomes (do not try to read them). Then make run accept carrier names in any case with surrounding spaces, keeping its LEARNING declaration exactly unchanged so the trained estimator state is kept. Evaluate the candidate and merge it only if acceptance passes.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "derive_holdout",
+          "args": {
+            "program": "{late}"
+          }
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{late}",
+            "claim": "Normalize carrier names",
+            "candidate_name": "normalized"
+          },
+          "as": "keep"
+        },
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{late}",
+            "claim": "Normalize and change the post prior",
+            "candidate_name": "normalized reset"
+          },
+          "as": "reset"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{keep}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Probability that a parcel delivery is late, from a learned rate per carrier; carrier names in any case.\"\"\"\n\nfrom evertree.core.learning.api import estimate\n\nLEARNING = {\n    \"targets\": {\n        \"DeliveryLate\": {\n            \"form\": \"probability\",\n            \"result\": \"\",\n            \"subject\": \"the parcel\",\n            \"horizon\": \"until delivery\",\n            \"check\": \"The delivery scan is after the promised date (1) or not (0).\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n    \"estimators\": {\n        \"post_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 4, \"beta\": 6}},\n        \"courier_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 1, \"beta\": 9}},\n    },\n}\n\n\nasync def run(ctx, carrier: str):\n    return {\"result\": await estimate(ctx, carrier.strip().lower() + \"_rate\"), \"feedback\": None}\n",
+            "tests/test_delivery_late.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_late/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_late_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\nRATES = {\"post_rate\": 0.4, \"courier_rate\": 0.1, \"late_rate\": 0.25}\n\n\nclass Ctx:\n    async def step(self, method, payload=None, *, journal=True):\n        assert method == \"learning.estimate\"\n        return {\"value\": RATES[payload[\"name\"]], \"state\": \"s\", \"revision\": 0, \"observed_count\": 0}\n\n\nclass DeliveryLateTest(unittest.TestCase):\n    def test_examples(self):\n        for carrier, expected in [(' POST ', 0.4)]:\n            with self.subTest(carrier=carrier):\n                result = asyncio.run(program.run(Ctx(), carrier=carrier))[\"result\"]\n                self.assertAlmostEqual(result, expected)\n"
+          }
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{reset}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Probability that a parcel delivery is late, from a learned rate per carrier; carrier names in any case.\"\"\"\n\nfrom evertree.core.learning.api import estimate\n\nLEARNING = {\n    \"targets\": {\n        \"DeliveryLate\": {\n            \"form\": \"probability\",\n            \"result\": \"\",\n            \"subject\": \"the parcel\",\n            \"horizon\": \"until delivery\",\n            \"check\": \"The delivery scan is after the promised date (1) or not (0).\",\n            \"metrics\": [\"brier\"],\n        }\n    },\n    \"estimators\": {\n        \"post_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 2, \"beta\": 3}},\n        \"courier_rate\": {\"kind\": \"beta_bernoulli\", \"target\": \"DeliveryLate\", \"settings\": {\"alpha\": 1, \"beta\": 9}},\n    },\n}\n\n\nasync def run(ctx, carrier: str):\n    return {\"result\": await estimate(ctx, carrier.strip().lower() + \"_rate\"), \"feedback\": None}\n",
+            "tests/test_delivery_late.py": "import asyncio\nimport importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/delivery_late/_model.py'\nSPEC = importlib.util.spec_from_file_location(\"delivery_late_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\nRATES = {\"post_rate\": 0.4, \"courier_rate\": 0.1, \"late_rate\": 0.25}\n\n\nclass Ctx:\n    async def step(self, method, payload=None, *, journal=True):\n        assert method == \"learning.estimate\"\n        return {\"value\": RATES[payload[\"name\"]], \"state\": \"s\", \"revision\": 0, \"observed_count\": 0}\n\n\nclass DeliveryLateTest(unittest.TestCase):\n    def test_examples(self):\n        for carrier, expected in [(' POST ', 0.4)]:\n            with self.subTest(carrier=carrier):\n                result = asyncio.run(program.run(Ctx(), carrier=carrier))[\"result\"]\n                self.assertAlmostEqual(result, expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{keep}"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{reset}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{keep}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{reset}",
+            "decision": "reject_branch",
+            "reason": "Changing the prior would discard trained state"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "late",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "late",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "derived",
+        "program": "late",
+        "count": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "sealed",
+        "count": [
+          3,
+          3
+        ]
+      },
+      {
+        "kind": "estimator",
+        "program": "late",
+        "estimator": "post_rate",
+        "observed": [
+          3,
+          3
+        ],
+        "states": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{late}",
+        "arguments": {
+          "carrier": " Post "
+        },
+        "range": [
+          0.46,
+          0.47
+        ]
       }
     ]
   }

@@ -7,9 +7,8 @@ import json
 
 from evertree.core.cognition.steps import ConsciousStepResult, ConsciousStepSpec
 from evertree.core.cognition.tasks import TaskSpecification
+from evertree.core.contracts import task_outcome_context
 from evertree.core.evaluation.acceptance import VerificationResult
-from evertree.core.learning.contracts import LearningObjective, LearningSignal
-from evertree.core.learning.coordinator import LearningCoordinator
 from evertree.core.memory.types import MemoryQuery, TraceOutputRef
 
 from ..core.programs.layout import program_active
@@ -442,6 +441,21 @@ class ConsciousnessMixin:
                 )
             return
 
+    def _learn_task_outcome(self, task_id, verified, reason):
+        """Score TaskVerified forecasts against a stopped task and train their declared estimator.
+
+        Core observes the outcome itself; Programs cannot report it.
+        """
+        if self.graph.find("TaskVerified") is not None:
+            self.learn_outcome(
+                "TaskVerified",
+                {"verified": verified, "reason": reason},
+                path=("verified",),
+                context=task_outcome_context(task_id),
+                source_id="task_verification:" + task_id,
+                task_id=task_id,
+            )
+
     async def _stop_task(self, state, status, reason, verification=None):
         """Finalize a stopped task and record its outcome, evaluation and learning signals."""
         await self.runtime.cancel(state.id)
@@ -457,41 +471,8 @@ class ConsciousnessMixin:
         )
         for event in self.memory.events:
             self.memory.release(event.id, "task:" + state.id)
-        if status in {"succeeded", "failed"} and state.id in self._predictions:
-            from evertree.core.evaluation.scoring import evaluate_prediction
-
-            run = self.memory.start_run(
-                "TaskOutcome", self._program_revision(), {"task_id": state.id}
-            )
-            observed = status == "succeeded"
-            event = self.memory.record(
-                run, "verification_outcome", output={"verified": observed, "reason": reason}
-            )
-            ref = self.memory.output_ref(event)
-            outcome_id = "task_verification:" + state.id
-            evaluation = self.evaluations.add(
-                evaluate_prediction(
-                    self._predictions[state.id],
-                    observed,
-                    metrics=("brier",),
-                    outcome_ids=(outcome_id,),
-                    provenance=(str(event.id),),
-                    subject="verified_task_rate",
-                )
-            )
-            receipt = LearningCoordinator(self.learning).learn(
-                LearningSignal(
-                    evaluation,
-                    LearningObjective(("brier",), "minimize", "runtime_verification"),
-                    {outcome_id: observed},
-                ),
-                "verified_task_rate",
-            )
-            self.memory.record(
-                run, "learning_receipt", arguments={"source": ref}, output=json_value(receipt)
-            )
-            self.memory.retain(ref, "learning:" + outcome_id)
-            self.memory.finish_run(run)
+        if status in {"succeeded", "failed"}:
+            self._learn_task_outcome(state.id, status == "succeeded", reason)
         kind = {
             "succeeded": "task_completed",
             "failed": "task_failed",

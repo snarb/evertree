@@ -7,6 +7,22 @@ from typing import Any
 from ..contracts import ProgramContext
 
 
+async def estimate(ctx: ProgramContext, name: str, inputs: Any = None) -> Any:
+    """Return the forecast of an estimator this Program declares in LEARNING; this never trains it.
+
+    The value is a probability, a {category: probability} mapping or a number, by
+    the estimator's kind; inputs are features for linear_regression. Core records
+    which state and version produced it, so its outcome can train that state.
+    """
+    forecast = await ctx.step("learning.estimate", {"name": name, "inputs": inputs}, journal=False)
+    return forecast["value"]
+
+
+async def statistics(ctx: ProgramContext, name: str) -> dict:
+    """Read the observation summary of a declared estimator; empirical values are None when empty."""
+    return await ctx.step("learning.statistics", {"name": name}, journal=False)
+
+
 async def credit(
     ctx: ProgramContext,
     target: str,

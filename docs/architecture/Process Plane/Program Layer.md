@@ -509,6 +509,42 @@ The contract for each forecast output defines:
 
 Fixed conditions belong in the versioned contract; changing conditions are passed as typed arguments. Use references to Concepts and relations; text explains any unformalized remainder. A separate mandatory `ForecastSpec` is not introduced. The configuration of a shared estimator may collect these references and settings, but does not duplicate graph definitions.
 
+#### Learning Declaration
+^learning-declaration
+
+#topic_core
+
+A Program revision declares its learning targets and learnable components in a module-level literal `LEARNING = {...}` in its entry module, read by Core from source without importing it, like [[#ProgramDesign|`DESIGN`]]. It is versioned with the code: changing it is a structural revision and goes through a `ProgramBranch`.
+
+```python
+LEARNING = {
+    "targets": {                       # PredictionTarget / LearningTarget, by Concept name
+        "TaskVerified": {
+            "form": "probability",     # probability | distribution | mean | median | value
+            "result": "verified",      # key of ProgramResult.result; "" is the whole result
+            "subject": "the task being framed",
+            "horizon": "until the task stops",
+            "check": "succeeded is 1, failed is 0; cancelled is not an outcome",
+            "metrics": ["brier", "log_loss"],
+            # "categories": [...] for a distribution
+        }
+    },
+    "estimators": {                    # learnable components bound to a declared target
+        "verified_rate": {
+            "kind": "beta_bernoulli",  # beta_bernoulli | categorical | mean | linear_regression
+            "target": "TaskVerified",
+            "settings": {"alpha": 1, "beta": 1},  # the declared initial state
+        }
+    },
+}
+```
+
+- **Targets.** A target names the Concept of the forecast quantity and states the [[#`PredictionTarget` and Forecast Contract|forecast contract]]: what is forecast, when it is realized, how the outcome is obtained and which metrics score it. Metrics must suit the form: Brier or log loss for a probability, log loss for a distribution, squared error for a mean, absolute error for a median, exact match for a value. When a Program is activated, Core creates a missing target Concept and links it with [[Process Ontology and Semantic Interface#PROCESS_VARIABLE|`PROCESS_VARIABLE(process, target)`]]. Only a model Program returns forecasts (`result`); an `exec` Program may declare internal targets without `result`, such as a utility it learns.
+- **Forecast check.** When a model run finishes, the runtime checks each declared forecast in `ProgramResult.result`: a probability in `[0, 1]`, a distribution over exactly its categories summing to 1, a finite number for a mean or median. A violation fails the run, and therefore a candidate's contract check.
+- **Estimators.** An estimator is a [[#Learnable and Fixed Components|learnable component]] whose state Core owns. Its state identity is derived from the Program and its declaration, so a revision with an unchanged declaration keeps the trained state, while a changed kind, target or prior starts from the declared prior. On activation the Program's declared estimators become the only learning bindings it owns; a displaced alternative's bindings are released, and its states remain for history. Program code reads an estimator with `await learning.api.estimate(ctx, name, inputs=None)`. It returns the forecast value and never trains the estimator; Core records in the trace which state and version produced the value. `statistics(ctx, name)` returns the estimator's observation summary.
+- **Forecast indexing.** An `exec` Program that uses a model calls `await evaluation.api.predict(ctx, program, arguments, context=...)`. It calls the model and returns the model's result, and Core indexes each declared forecast of that run as `PREDICTS` with the given prediction context. Programs never pass trace references themselves.
+- **Learning from outcomes.** When the outcome is observed in the same context, [[Learning system#PredictionEvaluator|`PredictionEvaluator`]] scores the indexed forecast, and the standard pipeline trains exactly the estimator states the forecasting run read, as recorded in its trace. Updating parameters needs no code change.
+
 For example, a stack change, its conditional mean, the probability of winning at least `X`, and the task objective of obtaining `X` have different meanings. A forecast of future `prediction_unexpectedness` concerns a specified model and evaluation conditions; it does not replace the evaluation itself or become an optimization target.
 
 ---
@@ -618,7 +654,7 @@ The material is retained so that different representations can be prepared for s
 
 #### Typed Core API
 
-Programs and shared helpers reach Core and the outside world through typed functions: `evertree.core.<domain>.api` (`semantics`, `graph`, `memory`, `learning`, `evaluation`) for Core operations, and `evertree.core.runtime.api` for boundaries: `call_program`, `llm`, `llm_with_tools`, `next_observation`, `list_actions`, `take_action` and `checkpoint`. `evertree.core.policy.api` builds, checks and samples [[Action Selection and Planning#Semantic Types for Arguments and Results|action distributions]]. `evertree.core.programs.api` is the lifecycle boundary for meta Programs (see [[Program Lifecycle and Evolution#Meta-Program Lifecycle Safety]]). Each function takes the `ProgramContext` first. Program code only passes `ctx` on; candidate validation rejects any `ctx` method call in `processes` and `common`. Candidate unit tests can import `evertree.core.contracts` and the policy and programs API wrappers, which only forward to `ctx`, so a test supplies its own `ctx` double; `core.runtime` and the rest of Core stay outside the test environment.
+Programs and shared helpers reach Core and the outside world through typed functions: `evertree.core.<domain>.api` (`semantics`, `graph`, `memory`, `learning`, `evaluation`) for Core operations, and `evertree.core.runtime.api` for boundaries: `call_program`, `llm`, `llm_with_tools`, `next_observation`, `list_actions`, `take_action` and `checkpoint`. `evertree.core.learning.api` reads the Program's [[#^learning-declaration|declared estimators]] (`estimate`, `statistics`), and `evertree.core.evaluation.api.predict` calls a model and indexes its forecasts. `evertree.core.policy.api` builds, checks and samples [[Action Selection and Planning#Semantic Types for Arguments and Results|action distributions]]. `evertree.core.programs.api` is the lifecycle boundary for meta Programs (see [[Program Lifecycle and Evolution#Meta-Program Lifecycle Safety]]). Each function takes the `ProgramContext` first. Program code only passes `ctx` on; candidate validation rejects any `ctx` method call in `processes` and `common`. Candidate unit tests can import `evertree.core.contracts` and the policy, programs, learning and evaluation API wrappers, which only forward to `ctx`, so a test supplies its own `ctx` double; `core.runtime` and the rest of Core stay outside the test environment.
 
 The durability contract for Program authors: **write ordinary async Python.** Results of Core writes, LLM calls, external actions, observation waits and child Program calls are saved; after a worker restart they are returned from the journal and local computation runs again. Cheap, repeatable Core reads (graph and memory reads, semantic search channels, update planning, `checkpoint`) are not journaled: recovery runs them again, so they may return newer data and appear again in the Core trace. Code must therefore reach the same calls in the same order from the same inputs: do not branch on wall-clock time, randomness or other unsaved external state. `take_action` derives its idempotency key from the action's order in the run unless one is given. Long pure computation is not checkpointed by time; `checkpoint` only gives Core a point to pause for backup or stop a cancelled run.
 

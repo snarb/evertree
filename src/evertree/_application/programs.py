@@ -23,7 +23,9 @@ from evertree.core.runtime.repository import ProgramFailed, _git
 
 from ..core.anchors import AnchorResolver, parse_anchors
 from ..core.datasets import EvaluationCase, thaw_json, validate_holdout
+from ..core.learning.declaration import read_learning
 from ..core.memory.types import TraceOutputRef
+from ..core.predictions import ensure_target
 from ..core.programs.design import check_design, design_profile
 from ..core.programs.layout import (
     process_directory,
@@ -101,6 +103,28 @@ class ProgramsMixin:
         )
         if profile is not None and changed:
             check_design(sources.read(path).decode("utf-8"), path, profile)
+
+    def _install_seed_learning(self):
+        """Bind the declared estimators of the seed's active Programs."""
+        for node in self.graph.nodes(kind="program"):
+            if program_active(node):
+                self._install_learning(
+                    node, self._program_source(dict(node.properties)), node.properties["revision"]
+                )
+
+    def _install_learning(self, node, source, revision):
+        """Bind an active Program's declared estimators and create its declared targets."""
+        path = node.properties["git_path"]
+        declaration = read_learning(source, path)
+        if declaration is None:
+            self.learning.release(str(node.id))
+            return
+        declaration.check_role(node.properties["role"])
+        for name in declaration.targets:
+            ensure_target(
+                self.graph, self.memory, node.properties["process"], name, revision=revision
+            )
+        self.learning.install(str(node.id), declaration)
 
     def _slot(self, program_id) -> str:
         """Name the process role a Program competes for; alternatives and branches share it."""
@@ -468,6 +492,11 @@ class ProgramsMixin:
         )
         self.memory.retain(self.memory.output_ref(event), "graph:" + str(node.id))
         self.memory.finish_run(run)
+        if displaced is not None and displaced != node.id:
+            self.learning.release(str(displaced))
+        self._install_learning(
+            node, self._program_source({**node.properties, "revision": revision}), revision
+        )
 
     def bind_evaluation(
         self,
@@ -639,6 +668,9 @@ class ProgramsMixin:
                 tool_handler=payload.get("_tool_handler"),
             )
 
+        # A candidate that returned no result on any case learned nothing about the labels.
+        unrevealed = set()
+
         async def evaluate(branch, revision):
             reports, traces = [], []
             for dataset in datasets:
@@ -666,6 +698,13 @@ class ProgramsMixin:
                 )
                 reports.append(experiment.report)
                 traces.extend(experiment.traces)
+                cases = [
+                    trace
+                    for trace in experiment.traces
+                    if trace.get("kind") == "case" and trace.get("side") == "candidate"
+                ]
+                if cases and all("error" in trace for trace in cases):
+                    unrevealed.add(dataset.revision)
             trace_run = self.memory.start_run(
                 "CandidateEvaluation", revision, {"candidate": branch.id}
             )
@@ -709,6 +748,8 @@ class ProgramsMixin:
             }
         finally:
             for dataset in datasets:
+                if dataset.revision in unrevealed:
+                    continue
                 self.datasets.mark_exposed(candidate_id, dataset.revision)
                 self.datasets.mark_exposed(self._slot(candidate.program_id), dataset.revision)
 
@@ -759,7 +800,8 @@ class ProgramsMixin:
     def _dominating_sibling(self, candidate):
         """Find an undecided verified sibling that beats the candidate on the same holdout."""
         receipt = self.lifecycle.receipt(candidate.id)
-        if receipt is None:
+        # A candidate that failed a mandatory check is refused for that reason first.
+        if receipt is None or False in receipt["report"]["checks"].values():
             return None
         criteria = self._acceptance_criteria(candidate)
         metric, sign = criteria.target_metric, 1 if criteria.direction == "maximize" else -1

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from threading import RLock
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from ..datasets import freeze_json, thaw_json
+from ..datasets import content_revision, freeze_json, thaw_json
 from .contracts import (
     LearningBinding,
     LearningCredit,
@@ -16,6 +16,61 @@ from .contracts import (
     UpdateReceipt,
 )
 from .estimators import UpdateDispatcher, _number
+
+if TYPE_CHECKING:
+    from .declaration import EstimatorDeclaration, LearningDeclaration
+
+
+def initial_state(kind: str, settings: Mapping[str, Any]) -> tuple[dict, dict]:
+    """Validate kind-specific settings and return them with the initial parameters."""
+    if kind == "beta_bernoulli":
+        settings = {"alpha": settings.get("alpha", 1.0), "beta": settings.get("beta", 1.0)}
+        if any(_number(value) <= 0 for value in settings.values()):
+            raise ValueError("Beta prior parameters must be positive")
+        return settings, {"positive": 0.0, "negative": 0.0, "observed_count": 0}
+    if kind == "categorical":
+        categories = tuple(settings.get("categories", ()))
+        if (
+            not categories
+            or len(set(categories)) != len(categories)
+            or any(not isinstance(value, str) for value in categories)
+        ):
+            raise ValueError("Declare distinct string categories")
+        prior = _number(settings.get("prior", 1.0))
+        if prior <= 0:
+            raise ValueError("Dirichlet prior concentration must be positive")
+        return (
+            {"categories": list(categories), "prior": prior},
+            {"counts": {category: 0.0 for category in categories}, "observed_count": 0},
+        )
+    if kind == "mean":
+        prior = settings.get("prior")
+        if prior is not None:
+            prior = _number(prior)
+        return {"prior": prior}, {
+            "sum": 0.0,
+            "sum_squares": 0.0,
+            "weight": 0.0,
+            "observed_count": 0,
+        }
+    if kind == "linear_regression":
+        dimension = settings.get("dimension")
+        if not isinstance(dimension, int) or isinstance(dimension, bool) or dimension < 1:
+            raise ValueError("Linear regression needs a positive feature dimension")
+        learning_rate = _number(settings.get("learning_rate", 0.05))
+        if learning_rate <= 0:
+            raise ValueError("Learning rate must be positive")
+        return (
+            {"dimension": dimension, "learning_rate": learning_rate},
+            {"weights": [0.0] * dimension, "bias": 0.0, "observed_count": 0},
+        )
+    raise ValueError("Unsupported estimator kind")
+
+
+def program_state_id(owner: str | int, name: str, estimator: EstimatorDeclaration) -> str:
+    """Address a Program's estimator state by its declaration, not by revision."""
+    fingerprint = content_revision(estimator.model_dump(mode="json"))[:12]
+    return f"program:{owner}:{name}:{fingerprint}"
 
 
 class LearningStore:
@@ -33,41 +88,7 @@ class LearningStore:
     def create_state(self, kind: str, *, state_id: str | None = None, **settings: Any) -> str:
         """Allocate estimator state with validated kind-specific settings and initial parameters."""
         identity = state_id or str(uuid4())
-        if kind == "beta_bernoulli":
-            settings = {"alpha": settings.get("alpha", 1.0), "beta": settings.get("beta", 1.0)}
-            if any(_number(value) <= 0 for value in settings.values()):
-                raise ValueError("Beta prior parameters must be positive")
-            parameters = {"positive": 0.0, "negative": 0.0, "observed_count": 0}
-        elif kind == "categorical":
-            categories = tuple(settings.get("categories", ()))
-            if (
-                not categories
-                or len(set(categories)) != len(categories)
-                or any(not isinstance(value, str) for value in categories)
-            ):
-                raise ValueError("Declare distinct string categories")
-            prior = _number(settings.get("prior", 1.0))
-            if prior <= 0:
-                raise ValueError("Dirichlet prior concentration must be positive")
-            settings = {"categories": list(categories), "prior": prior}
-            parameters = {"counts": {category: 0.0 for category in categories}, "observed_count": 0}
-        elif kind == "mean":
-            prior = settings.get("prior")
-            if prior is not None:
-                prior = _number(prior)
-            settings = {"prior": prior}
-            parameters = {"sum": 0.0, "sum_squares": 0.0, "weight": 0.0, "observed_count": 0}
-        elif kind == "linear_regression":
-            dimension = settings.get("dimension")
-            if not isinstance(dimension, int) or isinstance(dimension, bool) or dimension < 1:
-                raise ValueError("Linear regression needs a positive feature dimension")
-            learning_rate = _number(settings.get("learning_rate", 0.05))
-            if learning_rate <= 0:
-                raise ValueError("Learning rate must be positive")
-            settings = {"dimension": dimension, "learning_rate": learning_rate}
-            parameters = {"weights": [0.0] * dimension, "bias": 0.0, "observed_count": 0}
-        else:
-            raise ValueError("Unsupported estimator kind")
+        settings, parameters = initial_state(kind, settings)
         with self._lock:
             if identity in self._states:
                 raise ValueError("Estimator state identity already exists")
@@ -78,6 +99,64 @@ class LearningStore:
                 "revision": 0,
             }
         return identity
+
+    def install(self, owner: str, declaration: LearningDeclaration) -> dict[str, str]:
+        """Make a Program's declared estimators its only learning bindings.
+
+        A state's identity includes its declaration, so an unchanged estimator keeps
+        its trained state across revisions and a changed one starts from its prior.
+        """
+        states = {}
+        with self._lock:
+            for name, estimator in declaration.estimators.items():
+                identity = program_state_id(owner, name, estimator)
+                if identity not in self._states:
+                    self.create_state(estimator.kind, state_id=identity, **estimator.settings)
+                states[name] = identity
+            self._bindings = [binding for binding in self._bindings if binding.owner != str(owner)]
+            for name, estimator in declaration.estimators.items():
+                target = declaration.targets[estimator.target]
+                self._bindings.append(
+                    LearningBinding(
+                        estimator.target,
+                        states[name],
+                        tuple(target.metrics),
+                        owner=str(owner),
+                    )
+                )
+        return states
+
+    def release(self, owner: str) -> None:
+        """Remove a displaced Program's bindings; its trained states remain for history."""
+        with self._lock:
+            self._bindings = [binding for binding in self._bindings if binding.owner != str(owner)]
+
+    def bindings(self, target: str | None = None) -> list[dict[str, Any]]:
+        """List declared learning bindings, optionally for one target."""
+        with self._lock:
+            return [
+                binding.to_dict()
+                for binding in self._bindings
+                if target is None or binding.target == target
+            ]
+
+    def estimate(
+        self, owner: str, declaration: LearningDeclaration, name: str, inputs: Any = None
+    ) -> dict[str, Any]:
+        """Predict with a Program's declared estimator, reporting the state version used."""
+        if name not in declaration.estimators:
+            raise ValueError(f"Program declares no estimator {name!r}")
+        identity = program_state_id(owner, name, declaration.estimators[name])
+        with self._lock:
+            if identity not in self._states:
+                self.install(owner, declaration)
+            state = self._states[identity]
+            return {
+                "value": self.predict(identity, inputs),
+                "state": identity,
+                "revision": state["revision"],
+                "observed_count": state["parameters"]["observed_count"],
+            }
 
     def state(self, state_id: str) -> dict[str, Any]:
         """Return an independent copy of estimator state rather than exposing mutable storage."""

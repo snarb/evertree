@@ -46,7 +46,9 @@ class SourceRuntime(Runtime):
                 "run_mode": run_mode,
                 "cancelled": False,
                 "known_runs": {},
+                "calls": {"parents": {}, "finished": []},
                 "run_dir": run_dir,
+                "source_dir": Path(__file__).resolve().parents[2],
                 "llm": ProgramLLMInvocations(self.gateway),
                 "execution_stack": [],
                 "execution_scopes": {},
@@ -99,7 +101,9 @@ class SourceRuntime(Runtime):
             )
             kwargs = dict(arguments)
             if "ctx" in inspect.signature(function).parameters:
-                ctx = SimpleNamespace(step=step, call=call, run_id=run_id)
+                ctx = SimpleNamespace(
+                    step=step, call=call, run_id=run_id, task_id=self._active["task_id"]
+                )
 
                 async def llm(payload, **options):
                     return await run_llm_dialogue(ctx, payload, **options)
@@ -144,6 +148,7 @@ async def component_app(
         return (Path(__file__).resolve().parents[2] / path).read_text(encoding="utf-8")
 
     app._program_source = source
+    app._install_seed_learning()
     app.backup = AsyncMock(return_value=None)
     app._make_lifecycle()
     app._started = True

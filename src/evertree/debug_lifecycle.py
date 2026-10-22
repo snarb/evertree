@@ -23,6 +23,7 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from uuid import uuid4
 
@@ -70,6 +71,7 @@ class LifecycleSession:
         self.steps: list[dict] = []
         self.task: dict | None = None
         self.probes: list[dict] = []
+        self.outcomes: list[dict] = []
         self._task_id = None
 
     def task_id(self) -> str:
@@ -199,6 +201,17 @@ class LifecycleSession:
             if run.get("surfaced"):
                 # Consciousness already saw this outcome, so it can no longer be hidden.
                 self.agent._surfaced.add(reference.event_ref)
+        for index, item in enumerate(setup.get("trained", ())):
+            # An exec Program forecasts through its model; the outcome then trains the estimator.
+            await self.agent._run_program(
+                self.task_id(), self.names[item["program"]], self.fill(item["arguments"])
+            )
+            self.agent.learn_outcome(
+                item["target"],
+                item["outcome"],
+                context=self.fill(item["context"]),
+                source_id=f"{self.case['id']}:trained:{index}",
+            )
         for key, value in setup.get("names", {}).items():
             self.names[key] = value
 
@@ -270,6 +283,18 @@ class LifecycleSession:
                 self.probes.append({"arguments": arguments, "result": result["result"]})
             except Exception as error:  # noqa: BLE001 -- a failing probe is checked, not raised
                 self.probes.append({"arguments": arguments, "error": str(error)})
+        for index, item in enumerate(self.case.get("outcomes", ())):
+            # The world later reports what happened to forecasts the probes made.
+            try:
+                result = self.agent.learn_outcome(
+                    item["target"],
+                    item["value"],
+                    context=self.fill(item["context"]),
+                    source_id=f"{self.case['id']}:outcome-after:{index}",
+                )
+            except Exception as error:  # noqa: BLE001 -- checked through the outcome record
+                result = {"error": f"{type(error).__name__}: {error}"}
+            self.outcomes.append({"target": item["target"], **json_value(result)})
 
     def state(self) -> dict:
         """Collect the observable lifecycle state the scenario checks read."""
@@ -309,8 +334,46 @@ class LifecycleSession:
                 "steps": self.steps,
                 "task": self.task,
                 "probes": self.probes,
+                "outcomes": self.outcomes,
+                "learning": self._learning_state(),
             }
         )
+
+    def _learning_state(self) -> dict:
+        """Declared targets, bindings, estimator states and indexed forecasts."""
+        agent = self.agent
+        snapshot = agent.learning.snapshot()
+        variables = [
+            {
+                "process": fact.args["process"],
+                "target": agent.graph.get(fact.args["variable"]).name,
+            }
+            for fact in agent.graph.facts("PROCESS_VARIABLE")
+        ]
+        predictions = [
+            {"id": fact.id, "target": agent.graph.get(fact.args["target"]).name}
+            for fact in agent.graph.facts("PREDICTS")
+        ]
+        return {
+            "bindings": agent.learning.bindings(),
+            "states": {
+                identity: {
+                    "kind": state["kind"],
+                    "revision": state["revision"],
+                    "observed_count": state["parameters"]["observed_count"],
+                    "settings": state["settings"],
+                }
+                for identity, state in snapshot["states"].items()
+            },
+            "variables": variables,
+            "predictions": predictions,
+            "estimates": [
+                {"run": event.program_run, "state": event.output["state"]}
+                for event in agent.memory.events
+                if isinstance(event.output, Mapping)
+                and set(event.output) == {"value", "state", "revision", "observed_count"}
+            ],
+        }
 
     def save(self, **extra):
         """Write the scenario state for inspection."""

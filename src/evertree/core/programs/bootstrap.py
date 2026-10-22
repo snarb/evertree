@@ -12,6 +12,7 @@ PROCESS_GROUPS = {
         "TaskManagement",
         (
             "task_framing",
+            "task_outcome",
             "context_preparation",
             "argument_preparation",
             "episode_step_selection",
@@ -78,6 +79,12 @@ def bootstrap_catalog() -> tuple[dict, ...]:
             "task_framing",
             "exec",
             "Structure the request and select its finite task-specific budget.",
+        ),
+        (
+            "TaskOutcome",
+            "task_outcome",
+            "model",
+            "Forecast whether a newly framed task will pass independent completion verification.",
         ),
         (
             "ContextPreparation",

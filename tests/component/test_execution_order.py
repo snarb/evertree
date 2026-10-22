@@ -28,6 +28,7 @@ async def test_only_current_program_can_read_or_start_a_sibling(tmp_path):
         "run_mode": "live",
         "cancelled": False,
         "known_runs": {"parent": asdict(parent)},
+        "calls": {"parents": {}, "finished": []},
         "run_dir": run_dir,
         "execution_stack": ["parent"],
         "execution_scopes": {"parent": ["outer"]},

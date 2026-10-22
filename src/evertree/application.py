@@ -9,6 +9,7 @@ import json
 import os
 import time
 import weakref
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -259,6 +260,101 @@ class EverTree(
         self.memory.finish_run(run)
         return ref
 
+    def learn_outcome(
+        self,
+        target: str,
+        value: Any,
+        *,
+        context: dict,
+        source_id: str,
+        path: tuple = (),
+        task_id: str | None = None,
+        metrics: tuple[str, ...] | None = None,
+    ) -> dict:
+        """Record a host-observed outcome, score its forecasts and train the estimators used.
+
+        path selects the outcome inside value. Each matched forecast trains the
+        declared estimator its model run actually read; replaying the same outcome
+        is accounted once. A selected target without a forecast stays unresolved.
+        """
+        from .core.learning.contracts import LearningObjective, LearningSignal
+        from .core.learning.coordinator import LearningCoordinator
+
+        node = self.graph.find(target)
+        if node is None:
+            raise ValueError(f"Unknown learning target: {target}")
+        bindings = self.learning.bindings(target)
+        metrics = metrics or tuple(dict.fromkeys(m for b in bindings for m in b["metrics"]))
+        if not metrics:
+            raise ValueError(f"No active Program learns {target}")
+        ref = self.observe(
+            value,
+            source_id=source_id,
+            task_id=task_id,
+            projections={target: {"value": list(path)}},
+            context=context,
+        )
+        observed = self.memory.resolve(TraceOutputRef(ref.event_ref, tuple(path)))
+        batch = self.prediction_evaluator().evaluate(
+            [ref.event_ref],
+            context,
+            metrics,
+            selected_targets=(target,),
+            revision=self._program_revision(),
+        )
+        coordinator = LearningCoordinator(self.learning)
+        run = self.memory.start_run(
+            "OutcomeLearning", self._program_revision(), {"task_id": task_id}
+        )
+        receipts, unresolved = [], []
+        for result in batch["results"]:
+            if result["status"] != "evaluated":
+                continue
+            evaluation = self.evaluations.get(result["id"])
+            receipt = coordinator.learn(
+                LearningSignal(
+                    evaluation,
+                    LearningObjective((metrics[0],), "minimize", "observed_outcome"),
+                    {str(ref.event_ref): observed},
+                ),
+                target,
+                context=self._estimator_provenance(int(evaluation.provenance[0])),
+            )
+            receipts.append(json_value(receipt))
+            self.memory.record(
+                run, "learning_receipt", arguments={"source": json_value(ref)}, output=receipts[-1]
+            )
+        for case in batch["unmatched"]:
+            if case["reason"] == "missing_prediction":
+                credit = coordinator.missing_prediction(
+                    target, tuple(case["observation_ids"]), context=context
+                )
+                unresolved.append(credit.to_dict())
+                self.memory.record(run, "unresolved_credit", output=unresolved[-1])
+        self.memory.retain(ref, "learning:" + source_id)
+        self.memory.finish_run(run)
+        return {
+            "observation": json_value(ref),
+            "evaluations": batch["results"],
+            "receipts": receipts,
+            "unresolved": unresolved,
+        }
+
+    def _estimator_provenance(self, forecast_event: int) -> dict:
+        """Name the estimator states, and their inputs, that the forecasting run read."""
+        run = self.memory.get_event(forecast_event).program_run
+        used = [
+            event
+            for event in self.memory.events
+            if event.program_run == run
+            and isinstance(event.output, Mapping)
+            and set(event.output) == {"value", "state", "revision", "observed_count"}
+        ]
+        context: dict = {"estimator_states": sorted({event.output["state"] for event in used})}
+        if len(used) == 1 and used[0].arguments.get("inputs") is not None:
+            context["features"] = json_value(used[0].arguments["inputs"])
+        return context
+
     def prediction_evaluator(self):
         """Build an evaluator bound to this agent's graph, trace and trusted observations."""
         from .core.predictions import PredictionEvaluator
@@ -266,6 +362,13 @@ class EverTree(
         return PredictionEvaluator(
             self.graph, self.memory, self.evaluations, observation_ids=self._observations
         )
+
+    def learning_statistics(self, target: str) -> dict:
+        """Report the observation summary of the estimator an active Program binds to target."""
+        bindings = self.learning.bindings(target)
+        if len(bindings) != 1:
+            raise ValueError(f"Expected one learning binding for {target}, found {len(bindings)}")
+        return self.learning.statistics(bindings[0]["state"])
 
     def save_prediction(self, target, reference: TraceOutputRef, context: dict, **settings):
         """Index an original trace output before its outcome becomes known."""
@@ -345,7 +448,6 @@ class EverTree(
                     text, episode_id=uuid4().hex, source_ids=(source_id,), hard_limits=hard_limits
                 )
             )
-            self._predictions.setdefault(state.id, self.learning.predict("verified_task_rate"))
             if state.terminal:
                 raise ValueError("Completed tasks cannot be resumed; submit a new task")
             incoming = {

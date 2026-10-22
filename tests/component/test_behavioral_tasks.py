@@ -175,5 +175,5 @@ async def test_cog_05_unavailable_check_feedback_returns_task_to_waiting(tmp_pat
         assert result["status"] == "waiting"
         assert not task.terminal
         assert reason in provider.task_requests[3].prompt
-        assert app.learning.statistics("verified_task_rate")["observed_count"] == 0
+        assert app.learning_statistics("TaskVerified")["observed_count"] == 0
         assert len(provider.task_requests) == 4

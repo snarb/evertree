@@ -12,7 +12,7 @@ from typing import Any
 from evertree.core.evaluation.contracts import UnresolvedEvaluationResult, exact_json_equal
 from evertree.core.evaluation.scoring import evaluate_prediction
 from evertree.core.evaluation.store import EvaluationStore
-from evertree.core.graph.types import GraphDelta, RelationType, Slot
+from evertree.core.graph.types import AccessView, Concept, GraphDelta, RelationType, Slot
 from evertree.core.memory.types import TraceOutputRef
 
 from .datasets import content_revision
@@ -55,6 +55,52 @@ def protect_prediction_delta(graph, delta):
         or any(reserved(graph.get(identity)) for identity in delta.deletes)
     ):
         raise PermissionError("Prediction index changes require evaluation.save_prediction")
+
+
+def ensure_target(graph, memory, process: int, name: str, *, revision: str, run_mode="live") -> int:
+    """Resolve a declared LearningTarget, creating its Concept and PROCESS_VARIABLE when absent.
+
+    A Program declares its targets by Concept name; the link records that the
+    process is modeled through this quantity without implying every Program covers it.
+    """
+    node = graph.find(name)
+    link = graph.find("PROCESS_VARIABLE")
+    if (
+        node is not None
+        and link is not None
+        and any(
+            fact.args == {"process": process, "variable": node.id}
+            for fact in graph.facts("PROCESS_VARIABLE")
+        )
+    ):
+        return node.id
+    run = memory.start_run("LearningDeclaration", revision, {}, run_mode=run_mode)
+    event = memory.record(
+        run, "learning_target", arguments={"process": process, "target": name}, output=name
+    )
+    memory.finish_run(run)
+    provenance = memory.output_ref(event)
+    creates = []
+    if link is None:
+        link = RelationType(
+            graph.reserve_id(),
+            "PROCESS_VARIABLE",
+            signature=(Slot("process"), Slot("variable")),
+            views=(AccessView("get_variables", ("process",), ("variable",)),),
+        )
+        creates.append(link)
+    if node is None:
+        node = Concept(
+            graph.reserve_id(),
+            name,
+            description="A quantity a Program of this process predicts or learns about.",
+        )
+        creates.append(node)
+    graph.apply(GraphDelta(creates=tuple(creates)), provenance=provenance)
+    fact = graph.new_fact("PROCESS_VARIABLE", {"process": process, "variable": node.id})
+    graph.apply(GraphDelta(creates=(fact,)), provenance=provenance)
+    memory.retain(event.id, "learning_target:" + str(node.id))
+    return node.id
 
 
 class PredictionEvaluator:
@@ -159,6 +205,57 @@ class PredictionEvaluator:
         self.memory.retain(reference, "prediction:" + str(fact.id))
         self.memory.retain(assignment.id, "prediction:" + str(fact.id))
         return fact
+
+    def index_forecasts(self, children, program, context, *, revision: str) -> list[dict]:
+        """Index the declared forecasts of the caller's last finished child run of program.
+
+        children lists finished child runs in completion order, as the runtime saw
+        them; Programs never pass trace references themselves.
+        """
+        from .learning.declaration import LearningDeclaration
+
+        child = next(
+            (item for item in reversed(children) if self._names(item["program_id"], program)),
+            None,
+        )
+        if child is None:
+            raise ValueError("Call the model Program before indexing its forecasts")
+        if child["learning"] is None:
+            raise ValueError("The called Program declares no LEARNING targets")
+        declaration = LearningDeclaration.model_validate(child["learning"])
+        caller = next(
+            event
+            for event in self.memory.events
+            if event.operator == "call_program"
+            and isinstance(event.output, Mapping)
+            and event.output.get("run_id") == child["run_id"]
+        )
+        run = next(run for run in self.memory.runs if run.caller_event == caller.id)
+        finished = next(
+            event
+            for event in self.memory.events
+            if event.program_run == run.id and event.operator == "run_finished"
+        )
+        # Live traces keep the whole runtime event; evaluation keeps its result.
+        base = ("result", "result") if "type" in finished.output else ("result",)
+        process = self.graph.get(int(child["program_id"])).properties["process"]
+        indexed = []
+        for name, target in declaration.targets.items():
+            if target.result is None:
+                continue
+            identity = ensure_target(
+                self.graph, self.memory, process, name, revision=revision, run_mode=self.run_mode
+            )
+            path = base + ((target.result,) if target.result else ())
+            fact = self.save_prediction(identity, TraceOutputRef(finished.id, path), context)
+            indexed.append({"target": name, "prediction": fact.id})
+        return indexed
+
+    def _names(self, program_id, program) -> bool:
+        if str(program_id) == str(program):
+            return True
+        node = self.graph.get(int(program_id))
+        return program in {node.name, node.properties.get("slug")}
 
     def _assignment(self, fact):
         """Resolve the immutable assignment; the semantic graph is only its index."""

@@ -75,6 +75,9 @@ RULE_METRICS = {
 }
 
 
+WORST_SCORES = {"brier": 1.0, "exact_match": 0.0}
+
+
 def _redact_sealed(snapshot: dict, sealed: frozenset[int]) -> None:
     """Remove hidden outcome contents from a side's memory; their identities stay valid."""
     for event in snapshot["events"]:
@@ -434,6 +437,12 @@ async def evaluate_pair(
                         audit["correct"] = False
                         if rule in {"exact", "lifecycle_replay"}:
                             measured["accuracy"] += 1
+                        elif rule == "prediction":
+                            # No forecast scores the worst value of a bounded proper score,
+                            # so a fix for a failing model stays comparable with it.
+                            for metric in set(requested_metrics) & set(WORST_SCORES):
+                                totals[metric] += WORST_SCORES[metric] * case.weight
+                                measured[metric] += 1
                     audit["events"] = side_events[start_event:]
                     traces.append(audit)
             finally:

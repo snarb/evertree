@@ -20,6 +20,19 @@ class MatchBatch(TypedDict):
     unmatched: list[UnmatchedCase]
 
 
+async def predict(
+    ctx: ProgramContext, program: str | int, arguments: dict, *, context: dict
+) -> Any:
+    """Call a model Program and index its declared forecasts for later matching.
+
+    context is {process_id, subject, episode, conditions?}: observations reported
+    with the same context are matched to these forecasts. Returns the model's result.
+    """
+    output = await ctx.call(program, arguments)
+    await ctx.step("evaluation.index_forecasts", {"program": program, "context": context})
+    return output.result
+
+
 async def match(
     ctx: ProgramContext,
     observations: list[int],

@@ -12,7 +12,6 @@ from evertree.core.cognition.tasks import TaskSpecification, TaskStore
 from evertree.core.evaluation.store import EvaluationStore
 from evertree.core.graph.store import GraphStore
 from evertree.core.graph.types import GraphDelta, Node
-from evertree.core.learning.contracts import LearningBinding
 from evertree.core.learning.state import LearningStore
 from evertree.core.memory.store import TraceStore
 
@@ -56,12 +55,12 @@ class PersistenceMixin:
         self._observations: set[int] = set()
         # Trace events whose content reached a model or a live Program.
         self._surfaced: set[int] = set()
-        self._predictions: dict[str, float] = {}
 
     def _bootstrap(self):
         revision = git(self.repository, "rev-parse", "main")
         self._bootstrap_state(revision)
         self._validate_program_layout(None, revision)
+        self._install_seed_learning()
 
     def _bootstrap_state(self, revision):
         """Populate stores from the trusted seed using an already resolved revision."""
@@ -106,10 +105,6 @@ class PersistenceMixin:
         for node in self.graph.nodes():
             self.memory.retain(ref, "graph:" + str(node.id))
         self.memory.finish_run(run)
-        self.learning.create_state("beta_bernoulli", state_id="verified_task_rate")
-        self.learning.register_binding(
-            LearningBinding("verified_task_rate", "verified_task_rate", ("brier",))
-        )
 
     def _append_input(self, record):
         # Intake is durable even while another task occupies the runtime.
@@ -177,7 +172,6 @@ class PersistenceMixin:
             "pending_programs": self._pending_programs,
             "observations": sorted(self._observations),
             "surfaced": sorted(self._surfaced),
-            "predictions": self._predictions,
         }
 
     def _restore_core(self, data):
@@ -219,7 +213,6 @@ class PersistenceMixin:
             "results",
             "evaluation_bindings",
             "pending_programs",
-            "predictions",
         ):
             setattr(self, "_" + name, data.get(name, {}))
         self._protected_nodes = set(data["protected_nodes"])

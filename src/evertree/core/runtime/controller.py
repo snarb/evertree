@@ -180,7 +180,14 @@ class Runtime:
                     if known_runs_path.exists()
                     else {}
                 )
+                calls_path = run_dir / "core_calls.json"
+                calls = (
+                    json.loads(calls_path.read_text(encoding="utf-8"))
+                    if calls_path.exists()
+                    else {"parents": {}, "finished": []}
+                )
                 self._active = {
+                    "calls": calls,
                     "task_id": task_id,
                     "run_id": run_id,
                     "journal": journal,
@@ -518,6 +525,9 @@ class Runtime:
                 (active["run_dir"] / "core_runs.json").write_text(
                     json.dumps(active["known_runs"]), encoding="utf-8"
                 )
+                if parent is not None and active["calls"]["parents"].get(run_id) != parent:
+                    active["calls"]["parents"][run_id] = parent
+                    self._save_calls(active)
                 if method == "run_enter":
                     return None
                 await self._trace(
@@ -529,6 +539,41 @@ class Runtime:
                     }
                 )
                 return None
+            if method == "run_finished":
+                declaration = self._learning(active, spec)
+                if declaration is not None and spec.role == "model":
+                    from ..learning.declaration import check_forecast
+
+                    check_forecast(declaration, payload.get("result", {}).get("result"))
+                if (
+                    run_id in active["calls"]["parents"]
+                    and run_id not in active["calls"]["finished"]
+                ):
+                    active["calls"]["finished"].append(run_id)
+                    self._save_calls(active)
+            if method.startswith("learning."):
+                declaration = self._learning(active, spec)
+                metadata["learning"] = (
+                    declaration.model_dump(mode="json") if declaration is not None else None
+                )
+            if method == "evaluation.index_forecasts":
+                # Core indexes only results the runtime saw this run's children return.
+                children = []
+                for child in active["calls"]["finished"]:
+                    if active["calls"]["parents"].get(child) != run_id:
+                        continue
+                    child_spec = ProgramSpec(**active["known_runs"][child])
+                    declaration = self._learning(active, child_spec)
+                    children.append(
+                        {
+                            "run_id": child,
+                            "program_id": child_spec.program_id,
+                            "learning": declaration.model_dump(mode="json")
+                            if declaration is not None
+                            else None,
+                        }
+                    )
+                metadata["children"] = children
             if method in ("run_finished", "run_failed", "trace"):
                 fields = {
                     "run_finished": ("result",),
@@ -611,6 +656,26 @@ class Runtime:
             raise
         finally:
             self._gateway_active -= 1
+
+    @staticmethod
+    def _save_calls(active):
+        (active["run_dir"] / "core_calls.json").write_text(
+            json.dumps(active["calls"]), encoding="utf-8"
+        )
+
+    @staticmethod
+    def _learning(active, spec):
+        """Read a Program's LEARNING declaration from its pinned source, once per path."""
+        from ..learning.declaration import read_learning
+
+        cache = active.setdefault("learning", {})
+        if spec.git_path not in cache:
+            source = (active["source_dir"] / spec.git_path).read_text(encoding="utf-8")
+            declaration = read_learning(source, spec.git_path)
+            if declaration is not None:
+                declaration.check_role(spec.role)
+            cache[spec.git_path] = declaration
+        return cache[spec.git_path]
 
     async def deliver(self, run_id: str, observation: Any, *, observation_id: str | None = None):
         """Send an observation to an admitted workflow; observation_id deduplicates delivery."""

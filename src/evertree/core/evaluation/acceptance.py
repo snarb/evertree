@@ -124,7 +124,9 @@ def assess_candidate(
                 failures.append(f"Target criterion failed: {metric}")
             if baseline_metrics is not None:
                 if metric not in baseline_metrics:
-                    missing.append("baseline:" + metric)
+                    # A baseline the holdout cannot score is no comparator; a threshold decides.
+                    if criteria.threshold is None:
+                        missing.append("baseline:" + metric)
                 else:
                     improvement = sign * (candidate - _number(baseline_metrics[metric]))
                     if uncertainty and metric in uncertainty:

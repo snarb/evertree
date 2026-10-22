@@ -381,7 +381,7 @@ If the credit recipient has not yet been found, retain a question or hypothesis 
 
 ### PreparedUpdate, UpdateTransactionManager, and UpdateDispatcher
 
-`UpdatePlanner` selects a specific estimator or Program parameters based on the `LearningTarget`, attributed application, source context, and `LearningObjective`. It uses the learning bindings declared by the program and the provenance of the credit and evaluation; a matching target alone does not authorize updating every implementation of that Concept. It then checks the contract of the selected state and prepares an update:
+`UpdatePlanner` selects a specific estimator or Program parameters based on the `LearningTarget`, attributed application, source context, and `LearningObjective`. It uses the learning bindings declared by the program and the provenance of the credit and evaluation; a matching target alone does not authorize updating every implementation of that Concept. A Program declares its bindings in its [[Process Plane/Program Layer#^learning-declaration|`LEARNING` literal]]; Core owns their state, and the bindings an activated Program declares replace any it held before. A displaced alternative's bindings are released, so one active Program owns a target's bindings. When several declared estimators serve one target, such as a rate per carrier, the forecast's provenance names the states its run read, and only those states learn from the outcome. It then checks the contract of the selected state and prepares an update:
 
 ```python
 UpdatePlanner.prepare(

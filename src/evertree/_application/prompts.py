@@ -146,8 +146,10 @@ CODING_INSTRUCTIONS = (
 CANDIDATE_INSTRUCTIONS = (
     "Implement the candidate change at the Program's declared git_path using native coding tools. "
     "The entrypoint is run with keyword arguments matching the Program inputs; an optional ctx "
-    "parameter provides runtime access. Return a mapping with result and feedback (string or null), "
-    "or ProgramResult. Calls to other Programs must go through ctx.call. "
+    "parameter provides runtime access. Always return the wrapper "
+    '{"result": <value>, "feedback": None} (feedback may be a string) or ProgramResult, never '
+    "the bare value; Core rejects any other return. Unit tests should check "
+    'run(...)["result"]. Calls to other Programs must go through ctx.call. '
     "Preserve all Program contracts. Do not modify trusted core or acceptance rules. "
     "Add and run a committed unittest suite in tests/test_*.py; at least one non-skipped test must pass. "
     "Core commits your completed changes and performs protected "
@@ -160,6 +162,37 @@ DESIGN_INSTRUCTIONS = (
     "responsible Program, or why the question does not apply."
 )
 
+LEARNING_INSTRUCTIONS = (
+    "Declare what the model forecasts and learns in a module-level literal LEARNING = "
+    '{"targets": {...}, "estimators": {...}}. Each target is keyed by the Concept name of the '
+    'predicted quantity (Core creates it) with form ("probability", "distribution" with '
+    'categories, "mean", "median" or "value"), result (where the forecast sits inside the '
+    'returned "result" value: "" when "result" itself is the forecast, such as a bare '
+    'probability, or a key such as "verified" when "result" is a mapping holding it), subject, horizon, check (how the outcome is '
+    "observed) and metrics matching the form (probability: brier, log_loss; distribution: "
+    "log_loss; mean: squared_error; median: absolute_error; value: exact_match). Core rejects a "
+    "returned forecast outside its declared form. An estimator is a learnable component "
+    '{"kind": "beta_bernoulli" | "categorical" | "mean" | "linear_regression", "target": ..., '
+    '"settings": {prior or dimension}}. await evertree.core.learning.api.estimate(ctx, name, '
+    "inputs=None) returns the forecast value itself (a probability for beta_bernoulli), so "
+    'a model returns it as {"result": await estimate(ctx, "rate"), "feedback": None}; '
+    "statistics(ctx, name) returns its observation counts. Estimating never trains: Core "
+    "updates estimators from observed outcomes. A fixed formula needs no estimator. Changing "
+    "an estimator's declaration starts it again from its prior. Never use information that "
+    "becomes available only after the forecast. Unit tests replace ctx with a double whose "
+    'async step(method, payload, *, journal=True) answers "learning.estimate" with '
+    '{"value": ...}.'
+)
+
+DUAL_MODEL_INSTRUCTIONS = (
+    "To use a model Program's forecast, call await evertree.core.evaluation.api.predict(ctx, "
+    "program, arguments, context={process_id, subject, episode}). It returns the model's "
+    "result itself (for a probability model, a float), and Core indexes the forecast so the "
+    "observed outcome can later score it. Unit tests replace ctx with a double whose async "
+    "call(program, arguments) returns an object with .result and whose async step answers "
+    '"evaluation.index_forecasts".'
+)
+
 
 def candidate_instructions(program: dict, evaluation: dict | None) -> str:
     """Tell the coding provider the contract its role, meta authority and evaluation impose."""
@@ -170,6 +203,9 @@ def candidate_instructions(program: dict, evaluation: dict | None) -> str:
             "This is a model Program: it describes or predicts a process. It must not take "
             "actions, change the graph or call exec Programs; Core rejects such operations."
         )
+        parts.append(LEARNING_INSTRUCTIONS)
+    else:
+        parts.append(DUAL_MODEL_INSTRUCTIONS)
     policy = bool(evaluation and evaluation["rule"] == "policy")
     if policy:
         parts.append(

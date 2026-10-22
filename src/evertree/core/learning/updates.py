@@ -83,6 +83,10 @@ class UpdatePlanner:
                 or binding.subject == credit.signal.evaluation.evaluated_subject
             )
         ]
+        used = thaw_json(credit.context).get("estimator_states")
+        if used is not None:
+            # Provenance names the states the forecast read; only they learn from its outcome.
+            candidates = [binding for binding in candidates if binding.state in used]
         if not candidates:
             return UpdateBlocked(credit, "no_learning_binding")
         candidates = [

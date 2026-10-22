@@ -259,7 +259,7 @@ Core decides which decisions apply from the candidate's kind; the chooser cannot
 
 `create_new_program` is not a recorded decision: the chooser proposes the new Program, which then starts its own candidate. Both activating decisions pass the same fixed gates: a verified receipt for the exact committed revision, unchanged criteria and holdout, and `main` still at the candidate's base. Rejecting or archiving a new or alternative Program also sets its `lifecycle_status`.
 
-Competing candidates of one slot meet the same holdout. A holdout that an evaluation has shown counts as exposed to the slot, and candidates opened afterwards inherit that exposure, so competitors are opened before any of them is evaluated. `compare_candidates` ranks evaluated candidates of one slot on the slot's target metric. Core refuses to activate a candidate while an undecided verified sibling is strictly better on the same holdout; ties are allowed.
+Competing candidates of one slot meet the same holdout. A holdout that an evaluation has shown counts as exposed to the slot, and candidates opened afterwards inherit that exposure, so competitors are opened before any of them is evaluated. An evaluation in which the candidate returned no result on any case, for example because every run broke the return contract, shows nothing about the labels. It leaves the holdout unexposed, so the corrected revision can be evaluated on it. `compare_candidates` ranks evaluated candidates of one slot on the slot's target metric. Core refuses to activate a candidate while an undecided verified sibling is strictly better on the same holdout; ties are allowed. A candidate that failed a mandatory check is refused for that check first.
 
 #### Operational Flows
 
@@ -629,7 +629,7 @@ if the problem cannot be resolved by changing existing parameter values or belie
 
 Structural revision proceeds through a `ProgramBranch`, semantic change, or new `Program` and is checked through Evaluation.
 
-During the revision, consciousness selects which program parts should be learnable and how. A new predictor and, if training is intended, its updater are verified and activated together with the program change; parameter updates then follow the selected scheme. Pausing or resuming already-defined training does not itself change program structure.
+During the revision, consciousness selects which program parts should be learnable and how. A new predictor and, if training is intended, its updater are verified and activated together with the program change; parameter updates then follow the selected scheme. The predictor and its target are part of the Program's [[Program Layer#^learning-declaration|`LEARNING` declaration]], so they go through the same branch, evaluation and activation as the code. Activation binds the declared estimators: an unchanged declaration keeps the trained state, and a changed one starts from its prior. Pausing or resuming already-defined training does not itself change program structure.
 
 ---
 

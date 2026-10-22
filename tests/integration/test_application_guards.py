@@ -155,7 +155,7 @@ async def test_cancel_stops_real_worker_waiting_inside_provider_gateway(tmp_path
         assert not app.runtime.is_running()
         assert task.status == "cancelled"
         assert task.execution_stopped
-        assert app.learning.statistics("verified_task_rate")["observed_count"] == 0
+        assert app.learning_statistics("TaskVerified")["observed_count"] == 0
         provider.release.set()
         await asyncio.sleep(0)
         assert len(provider.task_requests) == 1

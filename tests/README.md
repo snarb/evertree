@@ -104,6 +104,7 @@ The following inventory preserves the behavioral scenario IDs and acceptance bou
 | COG-05 | `test_behavioral_tasks` | Mandatory-check gate and negative verifier; no automatic registry of arbitrary required Task checks, so a model's false `verified=True` is not excluded by these cases. |
 | ACT-01–03 | Not yet covered | ActionDistribution, Core sampling and policy evaluation exist (PLC-07); no policy executor loop or continuation planner, and bootstrap Planning returns a proposal. |
 | PLC-01–11 | `tests/lifecycle`, `native/test_lifecycle_mirror` | Program authoring and evolution: new exec, branch improvement, rejection, competing branches, alternative Programs, model, policy and meta Programs, memory-derived holdouts and stale bases. The mirror fixes candidate code; the live suite lets the agent write it. |
+| PLC-12–16 | `tests/lifecycle`, `native/test_lifecycle_mirror`, `component/test_task_outcome` | Model Programs: declared forecast targets and learnable estimators, forecast contracts, exec use of a model through `predict`, outcomes that train the estimator a forecast read, alternatives that release bindings, revisions that keep trained state. TaskOutcome.model forecasts verification for TaskFraming in every task. Credit assignment beyond provenance and new updaters are out of scope. |
 | ACT-04, ACT-05 | `test_behavioral_control` | Real ActionGateway: current immutable commands; acceptance is distinct from an Observation or success. |
 | ACT-06 | `test_behavioral_control` | Unknown receipt does not trigger resending; pending/reconciliation survive snapshots. Automatic receipt acquisition is absent. |
 | EVA-01–04 | `test_behavioral_evaluation` | Statuses, proper scoring, frozen evaluation, hidden outcomes, and refusal without independent evidence. |
@@ -112,7 +113,7 @@ The following inventory preserves the behavioral scenario IDs and acceptance bou
 | INT-03, INT-04 | `test_behavioral_beliefs` | Current reads after retract and separate behavior/belief probability in traces; executable policy and plan revision are absent. |
 | INT-05 | `test_behavioral_learning` | Comments stay separate from numeric feedback; a supplied target receives credit or UnresolvedCredit. No automatic causal-target selection from text. |
 
-The catalog contains 88 scenarios: the existing mapping describes full or partial coverage for 79 and gaps for 9. This is a capability inventory, not a claim that every scenario is fully implemented. Module names may occur in more than one suite because business rules and infrastructure boundaries are deliberately separated.
+The catalog contains 93 scenarios: the existing mapping describes full or partial coverage for 84 and gaps for 9. This is a capability inventory, not a claim that every scenario is fully implemented. Module names may occur in more than one suite because business rules and infrastructure boundaries are deliberately separated.
 
 ## Performance evidence
 

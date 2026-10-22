@@ -147,6 +147,8 @@ class LearningBinding:
     direction: str = "minimize"
     subject: str | None = None
     allow_multiple_examples: bool = False
+    # The Program that declared this binding; None for Core-owned estimators.
+    owner: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metrics", tuple(self.metrics))
@@ -164,6 +166,7 @@ class LearningBinding:
             "direction": self.direction,
             "subject": self.subject,
             "allow_multiple_examples": self.allow_multiple_examples,
+            "owner": self.owner,
         }
 
 
