@@ -11,11 +11,15 @@ from evertree.core.memory.types import TraceOutputRef
 from ..core.provider import LLMRequest, ToolDefinition
 from ..core.runtime.coordination import semantic_scope
 from ..core.values import json_value
-from .prompts import CODING_INSTRUCTIONS, LIFECYCLE_TOOLS
+from .prompts import CODING_INSTRUCTIONS, LIFECYCLE_TOOLS, TELEMETRY_OPERATORS, bounded_event
 
 
 class ToolsMixin:
     """Internal EverTree method group; state is owned and initialized by EverTree."""
+
+    @staticmethod
+    def _bounded_event(event):
+        return bounded_event(json_value(event))
 
     async def _tool(self, task_id, name, args, *, semantic_tools=None):
         """Apply task and self-improvement resource limits to a tracked conscious tool callback."""
@@ -110,8 +114,18 @@ class ToolsMixin:
             return await self._graph_tool(task_id, name, args)
         if name == "recall":
             groups = self.memory.retrieve(args["query"], limit=10)
-            self._surfaced.update(event.id for group in groups for event in group.events)
-            return json_value(groups)
+            # Provider telemetry holds earlier prompts verbatim; recalling it would nest
+            # each prompt inside the next and grow without bound.
+            events = [
+                [event for event in group.events if event.operator not in TELEMETRY_OPERATORS]
+                for group in groups
+            ]
+            self._surfaced.update(event.id for group in events for event in group)
+            return [
+                {**json_value(group), "events": [self._bounded_event(e) for e in kept]}
+                for group, kept in zip(groups, events, strict=True)
+                if kept
+            ]
         if name in LIFECYCLE_TOOLS:
             return await self._lifecycle_operation(task_id, name, args)
         if name == "list_actions":

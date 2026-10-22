@@ -116,7 +116,7 @@ main allowance. Modify agent state and reusable Programs only through EverTree t
 For reusable code changes, load program_development_tools and follow candidate development,
 evaluation and selection. A read-only sandbox of this invocation limits only your own native
 commands; develop_candidate and other EverTree tools write in their own authorized checkouts,
-which is the sanctioned way to change Programs. Native coding tools operate in the task workspace; use absolute
+which is the sanctioned way to change Programs. Any evaluation of a Program slot, including one run by a meta Program such as ProgramImprovement, spends that slot's holdout for candidates opened afterwards. Change a slot through either a meta Program or the development tools, never both, and follow the lifecycle tools the task names directly. Native coding tools operate in the task workspace; use absolute
 file paths. This workspace is deleted when the task ends. Save lasting artifacts under
 artifacts/ in a candidate through those development tools. After restart, recover missing
 temporary files and check saved action receipts before repeating external effects.
@@ -238,6 +238,24 @@ def candidate_instructions(program: dict, evaluation: dict | None) -> str:
     return "\n\n".join(parts)
 
 
+# High-volume provider bookkeeping that embeds earlier prompts; never evidence for a decision.
+TELEMETRY_OPERATORS = frozenset(
+    {"provider_request", "provider_event", "run_started", "step_started", "code_anchors"}
+)
+# One recorded result or recalled event never exceeds this many characters in a prompt; the
+# rest stays in the trace and is reachable through its reference.
+EVENT_PROMPT_CHARS = 12_000
+# Newest results first, the conscious prompt carries at most this many characters of them.
+RESULTS_PROMPT_CHARS = 120_000
+
+
+def bounded_event(event: dict) -> dict:
+    """Replace an oversized event output with a preview that keeps its reference."""
+    from ..core.values import bounded
+
+    return {**event, "output": bounded(event.get("output"), EVENT_PROMPT_CHARS)}
+
+
 LIFECYCLE_TOOLS = (
     "create_candidate",
     "propose_program",
@@ -304,7 +322,7 @@ def _all_tools():
         ),
         tool(
             "propose_program",
-            "Propose a missing role for an existing process by name, or create a new process under parent (ID or name; defaults to SelfProcess). Omit parent for existing processes and never pass it together with alternative_to. For an occupied role, set alternative_to to the Program it competes with when the solution principle differs; improve the same principle with create_candidate instead. meta marks an exec Program that manages other Programs' lifecycle. Give candidate_name a specific label of one to three words. Independent evidence is required before activation.",
+            "Propose a missing role for an existing process by name, or create a new process under parent (ID or name; defaults to SelfProcess). Omit parent for existing processes and never pass it together with alternative_to. For an occupied role, set alternative_to to the Program it competes with when the solution principle differs; improve the same principle with create_candidate instead. meta marks an exec Program that manages other Programs' lifecycle. Give candidate_name a specific label of one to three words. Open every competing alternative before evaluating any of them, since an evaluation spends the slot's holdout for later ones. Independent evidence is required before activation.",
             {
                 "name": string,
                 "role": {"enum": ["model", "exec"], "type": "string"},

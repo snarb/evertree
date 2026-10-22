@@ -13,11 +13,13 @@ from evertree.core.memory.types import MemoryQuery, TraceOutputRef
 
 from ..core.programs.layout import program_active
 from ..core.provider import LLMRequest
-from ..core.values import json_value
+from ..core.values import bounded, json_value
 from .integration import EVIDENCE_ASSESSMENT_SLUGS
 from .prompts import (
     ANSWER_VERIFICATION_INSTRUCTIONS,
     CONSCIOUSNESS_INSTRUCTIONS,
+    EVENT_PROMPT_CHARS,
+    RESULTS_PROMPT_CHARS,
     AnswerVerification,
     tool_sets,
 )
@@ -502,7 +504,7 @@ class ConsciousnessMixin:
             "program": name(run.program),
             "operation": name(event["operator"]),
             "status": event["status"],
-            "output": event["output"],
+            "output": bounded(event["output"], EVENT_PROMPT_CHARS),
         }
         if run.run_mode != "live":
             result["run_mode"] = run.run_mode
@@ -569,7 +571,13 @@ class ConsciousnessMixin:
                     continue
             if event["output"] is not None:
                 results.append(self._prompt_event(event))
-        return results[-40:]
+        recent, size = [], 0
+        for item in reversed(results[-40:]):
+            size += len(json.dumps(item, ensure_ascii=False, default=str))
+            if recent and size > RESULTS_PROMPT_CHARS:
+                break
+            recent.append(item)
+        return recent[::-1]
 
     def _conscious_context(self, state, admitted_step):
         """Build decision context from retained task progress and substantive operation results."""

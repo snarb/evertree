@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import math
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -104,3 +105,11 @@ def restore_value(value: Any) -> Any:
     if isinstance(value, list):
         return tuple(restore_value(item) for item in value)
     return value
+
+
+def bounded(value: Any, limit: int) -> Any:
+    """Return value, or a marker with a preview when its JSON form exceeds limit characters."""
+    text = json.dumps(json_value(value), ensure_ascii=False, default=str)
+    if len(text) <= limit:
+        return value
+    return {"truncated": True, "chars": len(text), "preview": text[: limit // 4]}

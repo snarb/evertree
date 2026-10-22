@@ -1,11 +1,13 @@
 import asyncio
 import contextvars
+import json
 import time
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
 
+from evertree._application.prompts import RESULTS_PROMPT_CHARS
 from evertree.core.actions import ActionOption
 from evertree.core.evaluation.scoring import evaluate_prediction
 from evertree.core.graph.types import GraphDelta
@@ -134,6 +136,37 @@ def test_prompt_results_keep_observations_ahead_of_integration_bookkeeping(agent
     results = agent._prompt_results(task)
     assert results[-1]["reference"]["event_ref"] == changed.id
     assert results[-1]["run_mode"] == "simulation"
+
+
+def test_conscious_prompt_stays_bounded_whatever_the_trace_holds(agent):
+    """Oversized results are previewed and total evidence is capped, so prompts cannot snowball."""
+    task = prepared_task(agent)
+    run = agent.memory.start_run("Experiment", "commit", {"task_id": task.id})
+    for index in range(40):
+        agent.memory.record(run, "measurement", output={"index": index, "blob": "x" * 50_000})
+    agent.memory.finish_run(run)
+
+    results = agent._prompt_results(task)
+
+    assert results[-1]["output"]["truncated"] is True
+    assert results[-1]["output"]["chars"] > 50_000
+    assert len(json.dumps(results)) <= RESULTS_PROMPT_CHARS + 20_000
+    assert results[-1]["output"] != results[0]["output"]
+
+
+async def test_recall_leaves_provider_telemetry_in_the_trace(agent):
+    """A recalled provider request would embed an earlier prompt inside the next one."""
+    task = prepared_task(agent)
+    run = agent.memory.start_run("Consciousness", "commit", {"task_id": task.id})
+    agent.memory.record(run, "provider_request", output={"prompt": "walrus " * 5000})
+    agent.memory.record(run, "measurement", output={"note": "walrus count", "blob": "w" * 40_000})
+    agent.memory.finish_run(run)
+
+    groups = await agent._dispatch_tool(task.id, "recall", {"query": "walrus"})
+
+    events = [event for group in groups for event in group["events"]]
+    assert [event["operator"] for event in events] == ["measurement"]
+    assert events[0]["output"]["truncated"] is True
 
 
 async def test_close_wakes_a_waiting_event_consumer(agent):
