@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import os
@@ -71,9 +72,9 @@ def _macos_runtime_paths() -> tuple[Path, ...]:
     return tuple(paths)
 
 
-@contextmanager
-def _prepare_macos(include_core):
-    """Assemble a private macOS worker interpreter with only declared dependency paths."""
+@functools.cache
+def _macos_dependencies():
+    """Installed dependency packages and the paths linked into a worker; fixed for the process."""
     from importlib import metadata
 
     from ..environment import _installed_packages
@@ -99,6 +100,13 @@ def _prepare_macos(include_core):
             root = relative.parts[0]
             if root != "__pycache__":
                 dependencies[root] = Path(distribution.locate_file(root)).resolve()
+    return packages, dependencies
+
+
+@contextmanager
+def _prepare_macos(include_core):
+    """Assemble a private macOS worker interpreter with only declared dependency paths."""
+    packages, dependencies = _macos_dependencies()
     sources = _sources(include_core)
     key = _key(
         [

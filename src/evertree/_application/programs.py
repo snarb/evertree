@@ -147,12 +147,24 @@ class ProgramsMixin:
         return meta_criteria(criteria) if self._is_meta(candidate.program_id) else criteria
 
     def _program_revision(self):
+        # Read on every run start; a loose ref answers without spawning Git.
+        try:
+            value = (Path(self.repository) / ".git/refs/heads/main").read_text().strip()
+        except OSError:
+            value = ""
+        if len(value) == 40 and not set(value) - set("0123456789abcdef"):
+            return value
         return git(self.repository, "rev-parse", "main")
 
     def _program_source(self, spec):
-        return _git(self.repository, "show", f"{spec['revision']}:{spec['git_path']}").decode(
-            "utf-8"
-        )
+        # A revision names immutable content, so one Git read per file serves every later run.
+        cache = self.__dict__.setdefault("_source_cache", {})
+        key = (spec["revision"], spec["git_path"])
+        if key not in cache:
+            cache[key] = _git(
+                self.repository, "show", f"{spec['revision']}:{spec['git_path']}"
+            ).decode("utf-8")
+        return cache[key]
 
     def _program(self, identity: int | str, *, allow_inactive=False) -> ProgramSpec:
         """Resolve a Program or active process role into a spec pinned to the current repository revision."""

@@ -7,6 +7,7 @@ only case inputs. Every side starts from the same independent state snapshot.
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import math
@@ -225,15 +226,9 @@ async def evaluate_pair(
             has_baseline = False
         metrics = {}
         valid = {}
-        for label, source, commit in (
-            ("baseline", Path(repository), branch.base_revision),
-            ("candidate", candidate_repository, revision),
-        ):
-            if label == "baseline" and not has_baseline:
-                traces.append(
-                    {"kind": "baseline_absent", "revision": commit, "program": program.program_id}
-                )
-                continue
+
+        async def run_side(label, source, commit):
+            side_traces = []
             side = root / label
             side.mkdir()
             side_beliefs = BeliefStore.from_snapshot(snapshots["beliefs"])
@@ -444,18 +439,43 @@ async def evaluate_pair(
                                 totals[metric] += WORST_SCORES[metric] * case.weight
                                 measured[metric] += 1
                     audit["events"] = side_events[start_event:]
-                    traces.append(audit)
+                    side_traces.append(audit)
             finally:
                 await runtime.close()
                 await search_index.close()
             # A partial or infinite score cannot silently become a better mean.
             # Missing required metrics block acceptance in the protected policy.
-            metrics[label] = {
+            side_metrics = {
                 metric: value / sum(case.weight for case in dataset.cases)
                 for metric, value in totals.items()
                 if measured[metric] == len(dataset.cases)
             }
-            valid[label] = all_valid
+            return side_metrics, all_valid, side_traces
+
+        sides = [
+            (label, source, commit)
+            for label, source, commit in (
+                ("baseline", Path(repository), branch.base_revision),
+                ("candidate", candidate_repository, revision),
+            )
+            if label == "candidate" or has_baseline
+        ]
+        if not has_baseline:
+            traces.append(
+                {
+                    "kind": "baseline_absent",
+                    "revision": branch.base_revision,
+                    "program": program.program_id,
+                }
+            )
+        # The sides share nothing mutable, so their worker startups and cases overlap.
+        outcomes = await asyncio.gather(*(run_side(*side) for side in sides))
+        for (label, _, _), (side_metrics, side_valid, recorded) in zip(
+            sides, outcomes, strict=True
+        ):
+            metrics[label] = side_metrics
+            valid[label] = side_valid
+            traces.extend(recorded)
         report = EvaluationReport(
             revision,
             dataset.revision,

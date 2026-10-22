@@ -25,6 +25,8 @@ uv run pytest -q
 uv run pytest tests/integration -q
 # Native contracts on macOS or Windows, sequentially
 uv run pytest tests/native -q -n 0
+# The lifecycle mirror cases are independent; four workers cut it from about 5 minutes to under 90 seconds
+uv run pytest tests/native/test_lifecycle_mirror.py -q -n 4
 # Optional outgoing HTTPS smoke (PowerShell: $env:EVERTREE_NETWORK_SMOKE = "1")
 EVERTREE_NETWORK_SMOKE=1 uv run pytest tests/native/test_network.py -q -n 0
 # All offline suites: both commands are required
