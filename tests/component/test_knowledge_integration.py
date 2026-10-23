@@ -4,6 +4,8 @@ import json
 
 import pytest
 
+from evertree.core.cognition.steps import trace_reference
+from evertree.core.graph.store import GraphStore
 from evertree.core.memory.store import TraceStore
 from evertree.core.values import ContractError
 from evertree.processes.semantic_processing.knowledge_integration._exec import run
@@ -100,8 +102,11 @@ async def test_search_is_bounded_and_refreshes_after_a_successful_graph_write():
 
     class Index(EmptyIndex):
         async def lexical(self, nodes, query, kind):
-            searches.append(query)
-            return [node["id"] for node in nodes if node["name"].startswith("Candidate ")]
+            searches.extend(query)
+            return [
+                {"ids": [node["id"] for node in nodes if node["name"].startswith("Candidate ")]}
+                for _ in query
+            ]
 
     world = semantic_world(index=Index())
     nodes = [Node(world.graph.reserve_id(), f"Candidate {index}") for index in range(25)]
@@ -109,11 +114,11 @@ async def test_search_is_bounded_and_refreshes_after_a_successful_graph_write():
     refs, _ = recorded_experience(world, "An explanation worth retaining")
 
     async def model(payload, call):
-        first = await call("search", {"query": "ambiguous"})
-        assert len(first["items"]) == 20 and "has_more" not in first
+        first = await call("search", {"queries": ["ambiguous"]})
+        assert len(first["items"]) == 10 and "has_more" not in first
         saved = await call("save_note", {"name": "Explanation", "source": refs[0], "sources": []})
         assert "error" not in saved, saved
-        refreshed = await call("search", {"query": "ambiguous"})
+        refreshed = await call("search", {"queries": ["ambiguous"]})
         assert refreshed["items"] == first["items"]
         assert "cursor" not in refreshed and "has_more" not in refreshed
 
@@ -134,10 +139,10 @@ def test_identity_creation_keeps_complete_search_after_own_write(action_name):
     }
     assert "complete search" in write_action(world, refs, metadata, action, searched=False)["error"]
     world.service.results(
-        "Object", None, [], [{"channel": "vector", "error": "offline"}], 20, "task", scope="packet"
+        "Object", None, [], [{"channel": "vector", "error": "offline"}], 10, "task", scope="packet"
     )
     assert "complete search" in write_action(world, refs, metadata, action, searched=False)["error"]
-    world.service.results("Object", None, [], [], 20, "task", scope="packet")
+    world.service.results("Object", None, [], [], 10, "task", scope="packet")
     assert "error" not in write_action(world, refs, metadata, note(refs[0]), key="intervening")
     result = write_action(world, refs, metadata, action, searched=False)
     assert result["object"] > 0
@@ -165,11 +170,10 @@ async def test_fabricated_search_completion_cannot_authorize_creation():
     result = await world.service.execute(
         "semantic.results",
         {
-            "query": "Candidate",
-            "kind": None,
-            "items": [],
-            "errors": [],
-            "limit": 20,
+            "queries": ["Candidate"],
+            "kinds": None,
+            "rankings": [{"items": [], "errors": []}],
+            "limit": 10,
         },
         metadata,
     )
@@ -184,8 +188,8 @@ async def test_program_reuses_search_after_own_write(action_name):
 
     class Index(EmptyIndex):
         async def lexical(self, nodes, query, kind):
-            searches.append(query)
-            return []
+            searches.extend(query)
+            return [{"ids": []} for _ in query]
 
     world = semantic_world(index=Index())
     refs, _ = recorded_experience(world, "A useful term")
@@ -193,7 +197,7 @@ async def test_program_reuses_search_after_own_write(action_name):
     async def model(payload, call):
         state = json.loads(payload["prompt"])
         assert state["material"]["context"]["task"] == {"objective": "Learn terminology"}
-        await call("search", {"query": "Useful term"})
+        await call("search", {"queries": ["Useful term"]})
         saved = await call("save_note", {"name": "Explanation", "source": refs[0], "sources": []})
         assert world.graph.get(saved["object"]).description == "A useful term"
         created = await call(
@@ -310,13 +314,15 @@ async def test_model_projection_keeps_addressed_note_fragments_verbatim(path):
 
     async def model(payload, call):
         item = json.loads(payload["prompt"])["material"]["experience"][0]
-        assert item["reference"] == reference
+        assert trace_reference(item["reference"]) == world.memory.producer_of(
+            trace_reference(reference)
+        )
         assert item["content"] == source
 
-    assert (await run(context(world, model, role="exec"), [reference])) == {
-        "result": {"writes": []},
-        "feedback": None,
-    }
+    result = await run(context(world, model, role="exec"), [reference])
+    assert result["result"]["writes"] == []
+    assert result["result"]["processing"]["status"] == "processed"
+    assert result["feedback"] is None
 
 
 async def test_native_tools_create_undated_state_and_relation_with_permanent_ids():
@@ -346,11 +352,26 @@ async def test_native_tools_create_undated_state_and_relation_with_permanent_ids
             {
                 "name": "HAS_NOISE",
                 "roles": [
-                    {"label": "state", "value_type": "facet", "arity": "one"},
-                    {"label": "sound", "value_type": "string", "arity": "one"},
+                    {
+                        "label": "state",
+                        "value_type": "facet",
+                        "arity": "one",
+                        "description": "State in which the sound was reported.",
+                    },
+                    {
+                        "label": "sound",
+                        "value_type": "string",
+                        "arity": "one",
+                        "description": "Reported sound of that state.",
+                    },
                 ],
                 **common,
             },
+        )
+        assert "error" not in relation, relation
+        described = await call("describe", {"subject": relation["object"]})
+        assert described["schema"]["signature"][0]["description"] == (
+            "State in which the sound was reported."
         )
         result = await call(
             "relate",
@@ -373,6 +394,8 @@ async def test_native_tools_create_undated_state_and_relation_with_permanent_ids
     (facet,) = world.graph.get_facets(instance)
     assert facet.valid_from is None and facet.valid_until is None
     assert len(world.graph.facts("HAS_NOISE")) == 1
+    restored = GraphStore.from_snapshot(world.graph.snapshot())
+    assert restored.find("HAS_NOISE").signature[1].description == "Reported sound of that state."
     assert refs[1]["event_ref"] not in world.memory.retention_closure()
 
 
@@ -411,8 +434,10 @@ async def test_model_failure_does_not_undo_completed_writes():
         await call("save_note", {"name": "Explanation", "source": refs[0], "sources": []})
         raise RuntimeError("Provider disconnected")
 
-    with pytest.raises(RuntimeError, match="Provider disconnected"):
-        await run(context(world, model, role="exec"), refs)
+    result = (await run(context(world, model, role="exec"), refs))["result"]
+    assert len(result["writes"]) == 1
+    assert result["processing"]["status"] == "incomplete"
+    assert "Provider disconnected" in result["processing"]["failed"][0]["error"]
     assert world.graph.find("Explanation").description == "Useful explanation"
 
 
@@ -421,7 +446,10 @@ async def test_search_ceiling_and_relation_schemas_need_no_status_calls():
 
     class Index(EmptyIndex):
         async def lexical(self, nodes, query, kind):
-            return [node["id"] for node in nodes if node["name"].startswith("Candidate ")]
+            return [
+                {"ids": [node["id"] for node in nodes if node["name"].startswith("Candidate ")]}
+                for _ in query
+            ]
 
     world = semantic_world(index=Index())
     nodes = [Node(world.graph.reserve_id(), f"Candidate {i}") for i in range(25)]
@@ -429,15 +457,16 @@ async def test_search_ceiling_and_relation_schemas_need_no_status_calls():
     refs, _ = recorded_experience(world, "Ambiguous object mention")
 
     async def model(payload, call):
-        first = await call("search", {"query": "ambiguous"})
-        assert len(first["items"]) == 20
+        first = await call("search", {"queries": ["ambiguous"]})
+        assert len(first["items"]) == 10
         assert "has_more" not in first and "cursor" not in first
-        rejected = await call("search", {"query": "ambiguous", "next_page": True})
+        rejected = await call("search", {"queries": ["ambiguous"], "next_page": True})
         assert "error" in rejected
         schema = (await call("describe", {"subject": "IDENTITY_TYPE"}))["schema"]
         assert schema["signature"] and "views" not in schema
 
-    assert (await run(context(world, model, role="exec"), refs))["result"] == {"writes": []}
+    result = (await run(context(world, model, role="exec"), refs))["result"]
+    assert result["writes"] == [] and result["processing"]["status"] == "processed"
 
 
 async def test_tool_projection_preserves_empty_reads_and_nested_review_results():
@@ -457,11 +486,20 @@ async def test_tool_projection_preserves_empty_reads_and_nested_review_results()
         assert rejected["error"]
         nested = rejected["reads"][0]
         assert nested["tool"] == "search"
-        found = await call("search", {"query": root.name})
+        found = await call("search", {"queries": [root.name]})
         assert nested["result"] == found
         assert found == {
             "status": "complete",
             "items": [{"id": root.id, "name": root.name, "kind": "prototype"}],
+            "queries": [
+                {
+                    "query": root.name,
+                    "status": "complete",
+                    "exact": True,
+                    "total": 1,
+                    "ids": [root.id],
+                }
+            ],
         }
 
         described = await call("describe", {"subject": root.id})
@@ -475,20 +513,25 @@ async def test_tool_projection_preserves_empty_reads_and_nested_review_results()
         assert missing["error"]
         assert missing["reads"][0]["result"] == {"status": "not_found", "candidates": []}
 
-    assert (await run(context(world, model, role="exec"), refs))["result"] == {"writes": []}
+    result = (await run(context(world, model, role="exec"), refs))["result"]
+    assert result["writes"] == [] and result["processing"]["status"] == "processed"
 
 
-async def test_normal_model_completion_needs_no_finish_call():
+@pytest.mark.parametrize("text", ["Integration complete", "Extraction is incomplete", ""])
+async def test_final_text_without_finish_keeps_writes_but_records_gap(text):
     world = semantic_world()
     refs, _ = recorded_experience(world, "Useful explanation")
 
     async def model(payload, call):
         await call("save_note", {"name": "Explanation", "source": refs[0], "sources": []})
-        return {"text": "Integration complete"}
+        return {"text": text}
 
     result = (await run(context(world, model, role="exec"), refs))["result"]
     assert len(result["writes"]) == 1
     assert world.graph.find("Explanation").description == "Useful explanation"
+    assert result["processing"]["status"] == "incomplete"
+    assert result["processing"]["completed"] == []
+    assert "without finish_section" in result["processing"]["failed"][0]["error"]
 
 
 def test_character_citations_cannot_ground_graph_writes():
@@ -500,7 +543,7 @@ def test_character_citations_cannot_ground_graph_writes():
         "description": "UPS-1 returned to mains at 10:07 UTC",
         "sources": [{**refs[0], "output_path": [0]}],
     }
-    world.service.results("Power restored", None, [], [], 20, "task", scope="packet")
+    world.service.results("Power restored", None, [], [], 10, "task", scope="packet")
     before = world.graph.snapshot(), world.memory.snapshot()
     result = write_action(world, refs, metadata, action)
     assert "not text characters" in result["error"]
@@ -517,8 +560,8 @@ async def test_new_names_search_without_reviewing_own_known_updates():
 
     class Index(EmptyIndex):
         async def vector(self, nodes, query, kind):
-            searches.append(query)
-            return [existing.id]
+            searches.extend(query)
+            return [{"ids": [existing.id]} for _ in query]
 
     world = semantic_world(index=Index())
     existing = Node(world.graph.reserve_id(), "Existing", description="An unrelated meaning")
@@ -551,7 +594,7 @@ async def test_explicit_search_exposes_candidates_before_new_name_preflight():
 
     class Index(EmptyIndex):
         async def vector(self, *args):
-            return [existing.id]
+            return [{"ids": [existing.id]} for _ in args[1]]
 
     world = semantic_world(index=Index())
     existing = Node(world.graph.reserve_id(), "Existing", description="Other meaning")
@@ -559,7 +602,7 @@ async def test_explicit_search_exposes_candidates_before_new_name_preflight():
     refs, _ = recorded_experience(world, "New useful concept")
 
     async def model(payload, call):
-        await call("search", {"query": "Related meaning"})
+        await call("search", {"queries": ["Related meaning"]})
         result = await call(
             "create_concept", {"name": "New", "description": "Useful", "sources": refs}
         )
@@ -572,9 +615,9 @@ def test_search_review_is_owned_by_one_model_invocation():
     world = semantic_world()
     refs, metadata = recorded_experience(world, "A pump")
     action = {"action": "create_concept", "name": "Pump", "description": None, "sources": refs}
-    world.service.results("Pump", None, [], [], 20, "task", scope="parent")
+    world.service.results("Pump", None, [], [], 10, "task", scope="parent")
     world.service.results(
-        "Pump", None, [], [{"channel": "vector", "error": "offline"}], 20, "task", scope="child"
+        "Pump", None, [], [{"channel": "vector", "error": "offline"}], 10, "task", scope="child"
     )
     for scope in ("child", "next-turn"):
         result = write_action(
@@ -591,8 +634,13 @@ async def test_completed_channels_cannot_be_reused_for_a_second_search():
     world = semantic_world()
     _, metadata = recorded_experience(world, "A pump")
     for method in ("semantic.bm25", "semantic.vector"):
-        await world.service.execute(method, {"query": "pump", "kind": None}, metadata)
-    payload = {"query": "pump", "kind": None, "items": [], "errors": [], "limit": 20}
+        await world.service.execute(method, {"queries": ["pump"], "kinds": None}, metadata)
+    payload = {
+        "queries": ["pump"],
+        "kinds": None,
+        "rankings": [{"items": [], "errors": []}],
+        "limit": 10,
+    }
     assert (await world.service.execute("semantic.results", payload, metadata))[
         "status"
     ] == "complete"
@@ -637,9 +685,9 @@ def test_program_completion_cannot_authorize_creation():
 def test_core_search_confirmation_survives_restore(complete):
     world = semantic_world()
     refs, metadata = recorded_experience(world, "A pump")
-    world.service.results("Pump", None, [], [], 20, "task", scope="packet")
+    world.service.results("Pump", None, [], [], 10, "task", scope="packet")
     if not complete:
-        world.service.results("Pump", None, [], [{"channel": "vector"}], 20, "task", scope="packet")
+        world.service.results("Pump", None, [], [{"channel": "vector"}], 10, "task", scope="packet")
     world.memory = TraceStore.from_snapshot(world.memory.snapshot())
     world.service.memory = world.memory
     world.operations.memory = world.memory
@@ -650,3 +698,233 @@ def test_core_search_confirmation_survives_restore(complete):
     )
     result = write_action(world, refs, metadata, action, searched=False)
     assert ("object" in result) is complete
+
+
+@pytest.mark.parametrize("focus", [None, "Preserve the failure conditions"])
+async def test_default_integration_prioritizes_connected_facts_and_explicit_focus_is_preserved(
+    focus,
+):
+    from evertree.processes.semantic_processing.knowledge_integration._exec import DEFAULT_FOCUS
+
+    world = semantic_world()
+    refs, _ = recorded_experience(world, "A transfers coolant to B at 12 l/min.")
+
+    async def model(payload, call):
+        material = json.loads(payload["prompt"])["material"]
+        assert material["focus"] == (DEFAULT_FOCUS if focus is None else focus)
+
+    await run(context(world, model, role="exec"), refs, focus=focus)
+
+
+@pytest.mark.parametrize("automatic_fragment", [False, True])
+async def test_tool_limit_refines_sections_with_fresh_review_and_distinct_write_keys(
+    automatic_fragment,
+):
+    from evertree.core.runtime.llm import ToolCallLimitError
+
+    world = semantic_world()
+    text = "The pump supplies water.\n\nThe valve controls the pump."
+    refs, _ = recorded_experience(world, text)
+    if automatic_fragment:
+        producer = world.memory.start_run("ExperienceFragments", "revision", {"task_id": "task"})
+        event = world.memory.record(
+            producer,
+            "experience_fragment",
+            output={
+                "source_ref": refs[0],
+                "encoding": "structured",
+                "location": {"path": [], "start": 0, "end": len(text)},
+                "context": [{"preceding_text": "Pump system"}],
+                "text": text,
+            },
+        )
+        world.memory.finish_run(producer)
+        refs = [{"event_ref": event.id, "output_path": []}]
+    parent = {**refs[0], "output_path": ["text"]} if automatic_fragment else refs[0]
+    invocations = 0
+
+    async def model(payload, call):
+        nonlocal invocations
+        invocations += 1
+        source = json.loads(payload["prompt"])["material"]["experience"][0]
+        if invocations == 1:
+            result = await call(
+                "create_concept",
+                {"name": "Water supply", "description": "A useful function", "sources": refs},
+            )
+            assert "error" not in result
+            raise ToolCallLimitError("LLM dialogue exhausted its tool-call limit")
+        assert source["reference"] != refs[0]
+        assert source["source_reference"] == parent
+        assert world.memory.resolve(trace_reference(source["reference"])) == source["content"]
+        if invocations == 2:
+            rejected = await call(
+                "create_concept",
+                {
+                    "name": "Water supply",
+                    "description": "A useful function",
+                    "sources": [source["reference"]],
+                },
+            )
+            assert "Review search candidates" in rejected["error"]
+        result = await call(
+            "create_concept",
+            {
+                "name": f"Section {invocations}",
+                "description": "Supported meaning",
+                "sources": [source["reference"]],
+            },
+        )
+        assert "error" not in result
+
+    result = (await run(context(world, model, role="exec"), refs))["result"]
+    assert invocations == 3
+    assert len(result["writes"]) == 3
+    assert len(result["processing"]["completed"]) == 2
+    assert result["processing"]["status"] == "processed"
+    events = [event for event in world.memory.events if event.operator == "semantic_write"]
+    assert len({tuple(event.arguments["key"]) for event in events}) == 3
+    assert len(world.graph.changes_of(world.graph.find("Water supply").id)) == 1
+
+
+async def test_indivisible_tool_limit_records_gap():
+    from evertree.core.runtime.llm import ToolCallLimitError
+
+    world = semantic_world()
+    refs, _ = recorded_experience(world, "An indivisible assertion")
+
+    async def limited(payload, call):
+        raise ToolCallLimitError("LLM dialogue exhausted its tool-call limit")
+
+    result = (await run(context(world, limited, role="exec"), refs))["result"]
+    assert result["processing"]["status"] == "incomplete"
+    assert result["processing"]["completed"] == result["processing"]["pending"] == []
+    assert len(result["processing"]["failed"]) == 1
+
+
+async def test_direct_integration_partitions_full_source_and_resumes_only_remaining_units():
+    world = semantic_world()
+    source = "First fact.\n\n" * 700 + "Last distinct fact."
+    refs, _ = recorded_experience(world, source)
+    seen = []
+
+    async def interrupted(payload, call):
+        item = json.loads(payload["prompt"])["material"]["experience"][0]
+        seen.append(item["content"])
+        if len(seen) == 2:
+            raise RuntimeError("Provider temporarily unavailable")
+
+    result = (await run(context(world, interrupted, role="exec"), refs))["result"]
+    progress = result["processing"]
+    assert len(progress["completed"]) == 1 and len(progress["failed"]) == 1
+    progress["pending"] = [entry["unit"] for entry in progress["failed"]] + progress["pending"]
+    progress["failed"] = []
+    resumed = []
+
+    async def complete(payload, call):
+        resumed.append(json.loads(payload["prompt"])["material"]["experience"][0]["content"])
+
+    result = (await run(context(world, complete, role="exec"), refs, processing=progress))["result"]
+    assert result["processing"]["status"] == "processed"
+    assert "".join([seen[0], *resumed]) == source
+
+
+async def test_declared_incomplete_section_splits_and_keeps_prior_writes():
+    world = semantic_world()
+    refs, _ = recorded_experience(world, "First fact. Second fact.")
+    sections = []
+
+    async def model(payload, call):
+        material = json.loads(payload["prompt"])["material"]
+        item = material["experience"][0]
+        sections.append(item["content"])
+        if len(sections) > 1:
+            assert material["previous_attempt_remaining_work"] == ["Second assertion not yet saved"]
+        if len(sections) == 1:
+            await call(
+                "create_claim",
+                {"name": "First fact", "description": "First fact.", "sources": refs},
+            )
+            await call(
+                "finish_section", {"complete": False, "remaining": "Second assertion not yet saved"}
+            )
+        if "Second" in item["content"]:
+            await call(
+                "create_claim",
+                {
+                    "name": "Second fact",
+                    "description": "Second fact.",
+                    "sources": [item["reference"]],
+                },
+            )
+        await call("finish_section", {"complete": True, "remaining": ""})
+
+    result = (await run(context(world, model, role="exec"), refs))["result"]
+    assert sections == ["First fact. Second fact.", "First fact. ", "Second fact."]
+    assert len(result["writes"]) == len(world.graph.nodes(kind="claim")) == 2
+    assert result["processing"]["status"] == "processed"
+    assert len(result["processing"]["completed"]) == 2
+    assert result["processing"]["failed"] == result["processing"]["pending"] == []
+
+
+async def test_declared_indivisible_gap_is_not_retried_forever():
+    world = semantic_world()
+    refs, _ = recorded_experience(world, "One indivisible assertion")
+    invocations = 0
+
+    async def model(payload, call):
+        nonlocal invocations
+        invocations += 1
+        await call(
+            "finish_section", {"complete": False, "remaining": "Missing participant identity"}
+        )
+
+    result = (await run(context(world, model, role="exec"), refs))["result"]
+    assert invocations == 1
+    assert result["processing"]["completed"] == result["processing"]["pending"] == []
+    assert result["processing"]["status"] == "incomplete"
+    assert "Missing participant identity" in result["processing"]["failed"][0]["error"]
+    assert result["processing"]["failed"][0]["unit"]["remaining_work"] == [
+        "Missing participant identity"
+    ]
+
+
+async def test_completion_decision_cannot_hide_a_known_remainder():
+    world = semantic_world()
+    refs, _ = recorded_experience(world, "One fact")
+
+    async def model(payload, call):
+        with pytest.raises(ValueError, match="Completed sections"):
+            await call("finish_section", {"complete": True, "remaining": "Still missing a fact"})
+        with pytest.raises(ValueError, match="Completed sections"):
+            await call("finish_section", {"complete": False, "remaining": ""})
+        await call("finish_section", {"complete": True, "remaining": ""})
+
+    result = (await run(context(world, model, role="exec"), refs))["result"]
+    assert result["processing"]["status"] == "processed"
+
+
+async def test_explicit_retry_preserves_unresolved_repair_report():
+    world = semantic_world()
+    refs, _ = recorded_experience(world, "A participant has a property")
+
+    async def incomplete(payload, call):
+        await call(
+            "finish_section",
+            {"complete": False, "remaining": "Check a duplicate participant identity"},
+        )
+
+    progress = (await run(context(world, incomplete, role="exec"), refs))["result"]["processing"]
+    progress = json.loads(json.dumps(progress))
+    progress["pending"] = [row["unit"] for row in progress["failed"]]
+    progress["failed"] = []
+
+    async def resumed(payload, call):
+        material = json.loads(payload["prompt"])["material"]
+        assert material["previous_attempt_remaining_work"] == [
+            "Check a duplicate participant identity"
+        ]
+        await call("finish_section", {"complete": True, "remaining": ""})
+
+    result = (await run(context(world, resumed, role="exec"), refs, processing=progress))["result"]
+    assert result["processing"]["status"] == "processed"

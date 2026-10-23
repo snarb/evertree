@@ -34,10 +34,12 @@ async def test_exact_normalization_ambiguity_and_atomic_rename():
         g.new_fact("IDENTITY_TYPE", {"instance": n.id, "type": person.id}) for n in people
     )
     g.apply(GraphDelta(creates=(cat, person, *people, *links)), provenance="test")
-    result = (await search(context(world, never), "cafe\u0301 ANIMAL"))["result"]
+    result = (await search(context(world, never), ["cafe\u0301 ANIMAL"]))["result"]
     assert result["exact"] and [n["id"] for n in result["items"]] == [cat.id]
-    assert (await search(context(world, never), cat.id, kind="instance"))["result"]["items"] == []
-    assert len((await search(context(world, never), "ALEX"))["result"]["items"]) == 2
+    assert (await search(context(world, never), [cat.id], kinds=["instance"]))["result"][
+        "items"
+    ] == []
+    assert len((await search(context(world, never), ["ALEX"]))["result"]["items"]) == 2
     assert describe(g, world.attribution, "alex")["status"] == "ambiguous"
     revision = g.revision
     with pytest.raises(ContractError):
@@ -68,13 +70,13 @@ async def test_parallel_indexes_rank_fusion_and_cached_pages():
                 [ids[0], ids[17], *ids[1:6]] if name == "bm25" else [ids[6], ids[17], *ids[7:17]]
             ) * 2
 
-        async def lexical(self, nodes, query, kind):
-            assert query == "  ReLATED \t  TYPES  " and kind == "prototype"
-            return await self.run("bm25")
+        async def lexical(self, nodes, query, kinds):
+            assert query == ["  ReLATED \t  TYPES  "] and kinds == ["prototype"]
+            return [{"ids": await self.run("bm25")} for _ in query]
 
-        async def vector(self, nodes, query, kind):
-            assert query == "  ReLATED \t  TYPES  " and kind == "prototype"
-            return await self.run("vector")
+        async def vector(self, nodes, query, kinds):
+            assert query == ["  ReLATED \t  TYPES  "] and kinds == ["prototype"]
+            return [{"ids": await self.run("vector")} for _ in query]
 
     world = semantic_world(index=Index())
     nodes = [Prototype(world.graph.reserve_id(), f"Type{i}") for i in range(18)]
@@ -82,7 +84,9 @@ async def test_parallel_indexes_rank_fusion_and_cached_pages():
     world.graph.apply(GraphDelta(creates=nodes), provenance="test")
 
     first = (
-        await search(context(world, never), "  ReLATED \t  TYPES  ", kind=" PROTOTYPE ", limit=5)
+        await search(
+            context(world, never), ["  ReLATED \t  TYPES  "], kinds=[" PROTOTYPE "], limit=5
+        )
     )["result"]
     assert first["status"] == "complete" and len(first["items"]) == 5 and first["total"] == 18
     assert started == {"bm25", "vector"}
@@ -263,16 +267,16 @@ async def test_index_failure_reports_incomplete_and_cards_are_authoritative(fail
         async def lexical(self, *args):
             if "bm25" in failed:
                 raise RuntimeError("unavailable")
-            return [node.id]
+            return [{"ids": [node.id]} for _ in args[1]]
 
         async def vector(self, *args):
             if "vector" in failed:
                 raise RuntimeError("unavailable")
-            return [node.id]
+            return [{"ids": [node.id]} for _ in args[1]]
 
     world = semantic_world(index=Index())
     node = next(iter(world.graph.nodes()))
-    result = (await search(context(world, never), "missing"))["result"]
+    result = (await search(context(world, never), ["missing"]))["result"]
     assert result["status"] == "incomplete"
     assert {error["channel"] for error in result["errors"]} == failed
     assert [item["id"] for item in result["items"]] == ([] if len(failed) == 2 else [node.id])
@@ -281,18 +285,24 @@ async def test_index_failure_reports_incomplete_and_cards_are_authoritative(fail
     result = await world.service.execute(
         "semantic.results",
         {
-            "query": "query",
-            "items": [{"id": node.id, "name": "invented", "channels": ["bm25"]}],
-            "errors": [],
-            "limit": 20,
+            "queries": ["query"],
+            "rankings": [
+                {
+                    "items": [
+                        {"id": node.id, "name": "invented", "channels": ["bm25"], "score": 1 / 61}
+                    ],
+                    "errors": [],
+                }
+            ],
+            "limit": 10,
         },
         {"task_id": "task", "run_id": "test", "semantic_scope": "packet"},
     )
     assert result["items"][0]["name"] == node.name
 
 
-@pytest.mark.parametrize("limit", [1, 20])
-def test_search_returns_only_top_results_and_enforces_twenty_item_ceiling(limit):
+@pytest.mark.parametrize("limit", [1, 10])
+def test_search_returns_only_top_results_and_enforces_ten_item_ceiling(limit):
     world = semantic_world()
     nodes = [Node(world.graph.reserve_id(), f"Candidate {i}") for i in range(25)]
     world.graph.apply(GraphDelta(creates=nodes), provenance="test")
@@ -300,10 +310,10 @@ def test_search_returns_only_top_results_and_enforces_twenty_item_ceiling(limit)
     result = world.service.results("query", None, cards, [], limit, "task", scope="packet")
     assert result["items"] == cards[:limit] and result["total"] == 25
     assert "cursor" not in result and "has_more" not in result
-    with pytest.raises(ContractError, match="between 1 and 20"):
-        world.service.lookup("query", limit=21, task_id="task", scope="packet")
-    with pytest.raises(ContractError, match="between 1 and 20"):
-        world.service.results("query", None, cards, [], 21, "task", scope="packet")
+    with pytest.raises(ContractError, match="between 1 and 10"):
+        world.service.lookup(["query"], limit=11, task_id="task", scope="packet")
+    with pytest.raises(ContractError, match="between 1 and 10"):
+        world.service.results("query", None, cards, [], 11, "task", scope="packet")
 
 
 def test_describe_filters_relations_by_facet_time_and_removed_definitions():
@@ -345,7 +355,10 @@ async def test_integration_can_disambiguate_by_id_without_a_disposition():
         assert result["subject"]["id"] == identity
 
     result = await run(context(world, model, role="exec"), refs)
-    assert result == {"result": {"writes": []}, "feedback": None}
+    assert result["result"]["writes"] == [] and result["feedback"] is None
+    processing = result["result"]["processing"]
+    assert processing["status"] == "processed"
+    assert processing["pending"] == processing["failed"] == []
 
 
 @pytest.mark.parametrize(
@@ -363,9 +376,9 @@ async def test_populated_graph_exact_names_per_kind_without_external_calls(kind)
 
     world = populated_search_world(index=NoIndex())
     target = world.targets[kind]
-    result = (await search(context(world, never), target.name.upper(), kind=kind))["result"]
+    result = (await search(context(world, never), [target.name.upper()], kinds=[kind]))["result"]
     assert result["exact"] and result["status"] == "complete"
     assert target.id in {item["id"] for item in result["items"]}
     assert all(item["kind"] == kind for item in result["items"])
-    by_id = (await search(context(world, never), target.id, kind=kind))["result"]
+    by_id = (await search(context(world, never), [target.id], kinds=[kind]))["result"]
     assert [item["id"] for item in by_id["items"]] == [target.id]

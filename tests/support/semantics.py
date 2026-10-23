@@ -18,10 +18,10 @@ from evertree.core.values import json_value
 
 class EmptyIndex:
     async def lexical(self, *args):
-        return []
+        return [{"ids": []} for _ in args[1]]
 
     async def vector(self, *args):
-        return []
+        return [{"ids": []} for _ in args[1]]
 
     async def close(self):
         pass
@@ -87,7 +87,7 @@ def write_action(world, refs, metadata, action, *, key="write", searched=True):
     """Exercise Core validation; Program tests separately exercise the actual search path."""
     if searched and action["action"] in CREATE_ACTIONS:
         world.service.results(
-            action["name"], None, [], [], 20, metadata["task_id"], scope=metadata["semantic_scope"]
+            action["name"], None, [], [], 10, metadata["task_id"], scope=metadata["semantic_scope"]
         )
     return world.service.write(
         {"experience_refs": refs, "action": action, "operation_key": key}, metadata
@@ -125,6 +125,8 @@ def context(
 
         try:
             result = await model(payload, call_tool)
+            if result is None and "finish_section" in names:
+                await call_tool("finish_section", {"complete": True, "remaining": ""})
         except Finished as finished:
             return finished.result
         return result or {"text": ""}
@@ -140,6 +142,11 @@ def context(
             scope = scopes.pop()
             return
         authorize_operation(method, role)
+        if method == "trace":
+            run = world.memory.start_run("IntegrationProgress", "revision", {})
+            world.memory.record(run, payload["operator"], output=json_value(payload["output"]))
+            world.memory.finish_run(run)
+            return
         if method == "llm.run":
             return {"parsed": await model(payload)}
         metadata = {
@@ -151,7 +158,12 @@ def context(
             "integration_operation_id": operation_id,
             "integration_context": integration_context or {},
         }
-        if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
+        if method.startswith("semantic.") or method in {
+            "graph.query",
+            "graph.walk",
+            "graph.sources",
+            "memory.read_source",
+        }:
             return await world.service.execute(method, payload, metadata)
         return world.operations.execute(method, payload, metadata=metadata)
 
@@ -270,4 +282,57 @@ def populated_search_world(**kwargs):
         "facts": kinship,
         "mammals": (mammal,),
     }
+    return world
+
+
+def structured_fact_world(*, index=None, count=96):
+    """Opaque, description-free facts must be found by participants, values and conditions."""
+    from evertree.core.graph.types import GraphDelta, Node, RelationInstance, RelationType, Slot
+
+    world = semantic_world(index=index)
+    graph = world.graph
+    recipient = Node(graph.reserve_id(), "Reservoir")
+    senders = [
+        Node(graph.reserve_id(), "Kestrel" if i == count - 1 else f"Sender {i}")
+        for i in range(count)
+    ]
+    relation = RelationType(
+        graph.reserve_id(),
+        "TRANSFER",
+        description="Directed transfer from a sender to receiving objects.",
+        signature=(
+            Slot("sender", "node"),
+            Slot("receivers", "node", "list1"),
+            Slot("flow", "number"),
+            Slot("unit", "string"),
+            Slot("annotation", "any", "optional"),
+        ),
+    )
+    graph.apply(GraphDelta(creates=[recipient, *senders, relation]), provenance="fixture")
+    facts = [
+        RelationInstance(
+            graph.reserve_id(),
+            relation.name,
+            relation_type=relation.id,
+            args={
+                "sender": sender.id,
+                "receivers": [recipient.id],
+                "flow": 83.75 if i == count - 1 else float(i),
+                "unit": "l/min",
+                "annotation": 99001,
+            },
+            properties={
+                "conditions": {"mode": "backup" if i == count - 1 else "normal"},
+                "opaque": {"id": 99001, "name": "batch", "kind": "sample"},
+            },
+        )
+        for i, sender in enumerate(senders)
+    ]
+    graph.apply(GraphDelta(creates=facts), provenance="fixture")
+    world.target, world.sender, world.recipient, world.relation = (
+        facts[-1],
+        senders[-1],
+        recipient,
+        relation,
+    )
     return world

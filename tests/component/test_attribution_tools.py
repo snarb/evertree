@@ -141,8 +141,10 @@ async def test_semantic_property_creation_reads_domain_before_writing():
     refs, _ = recorded_experience(world, "Dog mass is measured in kg")
     ctx = context(world, None, role="exec")
 
-    async def search(query):
-        return (await ctx.call("semantic_search", {"query": query})).result
+    async def search(query, *, kinds=None, limit=10):
+        return (
+            await ctx.call("semantic_search", {"queries": query, "kinds": kinds, "limit": limit})
+        ).result
 
     async def describe_subject(subject):
         return await ctx.step("graph.describe", {"subject": subject})

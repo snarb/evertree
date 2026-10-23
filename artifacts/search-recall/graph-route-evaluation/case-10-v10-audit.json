@@ -1,0 +1,661 @@
+{
+  "purpose": "Source-only grouped audit:56 live paragraphs plus7 summary review units, not63 atomic facts or an accuracy denominator. No answer labels used.",
+  "snapshot": "tmp/knowledge-graph-routes-v10/acquisition/10-824db365/snapshot.json",
+  "snapshot_sha256": "202294b287a42199de29b3b41bc97f4aca923b6f51579e55e3dd6d05eaa4a252",
+  "checklist_sha256": "26929564ccb90ff49e1de5ad1abfed89f31d0e4e8a35c0d4026b4b2996402dfd",
+  "counts": {
+    "grouped_review_units": 63,
+    "live_paragraphs": 56,
+    "summary_units": 7,
+    "meaning_status": {
+      "partial_time_and_assessment": 1,
+      "partial_missing_possession_update": 1,
+      "preserved_in_card_or_fields": 49,
+      "incorrect_time_binding": 1,
+      "time_only_in_retained_source": 6,
+      "unsupported_event_subtype": 1,
+      "partial_qualification": 1,
+      "unsupported_participant": 1,
+      "conflicting_role": 1,
+      "strict_comparator_overwritten": 1
+    },
+    "invocations": 23,
+    "declared_incomplete_invocations": 3
+  },
+  "acquisition_seconds": 1383.6109897089773,
+  "positive_checks": [
+    "Game1831 is shared by result, all eight numeric quarter scores, player stats, timed plays and streaming access.",
+    "Streaming services2072/2074/2076 have separate access facts:subscription required forPeacock/NBCSports.com, free trial forFubo. DAZN Canada every-NFL-game scope survives.",
+    "Intermediate scores retain time/period context rather than replacing final42-10.",
+    "Uncertain fumble recovery9:01 and confirmed possession9:04 remain distinct.",
+    "Passer/receiver and other players are addressable, although the generic actor/other_player schema is less precise than named roles for each play type.",
+    "No medical diagnosis was invented for players reported down or receiving attention."
+  ],
+  "remaining_limits": [
+    "Some supplied update times were lost or attached to the next header.",
+    "Unsupported incomplete-pass label and extra named actor remain.",
+    "A punt sentence has conflicting participants; a strict remaining-time comparator was overwritten.",
+    "Repeated results and overlapping play records remain; named coach has no node-valued route.",
+    "Three early incomplete decisions caused extra fresh sessions despite fewer than80calls; technical progress remained explicit.",
+    "Paragraph-first partition will be tested separately; this completed graph is not manually corrected."
+  ],
+  "assertions": [
+    {
+      "assertion_id": "game-live-01",
+      "supporting_object_ids": [
+        1852,
+        1899,
+        1928
+      ],
+      "meaning_status": "partial_time_and_assessment",
+      "representation_gaps": [
+        "Final result and5-0 record survive; no11:26 update or its specific dominance assessment found.",
+        "Quarter points are numeric, but5-0 record remains a formatted string."
+      ]
+    },
+    {
+      "assertion_id": "game-live-02",
+      "supporting_object_ids": [
+        1927
+      ],
+      "meaning_status": "partial_missing_possession_update",
+      "representation_gaps": [
+        "Skirmish survives in1927; the11:24 trading-possessions assertion is absent."
+      ]
+    },
+    {
+      "assertion_id": "game-live-03",
+      "supporting_object_ids": [
+        1917,
+        1925,
+        1926
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Punt timing is not independently asserted beyond its sequence after the timed sack."
+      ]
+    },
+    {
+      "assertion_id": "game-live-04",
+      "supporting_object_ids": [
+        1921
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-05",
+      "supporting_object_ids": [
+        1922
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-06",
+      "supporting_object_ids": [
+        1878,
+        1920,
+        1929
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-07",
+      "supporting_object_ids": [
+        1919
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-08",
+      "supporting_object_ids": [
+        1918
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-09",
+      "supporting_object_ids": [
+        1923,
+        1924
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-10",
+      "supporting_object_ids": [
+        1935,
+        1874,
+        1875,
+        1876
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-11",
+      "supporting_object_ids": [
+        1936,
+        1853
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-12",
+      "supporting_object_ids": [
+        1938
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-13",
+      "supporting_object_ids": [
+        1937,
+        1955,
+        1956
+      ],
+      "meaning_status": "incorrect_time_binding",
+      "representation_gaps": [
+        "Jennings catch has10:38; Purdy242yards/threeTDs in1955/1956 are incorrectly assigned10:32, the next update."
+      ]
+    },
+    {
+      "assertion_id": "game-live-14",
+      "supporting_object_ids": [
+        1950
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-15",
+      "supporting_object_ids": [
+        1951,
+        1854
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-16",
+      "supporting_object_ids": [
+        1952
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-17",
+      "supporting_object_ids": [
+        1953
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-18",
+      "supporting_object_ids": [
+        1965,
+        1966
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-19",
+      "supporting_object_ids": [
+        1967,
+        1968
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-20",
+      "supporting_object_ids": [
+        1969
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-21",
+      "supporting_object_ids": [
+        1971,
+        1972
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-22",
+      "supporting_object_ids": [
+        1973
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-23",
+      "supporting_object_ids": [
+        1979
+      ],
+      "meaning_status": "time_only_in_retained_source",
+      "representation_gaps": [
+        "Third-down pass and remaining-minute meaning survive, but9:52 timestamp is absent from the fact."
+      ]
+    },
+    {
+      "assertion_id": "game-live-24",
+      "supporting_object_ids": [
+        1978
+      ],
+      "meaning_status": "unsupported_event_subtype",
+      "representation_gaps": [
+        "The source says the pass fell short of the line to gain. Fact1978 labels it incomplete, which the source does not establish."
+      ]
+    },
+    {
+      "assertion_id": "game-live-25",
+      "supporting_object_ids": [
+        1976,
+        1861
+      ],
+      "meaning_status": "partial_qualification",
+      "representation_gaps": [
+        "Touchdown and14-game streak survive; the stated return to a two-score lead is omitted from1976."
+      ]
+    },
+    {
+      "assertion_id": "game-live-26",
+      "supporting_object_ids": [
+        1977
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-27",
+      "supporting_object_ids": [
+        1982
+      ],
+      "meaning_status": "time_only_in_retained_source",
+      "representation_gaps": [
+        "19-yard screen reception survives;9:35 update time was removed as unavailable in the fragment despite existing in the original paragraph."
+      ]
+    },
+    {
+      "assertion_id": "game-live-28",
+      "supporting_object_ids": [
+        1983,
+        1984,
+        1988
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-29",
+      "supporting_object_ids": [
+        1986
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-30",
+      "supporting_object_ids": [
+        1987
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-31",
+      "supporting_object_ids": [
+        1998
+      ],
+      "meaning_status": "time_only_in_retained_source",
+      "representation_gaps": [
+        "Pollard10yards/six touches survives;9:23 update time does not."
+      ]
+    },
+    {
+      "assertion_id": "game-live-32",
+      "supporting_object_ids": [
+        1993
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-33",
+      "supporting_object_ids": [
+        1994
+      ],
+      "meaning_status": "unsupported_participant",
+      "representation_gaps": [
+        "Source names only Dallas getting its first down. Fact1994 adds DakPrescott as actor."
+      ]
+    },
+    {
+      "assertion_id": "game-live-34",
+      "supporting_object_ids": [
+        1996,
+        1999
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-35",
+      "supporting_object_ids": [
+        1995
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Team in generic play schema means associated team, not necessarily actor affiliation; Dallas context does not make Warner a Dallas player."
+      ]
+    },
+    {
+      "assertion_id": "game-live-36",
+      "supporting_object_ids": [
+        1997
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-37",
+      "supporting_object_ids": [
+        2004
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-38",
+      "supporting_object_ids": [
+        2003
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-39",
+      "supporting_object_ids": [
+        2005,
+        2006,
+        2007
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-40",
+      "supporting_object_ids": [
+        2008
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-41",
+      "supporting_object_ids": [
+        2009,
+        2019
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-42",
+      "supporting_object_ids": [
+        2012,
+        2013
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-43",
+      "supporting_object_ids": [
+        2014,
+        2015
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-44",
+      "supporting_object_ids": [
+        2016
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-45",
+      "supporting_object_ids": [
+        2017
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-46",
+      "supporting_object_ids": [
+        2018
+      ],
+      "meaning_status": "conflicting_role",
+      "representation_gaps": [
+        "Fact2018 description correctly has Dallas punting, but qualification says the49ers would punt right back. Original says Cowboys."
+      ]
+    },
+    {
+      "assertion_id": "game-live-47",
+      "supporting_object_ids": [
+        2020,
+        2021,
+        2027
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "KyleShanahan remains a string rather than an addressable coach participant."
+      ]
+    },
+    {
+      "assertion_id": "game-live-48",
+      "supporting_object_ids": [
+        2022,
+        2023
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-49",
+      "supporting_object_ids": [
+        2024,
+        2025
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-50",
+      "supporting_object_ids": [
+        2026
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-51",
+      "supporting_object_ids": [
+        1843,
+        2042
+      ],
+      "meaning_status": "time_only_in_retained_source",
+      "representation_gaps": [
+        "Pregame quote and two-year playoff background survive; live update time8:10 is absent."
+      ]
+    },
+    {
+      "assertion_id": "game-live-52",
+      "supporting_object_ids": [
+        2043,
+        2044
+      ],
+      "meaning_status": "time_only_in_retained_source",
+      "representation_gaps": [
+        "Attendees and coach-era links survive;7:56 update time is absent."
+      ]
+    },
+    {
+      "assertion_id": "game-live-53",
+      "supporting_object_ids": [
+        2046
+      ],
+      "meaning_status": "time_only_in_retained_source",
+      "representation_gaps": [
+        "Four catches in each of two prior games and uncertain outlook survive;7:36 update time is absent."
+      ]
+    },
+    {
+      "assertion_id": "game-live-54",
+      "supporting_object_ids": [
+        2045
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "RandyGregory former Cowboys membership survives in description, not a separate typed former-team role."
+      ]
+    },
+    {
+      "assertion_id": "game-live-55",
+      "supporting_object_ids": [
+        2047,
+        2064
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-live-56",
+      "supporting_object_ids": [
+        2062,
+        2066
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-summary-01",
+      "supporting_object_ids": [
+        1852,
+        1891,
+        1892,
+        1893,
+        1894,
+        1895,
+        1896,
+        1897,
+        1898,
+        1899,
+        1928
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-summary-02",
+      "supporting_object_ids": [
+        1853,
+        1854,
+        1861,
+        1874,
+        1875,
+        1876,
+        1877,
+        1878,
+        1929
+      ],
+      "meaning_status": "strict_comparator_overwritten",
+      "representation_gaps": [
+        "Intro originally says more than12minutes remained for Darnold. Model changed1878 to exact-sounding12 after a later rounded report instead of preserving both qualifications."
+      ]
+    },
+    {
+      "assertion_id": "game-summary-03",
+      "supporting_object_ids": [
+        1846,
+        1879,
+        1899,
+        2092,
+        2094
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Named coach in schedule1899 remains scalar text, preventing a coach traversal."
+      ]
+    },
+    {
+      "assertion_id": "game-summary-04",
+      "supporting_object_ids": [
+        2059,
+        2060,
+        2088,
+        2089,
+        2090,
+        2091
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Streaming services appear as strings in2060 and as addressable instances in2088-2091; U.S. restriction remains in2060."
+      ]
+    },
+    {
+      "assertion_id": "game-summary-05",
+      "supporting_object_ids": [
+        2061,
+        2083,
+        2086,
+        2087
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "game-summary-06",
+      "supporting_object_ids": [
+        2026,
+        2048,
+        2059
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Source CT/local-time labels both survive in2059, without a normalized reconciled kickoff timestamp."
+      ]
+    },
+    {
+      "assertion_id": "game-summary-07",
+      "supporting_object_ids": [
+        1836,
+        1928,
+        2059
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Source publication time is kept distinct from game time; no new update timestamp invented."
+      ]
+    }
+  ]
+}

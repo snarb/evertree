@@ -208,6 +208,6 @@ async def test_conscious_question_uses_scoped_application_writes_and_normal_inte
         assert len(outcome["task"]["program_run_ids"]) >= 2
         assert not [event for event in app.memory.events if event.operator == "integration_error"]
     assert transcript[0]["request"]["mode"] == "exec"
-    assert any(
-        item["request"]["instructions"].startswith("# Purpose and selection") for item in transcript
-    )
+    from evertree.processes.semantic_processing.knowledge_integration._exec import INSTRUCTIONS
+
+    assert any(item["request"]["instructions"] == INSTRUCTIONS for item in transcript)

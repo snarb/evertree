@@ -18,50 +18,53 @@ async def load_sources(
 ) -> SourceMaterial:
     """Authorize integration and resolve retained experience with its producer provenance.
 
-    experience_refs address original trace outputs; focus optionally narrows attention.
+    experience_refs address original trace outputs; focus prioritizes attention without
+    excluding other source assertions.
     """
     return await ctx.step("semantic.sources", {"experience_refs": experience_refs, "focus": focus})
 
 
-async def lookup(ctx: ProgramContext, query: str, *, kind: str | None, limit: int) -> Any:
-    """Return exact graph matches for query, or None when no exact identity matches."""
+async def prepare_sources(
+    ctx: ProgramContext, experience_refs: list, sections: list[dict], *, focus: str | None = None
+) -> SourceMaterial:
+    """Retain exact source sections with parent context, replaying their saved references."""
     return await ctx.step(
-        "semantic.lookup", {"query": query, "kind": kind, "limit": limit}, journal=False
+        "semantic.prepare_sources",
+        {"experience_refs": experience_refs, "sections": sections, "focus": focus},
     )
 
 
-async def bm25(ctx: ProgramContext, query: str, *, kind: str | None) -> list:
-    """Rank object ids by the lexical index."""
-    return await ctx.step("semantic.bm25", {"query": query, "kind": kind}, journal=False)
+async def lookup(
+    ctx: ProgramContext, queries: list[str | int], *, kinds: list[str] | None, limit: int
+) -> Any:
+    """Return a merged exact batch, or None if any query needs indexed retrieval."""
+    return await ctx.step(
+        "semantic.lookup", {"queries": queries, "kinds": kinds, "limit": limit}, journal=False
+    )
 
 
-async def vector(ctx: ProgramContext, query: str, *, kind: str | None) -> list:
-    """Rank object ids by the vector index."""
-    return await ctx.step("semantic.vector", {"query": query, "kind": kind}, journal=False)
+async def bm25(ctx: ProgramContext, queries: list[str | int], *, kinds: list[str] | None) -> list:
+    """Rank each unresolved query's object IDs in one lexical batch."""
+    return await ctx.step("semantic.bm25", {"queries": queries, "kinds": kinds}, journal=False)
+
+
+async def vector(ctx: ProgramContext, queries: list[str | int], *, kinds: list[str] | None) -> list:
+    """Rank unresolved queries with batched embeddings and vector retrieval."""
+    return await ctx.step("semantic.vector", {"queries": queries, "kinds": kinds}, journal=False)
 
 
 async def results(
     ctx: ProgramContext,
-    query: str,
+    queries: list[str | int],
     *,
-    kind: str | None,
-    items: list[dict],
-    errors: list[dict],
+    kinds: list[str] | None,
+    rankings: list[dict],
     limit: int,
 ) -> Any:
-    """Submit fused ranks for Core to re-check and render as search results.
-
-    items are {"id", "channels"} in fused order; errors report failed index channels.
-    """
+    """Have Core validate, optionally filter and merge the per-query fused rankings."""
     return await ctx.step(
         "semantic.results",
-        {
-            "query": query,
-            "kind": kind,
-            "items": items,
-            "errors": errors,
-            "limit": limit,
-        },
+        {"queries": queries, "kinds": kinds, "rankings": rankings, "limit": limit},
         journal=False,
     )
 
@@ -106,12 +109,23 @@ async def summarize_property(
     )
 
 
-async def call_semantic_search(ctx: ProgramContext, query: str) -> Any:
+async def call_semantic_search(
+    ctx: ProgramContext,
+    queries: list[str | int],
+    *,
+    kinds: list[str] | None = None,
+    limit: int = 10,
+) -> Any:
     """Run the semantic_search Program and return its result.
 
     Contract Program: see CALLED_PROGRAMS in evertree.core.contracts.
     """
-    return (await ctx.call("semantic_search", {"query": query})).result
+    arguments = {"queries": queries}
+    if kinds is not None:
+        arguments["kinds"] = kinds
+    if limit != 10:
+        arguments["limit"] = limit
+    return (await ctx.call("semantic_search", arguments)).result
 
 
 async def refresh_property_norms(ctx: ProgramContext) -> Any:

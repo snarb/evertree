@@ -85,7 +85,29 @@ async def test_debug_integration_forwards_native_tools_and_records_direct_writes
     assert set(session.metadata["integration_context"]) == {"task"}
     session.record_experience()
     refs = session.experience_refs
-    session.provider = ScriptedProvider(
+
+    class Provider(ScriptedProvider):
+        async def run(self, request_id, request, **kwargs):
+            if not self.scripts:
+                self.scripts.append([LLMEvent("completed", {"text": ""})])
+            self.scripts[0].insert(
+                next(
+                    (
+                        i
+                        for i, event in enumerate(self.scripts[0])
+                        if event.kind in {"usage", "completed"}
+                    ),
+                    len(self.scripts[0]),
+                ),
+                LLMEvent(
+                    "tool_call",
+                    {"name": "finish_section", "arguments": {"complete": True, "remaining": ""}},
+                ),
+            )
+            async for event in super().run(request_id, request, **kwargs):
+                yield event
+
+    session.provider = Provider(
         [
             [
                 LLMEvent(
@@ -102,27 +124,45 @@ async def test_debug_integration_forwards_native_tools_and_records_direct_writes
                 LLMEvent("usage", {"available": True, "total_tokens": 17}),
                 LLMEvent("completed", {"text": ""}),
             ],
+            [LLMEvent("completed", {"text": ""})],
         ]
     )
     try:
         result = (await run(session, refs))["result"]
         assert len(result["writes"]) == 1
         assert session.graph.find("Retained analysis").description == CONSCIOUS_ANALYSIS
-        (request,) = session.provider.requests
+        request = session.provider.requests[0]
         assert set(json.loads(request.prompt)["material"]["context"]) == {"task"}
         assert request.mode == "exec" and not request.native_coding
         assert request.output_schema is None
         assert {"save_note", "update", "delete"} <= {tool.name for tool in request.tools}
-        (saved,) = session.tool_calls()
+        (saved,) = [call for call in session.tool_calls() if call["name"] != "finish_section"]
         assert saved["name"] == "save_note" and saved["result"] == result["writes"][0]
-        assert [call["method"] for call in session.calls] == [
+        assert [
+            call["method"]
+            for call in session.calls
+            if call["method"] not in {"trace", "semantic.prepare_sources", "tool:finish_section"}
+        ] == [
             "semantic.sources",
             "tool:save_note",
             "semantic.write",
             "attribution.refresh_norms",
         ]
+        assert sum(call["method"] == "semantic.prepare_sources" for call in session.calls) == len(
+            session.provider.requests
+        )
+        progress = [
+            event.output
+            for event in session.memory.events
+            if event.operator == "integration_processing"
+        ]
+        assert progress[0]["status"] == "incomplete"
+        assert progress[-1]["status"] == "processed"
         transcripts = [json.loads(path.read_text()) for path in tmp_path.glob("model-*.json")]
-        (events,) = transcripts
+        assert len(transcripts) == len(session.provider.requests)
+        events = next(
+            events for events in transcripts if any(row["kind"] == "usage" for row in events)
+        )
         assert events[-1]["kind"] == "completed"
         assert events[-2] == {"kind": "usage", "data": {"available": True, "total_tokens": 17}}
         assert not session.provider.cancelled
@@ -144,6 +184,10 @@ async def test_live_evaluation_native_bridge_accepts_no_writes_and_records_final
     provider = ScriptedProvider(
         [
             [
+                LLMEvent(
+                    "tool_call",
+                    {"name": "finish_section", "arguments": {"complete": True, "remaining": ""}},
+                ),
                 LLMEvent("usage", {"available": True, "total_tokens": 23}),
                 LLMEvent("completed", {"text": ""}),
             ],
@@ -153,11 +197,12 @@ async def test_live_evaluation_native_bridge_accepts_no_writes_and_records_final
     try:
         async with _native_context(world, provider, tmp_path, transcript, {}, "test") as ctx:
             result = (await run(ctx, refs))["result"]
-        assert result == {"writes": []}
+        assert result["writes"] == []
+        assert result["processing"]["status"] == "processed"
         (request,) = provider.requests
         assert request.tools and request.output_schema is None
         (history,) = [entry["tool_history"] for entry in transcript if "tool_history" in entry]
-        assert history == []
+        assert [call["name"] for call in history] == ["finish_section"]
         (events,) = [entry["events"] for entry in transcript if "events" in entry]
         assert events[-1]["kind"] == "completed"
         assert events[-2] == {"kind": "usage", "data": {"available": True, "total_tokens": 23}}

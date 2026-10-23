@@ -129,8 +129,9 @@ async def test_bridge_limits_native_tool_calls_even_if_worker_keeps_requesting()
     try:
         event = await invocations.next(payload(max_tool_calls=1), METADATA)
         completed = {**event["call"], "result": 7, "error": None}
-        with pytest.raises(RuntimeError, match="tool-call limit"):
-            await invocations.next(payload(history=[completed], max_tool_calls=1), METADATA)
+        outcome = await invocations.next(payload(history=[completed], max_tool_calls=1), METADATA)
+        assert outcome["kind"] == "tool_limit"
+        assert "tool-call limit" in outcome["error"]
     finally:
         await invocations.close_all()
 

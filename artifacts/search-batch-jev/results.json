@@ -1,0 +1,2092 @@
+{
+  "statuses": [
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        209
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        560
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        100
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        237
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        532
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        146
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        603
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        501
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        443
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        549
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        130
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        70
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        358
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        536
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        495
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        48
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        262
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        180
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        580
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "indices": [
+        72
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "indices": [
+        209,
+        560,
+        100,
+        237
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "indices": [
+        532,
+        146,
+        603,
+        501
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "indices": [
+        443,
+        549,
+        130,
+        70
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "indices": [
+        358,
+        536,
+        495,
+        48
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "indices": [
+        262,
+        180,
+        580,
+        72
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        209
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        560
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        100
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        237
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        532
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        146
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        603
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        501
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        443
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        549
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        130
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        70
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        358
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        536
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        495
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        48
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        262
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        180
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        580
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "indices": [
+        72
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "indices": [
+        209,
+        560,
+        100,
+        237
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "indices": [
+        532,
+        146,
+        603,
+        501
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "indices": [
+        443,
+        549,
+        130,
+        70
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "indices": [
+        358,
+        536,
+        495,
+        48
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "indices": [
+        262,
+        180,
+        580,
+        72
+      ],
+      "status": "complete",
+      "warnings": [],
+      "errors": []
+    }
+  ],
+  "rows": [
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 209,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/mlb-betting-sites/90537abdc639ffc5d57a8c1b",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-prop-bets/1ced83b63a5656fa1b3daffb",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "seconds": 0.23274800000945106
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 560,
+      "gold": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-scandal-winners-losers-jim-harbaugh-tony-petitti/52ad1c9ec667b556323fa41c",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-conquers-ohio-state-again-story-far-over/797e0148646f5d0d76ae74ee",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "seconds": 0.24382187495939434
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 100,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e",
+        "https://www.yardbarker.com/mlb/articles/top_25_mlb_offseason_trade_candidates/s1_13237_39530247"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-free-agency-tracker-live-updates-news-rumors-signings/f95a54a4cbf46030b9f1ecd6",
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "seconds": 0.22119712497806177
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 237,
+      "gold": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nascar/news/nascar-offseason-news-roundup-short-track-testing-in-phoenix-new-spotters-for-stars-more-moves-for-2024/",
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.sportingnews.com/us/betting/news/moneyline-betting/d3a60119341b3da02f1fb1ae"
+      ],
+      "raw_relevant": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/"
+      ],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/"
+      ],
+      "seconds": 0.2558722080430016
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 532,
+      "gold": [
+        "https://www.cbssports.com/fantasy/football/news/nfl-fantasy-football-week-5-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/nfl/news/fanduel-picks-week-15-nfl-dfs-lineup-advice-daily-fantasy/ec0ab2947586908f262c7bcd"
+      ],
+      "returned": [
+        "https://www.cbssports.com/fantasy/football/news/fantasy-football-week-13-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-qb-rankings-week-14-quarterback-sleepers/800a53cfcb378f32c12b80cd",
+        "https://www.sportingnews.com/us/ncaa-football/news/chiefs-packers-live-score-highlights-sunday-night-football/515656cb05afc1845e0dd402"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.24518820800585672
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 146,
+      "gold": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "returned": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing",
+        "https://www.theguardian.com/football/2023/sep/30/european-roundup-bellingham-helps-real-madrid-go-top-while-bayern-draw"
+      ],
+      "raw_relevant": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "kept_relevant": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "seconds": 0.24831900000572205
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 603,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/canada-vs-jamaica-live-score-result-highlights-second-leg/b49d5b0e0e9384800d431fe2",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/gio-reyna-start-usmnt-vs-germany/7b259d6825866019a619d5b8",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 0.24728854198474437
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 501,
+      "gold": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+        "https://www.theguardian.com/sport/2023/oct/27/craft-beer-and-cheese-boxes-swans-tap-in-something-uniquely-sydney-to-draw-aflw-crowds",
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/",
+        "https://www.theroar.com.au/2023/10/27/legacy-vs-ego-the-springboks-are-playing-for-south-africa-the-all-blacks-are-playing-for-themselves/"
+      ],
+      "raw_relevant": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "kept_relevant": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "seconds": 0.2666703750146553
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 443,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8",
+        "https://www.theroar.com.au/2023/10/20/nbl-round-4/"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/usa-germany-player-ratings-pulisic-weah-star-usmnt/0718bd5fb2a8b822bf2c9465",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 0.23261000000638887
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 549,
+      "gold": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/golf-news-perspectives-rollback-policy-a-boon-or-a-curse-the-controversial-system-that-might-redefine-the-golfing-world-by-the-end-of-two-zero-three-zero/",
+        "https://www.essentiallysports.com/nascar-news-kyle-larson-breaks-down-his-sprint-car-series-journey-and-how-he-partnered-up-with-dale-earnhardt-jr-former-pupil/",
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "seconds": 0.6650588749907911
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 130,
+      "gold": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "returned": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/",
+        "https://www.theguardian.com/football/2023/nov/27/manchester-united-head-for-istanbul-with-good-intentions-but-bad-memories-galatasaray-champions-league"
+      ],
+      "raw_relevant": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "kept_relevant": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "seconds": 0.2489897499908693
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 70,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/champions-league-permutations-scenarios-teams-groups-round-16/6a97ebef38a68bc175d441c5",
+        "https://www.sportingnews.com/us/soccer/news/inter-miami-vs-fc-cincinnati-live-score-result-highlights-mls/6288f57a14a413f02512e266"
+      ],
+      "returned": [
+        "https://talksport.com/football/1603721/paul-mitchell-man-united-sporting-director-jim-ratcliffe-takeover/",
+        "https://talksport.com/football/1659923/man-utd-defending-scars-champions-league/",
+        "https://www.independent.co.uk/sport/football/manchester-united-harry-kane-champions-league-premier-league-bayern-munich-b2462954.html"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.3627941249869764
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 358,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45"
+      ],
+      "seconds": 0.28391704201931134
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 536,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "returned": [
+        "https://theathletic.com/4934692/2023/10/06/mlb-postseason-stadium-ranking/",
+        "https://www.skysports.com/football/news/11095/12994089/man-utd-vs-man-city-erik-ten-hag-disagrees-with-jamie-carragher-that-his-team-have-gone-backwards-this-season"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.324737333052326
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 495,
+      "gold": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.sportingnews.com/us/boxing/news/showtime-boxing-top-5-greatest-fights/b946bec3fd1ea869856c32ff"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.theroar.com.au/2023/12/24/as-clinical-as-it-gets-unbeaten-aussie-moves-to-24-0-with-stunning-first-round-ko-of-hapless-englishman/"
+      ],
+      "raw_relevant": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/"
+      ],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/"
+      ],
+      "seconds": 0.24446337501285598
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 48,
+      "gold": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.theguardian.com/sport/2023/oct/06/rugby-world-cup-damien-penaud-leads-rout-of-italy-as-france-confirm-progress-in-style"
+      ],
+      "returned": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/"
+      ],
+      "kept_relevant": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/"
+      ],
+      "seconds": 0.33025366702349856
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 262,
+      "gold": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.cbssports.com/nfl/news/nfl-week-13-injuries-browns-to-start-joe-flacco-with-dorian-thompson-robinson-out-saints-olave-questionable/",
+        "https://www.essentiallysports.com/nba-active-basketball-nfl-news-perspective-are-nba-christmas-day-games-a-better-tradition-than-nfl-thanksgiving-day-games/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-injury-updates-week-10-jefferson-chase-hockenson/e836c8483a4efe09a42774e2"
+      ],
+      "raw_relevant": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "kept_relevant": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "seconds": 0.22986166703049093
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 180,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/golf-betting-sites/7735c28b8c223b35fb013517",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "seconds": 0.2363873339490965
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 580,
+      "gold": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2"
+      ],
+      "raw_relevant": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/"
+      ],
+      "kept_relevant": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/"
+      ],
+      "seconds": 0.43385199998738244
+    },
+    {
+      "jev": false,
+      "batch_size": 1,
+      "question_index": 72,
+      "gold": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/vikings-broncos-score-highlights-sunday-night-football/769a666fb9639b096c22b356"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db"
+      ],
+      "seconds": 0.25728529202751815
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 209,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/mlb-betting-sites/90537abdc639ffc5d57a8c1b",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-prop-bets/1ced83b63a5656fa1b3daffb",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/mlb-betting-sites/90537abdc639ffc5d57a8c1b",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "seconds": 0.31770712503930554
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 560,
+      "gold": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-scandal-winners-losers-jim-harbaugh-tony-petitti/52ad1c9ec667b556323fa41c",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-conquers-ohio-state-again-story-far-over/797e0148646f5d0d76ae74ee",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "seconds": 0.31770712503930554
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 100,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e",
+        "https://www.yardbarker.com/mlb/articles/top_25_mlb_offseason_trade_candidates/s1_13237_39530247"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-free-agency-tracker-live-updates-news-rumors-signings/f95a54a4cbf46030b9f1ecd6",
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "seconds": 0.31770712503930554
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 237,
+      "gold": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nascar/news/nascar-offseason-news-roundup-short-track-testing-in-phoenix-new-spotters-for-stars-more-moves-for-2024/",
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.sportingnews.com/us/betting/news/moneyline-betting/d3a60119341b3da02f1fb1ae"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/"
+      ],
+      "seconds": 0.31770712503930554
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 532,
+      "gold": [
+        "https://www.cbssports.com/fantasy/football/news/nfl-fantasy-football-week-5-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/nfl/news/fanduel-picks-week-15-nfl-dfs-lineup-advice-daily-fantasy/ec0ab2947586908f262c7bcd"
+      ],
+      "returned": [
+        "https://www.cbssports.com/fantasy/football/news/fantasy-football-week-13-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-qb-rankings-week-14-quarterback-sleepers/800a53cfcb378f32c12b80cd",
+        "https://www.sportingnews.com/us/ncaa-football/news/chiefs-packers-live-score-highlights-sunday-night-football/515656cb05afc1845e0dd402"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.29095112497452646
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 146,
+      "gold": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "returned": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing",
+        "https://www.theguardian.com/football/2023/sep/30/european-roundup-bellingham-helps-real-madrid-go-top-while-bayern-draw"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "seconds": 0.29095112497452646
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 603,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/canada-vs-jamaica-live-score-result-highlights-second-leg/b49d5b0e0e9384800d431fe2",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/gio-reyna-start-usmnt-vs-germany/7b259d6825866019a619d5b8",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 0.29095112497452646
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 501,
+      "gold": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+        "https://www.theguardian.com/sport/2023/oct/27/craft-beer-and-cheese-boxes-swans-tap-in-something-uniquely-sydney-to-draw-aflw-crowds",
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/",
+        "https://www.theroar.com.au/2023/10/27/legacy-vs-ego-the-springboks-are-playing-for-south-africa-the-all-blacks-are-playing-for-themselves/"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "seconds": 0.29095112497452646
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 443,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8",
+        "https://www.theroar.com.au/2023/10/20/nbl-round-4/"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/usa-germany-player-ratings-pulisic-weah-star-usmnt/0718bd5fb2a8b822bf2c9465",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 0.32818616699660197
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 549,
+      "gold": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/golf-news-perspectives-rollback-policy-a-boon-or-a-curse-the-controversial-system-that-might-redefine-the-golfing-world-by-the-end-of-two-zero-three-zero/",
+        "https://www.essentiallysports.com/nascar-news-kyle-larson-breaks-down-his-sprint-car-series-journey-and-how-he-partnered-up-with-dale-earnhardt-jr-former-pupil/",
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "seconds": 0.32818616699660197
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 130,
+      "gold": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "returned": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/",
+        "https://www.theguardian.com/football/2023/nov/27/manchester-united-head-for-istanbul-with-good-intentions-but-bad-memories-galatasaray-champions-league"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "seconds": 0.32818616699660197
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 70,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/champions-league-permutations-scenarios-teams-groups-round-16/6a97ebef38a68bc175d441c5",
+        "https://www.sportingnews.com/us/soccer/news/inter-miami-vs-fc-cincinnati-live-score-result-highlights-mls/6288f57a14a413f02512e266"
+      ],
+      "returned": [
+        "https://talksport.com/football/1603721/paul-mitchell-man-united-sporting-director-jim-ratcliffe-takeover/",
+        "https://talksport.com/football/1659923/man-utd-defending-scars-champions-league/",
+        "https://www.independent.co.uk/sport/football/manchester-united-harry-kane-champions-league-premier-league-bayern-munich-b2462954.html"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.32818616699660197
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 358,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45"
+      ],
+      "seconds": 0.33482845802791417
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 536,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "returned": [
+        "https://theathletic.com/4934692/2023/10/06/mlb-postseason-stadium-ranking/",
+        "https://www.skysports.com/football/news/11095/12994089/man-utd-vs-man-city-erik-ten-hag-disagrees-with-jamie-carragher-that-his-team-have-gone-backwards-this-season"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.33482845802791417
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 495,
+      "gold": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.sportingnews.com/us/boxing/news/showtime-boxing-top-5-greatest-fights/b946bec3fd1ea869856c32ff"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.theroar.com.au/2023/12/24/as-clinical-as-it-gets-unbeaten-aussie-moves-to-24-0-with-stunning-first-round-ko-of-hapless-englishman/"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/"
+      ],
+      "seconds": 0.33482845802791417
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 48,
+      "gold": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.theguardian.com/sport/2023/oct/06/rugby-world-cup-damien-penaud-leads-rout-of-italy-as-france-confirm-progress-in-style"
+      ],
+      "returned": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/"
+      ],
+      "seconds": 0.33482845802791417
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 262,
+      "gold": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.cbssports.com/nfl/news/nfl-week-13-injuries-browns-to-start-joe-flacco-with-dorian-thompson-robinson-out-saints-olave-questionable/",
+        "https://www.essentiallysports.com/nba-active-basketball-nfl-news-perspective-are-nba-christmas-day-games-a-better-tradition-than-nfl-thanksgiving-day-games/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-injury-updates-week-10-jefferson-chase-hockenson/e836c8483a4efe09a42774e2"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "seconds": 0.34447812498547137
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 180,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/golf-betting-sites/7735c28b8c223b35fb013517",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "seconds": 0.34447812498547137
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 580,
+      "gold": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "seconds": 0.34447812498547137
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "question_index": 72,
+      "gold": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/vikings-broncos-score-highlights-sunday-night-football/769a666fb9639b096c22b356"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db"
+      ],
+      "seconds": 0.34447812498547137
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 209,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/mlb-betting-sites/90537abdc639ffc5d57a8c1b",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-prop-bets/1ced83b63a5656fa1b3daffb",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "seconds": 0.6025866249692626
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 560,
+      "gold": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-scandal-winners-losers-jim-harbaugh-tony-petitti/52ad1c9ec667b556323fa41c",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-conquers-ohio-state-again-story-far-over/797e0148646f5d0d76ae74ee",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "seconds": 0.48114150000037625
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 100,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e",
+        "https://www.yardbarker.com/mlb/articles/top_25_mlb_offseason_trade_candidates/s1_13237_39530247"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-free-agency-tracker-live-updates-news-rumors-signings/f95a54a4cbf46030b9f1ecd6",
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "seconds": 0.5535568339983001
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 237,
+      "gold": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nascar/news/nascar-offseason-news-roundup-short-track-testing-in-phoenix-new-spotters-for-stars-more-moves-for-2024/",
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.sportingnews.com/us/betting/news/moneyline-betting/d3a60119341b3da02f1fb1ae"
+      ],
+      "raw_relevant": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/"
+      ],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/"
+      ],
+      "seconds": 0.5034757499815896
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 532,
+      "gold": [
+        "https://www.cbssports.com/fantasy/football/news/nfl-fantasy-football-week-5-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/nfl/news/fanduel-picks-week-15-nfl-dfs-lineup-advice-daily-fantasy/ec0ab2947586908f262c7bcd"
+      ],
+      "returned": [
+        "https://www.cbssports.com/fantasy/football/news/fantasy-football-week-13-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-qb-rankings-week-14-quarterback-sleepers/800a53cfcb378f32c12b80cd",
+        "https://www.sportingnews.com/us/ncaa-football/news/chiefs-packers-live-score-highlights-sunday-night-football/515656cb05afc1845e0dd402"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.5386314999777824
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 146,
+      "gold": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "returned": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing",
+        "https://www.theguardian.com/football/2023/sep/30/european-roundup-bellingham-helps-real-madrid-go-top-while-bayern-draw"
+      ],
+      "raw_relevant": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "kept_relevant": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "seconds": 0.7110202080220915
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 603,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/canada-vs-jamaica-live-score-result-highlights-second-leg/b49d5b0e0e9384800d431fe2",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/gio-reyna-start-usmnt-vs-germany/7b259d6825866019a619d5b8",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 0.4724736660136841
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 501,
+      "gold": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+        "https://www.theguardian.com/sport/2023/oct/27/craft-beer-and-cheese-boxes-swans-tap-in-something-uniquely-sydney-to-draw-aflw-crowds",
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/",
+        "https://www.theroar.com.au/2023/10/27/legacy-vs-ego-the-springboks-are-playing-for-south-africa-the-all-blacks-are-playing-for-themselves/"
+      ],
+      "raw_relevant": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "kept_relevant": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "seconds": 0.7478008329635486
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 443,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8",
+        "https://www.theroar.com.au/2023/10/20/nbl-round-4/"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/usa-germany-player-ratings-pulisic-weah-star-usmnt/0718bd5fb2a8b822bf2c9465",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 0.521781082963571
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 549,
+      "gold": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/nascar-news-kyle-larson-breaks-down-his-sprint-car-series-journey-and-how-he-partnered-up-with-dale-earnhardt-jr-former-pupil/",
+        "https://www.sportingnews.com/us/nhl/news/best-nhl-prop-bets-tonight-panarin-makar-tuesday/67d9b5e55d061181d7805c01",
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8",
+        "https://www.theroar.com.au/2023/10/27/legacy-vs-ego-the-springboks-are-playing-for-south-africa-the-all-blacks-are-playing-for-themselves/"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "seconds": 0.4728565000114031
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 130,
+      "gold": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "returned": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/",
+        "https://www.essentiallysports.com/boxing-news-perspective-potential-conor-mcgregor-fight-could-help-canelo-alvarez-come-a-step-closer-to-surpass-floyd-mayweathers-net-worth-and-his-billionaire-status/",
+        "https://www.theguardian.com/sport/2023/oct/27/craft-beer-and-cheese-boxes-swans-tap-in-something-uniquely-sydney-to-draw-aflw-crowds"
+      ],
+      "raw_relevant": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "kept_relevant": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "seconds": 0.4977397919865325
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 70,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/champions-league-permutations-scenarios-teams-groups-round-16/6a97ebef38a68bc175d441c5",
+        "https://www.sportingnews.com/us/soccer/news/inter-miami-vs-fc-cincinnati-live-score-result-highlights-mls/6288f57a14a413f02512e266"
+      ],
+      "returned": [
+        "https://talksport.com/football/1603721/paul-mitchell-man-united-sporting-director-jim-ratcliffe-takeover/",
+        "https://talksport.com/football/1659923/man-utd-defending-scars-champions-league/",
+        "https://www.independent.co.uk/sport/football/manchester-united-harry-kane-champions-league-premier-league-bayern-munich-b2462954.html"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.520143540983554
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 358,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45"
+      ],
+      "seconds": 0.570990291016642
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 536,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "returned": [
+        "https://theathletic.com/4934692/2023/10/06/mlb-postseason-stadium-ranking/",
+        "https://www.skysports.com/football/news/11095/12994089/man-utd-vs-man-city-erik-ten-hag-disagrees-with-jamie-carragher-that-his-team-have-gone-backwards-this-season"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.5500401669996791
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 495,
+      "gold": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.sportingnews.com/us/boxing/news/showtime-boxing-top-5-greatest-fights/b946bec3fd1ea869856c32ff"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.theroar.com.au/2023/12/24/as-clinical-as-it-gets-unbeaten-aussie-moves-to-24-0-with-stunning-first-round-ko-of-hapless-englishman/"
+      ],
+      "raw_relevant": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/"
+      ],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/"
+      ],
+      "seconds": 0.4726827080012299
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 48,
+      "gold": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.theguardian.com/sport/2023/oct/06/rugby-world-cup-damien-penaud-leads-rout-of-italy-as-france-confirm-progress-in-style"
+      ],
+      "returned": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/"
+      ],
+      "kept_relevant": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/"
+      ],
+      "seconds": 0.4708321249927394
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 262,
+      "gold": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.cbssports.com/nfl/news/nfl-week-13-injuries-browns-to-start-joe-flacco-with-dorian-thompson-robinson-out-saints-olave-questionable/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-injury-updates-week-10-jefferson-chase-hockenson/e836c8483a4efe09a42774e2"
+      ],
+      "raw_relevant": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "kept_relevant": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "seconds": 0.5908949580043554
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 180,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/golf-betting-sites/7735c28b8c223b35fb013517",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "seconds": 0.44887891702819616
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 580,
+      "gold": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2"
+      ],
+      "raw_relevant": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/"
+      ],
+      "kept_relevant": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/"
+      ],
+      "seconds": 0.5578450000029989
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "question_index": 72,
+      "gold": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/vikings-broncos-score-highlights-sunday-night-football/769a666fb9639b096c22b356"
+      ],
+      "raw_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db"
+      ],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db"
+      ],
+      "seconds": 0.5670054170186631
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 209,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/mlb-betting-sites/90537abdc639ffc5d57a8c1b",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/nba-prop-bets/1ced83b63a5656fa1b3daffb",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/line-shopping/0f917db9336b2772ba044571",
+        "https://www.sportingnews.com/us/betting/news/mlb-betting-sites/90537abdc639ffc5d57a8c1b",
+        "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+      ],
+      "seconds": 0.6883625829941593
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 560,
+      "gold": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-scandal-winners-losers-jim-harbaugh-tony-petitti/52ad1c9ec667b556323fa41c",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/ncaa-football/news/michigan-conquers-ohio-state-again-story-far-over/797e0148646f5d0d76ae74ee",
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/chiefs-jets-score-highlights-nfl-sunday-night-football/3e44364b970dbac0d083948d"
+      ],
+      "seconds": 0.6883625829941593
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 100,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e",
+        "https://www.yardbarker.com/mlb/articles/top_25_mlb_offseason_trade_candidates/s1_13237_39530247"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-free-agency-tracker-live-updates-news-rumors-signings/f95a54a4cbf46030b9f1ecd6",
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "seconds": 0.6883625829941593
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 237,
+      "gold": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nascar/news/nascar-offseason-news-roundup-short-track-testing-in-phoenix-new-spotters-for-stars-more-moves-for-2024/",
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/",
+        "https://www.sportingnews.com/us/betting/news/moneyline-betting/d3a60119341b3da02f1fb1ae"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/nascar-news-major-nascar-snubs-as-autosport-releases-the-top-fifty-motorsport-drivers-of-this-year-chris-buescher-denny-hamlin-christopher-bell-tyler-reddick-ross-chastain/"
+      ],
+      "seconds": 0.6883625829941593
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 532,
+      "gold": [
+        "https://www.cbssports.com/fantasy/football/news/nfl-fantasy-football-week-5-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/nfl/news/fanduel-picks-week-15-nfl-dfs-lineup-advice-daily-fantasy/ec0ab2947586908f262c7bcd"
+      ],
+      "returned": [
+        "https://www.cbssports.com/fantasy/football/news/fantasy-football-week-13-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-qb-rankings-week-14-quarterback-sleepers/800a53cfcb378f32c12b80cd",
+        "https://www.sportingnews.com/us/ncaa-football/news/chiefs-packers-live-score-highlights-sunday-night-football/515656cb05afc1845e0dd402"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 1.0829690829850733
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 146,
+      "gold": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "returned": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing",
+        "https://www.theguardian.com/football/2023/sep/30/european-roundup-bellingham-helps-real-madrid-go-top-while-bayern-draw"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.independent.co.uk/sport/football/newcastle-ac-milan-result-champions-league-b2463663.html",
+        "https://www.theguardian.com/football/2023/dec/09/european-football-eintracht-frankfurt-hit-bayern-for-five-in-famous-thrashing"
+      ],
+      "seconds": 1.0829690829850733
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 603,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/canada-vs-jamaica-live-score-result-highlights-second-leg/b49d5b0e0e9384800d431fe2",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/gio-reyna-start-usmnt-vs-germany/7b259d6825866019a619d5b8",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 1.0829690829850733
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 501,
+      "gold": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+        "https://www.theguardian.com/sport/2023/oct/27/craft-beer-and-cheese-boxes-swans-tap-in-something-uniquely-sydney-to-draw-aflw-crowds",
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/",
+        "https://www.theroar.com.au/2023/10/27/legacy-vs-ego-the-springboks-are-playing-for-south-africa-the-all-blacks-are-playing-for-themselves/"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.theroar.com.au/2023/10/19/it-happens-all-blacks-defend-star-centre-after-spray-as-cheika-heaps-pressure-on-favourites-new-zealand/"
+      ],
+      "seconds": 1.0829690829850733
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 443,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8",
+        "https://www.theroar.com.au/2023/10/20/nbl-round-4/"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/soccer/news/usa-germany-player-ratings-pulisic-weah-star-usmnt/0718bd5fb2a8b822bf2c9465",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "seconds": 0.667599499982316
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 549,
+      "gold": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/nascar-news-kyle-larson-breaks-down-his-sprint-car-series-journey-and-how-he-partnered-up-with-dale-earnhardt-jr-former-pupil/",
+        "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nhl/news/patrick-kane-destinations-free-agent-winger/64088479e9b5c46a32bcbbe8"
+      ],
+      "seconds": 0.667599499982316
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 130,
+      "gold": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "returned": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/",
+        "https://www.theguardian.com/football/2023/nov/27/manchester-united-head-for-istanbul-with-good-intentions-but-bad-memories-galatasaray-champions-league"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://talksport.com/sport/1249277/top-ten-craziest-fight-endings-boxing-floyd-mayweather-mike-tyson-lennox-lewis/"
+      ],
+      "seconds": 0.667599499982316
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 70,
+      "gold": [
+        "https://www.sportingnews.com/us/soccer/news/champions-league-permutations-scenarios-teams-groups-round-16/6a97ebef38a68bc175d441c5",
+        "https://www.sportingnews.com/us/soccer/news/inter-miami-vs-fc-cincinnati-live-score-result-highlights-mls/6288f57a14a413f02512e266"
+      ],
+      "returned": [
+        "https://talksport.com/football/1603721/paul-mitchell-man-united-sporting-director-jim-ratcliffe-takeover/",
+        "https://talksport.com/football/1659923/man-utd-defending-scars-champions-league/",
+        "https://www.independent.co.uk/sport/football/manchester-united-harry-kane-champions-league-premier-league-bayern-munich-b2462954.html"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.667599499982316
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 358,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45"
+      ],
+      "seconds": 0.7200367499608546
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 536,
+      "gold": [
+        "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e"
+      ],
+      "returned": [
+        "https://theathletic.com/4934692/2023/10/06/mlb-postseason-stadium-ranking/",
+        "https://www.sportingnews.com/us/betting/news/moneyline-betting/d3a60119341b3da02f1fb1ae"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [],
+      "seconds": 0.7200367499608546
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 495,
+      "gold": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.sportingnews.com/us/boxing/news/showtime-boxing-top-5-greatest-fights/b946bec3fd1ea869856c32ff"
+      ],
+      "returned": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/",
+        "https://www.theroar.com.au/2023/12/24/as-clinical-as-it-gets-unbeaten-aussie-moves-to-24-0-with-stunning-first-round-ko-of-hapless-englishman/"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.essentiallysports.com/boxing-news-truth-behind-jake-paul-dating-dillon-danis-ex-girlfriend-did-mma-star-break-up-with-savannah-montano/"
+      ],
+      "seconds": 0.7200367499608546
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 48,
+      "gold": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.theguardian.com/sport/2023/oct/06/rugby-world-cup-damien-penaud-leads-rout-of-italy-as-france-confirm-progress-in-style"
+      ],
+      "returned": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/",
+        "https://www.sportingnews.com/us/soccer/news/usa-squad-october-friendlies-usmnt-roster-germany-ghana/5b2416befc50de6d0cedace8"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://sportgrill.co.uk/2023/10/31/wullaert-fires-belgium-to-3-2-home-win-over-england-in-uefa-womens-nations-league/"
+      ],
+      "seconds": 0.7200367499608546
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 262,
+      "gold": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "returned": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.cbssports.com/nfl/news/nfl-week-13-injuries-browns-to-start-joe-flacco-with-dorian-thompson-robinson-out-saints-olave-questionable/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-injury-updates-week-10-jefferson-chase-hockenson/e836c8483a4efe09a42774e2"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.cbssports.com/nfl/news/2023-nfl-week-11-injury-roundup-rams-wr-cooper-kupp-seahawks-rb-kenneth-walker-iii-among-stars-to-exit/",
+        "https://www.sportingnews.com/us/fantasy/news/fantasy-football-rb-rankings-week-14-running-backs-sleepers/7dba90c2816610df4860c264"
+      ],
+      "seconds": 0.6973558339523152
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 180,
+      "gold": [
+        "https://www.sportingnews.com/us/betting/news/golf-betting-sites/7735c28b8c223b35fb013517",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "seconds": 0.6973558339523152
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 580,
+      "gold": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "returned": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/best-sports-betting-promo-codes-college-basketball/c127273936d403c13e08aa45",
+        "https://www.sportingnews.com/us/betting/news/best-sportsbook-bonus-offers-eagles-seahawks-mnf-bet365-betmgm-betrivers-caesars-draftkings-fanduel%C2%A0/0cac736f90d80f21daafd8a2"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+        "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+      ],
+      "seconds": 0.6973558339523152
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "question_index": 72,
+      "gold": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac"
+      ],
+      "returned": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db",
+        "https://www.sportingnews.com/us/nfl/news/vikings-broncos-score-highlights-sunday-night-football/769a666fb9639b096c22b356"
+      ],
+      "raw_relevant": [],
+      "kept_relevant": [
+        "https://www.sportingnews.com/us/nfl/news/bears-vikings-live-score-highlights-monday-night-football/9e0ddaf702f99e7aec9645db"
+      ],
+      "seconds": 0.6973558339523152
+    }
+  ]
+}

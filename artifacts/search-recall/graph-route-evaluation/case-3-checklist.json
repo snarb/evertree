@@ -1,0 +1,363 @@
+{
+  "purpose": "Source-only diagnostic checklist frozen before acquisition of article3; some rows group values sharing one statistical population. Not question-derived labels or a statistical holdout.",
+  "source": {
+    "title": "Christmas Day preview: 49ers, Ravens square off in potential Super Bowl sneak peek",
+    "author": "Colum Dell, Yardbarker",
+    "source": "Yardbarker",
+    "published_at": "2023-12-24T23:34:39+00:00",
+    "category": "sports",
+    "url": "https://www.yardbarker.com/nfl/articles/christmas_day_preview_49ers_ravens_square_off_in_potential_super_bowl_sneak_peek/s1_13132_39720250"
+  },
+  "source_record_sha256": "7fd4ea67a77a04c5263d94ba75efb35aefc23760411f91cb918550c04ee56b32",
+  "review_rules": [
+    "Preserve players, teams, roles, opponents and competition as graph identities.",
+    "Keep per-game rates separate from totals; keep season, last-three, five-start, since-2019 and attendance-selected populations distinct.",
+    "Preview predictions are not realized outcomes. No invented actual score or current-season update.",
+    "Retain named odds provider and signed American odds without treating them as probabilities."
+  ],
+  "assertions": [
+    {
+      "id": "schedule-01",
+      "subject": "Christmas Day NFL slate",
+      "assertion": "three games on Monday; preview, not completed results"
+    },
+    {
+      "id": "schedule-02",
+      "subject": "Raiders at Chiefs",
+      "assertion": "Raiders 6-8; Chiefs 9-5; 1 p.m. ET"
+    },
+    {
+      "id": "schedule-03",
+      "subject": "Giants at Eagles",
+      "assertion": "Giants 5-9; Eagles 10-4; 4:30 p.m. ET"
+    },
+    {
+      "id": "schedule-04",
+      "subject": "Ravens at 49ers",
+      "assertion": "both 11-3; 8:15 p.m. ET"
+    },
+    {
+      "id": "chiefs-01",
+      "subject": "Patrick Mahomes",
+      "assertion": "Kansas City starting quarterback; Chiefs 10-1 against Raiders since he became starter"
+    },
+    {
+      "id": "chiefs-02",
+      "subject": "Patrick Mahomes",
+      "assertion": "two-time Super Bowl MVP"
+    },
+    {
+      "id": "chiefs-03",
+      "subject": "Maxx Crosby",
+      "assertion": "two-time Pro Bowler; rivalry with Mahomes, mutual respect as article interpretation"
+    },
+    {
+      "id": "chiefs-04",
+      "subject": "Maxx Crosby",
+      "assertion": "five sacks in nine career games against Chiefs"
+    },
+    {
+      "id": "chiefs-05",
+      "subject": "Aidan O’Connell",
+      "assertion": "Raiders quarterback; rookie fourth-round pick"
+    },
+    {
+      "id": "chiefs-06",
+      "subject": "Aidan O’Connell",
+      "assertion": "led seven touchdown-scoring drives in last week’s 63-21 win over Chargers"
+    },
+    {
+      "id": "chiefs-07",
+      "subject": "Aidan O’Connell",
+      "assertion": "candidate for next season/2024 starting job; not appointed for 2024"
+    },
+    {
+      "id": "chiefs-08",
+      "subject": "Aidan O’Connell",
+      "assertion": "1300 passing yards, seven touchdowns, five interceptions across six full-time starts"
+    },
+    {
+      "id": "chiefs-09",
+      "subject": "Chiefs pass defense",
+      "assertion": "ranked fifth; allows 202.5 yards per game"
+    },
+    {
+      "id": "chiefs-10",
+      "subject": "Travis Kelce",
+      "assertion": "Chiefs tight end; All-Pro"
+    },
+    {
+      "id": "chiefs-11",
+      "subject": "Taylor Swift",
+      "assertion": "popstar; Kelce’s girlfriend; expected in town for holiday"
+    },
+    {
+      "id": "chiefs-12",
+      "subject": "Travis Kelce",
+      "assertion": "89.6 yards/game with Swift attending during this season"
+    },
+    {
+      "id": "chiefs-13",
+      "subject": "Travis Kelce",
+      "assertion": "latest game with Swift present: five catches for 28 yards; worst outing in her presence"
+    },
+    {
+      "id": "chiefs-14",
+      "subject": "Travis Kelce",
+      "assertion": "81.3 receiving yards/game against Raiders since 2019"
+    },
+    {
+      "id": "chiefs-15",
+      "subject": "Travis Kelce",
+      "assertion": "four-game scoring drought; productive next game and breaking drought are predictions"
+    },
+    {
+      "id": "eagles-01",
+      "subject": "Matt Patricia",
+      "assertion": "appointed Eagles defensive play-caller"
+    },
+    {
+      "id": "eagles-02",
+      "subject": "Eagles defense",
+      "assertion": "95 points allowed during current three-game losing streak; third-most in NFL over that span"
+    },
+    {
+      "id": "eagles-03",
+      "subject": "Giants offense",
+      "assertion": "31st in points/game and yards/game this season"
+    },
+    {
+      "id": "eagles-04",
+      "subject": "Giants offense",
+      "assertion": "76 sacks surrendered; third-most in one NFL season"
+    },
+    {
+      "id": "eagles-05",
+      "subject": "Giants",
+      "assertion": "last win at Lincoln Financial Field was 2013; not a claim that they never won elsewhere"
+    },
+    {
+      "id": "eagles-06",
+      "subject": "Jalen Hurts",
+      "assertion": "Eagles quarterback; reported ineffectiveness during last three games"
+    },
+    {
+      "id": "eagles-07",
+      "subject": "Eagles offense",
+      "assertion": "28.2 points/game through first 11 games; third-most in league"
+    },
+    {
+      "id": "eagles-08",
+      "subject": "Eagles offense",
+      "assertion": "four offensive touchdowns during current skid, three via tush push"
+    },
+    {
+      "id": "eagles-09",
+      "subject": "Giants defense",
+      "assertion": "131.6 rushing yards/game allowed; fourth-most in league"
+    },
+    {
+      "id": "eagles-10",
+      "subject": "Giants pass defense",
+      "assertion": "described as solid; possible passing difficulty for Eagles is forecast"
+    },
+    {
+      "id": "eagles-11",
+      "subject": "Tommy DeVito",
+      "assertion": "Giants quarterback; undrafted rookie; native of Cedar Grove, New Jersey"
+    },
+    {
+      "id": "eagles-12",
+      "subject": "Tommy DeVito",
+      "assertion": "858 passing yards, seven touchdowns, one interception in five games since becoming starter"
+    },
+    {
+      "id": "eagles-13",
+      "subject": "Tommy DeVito",
+      "assertion": "97.3 passer rating during those five games; 13th-highest in NFL over that stretch"
+    },
+    {
+      "id": "eagles-14",
+      "subject": "Giants offense",
+      "assertion": "article assesses its best operation as under DeVito"
+    },
+    {
+      "id": "ravens49ers-01",
+      "subject": "Ravens and 49ers",
+      "assertion": "top seed of respective conferences at reporting time"
+    },
+    {
+      "id": "ravens49ers-02",
+      "subject": "Ravens versus 49ers",
+      "assertion": "potential Super Bowl LVIII preview and possible decisive MVP clash; forecasts"
+    },
+    {
+      "id": "ravens49ers-03",
+      "subject": "Brock Purdy",
+      "assertion": "49ers quarterback"
+    },
+    {
+      "id": "ravens49ers-04",
+      "subject": "Brock Purdy MVP odds",
+      "assertion": "oddschecker: -230; favorite at reporting time"
+    },
+    {
+      "id": "ravens49ers-05",
+      "subject": "Lamar Jackson",
+      "assertion": "Baltimore quarterback"
+    },
+    {
+      "id": "ravens49ers-06",
+      "subject": "Lamar Jackson MVP odds",
+      "assertion": "oddschecker: +525; second-shortest at reporting time"
+    },
+    {
+      "id": "ravens49ers-07",
+      "subject": "Brock Purdy",
+      "assertion": "final pick of 2022 NFL Draft; age 23 at reporting time"
+    },
+    {
+      "id": "ravens49ers-08",
+      "subject": "Brock Purdy",
+      "assertion": "NFL first in QBR:76; first in touchdown passes:29"
+    },
+    {
+      "id": "ravens49ers-09",
+      "subject": "Brock Purdy",
+      "assertion": "NFL third in passing yards:3795"
+    },
+    {
+      "id": "ravens49ers-10",
+      "subject": "Brock Purdy",
+      "assertion": "coming off offseason elbow surgery"
+    },
+    {
+      "id": "ravens49ers-11",
+      "subject": "Lamar Jackson",
+      "assertion": "2019 MVP campaign; current numbers compared with that campaign"
+    },
+    {
+      "id": "ravens49ers-12",
+      "subject": "Todd Monken",
+      "assertion": "Baltimore offensive coordinator; Jackson in first season under him"
+    },
+    {
+      "id": "ravens49ers-13",
+      "subject": "Lamar Jackson",
+      "assertion": "article assesses style adjustment as supporting sustainable winning football"
+    },
+    {
+      "id": "ravens49ers-14",
+      "subject": "Lamar Jackson",
+      "assertion": "3105 passing yards and 17 passing touchdowns this season"
+    },
+    {
+      "id": "ravens49ers-15",
+      "subject": "Lamar Jackson",
+      "assertion": "741 rushing yards and five rushing touchdowns this season"
+    },
+    {
+      "id": "ravens49ers-16",
+      "subject": "Lamar Jackson MVP outlook",
+      "assertion": "article says Baltimore needs upset win; opinion, not formal award eligibility"
+    },
+    {
+      "id": "ravens49ers-17",
+      "subject": "Christian McCaffrey",
+      "assertion": "49ers running back"
+    },
+    {
+      "id": "ravens49ers-18",
+      "subject": "Christian McCaffrey",
+      "assertion": "leads NFL rushing with 1292 yards this season"
+    },
+    {
+      "id": "ravens49ers-19",
+      "subject": "Christian McCaffrey",
+      "assertion": "leads NFL total yards/game with 128.6 this season"
+    },
+    {
+      "id": "ravens49ers-20",
+      "subject": "Christian McCaffrey",
+      "assertion": "tied first in touchdowns with 20 this season"
+    },
+    {
+      "id": "ravens49ers-21",
+      "subject": "Christian McCaffrey awards",
+      "assertion": "likely Offensive Player of Year; MVP argument qualified by Purdy performance and quarterback emphasis"
+    },
+    {
+      "id": "ravens49ers-22",
+      "subject": "Mark Andrews",
+      "assertion": "Ravens tight end; ankle injury in Week 11"
+    },
+    {
+      "id": "ravens49ers-23",
+      "subject": "Isaiah Likely",
+      "assertion": "Ravens tight end; second-year; thriving in starting role after Andrews loss"
+    },
+    {
+      "id": "ravens49ers-24",
+      "subject": "Isaiah Likely",
+      "assertion": "64.3 yards/game over last three games"
+    },
+    {
+      "id": "ravens49ers-25",
+      "subject": "Mark Andrews",
+      "assertion": "54.4 yards/game before injury; comparison window differs from Likely’s"
+    },
+    {
+      "id": "ravens49ers-26",
+      "subject": "Ravens offense",
+      "assertion": "article attributes maintaining performance partly to Likely emergence"
+    },
+    {
+      "id": "ravens49ers-27",
+      "subject": "Ravens and 49ers offenses",
+      "assertion": "both top five in yardage and scoring"
+    },
+    {
+      "id": "ravens49ers-28",
+      "subject": "Ravens defense",
+      "assertion": "fewest points allowed/game:16.1 this season"
+    },
+    {
+      "id": "ravens49ers-29",
+      "subject": "Ravens defense",
+      "assertion": "second-fewest total yards allowed:4030, total not per-game"
+    },
+    {
+      "id": "ravens49ers-30",
+      "subject": "49ers defense",
+      "assertion": "second in points allowed/game:16.7"
+    },
+    {
+      "id": "ravens49ers-31",
+      "subject": "49ers defense",
+      "assertion": "tenth in yardage allowed:310 per game"
+    },
+    {
+      "id": "ravens49ers-32",
+      "subject": "49ers defense",
+      "assertion": "NFL-leading 25 turnovers"
+    },
+    {
+      "id": "ravens49ers-33",
+      "subject": "49ers defense",
+      "assertion": "second-fewest rushing yards allowed:1252 total"
+    },
+    {
+      "id": "ravens49ers-34",
+      "subject": "Ravens running game",
+      "assertion": "described as league’s most effective; 49ers slowing it is forecast"
+    },
+    {
+      "id": "ravens49ers-35",
+      "subject": "defensive matchup",
+      "assertion": "possible defensive battle despite strong offenses; not an observed final score"
+    }
+  ],
+  "checklist_counts": {
+    "grouped_domain_assertions": 68
+  }
+}

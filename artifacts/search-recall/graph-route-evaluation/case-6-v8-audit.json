@@ -1,0 +1,587 @@
+{
+  "purpose": "Manual source-only diagnostic audit of a long chronology with unchanged v8 production instructions; grouped rows are not atomic-fact or answer-accuracy estimates.",
+  "snapshot": "tmp/knowledge-graph-routes-v8/acquisition/6-64248ffd/snapshot.json",
+  "snapshot_sha256": "331b236b40218b6e36554a8900745d2f7ae411827943c9f31e32c669a4c1fd25",
+  "checklist_sha256": "4ab67f8603a9a358ac4a552563b92ac0307cca88ff6fb541c3f5ccb27b9cf179",
+  "seconds": 1343.4105897910194,
+  "counts": {
+    "grouped_assertions": 59,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 50,
+      "partially_preserved": 5,
+      "preserved_with_event_date_conflation": 1,
+      "preserved_with_conflicting_scope": 1,
+      "preserved_with_conflicting_date_context": 1,
+      "preserved_with_unsupported_specificity": 1
+    },
+    "with_representation_gaps": 19,
+    "model_invocations": 19,
+    "explicit_incomplete_decisions": 1
+  },
+  "positive_checks": [
+    "Reported five games retained without inventing an absent fifth named game.",
+    "Unresolved jersey-versus-phone-number dialogue remains qualified in this source.",
+    "Common people, teams and podcast identities reused.",
+    "October12 game has an addressable event linking Swift, both teams and Arrowhead; SNL introduction has all named participants.",
+    "Anonymous reports and joking matchmaking remain attributed."
+  ],
+  "important_limits": [
+    "Many other events remain strings, preventing equivalent graph walks.",
+    "The source combines October12 publication metadata with October22 body updates; the graph must not collapse those scopes.",
+    "Meaning retained in a description does not repair a conflicting typed field or participant role."
+  ],
+  "verdict": "Useful connected subgraphs exist, but chronology and population-scope errors remain. Continue the diagnostic transfer run without named exceptions or manually repairing the evaluated graph.",
+  "assertions": [
+    {
+      "assertion_id": "timeline-01",
+      "supporting_object_ids": [
+        906,
+        1082
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-02",
+      "supporting_object_ids": [
+        575,
+        905,
+        690,
+        911
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "Jason’s Eagles/center role is absent. Jersey87 remains text; mother/son direction is implicit in a generic personal-relationship label."
+      ]
+    },
+    {
+      "assertion_id": "timeline-03",
+      "supporting_object_ids": [
+        910,
+        911
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-04",
+      "supporting_object_ids": [
+        908,
+        1072,
+        1074
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-05",
+      "supporting_object_ids": [
+        907,
+        1082
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "AFC West qualification is absent; October22 heading and Chargers details remain separate unjoined event strings."
+      ]
+    },
+    {
+      "assertion_id": "timeline-06",
+      "supporting_object_ids": [
+        913
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-07",
+      "supporting_object_ids": [
+        914,
+        915,
+        926,
+        930
+      ],
+      "meaning_status": "preserved_with_event_date_conflation",
+      "representation_gaps": [
+        "July26 is the date of the reported announcement, but915/926 use it as the actual concert date."
+      ]
+    },
+    {
+      "assertion_id": "timeline-08",
+      "supporting_object_ids": [
+        917,
+        923,
+        930
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-09",
+      "supporting_object_ids": [
+        930
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-10",
+      "supporting_object_ids": [
+        914,
+        930
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-11",
+      "supporting_object_ids": [
+        930
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-12",
+      "supporting_object_ids": [
+        931
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-13",
+      "supporting_object_ids": [
+        932
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-14",
+      "supporting_object_ids": [
+        943
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-15",
+      "supporting_object_ids": [
+        956
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "September21 timeline date is not retained in the program remark."
+      ]
+    },
+    {
+      "assertion_id": "timeline-16",
+      "supporting_object_ids": [
+        957,
+        960
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "September21 invitation date is not retained, although venue and invitation/acceptance distinction are preserved."
+      ]
+    },
+    {
+      "assertion_id": "timeline-17",
+      "supporting_object_ids": [
+        959,
+        1088
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-18",
+      "supporting_object_ids": [
+        968,
+        972
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-19",
+      "supporting_object_ids": [
+        973
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-20",
+      "supporting_object_ids": [
+        977
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Three-yard touchdown distance remains qualification prose."
+      ]
+    },
+    {
+      "assertion_id": "timeline-21",
+      "supporting_object_ids": [
+        977,
+        978
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "2-1 record remains qualification text rather than numeric wins/losses."
+      ]
+    },
+    {
+      "assertion_id": "timeline-22",
+      "supporting_object_ids": [
+        974
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-23",
+      "supporting_object_ids": [
+        980
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-24",
+      "supporting_object_ids": [
+        981,
+        983
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Head-coach association remains a card description."
+      ]
+    },
+    {
+      "assertion_id": "timeline-25",
+      "supporting_object_ids": [
+        987
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-26",
+      "supporting_object_ids": [
+        988,
+        989
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-27",
+      "supporting_object_ids": [
+        990
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-28",
+      "supporting_object_ids": [
+        991
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-29",
+      "supporting_object_ids": [
+        992
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-30",
+      "supporting_object_ids": [
+        992
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-31",
+      "supporting_object_ids": [
+        999,
+        1011
+      ],
+      "meaning_status": "preserved_with_conflicting_scope",
+      "representation_gaps": [
+        "Description identifies Kelce jersey sales, but sales_measure points to the earlier broad NFL Jersey Sales concept804. The source populations must remain distinct."
+      ]
+    },
+    {
+      "assertion_id": "timeline-32",
+      "supporting_object_ids": [
+        1000
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Ranking belongs to a podcast, but subject role names Kelce; podcast and timeline date remain unlinked text."
+      ]
+    },
+    {
+      "assertion_id": "timeline-33",
+      "supporting_object_ids": [
+        1001,
+        1011
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-34",
+      "supporting_object_ids": [
+        1002,
+        1003,
+        1011
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-35",
+      "supporting_object_ids": [
+        1004
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-36",
+      "supporting_object_ids": [
+        1005
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "StubHub remains a scope string in1005 despite a later shared StubHub instance1015."
+      ]
+    },
+    {
+      "assertion_id": "timeline-37",
+      "supporting_object_ids": [
+        1006,
+        1007
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-38",
+      "supporting_object_ids": [
+        1018
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Town & Country attribution survives description; comparison baseline is preserved as imprecise source wording."
+      ]
+    },
+    {
+      "assertion_id": "timeline-39",
+      "supporting_object_ids": [
+        1020,
+        1023
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-40",
+      "supporting_object_ids": [
+        1023,
+        1029
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "Privacy statement is saved as unattributed1029 rather than linked to Mahomes; KSHB41 outlet is not represented."
+      ]
+    },
+    {
+      "assertion_id": "timeline-41",
+      "supporting_object_ids": [
+        1026
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-42",
+      "supporting_object_ids": [
+        1026
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-43",
+      "supporting_object_ids": [
+        1036
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-44",
+      "supporting_object_ids": [
+        1037
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-45",
+      "supporting_object_ids": [
+        1038,
+        1039,
+        1040
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Companions attend matching event strings; no shared event node supports their traversal join."
+      ]
+    },
+    {
+      "assertion_id": "timeline-46",
+      "supporting_object_ids": [
+        1041
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-47",
+      "supporting_object_ids": [
+        1048,
+        1049
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-48",
+      "supporting_object_ids": [
+        1048
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "X/Twitter alias remains platform text without an addressable platform identity."
+      ]
+    },
+    {
+      "assertion_id": "timeline-49",
+      "supporting_object_ids": [
+        1050,
+        1051
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-50",
+      "supporting_object_ids": [
+        1050,
+        1052
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-51",
+      "supporting_object_ids": [
+        1056
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-52",
+      "supporting_object_ids": [
+        1057
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-53",
+      "supporting_object_ids": [
+        1072,
+        1074
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-54",
+      "supporting_object_ids": [
+        1081,
+        1089
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "1081 and1089 overlap in meaning; the later fact adds a useful named-event link."
+      ]
+    },
+    {
+      "assertion_id": "timeline-55",
+      "supporting_object_ids": [
+        1076,
+        1077,
+        1087
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-56",
+      "supporting_object_ids": [
+        1076
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "timeline-57",
+      "supporting_object_ids": [
+        1077,
+        1078,
+        1091
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Three overlapping representations1077,1078,1091 describe the introduction;1091 carries the full participant roles."
+      ]
+    },
+    {
+      "assertion_id": "timeline-58",
+      "supporting_object_ids": [
+        907,
+        1098
+      ],
+      "meaning_status": "preserved_with_conflicting_date_context",
+      "representation_gaps": [
+        "October22 heading is not bound to current broadcast fact1098, which instead refers to October12 publication context. The source metadata predates later body updates."
+      ]
+    },
+    {
+      "assertion_id": "timeline-59",
+      "supporting_object_ids": [
+        1094,
+        1095,
+        1096
+      ],
+      "meaning_status": "preserved_with_unsupported_specificity",
+      "representation_gaps": [
+        "Source supplies Brittany as Patrick Mahomes’s wife; name1092 adds the surname without support in this supplied text. October22 event date remains unbound."
+      ]
+    }
+  ]
+}

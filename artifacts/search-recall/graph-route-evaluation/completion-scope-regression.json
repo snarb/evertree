@@ -1,0 +1,47 @@
+{
+  "purpose": "Local completion-scope regression from actual failed-section reports, not an independent extraction-quality benchmark.",
+  "original_trace": "tmp/knowledge-graph-routes-v8/acquisition/7-cb7b8bba/trace.json",
+  "original_snapshot_sha256": "18a7ddf4ace872d95a48bc50d37785d46f70f20e509d55d65ea5331778ae2f24",
+  "selection": {
+    "article_index": 7,
+    "body_start": 1187,
+    "body_end": 1299
+  },
+  "observed_failure": "Model repeatedly said the current fragment was already represented but declared it unfinished because named work belonged only to neighboring context.",
+  "previous_attempt_reports": [
+    "The principal player, team, numerical, and outlook facts have been saved. The article also names Anfernee Simons and Jerami Grant as supporting talents, but their relationship to the Trail Blazers has not yet been stored as traversable relation facts. Height and wingspan fact reads and representative relation verification remain.",
+    "The previous-attempt item about Anfernee Simons and Jerami Grant supporting Portland remains unresolved in this section: that clause appears only in source_context.following_text, outside the supplied fragment content, so this fragment does not provide a citable ground for adding the traversable team-player relations.",
+    "The assertions present in fragment 4297 are already represented by existing sourced facts, including Scoot Henderson's reported successor role (fact 1143). The prior-attempt request to add traversable Trail Blazers links for Anfernee Simons and Jerami Grant remains unresolved: those names occur only in source_context.following_text, not in this fragment's citable content, so this section does not ground those relations.",
+    "The fragment’s sole assertion is already represented by sourced relation 1143 (Scoot Henderson as successor to Damian Lillard for Portland after restructuring), with traversable participant roles, so no duplicate write was needed. Prior reported work remains outside this fragment’s citable scope: numeric height and wingspan readings, and traversable Trail Blazers links for Anfernee Simons and Jerami Grant. The latter names occur only in adjacent source_context here, not in the supplied fragment."
+  ],
+  "historical_graph_projection": {
+    "path": "tmp/knowledge-graph-scope-seed-v9.json",
+    "sha256": "acfe0feff50d64c12e370e3f8bf3664642eb3f1ad24aae7828d72b79802c5e3b",
+    "method": "Replay graph before/after history until the first provenance event beyond4297; preserve the original memory for existing sources. This is a graph projection, not a full DBOS replay.",
+    "graph_revision": 984,
+    "nodes": 1132
+  },
+  "runs": [
+    {
+      "path": "tmp/knowledge-graph-scope-v9",
+      "manifest_sha256": "5ae8d792c1d55b22fcebfae90edab6107bfdc4d68f719c9a47bd83685f61cbc5",
+      "model_invocations": 1,
+      "tool_calls": 6,
+      "seconds": 16.956087708007544,
+      "processing_status": "processed",
+      "writes": 0,
+      "nodes": 1154
+    },
+    {
+      "path": "tmp/knowledge-graph-scope-isolated-v9",
+      "manifest_sha256": "48660c176b0e2a551ca25a65a3c27e89d12394faffebbd0c443664864da042f3",
+      "model_invocations": 1,
+      "tool_calls": 6,
+      "seconds": 14.382650749990717,
+      "processing_status": "processed",
+      "writes": 0,
+      "nodes": 1132
+    }
+  ],
+  "conclusion": "Both checks completed their own fragment in one invocation without new graph writes; later neighboring work was not required for completion. This demonstrates the local behavior, not global semantic coverage or a statistically estimated improvement."
+}

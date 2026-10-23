@@ -1,0 +1,594 @@
+{
+  "purpose": "Manual source-only audit of fourth article; acquisition still used previous unchanged instructions. Diagnostic transfer, not answer accuracy.",
+  "snapshot": "tmp/knowledge-graph-routes-v7/acquisition/3-9943bdc9/snapshot.json",
+  "snapshot_sha256": "f642c3f584548dea3faad205ce017c4aaff335c89fcdbd2905612b1e4a2bfad8",
+  "checklist_sha256": "6b771817be63b2edd437ed2d31f4c3e58a72b896060bdf214ef9505b73dcb0e9",
+  "seconds": 783.582671458018,
+  "counts": {
+    "assertions": 68,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 66,
+      "partially_preserved": 1,
+      "preserved_with_conflicting_field": 1
+    },
+    "with_representation_gaps": 8,
+    "model_invocations": 11
+  },
+  "verdict": "Most source meaning is present, but one age is absent and a total-yardage average occupies a rushing-only field. Several values and participant roles remain prose. Preserve these issues without source-specific prompt corrections.",
+  "assertions": [
+    {
+      "assertion_id": "schedule-01",
+      "supporting_object_ids": [
+        558
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "schedule-02",
+      "supporting_object_ids": [
+        548
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "schedule-03",
+      "supporting_object_ids": [
+        595
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "schedule-04",
+      "supporting_object_ids": [
+        636
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-01",
+      "supporting_object_ids": [
+        549,
+        555
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-02",
+      "supporting_object_ids": [
+        551
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-03",
+      "supporting_object_ids": [
+        552,
+        553
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-04",
+      "supporting_object_ids": [
+        550
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-05",
+      "supporting_object_ids": [
+        574,
+        576
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-06",
+      "supporting_object_ids": [
+        577
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-07",
+      "supporting_object_ids": [
+        579
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-08",
+      "supporting_object_ids": [
+        576
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-09",
+      "supporting_object_ids": [
+        578
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-10",
+      "supporting_object_ids": [
+        575,
+        603
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "All-Pro status remains outlook prose."
+      ]
+    },
+    {
+      "assertion_id": "chiefs-11",
+      "supporting_object_ids": [
+        563,
+        580,
+        581
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-12",
+      "supporting_object_ids": [
+        582
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-13",
+      "supporting_object_ids": [
+        583,
+        584
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-14",
+      "supporting_object_ids": [
+        594
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "chiefs-15",
+      "supporting_object_ids": [
+        603
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-01",
+      "supporting_object_ids": [
+        596
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-02",
+      "supporting_object_ids": [
+        597
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-03",
+      "supporting_object_ids": [
+        598,
+        605
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-04",
+      "supporting_object_ids": [
+        606
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-05",
+      "supporting_object_ids": [
+        616
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-06",
+      "supporting_object_ids": [
+        620,
+        624
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-07",
+      "supporting_object_ids": [
+        617
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-08",
+      "supporting_object_ids": [
+        619
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-09",
+      "supporting_object_ids": [
+        618
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-10",
+      "supporting_object_ids": [
+        622
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-11",
+      "supporting_object_ids": [
+        625,
+        633
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Cedar Grove birthplace remains card description."
+      ]
+    },
+    {
+      "assertion_id": "eagles-12",
+      "supporting_object_ids": [
+        634
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-13",
+      "supporting_object_ids": [
+        634
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "eagles-14",
+      "supporting_object_ids": [
+        635
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-01",
+      "supporting_object_ids": [
+        637
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-02",
+      "supporting_object_ids": [
+        637
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-03",
+      "supporting_object_ids": [
+        645
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-04",
+      "supporting_object_ids": [
+        643
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-05",
+      "supporting_object_ids": [
+        646
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-06",
+      "supporting_object_ids": [
+        644
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-07",
+      "supporting_object_ids": [
+        645
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "Final draft selection/year is in qualification, but age23 is omitted."
+      ]
+    },
+    {
+      "assertion_id": "ravens49ers-08",
+      "supporting_object_ids": [
+        645
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "QBR76 and rankings remain qualification text rather than numerical fields."
+      ]
+    },
+    {
+      "assertion_id": "ravens49ers-09",
+      "supporting_object_ids": [
+        645
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-10",
+      "supporting_object_ids": [
+        645
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-11",
+      "supporting_object_ids": [
+        646
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-12",
+      "supporting_object_ids": [
+        646
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Todd Monken and coordinator role remain prose; no participant ID joins him to Jackson/Ravens."
+      ]
+    },
+    {
+      "assertion_id": "ravens49ers-13",
+      "supporting_object_ids": [
+        646
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-14",
+      "supporting_object_ids": [
+        654
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-15",
+      "supporting_object_ids": [
+        654
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-16",
+      "supporting_object_ids": [
+        654
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-17",
+      "supporting_object_ids": [
+        655
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-18",
+      "supporting_object_ids": [
+        655
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-19",
+      "supporting_object_ids": [
+        655
+      ],
+      "meaning_status": "preserved_with_conflicting_field",
+      "representation_gaps": [
+        "128.6 total yards/game is stored as rushing_yards_per_game. Qualification says total yards, creating an internal conflict."
+      ]
+    },
+    {
+      "assertion_id": "ravens49ers-20",
+      "supporting_object_ids": [
+        655
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-21",
+      "supporting_object_ids": [
+        655
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-22",
+      "supporting_object_ids": [
+        658
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-23",
+      "supporting_object_ids": [
+        656,
+        660,
+        662
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Starting replacement is connected, but second-year status remains description text."
+      ]
+    },
+    {
+      "assertion_id": "ravens49ers-24",
+      "supporting_object_ids": [
+        662
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-25",
+      "supporting_object_ids": [
+        663
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-26",
+      "supporting_object_ids": [
+        660
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-27",
+      "supporting_object_ids": [
+        670,
+        671,
+        672
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Baltimore scoring rank is in670 basis;671 stores yardage only; both top-five bounds remain prose."
+      ]
+    },
+    {
+      "assertion_id": "ravens49ers-28",
+      "supporting_object_ids": [
+        664
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-29",
+      "supporting_object_ids": [
+        665
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-30",
+      "supporting_object_ids": [
+        666
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-31",
+      "supporting_object_ids": [
+        667
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-32",
+      "supporting_object_ids": [
+        668
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-33",
+      "supporting_object_ids": [
+        669
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-34",
+      "supporting_object_ids": [
+        670
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ravens49ers-35",
+      "supporting_object_ids": [
+        670
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    }
+  ]
+}

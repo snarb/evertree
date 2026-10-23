@@ -31,7 +31,7 @@ def request_kind(request):
     return "verification" if "answer" in data else "framing"
 
 
-async def test_integration_failure_consumes_attempted_packet_and_continues(tmp_path):
+async def test_integration_failure_records_gap_without_retrying_or_blocking_answer(tmp_path):
     """A provider failure does not send integration bookkeeping back to consciousness."""
 
     class FailingProvider(IntegrationScriptedProvider):
@@ -62,7 +62,10 @@ async def test_integration_failure_consumes_attempted_packet_and_continues(tmp_p
         assert result["status"] == "succeeded"
         task = app.tasks.get(result["task_id"])
         assert not task.step_state.get("integration")
-        assert all(ref in task.step_state["integrated"]["2"] for ref in provider.failed_refs)
+        assert all(ref not in task.step_state["integrated"]["2"] for ref in provider.failed_refs)
+        assert all(
+            ref in task.step_state["integration_failed"]["2"] for ref in provider.failed_refs
+        )
         diagnostics = [
             event for event in app.memory.events if event.operator == "integration_error"
         ]
@@ -210,3 +213,86 @@ async def test_interrupted_iteration_keeps_actual_tool_trace_without_fabricated_
         assert task.step_state["integrated"]
         assert "last_integration_receipt" not in task.step_state
         assert provider.cancelled
+
+
+async def test_explicit_retry_resumes_failed_and_pending_sections_without_replaying_completed(app):
+    class Provider(IntegrationScriptedProvider):
+        failed = False
+
+        async def run(self, request_id, request, **kwargs):
+            if is_integration_request(request):
+                self.requests.append(request)
+                count = len(self.requests)
+                if count == 2 and not self.failed:
+                    self.failed = True
+                    raise RuntimeError("Transient section failure")
+                async for event in tool_events(request_id, request, kwargs["tool_handler"], []):
+                    yield event
+                return
+            async for event in super().run(request_id, request, **kwargs):
+                yield event
+
+    task = app.tasks.create_task("Review full retained source")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 5}, 0, reason="Review")
+    app._inputs[task.id] = [{"role": "user", "content": task.objective}]
+    ref = app._record_analysis(task.id, {"text": "First independently useful fact.\n\n" * 500})
+    app.provider = Provider([])
+    args = {"experience_refs": [ref]}
+    first = (await app._run_integration(task.id, args))["result"]["processing"]
+    assert len(first["completed"]) == 1 and first["pending"] and first["failed"]
+    prefix = app.provider.requests[0].prompt
+    second = (await app._run_integration(task.id, args))["result"]["processing"]
+    assert second["status"] == "processed"
+    assert sum(request.prompt == prefix for request in app.provider.requests) == 1
+    assert ref in task.step_state["integrated"][str(task.specification.revision)]
+
+
+async def test_finalization_drains_all_sections_and_budget_stop_retains_real_tail(app):
+    task = app.tasks.create_task("Process all source sections")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 5}, 0, reason="Review")
+    app._inputs[task.id] = [{"role": "user", "content": task.objective}]
+    ref = app._record_analysis(task.id, {"text": "Another independently useful fact.\n\n" * 1800})
+    app.provider = IntegrationScriptedProvider([])
+    await app._drain_integration(task)
+    fragments = task.step_state["fragments"][json.dumps(ref, sort_keys=True)]
+    assert len(fragments) > 8
+    assert all(
+        item in task.step_state["integrated"][str(task.specification.revision)]
+        for item in fragments
+    )
+    assert not task.step_state.get("integration")
+
+    pending = app._record_analysis(task.id, {"text": "New unprocessed source"})
+    app.tasks.record_usage(task.id, "active_time_minutes", 5, operation_id="limit")
+    await app._drain_integration(task)
+    from evertree.core.evaluation.acceptance import VerificationResult
+
+    await app._stop_task(task, "succeeded", "Answer delivered", VerificationResult("verified"))
+    assert pending["event_ref"] in app.memory.retention_closure()
+    assert pending not in task.step_state["integrated"][str(task.specification.revision)]
+
+
+async def test_retry_after_norm_refresh_failure_reuses_processed_sections(app, monkeypatch):
+    from evertree.core.semantics import api as semantics
+
+    task = app.tasks.create_task("Retain processed source after norm refresh failure")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 5}, 0, reason="Review")
+    app._inputs[task.id] = [{"role": "user", "content": task.objective}]
+    ref = app._record_analysis(task.id, {"text": "An independently useful fact."})
+    original = semantics.refresh_property_norms
+
+    async def fail(ctx):
+        raise RuntimeError("Temporary norm refresh failure")
+
+    monkeypatch.setattr(semantics, "refresh_property_norms", fail)
+    args = {"experience_refs": [ref]}
+    with pytest.raises(RuntimeError, match="Temporary norm refresh failure"):
+        await app._run_integration(task.id, args)
+    assert len(app.provider.requests) == 1
+    # Component transport does not emit the real worker's run_failed lifecycle event.
+    pending_run = app._pending_programs[task.id]["run_id"]
+    app.memory.finish_run(app._run_map[pending_run], status="failed")
+    monkeypatch.setattr(semantics, "refresh_property_norms", original)
+    result = await app._run_integration(task.id, args)
+    assert result["result"]["processing"]["status"] == "processed"
+    assert len(app.provider.requests) == 1

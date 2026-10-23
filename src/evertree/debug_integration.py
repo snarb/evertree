@@ -33,8 +33,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
-from dotenv import dotenv_values
-
 from evertree.common.logging_setup import configure_logging
 from evertree.common.structured import validate
 from evertree.core.attribution import AttributionRuntime
@@ -75,13 +73,16 @@ CONSCIOUS_ANALYSIS = (
 
 def load_debug_environment(repository: Path, config: SemanticConfig):
     """Load repository debug settings without overriding existing environment credentials."""
-    names = (config.redis_url_env, config.openai_key_env, "EVERTREE_TEST_REDIS_URL")
+    from evertree.core.semantics.config import load_search_environment
+
+    load_search_environment(repository, config)
+    from dotenv import dotenv_values
+
     path = repository / ".env"
     if path.is_file():
-        values = dotenv_values(path, interpolate=False)
-        for name in names:
-            if values.get(name):
-                os.environ.setdefault(name, values[name])
+        value = dotenv_values(path, interpolate=False).get("EVERTREE_TEST_REDIS_URL")
+        if value:
+            os.environ.setdefault("EVERTREE_TEST_REDIS_URL", value)
     # This harness has private graph/index state, so the configured test Redis is suitable.
     if os.environ.get("EVERTREE_TEST_REDIS_URL"):
         os.environ.setdefault(config.redis_url_env, os.environ["EVERTREE_TEST_REDIS_URL"])
@@ -155,20 +156,23 @@ class DebugSession:
         breakpoint in a handler does not show the model request. Here it does. Tool calls
         are logged in self.calls as "tool:<name>".
         """
-        if stop_when is not None:
-            raise ValueError("The debug harness does not support stop_when")
+        from .core.runtime.llm import ToolCallLimitError
+
         self.metadata["semantic_scope"] = "debug:" + uuid4().hex
         definitions = {tool["name"]: tool for tool in json_value(tools)}
         used = 0
         failure = None
+        stopped = None
 
         async def call_tool(name, arguments):
-            nonlocal used, failure
+            nonlocal used, failure, stopped
+            if stopped is not None:
+                raise ValueError("This section has finished; no further tool calls are permitted")
             if name not in definitions:
                 raise PermissionError("Tool was not declared")
             used += 1
             if used > max_tool_calls:
-                failure = RuntimeError("LLM dialogue exhausted its tool-call limit")
+                failure = ToolCallLimitError("LLM dialogue exhausted its tool-call limit")
                 raise failure
             call = {"method": f"tool:{name}", "payload": json_value(arguments)}
             self.calls.append(call)
@@ -181,6 +185,8 @@ class DebugSession:
                 if not isinstance(error, (ValueError, TypeError, PermissionError)):
                     failure = error
                 raise
+            if stop_when and stop_when(name, call["result"]):
+                stopped = {"tool": name, "result": call["result"]}
             return call["result"]
 
         result = await self.model(
@@ -188,7 +194,7 @@ class DebugSession:
         )
         if failure is not None:
             raise failure
-        return result
+        return stopped if stopped is not None else result
 
     def tool_calls(self):
         """Tool calls the model made, in order, with arguments, result and error."""
@@ -268,7 +274,22 @@ class DebugSession:
         try:
             if method == "llm.run":
                 result = await self.model(payload)
-            elif method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
+            elif method == "trace":
+                run = self.memory.start_run(
+                    "IntegrationProgress",
+                    metadata["program"]["revision"],
+                    {},
+                    run_mode="evaluation",
+                )
+                self.memory.record(run, payload["operator"], output=json_value(payload["output"]))
+                self.memory.finish_run(run)
+                result = None
+            elif method.startswith("semantic.") or method in {
+                "graph.query",
+                "graph.walk",
+                "graph.sources",
+                "memory.read_source",
+            }:
                 result = await self.service.execute(method, payload, metadata)
             else:
                 result = self.operations.execute(method, payload, metadata=metadata)

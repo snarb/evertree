@@ -461,7 +461,7 @@ async def _ask(world, provider, directory, transcript, question, calls, *, exten
             assert name in {tool.name for tool in READ_TOOLS}
             validate_action({"action": name, **arguments})
             if name == "search":
-                result = await semantics.call_semantic_search(ctx, arguments["query"])
+                result = await semantics.call_semantic_search(ctx, arguments["queries"])
             else:
                 payload = dict(arguments)
                 if name in {"query", "walk"} and current_read_context.get() is not None:

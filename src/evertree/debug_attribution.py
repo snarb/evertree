@@ -118,8 +118,8 @@ class AttributionSession(EvidenceSession):
 
         reader = SimpleNamespace(step=read_step, call=self.call)
 
-        async def search(query):
-            return await semantics.call_semantic_search(reader, query)
+        async def search(queries, *, kinds=None, limit=10):
+            return await semantics.call_semantic_search(reader, queries, kinds=kinds, limit=limit)
 
         async def describe(subject):
             return await graph.describe(reader, subject)

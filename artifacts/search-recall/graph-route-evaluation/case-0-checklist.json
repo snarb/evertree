@@ -1,0 +1,650 @@
+{
+  "purpose": "Source-only manual coverage checklist frozen before reading the generated graph. Diagnostic review, not an independent benchmark or question-derived gold set.",
+  "input": "tmp/knowledge-graph-routes-case-0-v1/input/articles.json, element 0 only",
+  "source": {
+    "title": "200+ of the best deals from Amazon's Cyber Monday sale",
+    "publisher": "Mashable",
+    "url": "https://mashable.com/article/cyber-monday-deals-amazon-2023",
+    "author": null,
+    "published_at": "2023-11-27T08:45:59+00:00",
+    "category": "entertainment",
+    "body_update_label": "Nov. 27, 2023, 5:00 a.m. EST"
+  },
+  "review_rules": [
+    "The checklist was derived only from the first complete article record, without questions, answers, evidence labels or generated graph output.",
+    "Count distinct supported meanings, not edge quantity. Several checklist rows may be correctly represented by one qualified fact or structured offer.",
+    "Required retrieval means a participant and predicate/value/condition are reachable through graph reads; a value found only by reading the original source is source-access coverage, not graph-fact coverage.",
+    "Preserve reported, subjective, comparative and uncertain claims as such. Source support is not independent verification.",
+    "The original record contains many category headings but omits individual product lists. Do not invent the advertised 200-plus individual deals or infer that every heading names a currently available concrete offer.",
+    "Do not infer exact product models, sale prices, currencies, predecessor identifiers, numerical review counts or offer validity boundaries absent from the source.",
+    "Publication metadata and the in-body update label are distinct values; neither should silently overwrite the other.",
+    "Navigation, editorial wording and publication metadata are audited separately from substantive domain assertions; they must not inflate domain-fact completeness."
+  ],
+  "assertions": [
+    {
+      "id": "sale-01",
+      "subject": "Amazon holiday promotion",
+      "predicate": "reported duration",
+      "value": 11,
+      "unit": "days",
+      "qualification": "Source describes eleven days of deals spanning Black Friday and Cyber Monday."
+    },
+    {
+      "id": "sale-02",
+      "subject": "Amazon Black Friday sale",
+      "predicate": "began",
+      "value": "Friday, November 17, 2023, early morning",
+      "qualification": "No exact clock time or timezone is stated for sale opening."
+    },
+    {
+      "id": "sale-03",
+      "subject": "Amazon Black Friday sale opening",
+      "predicate": "relative timing",
+      "value": "one week ahead of schedule",
+      "qualification": "Reported comparison; the reference schedule is not supplied."
+    },
+    {
+      "id": "sale-04",
+      "subject": "Amazon promotion wording",
+      "predicate": "changed to Cyber Monday language",
+      "value": "Saturday, November 25, 2023, wee hours",
+      "qualification": "A wording transition is distinct from an exact sale-start timestamp."
+    },
+    {
+      "id": "sale-05",
+      "subject": "Amazon official Cyber Monday mode",
+      "predicate": "reported active through",
+      "value": "Monday, November 27, 2023",
+      "qualification": "Current at the article's writing/update; no exact end time."
+    },
+    {
+      "id": "sale-06",
+      "subject": "Amazon Cyber Monday deals",
+      "predicate": "include",
+      "value": "deals carried over from Black Friday"
+    },
+    {
+      "id": "sale-07",
+      "subject": "Amazon Cyber Monday deals",
+      "predicate": "include",
+      "value": "new deals"
+    },
+    {
+      "id": "echo-01",
+      "subject": "featured Echo Show offer",
+      "predicate": "sale price bound",
+      "value": 40,
+      "comparison": "less than",
+      "currency_symbol": "$",
+      "qualification": "Specific generation/model name and exact price are absent."
+    },
+    {
+      "id": "echo-02",
+      "subject": "featured Echo Show offer",
+      "predicate": "promotion continuity",
+      "value": "rollover from Black Friday to Cyber Monday"
+    },
+    {
+      "id": "echo-03",
+      "subject": "featured Echo Show",
+      "predicate": "responds to",
+      "value": "Alexa commands"
+    },
+    {
+      "id": "echo-04",
+      "subject": "featured Echo Show",
+      "predicate": "supports requested task",
+      "value": "measurement conversions",
+      "qualification": "Example usage during cooking."
+    },
+    {
+      "id": "echo-05",
+      "subject": "featured Echo Show",
+      "predicate": "supports requested task",
+      "value": "checking the weather"
+    },
+    {
+      "id": "echo-06",
+      "subject": "featured Echo Show",
+      "predicate": "supports requested task",
+      "value": "turning off smart lights"
+    },
+    {
+      "id": "echo-07",
+      "subject": "featured Echo Show",
+      "predicate": "screen diagonal",
+      "value": 5.5,
+      "unit": "inches"
+    },
+    {
+      "id": "echo-08",
+      "subject": "featured Echo Show",
+      "predicate": "sound quality comparison",
+      "value": "better than predecessor",
+      "qualification": "Predecessor identity and sound metric are unspecified."
+    },
+    {
+      "id": "echo-09",
+      "subject": "featured Echo Show",
+      "predicate": "supports",
+      "value": "watching videos"
+    },
+    {
+      "id": "echo-10",
+      "subject": "featured Echo Show",
+      "predicate": "supports",
+      "value": "video calling friends and family"
+    },
+    {
+      "id": "audible-01",
+      "subject": "Audible Premium Plus offer",
+      "predicate": "promotional monthly price",
+      "value": 5.95,
+      "currency_symbol": "$",
+      "period": "month"
+    },
+    {
+      "id": "audible-02",
+      "subject": "Audible Premium Plus offer",
+      "predicate": "comparison monthly price",
+      "value": 14.95,
+      "currency_symbol": "$",
+      "period": "month"
+    },
+    {
+      "id": "audible-03",
+      "subject": "Audible Premium Plus offer",
+      "predicate": "promotional duration",
+      "value": 4,
+      "unit": "months"
+    },
+    {
+      "id": "audible-04",
+      "subject": "Audible Premium Plus offer",
+      "predicate": "reported saving",
+      "value": 9,
+      "currency_symbol": "$",
+      "period": "month"
+    },
+    {
+      "id": "audible-05",
+      "subject": "Audible Premium Plus offer",
+      "predicate": "eligibility",
+      "value": "new customers only",
+      "qualification": "Must qualify the offer, not all Audible users."
+    },
+    {
+      "id": "audible-06",
+      "subject": "Audible Premium Plus offer",
+      "predicate": "additional credit",
+      "value": 20,
+      "currency_symbol": "$",
+      "credit_provider": "Audible",
+      "qualification": "Additional Audible credit, not a cash discount or Amazon credit."
+    },
+    {
+      "id": "mgm-01",
+      "subject": "all Fire TVs in the stated sale",
+      "predicate": "included subscription",
+      "value": "MGM+",
+      "qualification": "Source says Fire TVs; do not automatically extend to Fire TV streaming devices or all Echo products."
+    },
+    {
+      "id": "mgm-02",
+      "subject": "included MGM+ subscription",
+      "predicate": "duration",
+      "value": 6,
+      "unit": "months"
+    },
+    {
+      "id": "mgm-03",
+      "subject": "included MGM+ subscription",
+      "predicate": "price to buyer",
+      "value": 0,
+      "qualification": "Explicitly free with qualifying Fire TVs."
+    },
+    {
+      "id": "mgm-04",
+      "subject": "included MGM+ subscription",
+      "predicate": "reported value",
+      "value": 35.94,
+      "currency_symbol": "$",
+      "qualification": "The source's package valuation, not an independently quoted monthly price."
+    },
+    {
+      "id": "ipad-01",
+      "subject": "64GB ninth-generation iPad",
+      "predicate": "stock availability",
+      "value": "going in and out of stock"
+    },
+    {
+      "id": "ipad-02",
+      "subject": "64GB ninth-generation iPad",
+      "predicate": "possible sale price",
+      "value": 229.99,
+      "currency_symbol": "$",
+      "qualification": "You might be able to find it; not guaranteed currently in stock at that price."
+    },
+    {
+      "id": "ipad-03",
+      "subject": "64GB tenth-generation iPad offer",
+      "predicate": "sale price at Amazon",
+      "value": 349,
+      "currency_symbol": "$"
+    },
+    {
+      "id": "ipad-04",
+      "subject": "tenth-generation iPad",
+      "predicate": "storage of featured model",
+      "value": 64,
+      "unit": "GB"
+    },
+    {
+      "id": "ipad-05",
+      "subject": "ninth-generation iPad",
+      "predicate": "storage of compared model",
+      "value": 64,
+      "unit": "GB"
+    },
+    {
+      "id": "ipad-06",
+      "subject": "tenth-generation iPad",
+      "predicate": "screen diagonal",
+      "value": 10.9,
+      "unit": "inches"
+    },
+    {
+      "id": "ipad-07",
+      "subject": "ninth-generation iPad",
+      "predicate": "screen diagonal",
+      "value": 10.2,
+      "unit": "inches"
+    },
+    {
+      "id": "ipad-08",
+      "subject": "tenth-generation iPad",
+      "predicate": "display technology",
+      "value": "Liquid Retina"
+    },
+    {
+      "id": "ipad-09",
+      "subject": "tenth-generation iPad",
+      "predicate": "processor",
+      "value": "A14 Bionic"
+    },
+    {
+      "id": "ipad-10",
+      "subject": "tenth-generation iPad",
+      "predicate": "processor comparison",
+      "value": "faster than ninth-generation model",
+      "qualification": "Source associates this with smoother multitasking; no benchmark value or ninth-generation chip name."
+    },
+    {
+      "id": "ipad-11",
+      "subject": "tenth-generation iPad",
+      "predicate": "charging interface",
+      "value": "USB-C"
+    },
+    {
+      "id": "tv-01",
+      "subject": "featured Amazon Fire TV",
+      "predicate": "screen diagonal",
+      "value": 65,
+      "unit": "inches",
+      "qualification": "No exact product model is named."
+    },
+    {
+      "id": "tv-02",
+      "subject": "featured 65-inch Amazon Fire TV",
+      "predicate": "price record",
+      "value": "lowest ever price reached this month",
+      "qualification": "Article context November 2023; exact sale price is absent."
+    },
+    {
+      "id": "tv-03",
+      "subject": "featured 65-inch Amazon Fire TV reviews",
+      "predicate": "five-star share",
+      "value": 66,
+      "unit": "percent",
+      "qualification": "Reported review-rating proportion; total review count is absent."
+    },
+    {
+      "id": "tv-04",
+      "subject": "featured 65-inch Amazon Fire TV",
+      "predicate": "display specification",
+      "value": "4K QLED",
+      "qualification": "Do not invent a pixel resolution absent from the source."
+    },
+    {
+      "id": "tv-05",
+      "subject": "featured 65-inch Amazon Fire TV",
+      "predicate": "brightness control",
+      "value": "adaptive to room lighting"
+    },
+    {
+      "id": "tv-06",
+      "subject": "featured 65-inch Amazon Fire TV",
+      "predicate": "idle display capability",
+      "value": "famous art or personal pictures",
+      "qualification": "When not streaming."
+    },
+    {
+      "id": "tv-07",
+      "subject": "featured 65-inch Amazon Fire TV",
+      "predicate": "voice control",
+      "value": "Alexa"
+    },
+    {
+      "id": "surface-01",
+      "subject": "Microsoft Surface Laptop Go 3 offer at Amazon",
+      "predicate": "sale price",
+      "value": 599.99,
+      "currency_symbol": "$"
+    },
+    {
+      "id": "surface-02",
+      "subject": "Microsoft Surface Laptop Go 3 offer",
+      "predicate": "discount",
+      "value": 25,
+      "unit": "percent",
+      "qualification": "No original Go 3 price is explicitly stated."
+    },
+    {
+      "id": "surface-03",
+      "subject": "featured Microsoft Surface Laptop Go 3",
+      "predicate": "version year",
+      "value": 2023
+    },
+    {
+      "id": "surface-04",
+      "subject": "Surface Laptop Go 3 promotional price",
+      "predicate": "comparison",
+      "value": "equals the older Surface Go 2's regular asking price",
+      "qualification": "Keep the source's compared product wording; it calls the predecessor Surface Go 2/Go 2."
+    },
+    {
+      "id": "surface-05",
+      "subject": "Surface Laptop Go 3",
+      "predicate": "processor family",
+      "value": "Intel Core i5"
+    },
+    {
+      "id": "surface-06",
+      "subject": "Surface Laptop Go 3 processor",
+      "predicate": "generation",
+      "value": 12
+    },
+    {
+      "id": "surface-07",
+      "subject": "compared Surface Go 2 processor",
+      "predicate": "generation",
+      "value": 11
+    },
+    {
+      "id": "surface-08",
+      "subject": "Surface Laptop Go 3",
+      "predicate": "has",
+      "value": "touchscreen"
+    },
+    {
+      "id": "surface-09",
+      "subject": "Surface Laptop Go 3",
+      "predicate": "reported portability",
+      "value": "lightweight",
+      "qualification": "Qualitative source wording; no mass measurement."
+    },
+    {
+      "id": "surface-10",
+      "subject": "Surface Laptop Go 3 versus Go 2",
+      "predicate": "reported performance benefit",
+      "value": "better speeds and solid power for most everyday work or school tasks",
+      "qualification": "Qualitative editorial comparison, no measured speed or universal workload claim."
+    },
+    {
+      "id": "bose-01",
+      "subject": "Bose QuietComfort 45 offer",
+      "predicate": "sale price",
+      "value": 199,
+      "currency_symbol": "$"
+    },
+    {
+      "id": "bose-02",
+      "subject": "Bose QuietComfort 45 offer",
+      "predicate": "price record",
+      "value": "record low"
+    },
+    {
+      "id": "bose-03",
+      "subject": "Bose QuietComfort 45",
+      "predicate": "form factor",
+      "value": "over-ear headphones"
+    },
+    {
+      "id": "bose-04",
+      "subject": "Bose QuietComfort 45",
+      "predicate": "reported offer uniqueness",
+      "value": "only Bose over-ear pair available for just under $200",
+      "qualification": "The article's sale context; not a timeless worldwide exclusivity claim."
+    },
+    {
+      "id": "bose-05",
+      "subject": "Bose QuietComfort 45",
+      "predicate": "feature",
+      "value": "active noise cancellation"
+    },
+    {
+      "id": "bose-06",
+      "subject": "Bose QuietComfort 45",
+      "predicate": "reported battery life",
+      "value": 20,
+      "unit": "hours",
+      "qualification": "As reported by this article; no testing conditions or independent verification."
+    },
+    {
+      "id": "bose-07",
+      "subject": "Bose QuietComfort 45 sale price",
+      "predicate": "comparison",
+      "value": "less than half the AirPods Max sale price",
+      "qualification": "Do not infer an exact AirPods Max price."
+    },
+    {
+      "id": "quest-01",
+      "subject": "Meta Quest 2 offer",
+      "predicate": "sale price",
+      "value": 249,
+      "currency_symbol": "$"
+    },
+    {
+      "id": "quest-02",
+      "subject": "Meta Quest 2 offer",
+      "predicate": "comparison price",
+      "value": 299.99,
+      "currency_symbol": "$"
+    },
+    {
+      "id": "quest-03",
+      "subject": "Meta Quest 2 offer",
+      "predicate": "saving",
+      "value": 50.99,
+      "currency_symbol": "$"
+    },
+    {
+      "id": "quest-04",
+      "subject": "Meta Quest 2 offer",
+      "predicate": "additional credit",
+      "value": 50,
+      "currency_symbol": "$",
+      "credit_provider": "Amazon",
+      "qualification": "Free Amazon credit, distinct from the device price and price saving."
+    },
+    {
+      "id": "quest-05",
+      "subject": "Meta Quest 2 additional Amazon credit",
+      "predicate": "required code",
+      "value": "META50",
+      "qualification": "The code qualifies the free credit in the text; do not silently make it a requirement for the $249 base price."
+    },
+    {
+      "id": "quest-06",
+      "subject": "Meta Quest 2 offer",
+      "predicate": "price record",
+      "value": "all-time low",
+      "qualification": "Derived from its explicit fire marker and the article's stated marker legend."
+    }
+  ],
+  "editorial_and_publication_meanings": [
+    {
+      "id": "meta-01",
+      "meaning": "Mashable publishes this named Amazon Cyber Monday deal roundup at the recorded URL, with the supplied publication timestamp and a separate in-body update label."
+    },
+    {
+      "id": "meta-02",
+      "meaning": "The body says the post was updated with the latest Amazon Cyber Monday deals; this is a reported update, not a guarantee of live availability after publication."
+    },
+    {
+      "id": "meta-03",
+      "meaning": "Mashable describes a running curated list, spotlighting favorites, noting sellouts and intending repeated updates while the sale continues."
+    },
+    {
+      "id": "meta-04",
+      "meaning": "Mashable refers to another larger Cyber Monday list spanning more retailers; no link target or contents are supplied here."
+    },
+    {
+      "id": "legend-01",
+      "meaning": "Sparkle marker means a newly added deal."
+    },
+    {
+      "id": "legend-02",
+      "meaning": "Fire marker means an all-time-low price."
+    },
+    {
+      "id": "legend-03",
+      "meaning": "Envelope marker means an Amazon invite-only deal for Prime members; invite requirement and Prime eligibility are both material."
+    },
+    {
+      "id": "legend-04",
+      "meaning": "Strikethrough means sold out OR expired at writing time. The legend alone does not identify which condition applied to an individual offer."
+    },
+    {
+      "id": "opinion-01",
+      "meaning": "The article recommends Echo Show as a useful room addition, with hands-free Alexa tasks and audiovisual uses as reasons. Subjective game-changing/easier-life wording is editorial, not measured effectiveness."
+    },
+    {
+      "id": "opinion-02",
+      "meaning": "The article now favors the tenth-generation 64GB iPad Amazon offer, in the context of ninth-generation stock fluctuations."
+    },
+    {
+      "id": "opinion-03",
+      "meaning": "The article recommends the featured 65-inch Fire TV, citing display, brightness, artwork/photo display and Alexa capabilities."
+    },
+    {
+      "id": "opinion-04",
+      "meaning": "The article calls the older Surface Go 2 its favorite budget laptop and praises the Go 3 offer; those are reviewer preferences."
+    },
+    {
+      "id": "opinion-05",
+      "meaning": "The Go 3's appearance is compared to MacBook Air; resemblance must not merge product identities or invent shared technical specifications."
+    },
+    {
+      "id": "opinion-06",
+      "meaning": "Bose is described as premium and reputable, QC45 ANC as top-of-the-line and its comfort as all-day. Preserve attribution/subjectivity if stored."
+    },
+    {
+      "id": "navigation-01",
+      "meaning": "Echo devices are organized under Amazon device/service deals; Apple Watches and MacBooks are organized under Apple deals. These are article section placements, not taxonomic is-a facts."
+    },
+    {
+      "id": "newsletter-01",
+      "meaning": "Mashable advertises a daily Deals newsletter; the sign-up wording says subscribers agree to its Terms of Use and Privacy Policy. Loading/thank-you UI text is not evidence that this reader subscribed."
+    }
+  ],
+  "section_coverage": {
+    "meaning": "Named article sections/subsections can provide source navigation or topic coverage. They do not establish unlisted concrete offers, prices or product availability.",
+    "sections": {
+      "Echo, Fire TV, and Kindle deals": [
+        "Amazon services",
+        "Echo Buds",
+        "Echo smart displays",
+        "Echo smart speakers",
+        "Fire tablets",
+        "Fire TVs",
+        "Fire TV streaming devices",
+        "eero",
+        "Kindles",
+        "Miscellaneous Amazon devices"
+      ],
+      "Apple deals": [
+        "AirPods",
+        "MacBook",
+        "Mac",
+        "iPad",
+        "Apple Watch"
+      ],
+      "TV deals": [
+        "43 to 55 inches",
+        "65 inches",
+        "75 to 85 inches"
+      ],
+      "Laptop deals": [
+        "Traditional laptops",
+        "2-in-1 laptops",
+        "Chromebooks",
+        "Gaming laptops"
+      ],
+      "Headphone and earbud deals": [
+        "Headphones",
+        "Earbuds"
+      ],
+      "Tablet deals": [],
+      "Gaming deals": [
+        "Gaming headsets",
+        "Gaming mice",
+        "Gaming keyboards",
+        "VR headsets"
+      ],
+      "Speaker deals": [],
+      "Vacuum deals": [
+        "Cordless vacuums",
+        "Robot vacuums and vacuum/mop hybrids"
+      ],
+      "Kitchen deals": [
+        "Pizza ovens",
+        "Sparkling water makers",
+        "Toaster ovens"
+      ],
+      "Smart home deals": [
+        "Blink",
+        "Chromecast",
+        "Google Nest"
+      ],
+      "Fitness deals": [
+        "Smartwatches and fitness trackers"
+      ],
+      "Beauty tech deals": [],
+      "Drone deals": [],
+      "Camera deals": [
+        "GoPro"
+      ],
+      "Lego deals": [],
+      "Gift card deals": []
+    }
+  },
+  "negative_checks": [
+    "No fabricated individual deals for category headings whose lists are absent.",
+    "No exact Echo Show price/model beyond the <40 bound and stated 5.5-inch feature.",
+    "No exact 65-inch Fire TV price/model beyond the reported historical-low claim and features.",
+    "No guaranteed ninth-generation iPad availability or a claim that its possible price is always current.",
+    "No computed Go 3 original price, AirPods Max price or MGM+ monthly price represented as source-explicit facts.",
+    "No promotion code moved from the Quest credit eligibility to the base device sale price.",
+    "No offer-specific qualification detached from its named offer, beneficiary or subscription.",
+    "No inferred author identity, repaired timestamp, invented current validity or unstated hardware generation.",
+    "No generic RELATED_TO edges substituted for the concrete named price, eligibility, feature, comparison or publication predicate.",
+    "No independent evidential count added for article headings, repeated TOC text or a graph restatement of the same source."
+  ],
+  "source_record_sha256": "5d64ae7f73e49dcb949887d20c072674f4a7e3f9698262730ad073d8a60d9930",
+  "checklist_counts": {
+    "domain_assertions": 68,
+    "editorial_publication_meanings": 16,
+    "section_groups": 17
+  }
+}

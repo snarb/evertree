@@ -294,7 +294,7 @@ async def test_real_model_learns_relative_size_and_reads_assessed_profiles_after
             async def read(name, arguments):
                 validate_action({"action": name, **arguments})
                 result = (
-                    await semantics.call_semantic_search(ctx, arguments["query"])
+                    await semantics.call_semantic_search(ctx, arguments["queries"])
                     if name == "search"
                     else await graph_api.read(ctx, name, dict(arguments))
                 )
@@ -533,7 +533,7 @@ async def test_real_model_learns_frequency_table_norm_and_reuses_it_after_restor
             async def read(name, arguments):
                 validate_action({"action": name, **arguments})
                 result = (
-                    await semantics.call_semantic_search(ctx, arguments["query"])
+                    await semantics.call_semantic_search(ctx, arguments["queries"])
                     if name == "search"
                     else await graph_api.read(ctx, name, dict(arguments))
                 )

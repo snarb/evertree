@@ -1,0 +1,1859 @@
+[
+  {
+    "original_index": 4,
+    "label_status": "supported",
+    "label_reason": "The original CBS Sports article says Caesars Sportsbook offers new customers up to $1,000 in bonus bets if their first bet loses. The Sporting News articles say Caesars runs NBA betting promotions for existing players and expect it to offer Vermont sign-ups the same first-bet-loss offer; the Vermont claim is prospective.",
+    "aliases": {
+      "A": "raw",
+      "B": "graph_search",
+      "C": "graph_routes",
+      "D": "graph_sources"
+    },
+    "variants": {
+      "raw": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Names Caesars Sportsbook and accurately combines the CBS Sports offer with Sporting News’ NBA promotions and prospective Vermont offer. The cited records and article text appear in its reads.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Returns the relevant CBS Sports and Sporting News articles, along with substantial unrelated article material."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Again returns the relevant articles, alongside substantial material unrelated to the requested facts."
+          },
+          {
+            "read_index": 2,
+            "classification": "mixed",
+            "reason": "The Sporting News article supports the NBA promotions claim, but the read also contains unrelated article content."
+          }
+        ]
+      },
+      "graph_search": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly identifies Caesars and preserves the prospective status of the Vermont offer. Its reads contain the cited CBS Sports and Sporting News records, including the NBA promotions detail.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Contains records supporting the offer, NBA promotions, and Vermont forecast, as well as unrelated sportsbook results."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Contains the supporting Caesars records, but also records about other sportsbooks and promotions."
+          }
+        ]
+      },
+      "graph_routes": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly identifies Caesars, includes all three requested facts, and states that the Vermont offer is expected rather than confirmed. Its reads include the matching CBS Sports and Sporting News records.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Includes the relevant offer, NBA promotion, and Vermont forecast records, plus unrelated results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Returns the matching CBS Sports offer and Sporting News Vermont forecast for Caesars."
+          },
+          {
+            "read_index": 2,
+            "classification": "mixed",
+            "reason": "Returns the Caesars NBA promotions record and other useful Caesars records, alongside unrelated sportsbook results."
+          }
+        ]
+      },
+      "graph_sources": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly identifies Caesars and includes the loss-triggered bonus, NBA promotions for existing players, and the prospective status of the Vermont offer. Its citations correspond to records and source excerpts present in the reads.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Contains the relevant offer and Vermont forecast records, along with unrelated sportsbook results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Returns the Caesars loss-offer records from CBS Sports and Sporting News."
+          },
+          {
+            "read_index": 2,
+            "classification": "mixed",
+            "reason": "Returns the Caesars NBA promotions record and related Caesars material, plus unrelated results."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "Provides source references for the cited offer and NBA-promotion records, enabling verification."
+          },
+          {
+            "read_index": 4,
+            "classification": "mixed",
+            "reason": "The CBS Sports excerpt supports the first-bet-loss offer and includes unrelated text about bet365."
+          },
+          {
+            "read_index": 5,
+            "classification": "mixed",
+            "reason": "Provides Sporting News article context and a Caesars Vermont section heading, but also contains unrelated ESPN Bet material."
+          },
+          {
+            "read_index": 6,
+            "classification": "mixed",
+            "reason": "The structured source read includes the prospective Caesars offer in its surrounding text, along with unrelated surrounding article content."
+          },
+          {
+            "read_index": 7,
+            "classification": "relevant",
+            "reason": "Provides source references for the NBA promotions record, enabling verification."
+          },
+          {
+            "read_index": 8,
+            "classification": "mixed",
+            "reason": "Shows context leading into the Caesars section of the Sporting News NBA article, alongside unrelated material about other sportsbooks."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "raw": {
+        "read_counts": {
+          "mixed": 3
+        },
+        "tokens_by_relevance": {
+          "mixed": 26777
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 26777,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_search": {
+        "read_counts": {
+          "mixed": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 22265
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 22265,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_routes": {
+        "read_counts": {
+          "mixed": 2,
+          "relevant": 1
+        },
+        "tokens_by_relevance": {
+          "mixed": 12471,
+          "relevant": 1096
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 12471,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_sources": {
+        "read_counts": {
+          "mixed": 6,
+          "relevant": 3
+        },
+        "tokens_by_relevance": {
+          "mixed": 16532,
+          "relevant": 2954
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 16532,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    }
+  },
+  {
+    "original_index": 19,
+    "label_status": "supported",
+    "label_reason": "The original Sporting News article says Peacock and NBCSports.com streams require a subscription and that Fubo offers a free trial; it lists DAZN for Canada without stating its access terms. Polygon lists free ad-supported and library-card viewing for some films, alongside other streaming and rental options. The label “no” is supported, with the qualification that Sporting News does not specify DAZN’s terms.",
+    "aliases": {
+      "A": "graph_search",
+      "B": "graph_routes",
+      "C": "graph_sources",
+      "D": "raw"
+    },
+    "variants": {
+      "graph_search": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The answer gives the supported “No,” identifies the subscription requirement for Peacock and NBCSports.com, notes Fubo’s free trial, and accurately describes Polygon’s free ad-supported and library-card options. Its caveat avoids treating every Polygon listing as condition-free.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned useful access details for both articles, along with unrelated football material."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "The search returned relevant access details for both articles, alongside unrelated football and sportsbook results."
+          }
+        ]
+      },
+      "graph_routes": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The main comparison and “No” answer fit the articles, but the answer says Polygon lists other films on subscription services. The article names streaming platforms but does not state subscription requirements for them, and the reads do not establish those terms.",
+        "missing_required_parts": [],
+        "unsupported_claims": [
+          "Polygon lists other films as streaming on subscription services; neither the original article nor the reads state that those services require subscriptions."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned relevant streaming and film availability evidence, as well as unrelated game and sports information."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The query returned no matches; the empty result does not establish access terms."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "The source lookup links evidence objects to their recorded source material, supporting citation verification."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "The excerpt gives Sporting News’ subscription statement, Fubo trial, and DAZN listing."
+          }
+        ]
+      },
+      "graph_sources": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The answer accurately reports the stated terms for Peacock, NBCSports.com, Fubo, and Polygon’s M listings. It explicitly leaves DAZN’s unstated access terms unresolved. Both cited source excerpts support the claims assigned to them.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned useful access evidence for both articles and unrelated football results."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The query returned no access matches; the empty result does not prove absence."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "The source lookup verifies the origins of the cited evidence."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "The excerpt directly supports the Sporting News access claims and DAZN qualification."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "The excerpt directly supports the Polygon claims about M."
+          }
+        ]
+      },
+      "raw": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The main “No” comparison is supported, but the answer characterizes Polygon’s other streaming listings as subscription streaming. The original article lists platforms without stating their subscription terms, so that added claim is not established by the article or the read.",
+        "missing_required_parts": [],
+        "unsupported_claims": [
+          "Polygon lists some films on subscription streaming services; the source and read do not state those services’ subscription terms."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The read returned the full relevant Sporting News and Polygon articles, plus unrelated articles."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "The read returned the full Sporting News article, supporting the access claims."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "graph_search": {
+        "read_counts": {
+          "mixed": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 24899
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 24899,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_routes": {
+        "read_counts": {
+          "mixed": 1,
+          "irrelevant": 1,
+          "relevant": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 7068,
+          "irrelevant": 12845,
+          "relevant": 2620
+        },
+        "irrelevant_tokens_lower_bound": 12845,
+        "irrelevant_tokens_upper_bound": 19913,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_sources": {
+        "read_counts": {
+          "mixed": 1,
+          "irrelevant": 1,
+          "relevant": 3
+        },
+        "tokens_by_relevance": {
+          "mixed": 7241,
+          "irrelevant": 23,
+          "relevant": 4115
+        },
+        "irrelevant_tokens_lower_bound": 23,
+        "irrelevant_tokens_upper_bound": 7264,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "raw": {
+        "read_counts": {
+          "mixed": 1,
+          "relevant": 1
+        },
+        "tokens_by_relevance": {
+          "mixed": 14039,
+          "relevant": 4081
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 14039,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    },
+    "raw_judgment": {
+      "label_status": "supported",
+      "label_reason": "The original Sporting News article says Peacock and NBCSports.com streams require a subscription and that Fubo offers a free trial; it lists DAZN for Canada without stating its access terms. Polygon lists free ad-supported and library-card viewing for some films, alongside other streaming and rental options. The label “no” is supported, with the qualification that Sporting News does not specify DAZN’s terms.",
+      "A": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The answer gives the supported “No,” identifies the subscription requirement for Peacock and NBCSports.com, notes Fubo’s free trial, and accurately describes Polygon’s free ad-supported and library-card options. Its caveat avoids treating every Polygon listing as condition-free.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned useful access details for both articles, along with unrelated football material."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "The search returned relevant access details for both articles, alongside unrelated football and sportsbook results."
+          }
+        ]
+      },
+      "B": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The main comparison and “No” answer fit the articles, but the answer says Polygon lists other films on subscription services. The article names streaming platforms but does not state subscription requirements for them, and the reads do not establish those terms.",
+        "missing_required_parts": [],
+        "unsupported_claims": [
+          "Polygon lists other films as streaming on subscription services; neither the original article nor the reads state that those services require subscriptions."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned relevant streaming and film availability evidence, as well as unrelated game and sports information."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The query returned no matches; the empty result does not establish access terms."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "The source lookup links evidence objects to their recorded source material, supporting citation verification."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "The excerpt gives Sporting News’ subscription statement, Fubo trial, and DAZN listing."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "The excerpt gives Polygon’s availability terms for M, including ad-supported and library-card viewing."
+          }
+        ]
+      },
+      "C": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The answer accurately reports the stated terms for Peacock, NBCSports.com, Fubo, and Polygon’s M listings. It explicitly leaves DAZN’s unstated access terms unresolved. Both cited source excerpts support the claims assigned to them.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned useful access evidence for both articles and unrelated football results."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The query returned no access matches; the empty result does not prove absence."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "The source lookup verifies the origins of the cited evidence."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "The excerpt directly supports the Sporting News access claims and DAZN qualification."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "The excerpt directly supports the Polygon claims about M."
+          }
+        ]
+      },
+      "D": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The main “No” comparison is supported, but the answer characterizes Polygon’s other streaming listings as subscription streaming. The original article lists platforms without stating their subscription terms, so that added claim is not established by the article or the read.",
+        "missing_required_parts": [],
+        "unsupported_claims": [
+          "Polygon lists some films on subscription streaming services; the source and read do not state those services’ subscription terms."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The read returned the full relevant Sporting News and Polygon articles, plus unrelated articles."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "The read returned the full Sporting News article, supporting the access claims."
+          }
+        ]
+      }
+    },
+    "structural_repair": {
+      "source_trace": "tmp/knowledge-graph-routes-v11/route-answer-review/1-attempt-1-invalid-read-coverage/trace.json",
+      "sha256": "cf91b8e4ae9f11fa6891a4f91ef4f8a2345cf5754d3cae6bad8f373623f23e59",
+      "policy": "Keep first attempted judgment, discard ratings only for nonexistent reads; every actual read must retain exactly one original rating. Missing required parts disqualify correctness; unsupported claims disqualify grounding. No semantic ratings invented. Second attempt is retained but not selected.",
+      "warnings": [
+        {
+          "variant": "graph_routes",
+          "kind": "nonexistent_read_ratings_discarded",
+          "ratings": [
+            {
+              "read_index": 4,
+              "classification": "relevant",
+              "reason": "The excerpt gives Polygon’s availability terms for M, including ad-supported and library-card viewing."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "original_index": 25,
+    "label_status": "supported",
+    "label_reason": "The supplied original articles support “no”: the October CBSSports article describes dating rumors and an apparent relationship, while The Independent’s December 6 article reports Swift’s account that they were already a couple by her first Chiefs game. The earlier article does not say they were not a couple or that the game was their first date.",
+    "aliases": {
+      "A": "graph_routes",
+      "B": "graph_sources",
+      "C": "raw",
+      "D": "graph_search"
+    },
+    "variants": {
+      "graph_routes": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "It answers no and accurately distinguishes the earlier rumor framing from Swift’s later account. Its claims about the earlier article, the December article’s date, and the couple’s status and openness are supported by the cited read results.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "relevant",
+            "reason": "Search results include the earlier CBSSports rumor relation and Independent article information."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Returns the December Independent article and the earlier CBSSports article among the search results."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The property lookup returned no properties and supplies no answer evidence."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "Contains the December article’s date and its reported statements about the relationship."
+          },
+          {
+            "read_index": 4,
+            "classification": "administrative",
+            "reason": "The query failed with a contract error and returned no domain evidence."
+          },
+          {
+            "read_index": 5,
+            "classification": "relevant",
+            "reason": "Returns the CBSSports report’s rumor framing and identifies the participants."
+          }
+        ]
+      },
+      "graph_sources": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "It gives the correct conclusion and accurately summarizes the earlier rumor coverage and Swift’s later account that they were already a couple by her first Chiefs game. The cited reads include the full December article, the earlier CBS fragment, and a relevant Independent excerpt.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "relevant",
+            "reason": "Search results include the CBS rumor framing and relationship details from the December Independent article."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The property lookup returned no properties and supplies no answer evidence."
+          },
+          {
+            "read_index": 2,
+            "classification": "administrative",
+            "reason": "The query failed with a contract error and returned no domain evidence."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "Returns the December article’s rumour mention, which helps distinguish that passage from its attributed account."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "Returns the Independent report that they were already a couple by the first Chiefs game."
+          },
+          {
+            "read_index": 5,
+            "classification": "relevant",
+            "reason": "Search results include detailed relationship-origin and earlier rumor information."
+          },
+          {
+            "read_index": 6,
+            "classification": "relevant",
+            "reason": "Provides source references for the relationship excerpts and CBS rumor claim."
+          },
+          {
+            "read_index": 7,
+            "classification": "relevant",
+            "reason": "Contains the December article excerpt on the relationship’s origin and their status by the first game."
+          },
+          {
+            "read_index": 8,
+            "classification": "relevant",
+            "reason": "Contains the full December Independent article, including its date and relationship account."
+          },
+          {
+            "read_index": 9,
+            "classification": "relevant",
+            "reason": "Contains the earlier CBS report’s rumor framing."
+          }
+        ]
+      },
+      "raw": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "It correctly says the reports do not establish a contradiction: the earlier report frames the relationship as rumored and includes an attributed account of them getting to know each other, while the later report says they were already a couple by the first game. The search results displayed both article texts and support these points.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "relevant",
+            "reason": "Search results include the full CBS timeline and December Independent article, with the relationship claims used in the answer."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Search results again include the two articles and their relationship details."
+          }
+        ]
+      },
+      "graph_search": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "It answers no and supports the distinction between rumor coverage and Swift’s later account. Its qualification that an explicit earlier claim that the game was their first date would conflict is hypothetical and consistent with the text; the retrieved earlier coverage does not make that claim.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Search results include relevant relationship and rumor claims alongside other details and unrelated material."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Returns useful Independent and CBS relationship claims together with unrelated relationship-history and other coverage details."
+          },
+          {
+            "read_index": 2,
+            "classification": "mixed",
+            "reason": "Returns the relevant rumor framing and first-date context alongside other timeline events and coverage details."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "graph_routes": {
+        "read_counts": {
+          "relevant": 4,
+          "irrelevant": 1,
+          "administrative": 1
+        },
+        "tokens_by_relevance": {
+          "relevant": 15410,
+          "irrelevant": 78,
+          "administrative": 16
+        },
+        "irrelevant_tokens_lower_bound": 78,
+        "irrelevant_tokens_upper_bound": 78,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_sources": {
+        "read_counts": {
+          "relevant": 8,
+          "irrelevant": 1,
+          "administrative": 1
+        },
+        "tokens_by_relevance": {
+          "relevant": 19186,
+          "irrelevant": 78,
+          "administrative": 16
+        },
+        "irrelevant_tokens_lower_bound": 78,
+        "irrelevant_tokens_upper_bound": 78,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "raw": {
+        "read_counts": {
+          "relevant": 2
+        },
+        "tokens_by_relevance": {
+          "relevant": 13570
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 0,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_search": {
+        "read_counts": {
+          "mixed": 3
+        },
+        "tokens_by_relevance": {
+          "mixed": 22993
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 22993,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    }
+  },
+  {
+    "original_index": 81,
+    "label_status": "supported",
+    "label_reason": "The original articles support “Yes” at the level asked: both report an offer of up to $1,000 in bonus bets for new customers whose first bet loses. Sporting News describes the Vermont offer as an expectation based on offers elsewhere; CBSSports.com reports it in its Kentucky guide. The sources do not establish that all terms or state availability were identical.",
+    "aliases": {
+      "A": "graph_sources",
+      "B": "raw",
+      "C": "graph_search",
+      "D": "graph_routes"
+    },
+    "variants": {
+      "graph_sources": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly compares the amount and first-bet-loss condition, and preserves Sporting News’s prospective framing for Vermont. Reads 6 and 7 show the cited offer details.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Search results include the relevant offer records alongside unrelated sportsbook records."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Search results include relevant offer records and unrelated article or sportsbook records."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "Article metadata helps identify and verify the Sporting News source and its publication date."
+          },
+          {
+            "read_index": 3,
+            "classification": "administrative",
+            "reason": "The query failed with a contract error and provided no domain evidence."
+          },
+          {
+            "read_index": 4,
+            "classification": "irrelevant",
+            "reason": "The empty properties result for the offer adds no evidence or useful navigation."
+          },
+          {
+            "read_index": 5,
+            "classification": "relevant",
+            "reason": "Source references help locate the underlying CBS Sports and Sporting News text."
+          },
+          {
+            "read_index": 6,
+            "classification": "relevant",
+            "reason": "Shows the CBSSports.com offer for new customers."
+          },
+          {
+            "read_index": 7,
+            "classification": "relevant",
+            "reason": "Shows the Sporting News offer and its expected, rather than confirmed, Vermont status."
+          },
+          {
+            "read_index": 8,
+            "classification": "relevant",
+            "reason": "Source references help locate the underlying article text."
+          },
+          {
+            "read_index": 9,
+            "classification": "irrelevant",
+            "reason": "This fragment concerns Kentucky market activity and does not help compare Caesars offers."
+          }
+        ]
+      },
+      "raw": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly identifies the matching amount and first-bet-loss condition, and distinguishes the Vermont and Kentucky contexts. Read 0 contains both original articles and supports the comparison.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The full article results contain the relevant offer details alongside extensive unrelated sportsbook and betting information."
+          }
+        ]
+      },
+      "graph_search": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly compares the amount and loss condition while noting that Sporting News’s Vermont availability was prospective. The search results in reads 0 and 1 show both offer records and that qualification.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Results include both relevant offer records and unrelated promotional and sportsbook material."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Results include both relevant offer records and unrelated sportsbook or app information."
+          }
+        ]
+      },
+      "graph_routes": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly identifies the shared reported amount and loss condition, retains Sporting News’s prospective framing, and appropriately limits the comparison to the terms shown. Reads 0 and 2 support these claims.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Search results contain the relevant offer records as well as unrelated promotional and sportsbook material."
+          },
+          {
+            "read_index": 1,
+            "classification": "administrative",
+            "reason": "The query failed with a contract error and provided no domain evidence."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "The query returns the CBS Sports and Sporting News offer facts and their article identities."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "Article metadata helps verify the Sporting News source identity."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "Article metadata helps verify the CBSSports.com source identity."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "graph_sources": {
+        "read_counts": {
+          "mixed": 2,
+          "relevant": 5,
+          "administrative": 1,
+          "irrelevant": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 13305,
+          "relevant": 4971,
+          "administrative": 14,
+          "irrelevant": 401
+        },
+        "irrelevant_tokens_lower_bound": 401,
+        "irrelevant_tokens_upper_bound": 13706,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "raw": {
+        "read_counts": {
+          "mixed": 1
+        },
+        "tokens_by_relevance": {
+          "mixed": 9848
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 9848,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_search": {
+        "read_counts": {
+          "mixed": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 13054
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 13054,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_routes": {
+        "read_counts": {
+          "mixed": 1,
+          "administrative": 1,
+          "relevant": 3
+        },
+        "tokens_by_relevance": {
+          "mixed": 4592,
+          "administrative": 14,
+          "relevant": 1250
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 4592,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    }
+  },
+  {
+    "original_index": 261,
+    "label_status": "supported",
+    "label_reason": "The supplied articles support “no” with a qualification: The Independent calls Swift and Joe Alwyn a private couple and attributes reluctance to discuss the relationship to Alwyn; it also reports Swift saying she had nothing to hide with Travis Kelce. CBSSports covers the rumored Swift–Kelce romance, including Chiefs-game attendance and Arrowhead Stadium. The articles do not establish that Swift herself was secretive about a relationship.",
+    "aliases": {
+      "A": "raw",
+      "B": "graph_search",
+      "C": "graph_routes",
+      "D": "graph_sources"
+    },
+    "variants": {
+      "raw": {
+        "correct": false,
+        "grounded_in_reads": true,
+        "reason": "The cited read results support the details, but the answer’s opening “Yes” assigns the privacy claim to Swift. It later clarifies that the article describes the couple as private and Alwyn as reluctant to discuss it, which does not support that direct answer.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Returns both target articles with useful article text, plus an unrelated Independent article about Kelce’s tweets."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Returns the target Independent article and useful relationship details, alongside an unrelated article about Kelce’s tweets."
+          }
+        ]
+      },
+      "graph_search": {
+        "correct": false,
+        "grounded_in_reads": true,
+        "reason": "The facts and attribution caveat are supported by the reads, but “Broadly yes” conflicts with the answer’s own clarification that the article describes the couple as private and attributes reluctance to Alwyn, rather than describing Swift alone as secretive.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Includes useful privacy, attribution, rumored-romance, attendance, and venue facts, as well as unrelated or tangential results."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Contains useful article facts about the relationship, game attendance, and venue, alongside unrelated results and a failed query."
+          }
+        ]
+      },
+      "graph_routes": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The qualified “Partly” answer preserves the distinction: The Independent describes Swift and Alwyn as private, attributes reluctance to Alwyn, and contrasts that with Swift’s reported openness about Kelce. It also accurately describes CBSSports’ rumored-romance timeline and Arrowhead material.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Returns useful relationship and Arrowhead facts alongside unrelated or tangential results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Returns the Independent’s relationship and rumor facts that help establish the privacy and attribution distinction."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The empty relationship query result does not establish anything about the article or global absence."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "Confirms the article describes Swift and Alwyn as a private former couple."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "Confirms CBSSports frames the Swift–Kelce relationship as rumored."
+          },
+          {
+            "read_index": 5,
+            "classification": "administrative",
+            "reason": "The query failed because the selected slots were invalid; it provides no domain evidence."
+          },
+          {
+            "read_index": 6,
+            "classification": "relevant",
+            "reason": "Reports advance expectations that Swift would attend a Chiefs–Jets game, useful to the attendance part of the comparison."
+          },
+          {
+            "read_index": 7,
+            "classification": "uncertain",
+            "reason": "Judge omitted this read or supplied conflicting duplicate ratings."
+          }
+        ]
+      },
+      "graph_sources": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The privacy distinction is supported, but the answer says Swift attended Kelce’s concert. The cited CBSSports excerpt says Kelce attended Swift’s concert and did not meet her, reversing who attended whose performance. Its cited read also does not show Swift’s first Chiefs-game attendance. The venue invitation and performance comparison at Arrowhead are supported.",
+        "missing_required_parts": [],
+        "unsupported_claims": [
+          "Swift’s attendance at Kelce’s concert; the read says Kelce attended Swift’s concert.",
+          "The claim that the cited CBSSports excerpt discusses Swift’s first Chiefs-game attendance; the cited excerpt does not establish that detail."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Contains useful relationship and venue facts alongside tangential or unrelated timeline results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Provides source references for useful relationship and venue facts."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "Directly supports the Independent article’s privacy language, Alwyn’s attributed reluctance, and Swift’s statement about Kelce."
+          },
+          {
+            "read_index": 3,
+            "classification": "mixed",
+            "reason": "Supports the high-profile relationship context and Kelce’s attendance at Swift’s concert, but also contains unrelated timeline material."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "The fifth-game attendance heading helps with the article’s attendance coverage, though it gives no venue detail."
+          },
+          {
+            "read_index": 5,
+            "classification": "relevant",
+            "reason": "Returns detailed CBSSports timeline facts, including the rumored relationship and Kelce’s Arrowhead remarks."
+          },
+          {
+            "read_index": 6,
+            "classification": "administrative",
+            "reason": "The source-selection error provides no domain evidence."
+          },
+          {
+            "read_index": 7,
+            "classification": "relevant",
+            "reason": "Locates source excerpts supporting the venue remarks and performance claim."
+          },
+          {
+            "read_index": 8,
+            "classification": "relevant",
+            "reason": "Directly supports Kelce’s invitation and the comparison of their performances at Arrowhead."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "raw": {
+        "read_counts": {
+          "mixed": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 9962
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 9962,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_search": {
+        "read_counts": {
+          "mixed": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 16888
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 16888,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_routes": {
+        "read_counts": {
+          "mixed": 1,
+          "relevant": 4,
+          "irrelevant": 1,
+          "administrative": 1,
+          "uncertain": 1
+        },
+        "tokens_by_relevance": {
+          "mixed": 6683,
+          "relevant": 1435,
+          "irrelevant": 23,
+          "administrative": 14,
+          "uncertain": 495
+        },
+        "irrelevant_tokens_lower_bound": 23,
+        "irrelevant_tokens_upper_bound": 7201,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_sources": {
+        "read_counts": {
+          "mixed": 2,
+          "relevant": 6,
+          "administrative": 1
+        },
+        "tokens_by_relevance": {
+          "mixed": 7005,
+          "relevant": 18092,
+          "administrative": 12
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 7005,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    },
+    "raw_judgment": {
+      "label_status": "supported",
+      "label_reason": "The supplied articles support “no” with a qualification: The Independent calls Swift and Joe Alwyn a private couple and attributes reluctance to discuss the relationship to Alwyn; it also reports Swift saying she had nothing to hide with Travis Kelce. CBSSports covers the rumored Swift–Kelce romance, including Chiefs-game attendance and Arrowhead Stadium. The articles do not establish that Swift herself was secretive about a relationship.",
+      "A": {
+        "correct": false,
+        "grounded_in_reads": true,
+        "reason": "The cited read results support the details, but the answer’s opening “Yes” assigns the privacy claim to Swift. It later clarifies that the article describes the couple as private and Alwyn as reluctant to discuss it, which does not support that direct answer.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Returns both target articles with useful article text, plus an unrelated Independent article about Kelce’s tweets."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Returns the target Independent article and useful relationship details, alongside an unrelated article about Kelce’s tweets."
+          }
+        ]
+      },
+      "B": {
+        "correct": false,
+        "grounded_in_reads": true,
+        "reason": "The facts and attribution caveat are supported by the reads, but “Broadly yes” conflicts with the answer’s own clarification that the article describes the couple as private and attributes reluctance to Alwyn, rather than describing Swift alone as secretive.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Includes useful privacy, attribution, rumored-romance, attendance, and venue facts, as well as unrelated or tangential results."
+          },
+          {
+            "read_index": 1,
+            "classification": "mixed",
+            "reason": "Contains useful article facts about the relationship, game attendance, and venue, alongside unrelated results and a failed query."
+          }
+        ]
+      },
+      "C": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The qualified “Partly” answer preserves the distinction: The Independent describes Swift and Alwyn as private, attributes reluctance to Alwyn, and contrasts that with Swift’s reported openness about Kelce. It also accurately describes CBSSports’ rumored-romance timeline and Arrowhead material.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Returns useful relationship and Arrowhead facts alongside unrelated or tangential results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Returns the Independent’s relationship and rumor facts that help establish the privacy and attribution distinction."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The empty relationship query result does not establish anything about the article or global absence."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "Confirms the article describes Swift and Alwyn as a private former couple."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "Confirms CBSSports frames the Swift–Kelce relationship as rumored."
+          },
+          {
+            "read_index": 5,
+            "classification": "administrative",
+            "reason": "The query failed because the selected slots were invalid; it provides no domain evidence."
+          },
+          {
+            "read_index": 6,
+            "classification": "relevant",
+            "reason": "Reports advance expectations that Swift would attend a Chiefs–Jets game, useful to the attendance part of the comparison."
+          }
+        ]
+      },
+      "D": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The privacy distinction is supported, but the answer says Swift attended Kelce’s concert. The cited CBSSports excerpt says Kelce attended Swift’s concert and did not meet her, reversing who attended whose performance. Its cited read also does not show Swift’s first Chiefs-game attendance. The venue invitation and performance comparison at Arrowhead are supported.",
+        "missing_required_parts": [],
+        "unsupported_claims": [
+          "Swift’s attendance at Kelce’s concert; the read says Kelce attended Swift’s concert.",
+          "The claim that the cited CBSSports excerpt discusses Swift’s first Chiefs-game attendance; the cited excerpt does not establish that detail."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "Contains useful relationship and venue facts alongside tangential or unrelated timeline results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "Provides source references for useful relationship and venue facts."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "Directly supports the Independent article’s privacy language, Alwyn’s attributed reluctance, and Swift’s statement about Kelce."
+          },
+          {
+            "read_index": 3,
+            "classification": "mixed",
+            "reason": "Supports the high-profile relationship context and Kelce’s attendance at Swift’s concert, but also contains unrelated timeline material."
+          },
+          {
+            "read_index": 4,
+            "classification": "relevant",
+            "reason": "The fifth-game attendance heading helps with the article’s attendance coverage, though it gives no venue detail."
+          },
+          {
+            "read_index": 5,
+            "classification": "relevant",
+            "reason": "Returns detailed CBSSports timeline facts, including the rumored relationship and Kelce’s Arrowhead remarks."
+          },
+          {
+            "read_index": 6,
+            "classification": "administrative",
+            "reason": "The source-selection error provides no domain evidence."
+          },
+          {
+            "read_index": 7,
+            "classification": "relevant",
+            "reason": "Locates source excerpts supporting the venue remarks and performance claim."
+          },
+          {
+            "read_index": 8,
+            "classification": "relevant",
+            "reason": "Directly supports Kelce’s invitation and the comparison of their performances at Arrowhead."
+          }
+        ]
+      }
+    },
+    "structural_repair": {
+      "source_trace": "tmp/knowledge-graph-routes-v11/route-answer-review/4/first-attempt.json",
+      "sha256": "a80830181caa87dceb4cd616e89ae4fbad4bef8e7f418e94605c2c3901a2f9a7",
+      "repair_code_sha256": "6ab32398c3e4342c3aaeb5ff7579494be47f8a581002a57650114c28a935cfd0",
+      "policy": "Retain first attempt; unknown/duplicate read ratings become uncertain; nonexistent reads are discarded; contradictory positive verdicts are downgraded. No semantic rating invented and no favorable retry selected.",
+      "warnings": [
+        {
+          "variant": "graph_routes",
+          "read_index": 7,
+          "kind": "uncertain_read",
+          "raw": []
+        }
+      ]
+    }
+  },
+  {
+    "original_index": 2205,
+    "label_status": "contradicted",
+    "label_reason": "The articles identify Travis Kelce as the person Swift says she is open about her relationship with, and Taylor Swift as the person Kelce invited. Those are different participants, so the dataset label “Yes” is contradicted.",
+    "aliases": {
+      "A": "graph_search",
+      "B": "graph_routes",
+      "C": "graph_sources",
+      "D": "raw"
+    },
+    "variants": {
+      "graph_search": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "Correctly distinguishes Kelce, Swift’s relationship partner, from Swift, the person Kelce invited. The search results show both participant roles.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned useful relationship and invitation facts alongside unrelated results."
+          }
+        ]
+      },
+      "graph_routes": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The cited facts identify Kelce as Swift’s relationship partner and Swift as the invitee, which contradicts the answer’s “Yes.” The conclusion conflates the two participants.",
+        "missing_required_parts": [
+          "Distinguish the relationship partner from the person Kelce invited."
+        ],
+        "unsupported_claims": [
+          "The claim that the same individual is both Swift’s relationship partner and Kelce’s invitee."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned useful relationship and invitation facts alongside unrelated results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "The query returned Swift’s statement about her relationship, plus other relationship-account results."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "The query returned the invitation with inviter, invitee, and venue identified."
+          }
+        ]
+      },
+      "graph_sources": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The read results show Swift’s relationship is with Kelce and that Kelce invited Swift. The answer incorrectly calls Kelce the same person as the invitee.",
+        "missing_required_parts": [
+          "Distinguish Kelce, the relationship partner, from Swift, the invitee."
+        ],
+        "unsupported_claims": [
+          "The claim that the articles identify the same person as Travis Kelce in both roles."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "mixed",
+            "reason": "The search returned useful relationship and invitation facts alongside unrelated results."
+          },
+          {
+            "read_index": 1,
+            "classification": "relevant",
+            "reason": "The source lookup returned references for the relationship remark and invitation claim."
+          },
+          {
+            "read_index": 2,
+            "classification": "relevant",
+            "reason": "The excerpt provides Swift’s remarks about a public relationship."
+          },
+          {
+            "read_index": 3,
+            "classification": "relevant",
+            "reason": "The excerpt states Kelce invited Swift and names Arrowhead Stadium."
+          }
+        ]
+      },
+      "raw": {
+        "correct": false,
+        "grounded_in_reads": false,
+        "reason": "The article text identifies Kelce as Swift’s partner and Swift as the person he invited. Saying both refer to Swift misses the relationship participant and leads to the wrong Yes answer.",
+        "missing_required_parts": [
+          "Distinguish the person Swift is in a relationship with from the person Kelce invited."
+        ],
+        "unsupported_claims": [
+          "The claim that both articles refer to Taylor Swift as the relevant individual in the comparison."
+        ],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "relevant",
+            "reason": "The search returned the full text of both Independent articles, including the relationship and invitation details."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "graph_search": {
+        "read_counts": {
+          "mixed": 1
+        },
+        "tokens_by_relevance": {
+          "mixed": 6383
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 6383,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_routes": {
+        "read_counts": {
+          "mixed": 1,
+          "relevant": 2
+        },
+        "tokens_by_relevance": {
+          "mixed": 6127,
+          "relevant": 1682
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 6127,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_sources": {
+        "read_counts": {
+          "mixed": 1,
+          "relevant": 3
+        },
+        "tokens_by_relevance": {
+          "mixed": 6317,
+          "relevant": 1663
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 6317,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "raw": {
+        "read_counts": {
+          "relevant": 1
+        },
+        "tokens_by_relevance": {
+          "relevant": 6779
+        },
+        "irrelevant_tokens_lower_bound": 0,
+        "irrelevant_tokens_upper_bound": 0,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    }
+  },
+  {
+    "original_index": 10,
+    "label_status": "unassessed",
+    "label_reason": "The supplied original articles contain no Sridevi, BBC, or Times of India material relevant to the query. Because this is only a subset of the corpus, that gap cannot establish whether the dataset label is supported or contradicted across the full corpus.",
+    "aliases": {
+      "A": "graph_routes",
+      "B": "graph_sources",
+      "C": "raw",
+      "D": "graph_search"
+    },
+    "variants": {
+      "graph_routes": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The response honestly abstains. Its reads do not establish a Sridevi character linked to both requested recognitions, and it makes no unsupported character identification.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "The returned film character and award results concern unrelated Polygon and Taylor Swift material; they do not help identify the Sridevi character."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The results are unrelated film and award material, with no evidence about Sridevi or the requested recognitions."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The returned records concern unrelated films, performers, and awards; none addresses the question."
+          },
+          {
+            "read_index": 3,
+            "classification": "administrative",
+            "reason": "The result is a reading allowance error and contains no domain evidence."
+          },
+          {
+            "read_index": 4,
+            "classification": "irrelevant",
+            "reason": "The returned instances concern unrelated performers and Time magazine, not Sridevi or the requested awards."
+          },
+          {
+            "read_index": 5,
+            "classification": "irrelevant",
+            "reason": "The results are unrelated performers and film characters; they do not establish either requested recognition."
+          }
+        ]
+      },
+      "graph_sources": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The response abstains and accurately describes what its retrieved results did not establish. It does not infer an answer from unrelated records.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "The results contain unrelated Polygon character entries and Taylor Swift award records, not evidence about Sridevi."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The returned film entries and award records do not address Sridevi or connect a character to the stated honors."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The returned material is an unrelated Polygon film article and unrelated award records; it offers no useful evidence for this query."
+          },
+          {
+            "read_index": 3,
+            "classification": "administrative",
+            "reason": "The result is a reading allowance error with no domain evidence."
+          },
+          {
+            "read_index": 4,
+            "classification": "irrelevant",
+            "reason": "The returned instances are unrelated performers and do not answer or help verify the Sridevi question."
+          }
+        ]
+      },
+      "raw": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The response honestly abstains. Its reads include a full unrelated Polygon noir article and unrelated Taylor Swift and sports articles; none establishes the requested Sridevi character or honors.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "The rich results are unrelated Polygon and Taylor Swift/Yardbarker articles. Their contents do not address the requested Sridevi recognitions."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The returned prototype articles are unrelated film, relationship, and sports material, with no relevant Sridevi evidence."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The full Polygon article and Taylor Swift timeline are unrelated to the Sridevi character and posthumous honor."
+          }
+        ]
+      },
+      "graph_search": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "The response appropriately abstains. Its reads do not establish either recognition or a link to a character Sridevi portrayed.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "The returned film character entries and Taylor Swift award results are unrelated to Sridevi and the requested honors."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The results concern unrelated film characters and awards; they do not help identify the requested character."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The results remain unrelated Polygon film entries and Taylor Swift award material, with no evidence about Sridevi."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "graph_routes": {
+        "read_counts": {
+          "irrelevant": 5,
+          "administrative": 1
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 27696,
+          "administrative": 23
+        },
+        "irrelevant_tokens_lower_bound": 27696,
+        "irrelevant_tokens_upper_bound": 27696,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_sources": {
+        "read_counts": {
+          "irrelevant": 4,
+          "administrative": 1
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 31805,
+          "administrative": 22
+        },
+        "irrelevant_tokens_lower_bound": 31805,
+        "irrelevant_tokens_upper_bound": 31805,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "raw": {
+        "read_counts": {
+          "irrelevant": 3
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 28133
+        },
+        "irrelevant_tokens_lower_bound": 28133,
+        "irrelevant_tokens_upper_bound": 28133,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_search": {
+        "read_counts": {
+          "irrelevant": 3
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 28145
+        },
+        "irrelevant_tokens_lower_bound": 28145,
+        "irrelevant_tokens_upper_bound": 28145,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    }
+  },
+  {
+    "original_index": 13,
+    "label_status": "unassessed",
+    "label_reason": "The supplied original articles do not establish either the Financial Times patent ranking or the Bloomberg EPO challenge. Because this is only a subset of the corpus, that absence cannot establish that the answer is unsupported throughout the original corpus.",
+    "aliases": {
+      "A": "graph_sources",
+      "B": "raw",
+      "C": "graph_search",
+      "D": "graph_routes"
+    },
+    "variants": {
+      "graph_sources": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "This is an honest abstention for a null_query. The reads did not establish the patent ranking, the EPO challenge, or a company shared by both.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "Search results concern unrelated articles and companies; they do not help answer the patent question."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "Search results concern unrelated market, antitrust, and entertainment material."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The returned relation types concern unrelated antitrust and market topics."
+          },
+          {
+            "read_index": 3,
+            "classification": "irrelevant",
+            "reason": "The returned company references are unrelated to the requested patent ranking or EPO challenge."
+          },
+          {
+            "read_index": 4,
+            "classification": "irrelevant",
+            "reason": "The returned items concern unrelated articles and do not establish a patent-related company."
+          },
+          {
+            "read_index": 5,
+            "classification": "administrative",
+            "reason": "The search returned a query-budget error and no domain evidence."
+          },
+          {
+            "read_index": 6,
+            "classification": "irrelevant",
+            "reason": "The returned company references do not provide evidence about the FT ranking or Bloomberg challenge."
+          }
+        ]
+      },
+      "raw": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "This is an honest abstention for a null_query. The reads did not establish the FT ranking, the Bloomberg EPO challenge, or the identity linking them.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "The rich result is an unrelated CNBC article about Amazon and an FTC antitrust case."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The returned articles concern unrelated topics and provide no patent evidence."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The returned article references do not establish either requested patent claim."
+          },
+          {
+            "read_index": 3,
+            "classification": "administrative",
+            "reason": "The search returned a reading-allowance error and no domain evidence."
+          },
+          {
+            "read_index": 4,
+            "classification": "administrative",
+            "reason": "The search returned a reading-allowance error and no domain evidence."
+          }
+        ]
+      },
+      "graph_search": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "This is an honest abstention for a null_query. None of the reads establishes the FT patent ranking or a Bloomberg EPO challenge involving the same company.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "The returned relations concern unrelated FTC antitrust claims and other topics."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The returned companies and relations do not establish the requested patent facts."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "The returned items are unrelated to the FT ranking or Bloomberg EPO challenge."
+          },
+          {
+            "read_index": 3,
+            "classification": "irrelevant",
+            "reason": "The results concern unrelated antitrust, market, and other material."
+          },
+          {
+            "read_index": 4,
+            "classification": "irrelevant",
+            "reason": "The returned legal and company references do not provide useful evidence or a useful next step for the patent question."
+          }
+        ]
+      },
+      "graph_routes": {
+        "correct": true,
+        "grounded_in_reads": true,
+        "reason": "This is an honest abstention for a null_query. The reads do not identify the FT ranking company or connect it to a Bloomberg EPO challenge.",
+        "missing_required_parts": [],
+        "unsupported_claims": [],
+        "read_relevance": [
+          {
+            "read_index": 0,
+            "classification": "irrelevant",
+            "reason": "The results concern unrelated antitrust and market information."
+          },
+          {
+            "read_index": 1,
+            "classification": "irrelevant",
+            "reason": "The returned relations and entities do not establish either requested patent fact."
+          },
+          {
+            "read_index": 2,
+            "classification": "irrelevant",
+            "reason": "Despite patent-focused queries, the returned items are unrelated and give no useful patent evidence."
+          },
+          {
+            "read_index": 3,
+            "classification": "irrelevant",
+            "reason": "The returned companies and relations do not help verify the FT ranking or Bloomberg EPO challenge."
+          }
+        ]
+      }
+    },
+    "reading_statistics": {
+      "graph_sources": {
+        "read_counts": {
+          "irrelevant": 6,
+          "administrative": 1
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 24805,
+          "administrative": 17
+        },
+        "irrelevant_tokens_lower_bound": 24805,
+        "irrelevant_tokens_upper_bound": 24805,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "raw": {
+        "read_counts": {
+          "irrelevant": 3,
+          "administrative": 2
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 31358,
+          "administrative": 44
+        },
+        "irrelevant_tokens_lower_bound": 31358,
+        "irrelevant_tokens_upper_bound": 31358,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_search": {
+        "read_counts": {
+          "irrelevant": 5
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 27223
+        },
+        "irrelevant_tokens_lower_bound": 27223,
+        "irrelevant_tokens_upper_bound": 27223,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      },
+      "graph_routes": {
+        "read_counts": {
+          "irrelevant": 4
+        },
+        "tokens_by_relevance": {
+          "irrelevant": 25146
+        },
+        "irrelevant_tokens_lower_bound": 25146,
+        "irrelevant_tokens_upper_bound": 25146,
+        "caveat": "Bounds depend on model review of whole tool results; mixed results are not annotated at span level."
+      }
+    },
+    "reader_errors": {
+      "raw": [],
+      "graph_search": [],
+      "graph_routes": [],
+      "graph_sources": []
+    }
+  }
+]

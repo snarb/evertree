@@ -1,0 +1,71 @@
+[
+  {
+    "original_index": 4,
+    "answer": "Caesars Sportsbook.",
+    "ambiguous": false,
+    "role_bindings": [
+      "Caesars Sportsbook = platform offering up to $1,000 in bonus bets if a new customer’s first bet loses (CBSSports.com).",
+      "Caesars Sportsbook = platform running NBA betting promotions for existing players (Sporting News).",
+      "Caesars Sportsbook = platform anticipated to offer Vermont users the same first-bet-loss sign-up offer, up to $1,000 in bonus bets (Sporting News)."
+    ],
+    "reason": "All three clues identify Caesars Sportsbook. The sources do not give conflicting readings or leave the platform unnamed."
+  },
+  {
+    "original_index": 19,
+    "answer": "The Sporting News article does not establish that the game is generally viewable without a subscription. It says Peacock and NBCSports.com require a subscription, notes that Fubo offers a free trial, and gives no subscription details for DAZN in Canada. So it suggests a possible temporary free-trial route, while leaving DAZN’s requirements unspecified. Polygon explicitly lists several films as free to stream with ads or a library card.",
+    "ambiguous": true,
+    "role_bindings": [
+      "Subject: Sporting News article. Predicate: suggests. Object: streaming services do not require a subscription to view the Cowboys–49ers game.",
+      "Peacock and NBCSports.com: streaming options that the article says require a subscription.",
+      "Fubo: streaming option that the article says offers a free trial; whether that means viewing without a subscription is not stated.",
+      "DAZN: Canadian streaming option; subscription requirements are not stated.",
+      "Polygon article: identifies some films as free to stream with ads or a library card."
+    ],
+    "reason": "The wording supports different readings: Fubo’s free trial may allow temporary viewing without a paid subscription, but the article does not say that no subscription is required for the game overall. It explicitly requires a subscription for Peacock and NBCSports.com, and does not specify DAZN’s requirements."
+  },
+  {
+    "original_index": 25,
+    "answer": "The records do not establish a clear factual contradiction. The October 12 article describes Taylor Swift and Travis Kelce’s relationship as rumored or apparent, while also calling them a couple and quoting an unnamed source saying they were getting to know each other. The December 6 report says Swift recalled that they were already a couple by her first Chiefs game. Those accounts can fit together: the earlier article was less certain, and getting to know each other does not rule out being a couple. If “inconsistent” means only that the reports use different levels of certainty, then their framing differs.",
+    "ambiguous": true,
+    "role_bindings": [
+      "Taylor Swift is one partner in the reported relationship; Travis Kelce is the other. The relationship is reciprocal, so neither person is the other person.",
+      "In the September 21 invitation described by the October article, Travis Kelce is the inviter and Taylor Swift is the invitee.",
+      "The person quoted by Entertainment Tonight as a source in the October article is unnamed and cannot be identified from these records."
+    ],
+    "reason": "The October article does not say Swift and Kelce were not a couple; it presents the relationship as rumored or apparent and includes both a couple characterization and an unnamed source’s comment. The December article retrospectively reports Swift’s account that they were already a couple at the first game. The records therefore support differing certainty or framing, but not a definite contradiction."
+  },
+  {
+    "original_index": 81,
+    "answer": "Yes. Both reports describe a Caesars offer for new customers: if the customer’s first bet loses, Caesars provides bonus bets worth up to $1,000. The reports are consistent on the offer’s amount and condition.",
+    "ambiguous": false,
+    "role_bindings": [
+      "Caesars Sportsbook: offer provider.",
+      "Unnamed new customer: eligible recipient who places the first bet and loses it.",
+      "Bonus bet(s) up to $1,000: reward Caesars provides to that customer."
+    ],
+    "reason": "Sporting News says new sign-ups can receive up to a $1,000 Bonus Bet if their first bet loses. CBSSports.com says new customers can get up to $1,000 in bonus bets if they lose their first bet. The unnamed customer is the recipient and bettor in both reports; Caesars is the provider."
+  },
+  {
+    "original_index": 261,
+    "answer": "The Independent does not say Taylor Swift is secretive about a relationship. It says her former relationship with Joe Alwyn was “notoriously private,” and reports that Alwyn did not want to discuss it. Swift says she has “nothing to hide” in her relationship with Travis Kelce. The CBSSports.com article covers the rumored Swift–Kelce romance, including Swift attending Chiefs games and Kelce inviting her to see him play at Arrowhead Stadium, where she had performed.",
+    "ambiguous": true,
+    "role_bindings": [
+      "Taylor Swift: partner in the former relationship with Joe Alwyn; partner in the relationship with Travis Kelce.",
+      "Joe Alwyn: Swift’s former partner; the article says he did not want to discuss their relationship.",
+      "Travis Kelce: Swift’s partner; inviter to a Chiefs game.",
+      "Taylor Swift: invitee to Kelce’s game invitation.",
+      "Arrowhead Stadium: venue where Swift had performed and attended Chiefs games."
+    ],
+    "reason": "The question does not identify which individual it means. If it means Joe Alwyn, the article describes the former couple as private but specifically attributes reluctance to discuss the relationship to Alwyn. If it means Travis Kelce, the article says Swift has nothing to hide about that relationship. In neither reading does it claim Swift is secretive about the relationship."
+  },
+  {
+    "original_index": 2205,
+    "answer": "Yes. The first article says Taylor Swift is open about her relationship with Travis Kelce, and the second says Kelce invited Taylor Swift to a game at Arrowhead Stadium.",
+    "ambiguous": false,
+    "role_bindings": [
+      "Relationship: Taylor Swift is in a relationship with Travis Kelce; Swift is the person described as open about it.",
+      "Invitation: Travis Kelce is the inviter; Taylor Swift is the invitee."
+    ],
+    "reason": "Both articles identify Taylor Swift as the individual in question. The relationship partner is Travis Kelce, while the invited person is Taylor Swift."
+  }
+]

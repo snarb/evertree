@@ -1,0 +1,593 @@
+{
+  "purpose": "Manual source-only checklist audit of third article under unchanged production instructions; diagnostic transfer check, not independent benchmark.",
+  "snapshot": "tmp/knowledge-graph-routes-v7/acquisition/2-e9e83d5f/snapshot.json",
+  "snapshot_sha256": "2976e1c38ddc30a3b15cb31f18ca17e9260fbd07af9a1cd4ba3c3b8e629cc1ad",
+  "checklist_sha256": "5935c370822dca0528caef44792fc9fefa65b023de5b648237cbc494a966011b",
+  "seconds": 805.0903969589854,
+  "counts": {
+    "assertions": 64,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 62,
+      "partial_with_wrong_attribution": 1,
+      "preserved_with_contamination": 1
+    },
+    "with_representation_gaps": 16,
+    "model_invocations": 14
+  },
+  "verdict": "Most checklist meaning is present, but an adjacent quotation is attached to the wrong speaker. Additional role/value representations remain prose and one cost comparison is duplicated. Record these failures without injecting named corrections into the production prompt.",
+  "cross_article_identity_reuse": {
+    "Amazon": 12,
+    "FTC": 312,
+    "antitrust_case": 316
+  },
+  "mechanical_sources": {
+    "all_nonstructural_relations_in_three_article_graph": 214,
+    "without_available_source": 0,
+    "qualification": "Availability does not establish semantic support."
+  },
+  "assertions": [
+    {
+      "assertion_id": "ruckel-01",
+      "supporting_object_ids": [
+        415
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ruckel-02",
+      "supporting_object_ids": [
+        406,
+        407
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ruckel-03",
+      "supporting_object_ids": [
+        396
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ruckel-04",
+      "supporting_object_ids": [
+        394
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ruckel-05",
+      "supporting_object_ids": [
+        413
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ruckel-06",
+      "supporting_object_ids": [
+        395,
+        412
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ruckel-07",
+      "supporting_object_ids": [
+        400
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ruckel-08",
+      "supporting_object_ids": [
+        408
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "USD is inferred from dollar notation; source only supplies $."
+      ]
+    },
+    {
+      "assertion_id": "ruckel-09",
+      "supporting_object_ids": [
+        409
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "USD is inferred from dollar notation; source only supplies $."
+      ]
+    },
+    {
+      "assertion_id": "ruckel-10",
+      "supporting_object_ids": [
+        410
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "USD is inferred from dollar notation; source only supplies $."
+      ]
+    },
+    {
+      "assertion_id": "ruckel-11",
+      "supporting_object_ids": [
+        411
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-01",
+      "supporting_object_ids": [
+        424,
+        318
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-02",
+      "supporting_object_ids": [
+        424
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-03",
+      "supporting_object_ids": [
+        427
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-04",
+      "supporting_object_ids": [
+        426
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-05",
+      "supporting_object_ids": [
+        428
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-06",
+      "supporting_object_ids": [
+        428
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-07",
+      "supporting_object_ids": [
+        432
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-08",
+      "supporting_object_ids": [
+        432,
+        433
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ftc-09",
+      "supporting_object_ids": [
+        437,
+        439
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "amazon-01",
+      "supporting_object_ids": [
+        429,
+        434
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "General-counsel role survives in card/context, not a dedicated role relation."
+      ]
+    },
+    {
+      "assertion_id": "amazon-02",
+      "supporting_object_ids": [
+        434
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "amazon-03",
+      "supporting_object_ids": [
+        435
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "amazon-04",
+      "supporting_object_ids": [
+        442
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "amazon-05",
+      "supporting_object_ids": [
+        443
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "forum-01",
+      "supporting_object_ids": [
+        441,
+        448
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "forum-02",
+      "supporting_object_ids": [
+        448
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "forum-03",
+      "supporting_object_ids": [
+        444,
+        451
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "forum-04",
+      "supporting_object_ids": [
+        449
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "forum-05",
+      "supporting_object_ids": [
+        450,
+        452
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "forum-06",
+      "supporting_object_ids": [
+        453
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Anonymous individual shares a broad merchant concept as speaker; scope remains in prose."
+      ]
+    },
+    {
+      "assertion_id": "forum-07",
+      "supporting_object_ids": [
+        454
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Anonymous individual shares a broad merchant concept as speaker; scope remains in prose."
+      ]
+    },
+    {
+      "assertion_id": "forum-08",
+      "supporting_object_ids": [
+        455
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Anonymous individual shares a broad merchant concept as speaker; scope remains in prose."
+      ]
+    },
+    {
+      "assertion_id": "forum-09",
+      "supporting_object_ids": [
+        456,
+        462
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Distinct dissenting comments preserved but bound to broad merchant concept instead of individual anonymous participants."
+      ]
+    },
+    {
+      "assertion_id": "needham-01",
+      "supporting_object_ids": [
+        465
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-02",
+      "supporting_object_ids": [
+        461
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-03",
+      "supporting_object_ids": [
+        463,
+        466
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "fba-01",
+      "supporting_object_ids": [
+        460,
+        475
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-04",
+      "supporting_object_ids": [
+        466
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-05",
+      "supporting_object_ids": [
+        466
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-06",
+      "supporting_object_ids": [
+        471
+      ],
+      "meaning_status": "partial_with_wrong_attribution",
+      "representation_gaps": [
+        "His uncertainty that the lawsuit would change Amazon seller power is absent from his fact471 and incorrectly attributed to Moller in480."
+      ]
+    },
+    {
+      "assertion_id": "moller-01",
+      "supporting_object_ids": [
+        467,
+        476
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Unnamed agency/co-founder relation only in description; no addressable agency."
+      ]
+    },
+    {
+      "assertion_id": "moller-02",
+      "supporting_object_ids": [
+        478
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "moller-03",
+      "supporting_object_ids": [
+        470,
+        474
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "USD inferred; numeric comparison duplicated in470 and474."
+      ]
+    },
+    {
+      "assertion_id": "moller-04",
+      "supporting_object_ids": [
+        470,
+        474
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "USD inferred; approximation remains in description, comparison duplicated in470 and474."
+      ]
+    },
+    {
+      "assertion_id": "moller-05",
+      "supporting_object_ids": [
+        475
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "moller-06",
+      "supporting_object_ids": [
+        475
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "moller-07",
+      "supporting_object_ids": [
+        479
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "moller-08",
+      "supporting_object_ids": [
+        480,
+        487
+      ],
+      "meaning_status": "preserved_with_contamination",
+      "representation_gaps": [
+        "The advertising disagreement is preserved, but480 additionally misattributes Needham’s adjacent uncertainty quote to Moller."
+      ]
+    },
+    {
+      "assertion_id": "needham-07",
+      "supporting_object_ids": [
+        488
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-08",
+      "supporting_object_ids": [
+        489,
+        490
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-09",
+      "supporting_object_ids": [
+        491
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-10",
+      "supporting_object_ids": [
+        492
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "needham-11",
+      "supporting_object_ids": [
+        493
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Amazon comparison counterpart remains prose in493."
+      ]
+    },
+    {
+      "assertion_id": "needham-12",
+      "supporting_object_ids": [
+        512
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "pricing-01",
+      "supporting_object_ids": [
+        508
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "hart-01",
+      "supporting_object_ids": [
+        506,
+        507
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "hart-02",
+      "supporting_object_ids": [
+        510
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "hart-03",
+      "supporting_object_ids": [
+        511
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "hart-04",
+      "supporting_object_ids": [
+        519
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "hart-05",
+      "supporting_object_ids": [
+        519
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "hart-06",
+      "supporting_object_ids": [
+        515,
+        521
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Toy/company association remains in descriptions and goods string; Brain Flakes ID is absent from business-activity fact521."
+      ]
+    },
+    {
+      "assertion_id": "hart-07",
+      "supporting_object_ids": [
+        520
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "hart-08",
+      "supporting_object_ids": [
+        520
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "24-hour duration remains prose; reaction fact520 lacks Hart participant ID."
+      ]
+    }
+  ]
+}

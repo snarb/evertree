@@ -1,0 +1,290 @@
+{
+  "structure": {
+    "node_kinds": {
+      "prototype": 4,
+      "instance": 10,
+      "relation_instance": 26,
+      "relation_type": 4
+    },
+    "domain_assertions": [
+      {
+        "id": 38,
+        "predicate": "ARTICLE_REPORTS_OFFER",
+        "args": {
+          "article": 14,
+          "offer": 30
+        },
+        "participants": [
+          14,
+          30
+        ]
+      },
+      {
+        "id": 39,
+        "predicate": "OFFER_FOR_PRODUCT",
+        "args": {
+          "offer": 30,
+          "product": 18
+        },
+        "participants": [
+          18,
+          30
+        ]
+      },
+      {
+        "id": 40,
+        "predicate": "OFFERED_BY_RETAILER",
+        "args": {
+          "offer": 30,
+          "retailer": 16
+        },
+        "participants": [
+          16,
+          30
+        ]
+      },
+      {
+        "id": 41,
+        "predicate": "OFFER_PRICE_TERMS",
+        "args": {
+          "offer": 30,
+          "sale_price": "$349",
+          "reference_price": null,
+          "savings": null,
+          "eligibility": null,
+          "extras": "The article names it as its new favorite iPad deal; the 64GB 9th-generation model may be found on sale for $229.99, which is a different model."
+        },
+        "participants": [
+          30
+        ]
+      },
+      {
+        "id": 42,
+        "predicate": "ARTICLE_REPORTS_OFFER",
+        "args": {
+          "article": 14,
+          "offer": 32
+        },
+        "participants": [
+          14,
+          32
+        ]
+      },
+      {
+        "id": 43,
+        "predicate": "OFFER_FOR_PRODUCT",
+        "args": {
+          "offer": 32,
+          "product": 20
+        },
+        "participants": [
+          20,
+          32
+        ]
+      },
+      {
+        "id": 44,
+        "predicate": "OFFERED_BY_RETAILER",
+        "args": {
+          "offer": 32,
+          "retailer": 16
+        },
+        "participants": [
+          16,
+          32
+        ]
+      },
+      {
+        "id": 45,
+        "predicate": "OFFER_PRICE_TERMS",
+        "args": {
+          "offer": 32,
+          "sale_price": "$599.99",
+          "reference_price": null,
+          "savings": "25% discount",
+          "eligibility": null,
+          "extras": "The article says the discount brings the 2023 version to the regular asking price of its favorite budget laptop, the older Surface Go 2."
+        },
+        "participants": [
+          32
+        ]
+      },
+      {
+        "id": 46,
+        "predicate": "ARTICLE_REPORTS_OFFER",
+        "args": {
+          "article": 14,
+          "offer": 34
+        },
+        "participants": [
+          14,
+          34
+        ]
+      },
+      {
+        "id": 47,
+        "predicate": "OFFER_FOR_PRODUCT",
+        "args": {
+          "offer": 34,
+          "product": 22
+        },
+        "participants": [
+          22,
+          34
+        ]
+      },
+      {
+        "id": 48,
+        "predicate": "OFFERED_BY_RETAILER",
+        "args": {
+          "offer": 34,
+          "retailer": 16
+        },
+        "participants": [
+          16,
+          34
+        ]
+      },
+      {
+        "id": 49,
+        "predicate": "OFFER_PRICE_TERMS",
+        "args": {
+          "offer": 34,
+          "sale_price": "$199",
+          "reference_price": null,
+          "savings": null,
+          "eligibility": null,
+          "extras": "Described as a record-low price; the article says this is less than half the sale price of AirPods Max."
+        },
+        "participants": [
+          34
+        ]
+      },
+      {
+        "id": 50,
+        "predicate": "ARTICLE_REPORTS_OFFER",
+        "args": {
+          "article": 14,
+          "offer": 36
+        },
+        "participants": [
+          14,
+          36
+        ]
+      },
+      {
+        "id": 51,
+        "predicate": "OFFER_FOR_PRODUCT",
+        "args": {
+          "offer": 36,
+          "product": 24
+        },
+        "participants": [
+          24,
+          36
+        ]
+      },
+      {
+        "id": 52,
+        "predicate": "OFFERED_BY_RETAILER",
+        "args": {
+          "offer": 36,
+          "retailer": 16
+        },
+        "participants": [
+          16,
+          36
+        ]
+      },
+      {
+        "id": 53,
+        "predicate": "OFFER_PRICE_TERMS",
+        "args": {
+          "offer": 36,
+          "sale_price": "$249",
+          "reference_price": "$299.99",
+          "savings": "$50.99",
+          "eligibility": null,
+          "extras": "Free $50 Amazon credit with code META50; marked as an all-time-low price."
+        },
+        "participants": [
+          36
+        ]
+      }
+    ],
+    "structural_fact_ids": [
+      15,
+      17,
+      19,
+      21,
+      23,
+      25,
+      31,
+      33,
+      35,
+      37
+    ],
+    "domain_components": [
+      [
+        14,
+        16,
+        18,
+        20,
+        22,
+        24,
+        30,
+        32,
+        34,
+        36,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53
+      ]
+    ],
+    "unlinked_claims_or_notes": []
+  },
+  "review": {
+    "supported_domain_assertions": [
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+    ],
+    "errors": [
+      {
+        "object_id": 53,
+        "reason": "The source requires code META50 for the free $50 Amazon credit. The code is preserved in the assertion description and extras, but the structured eligibility argument is null, so the promotional condition is not represented in the eligibility field."
+      }
+    ],
+    "important_unrepresented_facts": [
+      "The article reports additional offers and conditions absent from the graph, including Audible Premium Plus at $5.95/month for four months for new customers, with an additional $20 Audible credit, and a free six-month MGM+ subscription with Fire TVs.",
+      "The article dates its update to Nov. 27, 2023, and says Cyber Monday mode runs through Nov. 27. The offer instances mostly identify Cyber Monday, but the price assertions have no structured temporal scope; the Quest 2 offer name also omits the year. Their links to specific reported offers and the dated article provide context, but do not encode validity dates directly."
+    ],
+    "quality_notes": "All listed non-scaffolding relation instances match the supplied report: the article-to-offer links, offer-to-product links, retailer links, and stated price terms preserve the reported participants and values. The prices are attached to specific offers rather than asserted as timeless product prices. Source-reported claims are assessed as faithful representations of the article, not independently verified facts. Class definitions and identity links were excluded."
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "purpose": "Source-only grouped diagnostic checklist before acquisition; source claims are not independently verified, no answer labels consulted.",
+  "source": {
+    "title": "2023 Kentucky online sports betting sites: Best legal sportsbooks, promos, bonuses, mobile apps, how to bet",
+    "author": "CBS Sports Staff",
+    "source": "CBSSports.com",
+    "published_at": "2023-10-13T21:17:17+00:00",
+    "category": "sports",
+    "url": "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/"
+  },
+  "source_record_sha256": "f34da993ce25eaeae31a4f9e5faf8204e86965eb79fba4eff2c15a909488d4bb",
+  "assertions": [
+    {
+      "id": "kentucky-01",
+      "subject": "Kentucky launch",
+      "assertion": "Retail and online launched September 2023; governor reported over $250 million wagered and roughly 500,000 mobile accounts about one month after launch."
+    },
+    {
+      "id": "kentucky-02",
+      "subject": "Kentucky scope",
+      "assertion": "Article claims no restrictions on sports or prop categories; professional, collegiate and international options. Preserve jurisdiction and 2023 date."
+    },
+    {
+      "id": "kentucky-03",
+      "subject": "Fanatics",
+      "assertion": "Sportsbook opened in 2023; prior merchandise business; up to 5% FanCash usable for gear or further bets."
+    },
+    {
+      "id": "kentucky-04",
+      "subject": "Fanatics menu",
+      "assertion": "Odds boosts, Same Game Parlays and trending bets."
+    },
+    {
+      "id": "kentucky-05",
+      "subject": "FanDuel",
+      "assertion": "DFS history; self-claimed America’s number one; odds boosts, parlay insurance and big-win bonuses."
+    },
+    {
+      "id": "kentucky-06",
+      "subject": "DraftKings",
+      "assertion": "DFS history; pick-em and props pools, live bets, cross-sport parlays and moneylines."
+    },
+    {
+      "id": "kentucky-07",
+      "subject": "BetMGM",
+      "assertion": "Resort/casino history; mobile sports; self-claimed king of parlays; boosted bets, in-game betting and SGPs."
+    },
+    {
+      "id": "kentucky-08",
+      "subject": "Caesars",
+      "assertion": "Properties from Atlantic City to Las Vegas; sports and casino app; odds boosts, parlays, SGPs and Quick Picks."
+    },
+    {
+      "id": "kentucky-09",
+      "subject": "bet365",
+      "assertion": "UK/Europe history, selected US states; personalized display; pre-match and in-play football, baseball and basketball."
+    },
+    {
+      "id": "kentucky-10",
+      "subject": "Selection criteria",
+      "assertion": "Article recommends comparing bonuses, rewards, odds and markets; each sportsbook sets its own lines; reported practice of comparing multiple sites."
+    },
+    {
+      "id": "kentucky-11",
+      "subject": "FanCash rates",
+      "assertion": "1% straight bets, 3% parlays, 5% same-game parlays; redeem bonus bets or merchandise on Fanatics.com."
+    },
+    {
+      "id": "kentucky-12",
+      "subject": "Fanatics Discover",
+      "assertion": "Discover combines marquee games, trending bets, promotions and rewards."
+    },
+    {
+      "id": "kentucky-13",
+      "subject": "DraftKings rewards",
+      "assertion": "Most wagers earn points redeemable for free bets, merchandise or DFS entries; new-customer $5 bet yields $200 free bets at source date; profit boosts including SGPs."
+    },
+    {
+      "id": "kentucky-14",
+      "subject": "FanDuel rewards",
+      "assertion": "Explicitly no rewards program at source date; live and SGP profit boosts; favorable interface judgment is attributed."
+    },
+    {
+      "id": "kentucky-15",
+      "subject": "BetMGM offer",
+      "assertion": "First real-money loss credited in bonus bets up to $1,500; conditional bonus despite risk-free marketing wording; smaller token limits and rewards redeemable for MGM Resort credit."
+    },
+    {
+      "id": "kentucky-16",
+      "subject": "Caesars offer",
+      "assertion": "New customers receive up to $1,000 bonus bets after first-bet loss; wagering credits usable at properties; home-state team boosts."
+    },
+    {
+      "id": "kentucky-17",
+      "subject": "bet365 offer",
+      "assertion": "Bet $1, get $365 offer at source date; SGP selection described as smaller; rare leagues and sports covered."
+    },
+    {
+      "id": "kentucky-18",
+      "subject": "Kentucky law chronology",
+      "assertion": "March 31, 2023 legalization; 34th legal state and 25th with online/mobile access; retail September 7 and online September 28."
+    },
+    {
+      "id": "kentucky-19",
+      "subject": "Kentucky forecast",
+      "assertion": "Over $1 billion handle by end of 2023 is a forecast, not a realized total."
+    },
+    {
+      "id": "kentucky-20",
+      "subject": "Fanatics platforms",
+      "assertion": "iOS/Android; FanCash, bettable search, Discover, cash outs, signup, deposits and Withdrawal Tracker."
+    },
+    {
+      "id": "kentucky-21",
+      "subject": "FanDuel platforms",
+      "assertion": "iOS/Android, desktop/mobile web; quick bets, deposits, horse racing, casino, cash outs and payouts."
+    },
+    {
+      "id": "kentucky-22",
+      "subject": "DraftKings platforms",
+      "assertion": "iOS/Android, desktop/mobile web; casino, withdrawals and deposits."
+    },
+    {
+      "id": "kentucky-23",
+      "subject": "BetMGM platforms",
+      "assertion": "iOS/Android, desktop/mobile web; deposits/withdrawals, round-the-clock access and secure transaction claims."
+    },
+    {
+      "id": "kentucky-24",
+      "subject": "Caesars platforms",
+      "assertion": "iOS/Android, desktop/mobile web; Caesars Rewards, casino and Quick Picks."
+    },
+    {
+      "id": "kentucky-25",
+      "subject": "bet365 platforms",
+      "assertion": "iOS/Android, desktop/mobile web; cash outs, personalization, alerts, editing bets, My Teams, search and sports stats."
+    },
+    {
+      "id": "kentucky-26",
+      "subject": "Kentucky Wildcats basketball",
+      "assertion": "Eight national titles; John Calipari coach since 2010 as reported; four Final Fours during tenure; 2012 title; 2,021–637 all-time record claimed best."
+    },
+    {
+      "id": "kentucky-27",
+      "subject": "Kentucky Wildcats football",
+      "assertion": "SEC membership; twelve bowl appearances since 2006."
+    },
+    {
+      "id": "kentucky-28",
+      "subject": "Louisville basketball",
+      "assertion": "2013 title; ten Final Fours; 1,726–874 record ranked twelfth."
+    },
+    {
+      "id": "kentucky-29",
+      "subject": "Louisville football",
+      "assertion": "Source says 2013 Heisman winner Lamar Jackson; ACC transition in 2014; seven AP Top 25 finishes since 2004. Preserve attribution rather than silently correcting."
+    },
+    {
+      "id": "kentucky-30",
+      "subject": "Western Kentucky football",
+      "assertion": "Former Division I-AA/FCS; fully FBS in 2009; nine winning seasons since."
+    },
+    {
+      "id": "kentucky-31",
+      "subject": "Western Kentucky basketball",
+      "assertion": "23 NCAA tournaments; 1,622–720 all-time record ranked fourteenth."
+    },
+    {
+      "id": "kentucky-32",
+      "subject": "Kentucky professional sports",
+      "assertion": "No Big Four teams within Kentucky; nearby Bengals popular; Colts and Titans a short drive from parts of the state."
+    },
+    {
+      "id": "kentucky-33",
+      "subject": "Bengals history",
+      "assertion": "Marvin Lewis: seven playoff appearances in 2005–15; Burrow and Chase led 2021 Super Bowl appearance and 2022 AFC title game as reported."
+    },
+    {
+      "id": "kentucky-34",
+      "subject": "Reds and Cardinals",
+      "assertion": "Reds described as Kentucky’s most popular MLB team; St. Louis Cardinals following especially in western Kentucky."
+    },
+    {
+      "id": "kentucky-35",
+      "subject": "Reds history",
+      "assertion": "Titles in 1975, 1976 and 1990; no advance past NLCS since; 2023 playoff push reported, not final qualification."
+    },
+    {
+      "id": "kentucky-36",
+      "subject": "Spread example",
+      "assertion": "Hypothetical Kentucky -7.5 against Louisville: Kentucky covers by winning by eight or more; Louisville covers by winning or losing by seven or fewer."
+    },
+    {
+      "id": "kentucky-37",
+      "subject": "Moneyline example",
+      "assertion": "Hypothetical Kentucky -200 and Florida +200; stakes of $200/$100 for profits of $100/$200 conditional on winning. Not actual odds."
+    },
+    {
+      "id": "kentucky-38",
+      "subject": "Outright",
+      "assertion": "Choose one athlete or horse to win an event; definition, not actual wager."
+    },
+    {
+      "id": "kentucky-39",
+      "subject": "Total example",
+      "assertion": "Hypothetical Kentucky–Louisville total of 125.5; article’s Over 126/Under 125 wording is potentially imprecise. No actual result supplied."
+    },
+    {
+      "id": "kentucky-40",
+      "subject": "Player props",
+      "assertion": "Source counts Kentucky among eighteen states allowing collegiate athlete props; projected stats include touchdown passes and three-pointers; dated claim."
+    },
+    {
+      "id": "kentucky-41",
+      "subject": "Underdog and favorite",
+      "assertion": "Odds-based lower/higher win likelihood and typical return tradeoff; not guarantees."
+    },
+    {
+      "id": "kentucky-42",
+      "subject": "Consensus odds",
+      "assertion": "Source describes an average of available markets; sites vary by action and interpretation of information."
+    },
+    {
+      "id": "kentucky-43",
+      "subject": "Futures",
+      "assertion": "Season wins, championship and MVP markets compared with game-level markets."
+    },
+    {
+      "id": "kentucky-44",
+      "subject": "Parlay",
+      "assertion": "Two or more legs must all win; hypothetical $100 three-leg wager at 6:1 gives $600 profit if successful."
+    },
+    {
+      "id": "kentucky-45",
+      "subject": "Juice",
+      "assertion": "Aliases vig/vigorish; operator charge; source claims -110 on both sides means a 10% rake. Retain as an article claim, not a verified calculation."
+    },
+    {
+      "id": "kentucky-46",
+      "subject": "Push",
+      "assertion": "Neither side wins and stake is returned; hypothetical total of 44 with exactly 44 combined points."
+    },
+    {
+      "id": "kentucky-47",
+      "subject": "Live betting",
+      "assertion": "Real-time quarter outcomes, individual statistics and updated spreads/totals."
+    },
+    {
+      "id": "kentucky-48",
+      "subject": "Other states",
+      "assertion": "Ohio, New York and Arizona named as sports-betting states at the source date."
+    }
+  ],
+  "negative_checks": [
+    "Deduplicate repeated marketing paragraphs; preserve distinct reward rates, eligibility and redemption targets.",
+    "Jurisdiction and availability statements are dated source claims, not verified current law.",
+    "Examples are hypothetical, not completed transactions or game outcomes.",
+    "Do not silently repair potentially incorrect dates, records, arithmetic or unavailable linked terms from outside knowledge."
+  ],
+  "checklist_counts": {
+    "grouped_domain_assertions": 48
+  }
+}

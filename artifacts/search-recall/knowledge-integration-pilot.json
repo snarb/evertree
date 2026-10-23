@@ -1,0 +1,117 @@
+{
+  "notice": "Diagnostic pilot only; shared documents and observed cases, not independent acceptance. Baseline was deliberately stopped after four completed sources. The instruction-only variant had a timed-out partial attempt before its saved completed attempt. Coverage repair sees only sources and retained graph; no questions, labels or QA outputs. Relation counts do not establish semantic precision or answer recall.",
+  "variants": [
+    {
+      "variant": "pilot",
+      "completed_articles": 4,
+      "coverage_completed": 0,
+      "production_revision": "687ea42cfecd6117d9386e76b1fd32caae933ee30066e58b813f08f438e36eba",
+      "focus": null,
+      "domain_relations": 0,
+      "mandatory_links": 0,
+      "node_kinds": {
+        "claim": 27,
+        "note": 1
+      },
+      "components": 0
+    },
+    {
+      "variant": "analysis",
+      "completed_articles": 1,
+      "coverage_completed": 0,
+      "production_revision": "687ea42cfecd6117d9386e76b1fd32caae933ee30066e58b813f08f438e36eba",
+      "focus": null,
+      "domain_relations": 0,
+      "mandatory_links": 0,
+      "node_kinds": {
+        "claim": 10
+      },
+      "components": 0
+    },
+    {
+      "variant": "relations",
+      "completed_articles": 1,
+      "coverage_completed": 0,
+      "production_revision": "2e60313edcf0d57daee33bb66c1c7c8432dfd5d752c38d69e5bcc3925cb758e8",
+      "focus": null,
+      "domain_relations": 0,
+      "mandatory_links": 0,
+      "node_kinds": {
+        "note": 1,
+        "claim": 7
+      },
+      "components": 0
+    },
+    {
+      "variant": "focused",
+      "completed_articles": 12,
+      "coverage_completed": 0,
+      "production_revision": "2e60313edcf0d57daee33bb66c1c7c8432dfd5d752c38d69e5bcc3925cb758e8",
+      "focus": "Prioritize a connected graph of useful source-supported relationships. First make participants addressable as entities and save concrete predicates with named roles, values and source conditions, reusing participants across assertions. Define missing relation schemas. Verify the connected facts with query or describe before finishing. Claims are for meanings that native relations, properties or state representations cannot adequately preserve; ordinary reported offers and events should use those native forms even when unverified. Preserve qualifications; prefer completing a useful connected cluster over isolated prose summaries.",
+      "domain_relations": 107,
+      "mandatory_links": 70,
+      "node_kinds": {
+        "prototype": 13,
+        "relation_type": 33,
+        "instance": 65,
+        "relation_instance": 177,
+        "property": 3,
+        "concept": 1
+      },
+      "components": 10
+    },
+    {
+      "variant": "coverage",
+      "completed_articles": 12,
+      "coverage_completed": 12,
+      "production_revision": "2e60313edcf0d57daee33bb66c1c7c8432dfd5d752c38d69e5bcc3925cb758e8",
+      "focus": "Prioritize a connected graph of useful source-supported relationships. First make participants addressable as entities and save concrete predicates with named roles, values and source conditions, reusing participants across assertions. Define missing relation schemas. Verify the connected facts with query or describe before finishing. Claims are for meanings that native relations, properties or state representations cannot adequately preserve; ordinary reported offers and events should use those native forms even when unverified. Preserve qualifications; prefer completing a useful connected cluster over isolated prose summaries.",
+      "domain_relations": 227,
+      "mandatory_links": 105,
+      "node_kinds": {
+        "prototype": 16,
+        "relation_type": 58,
+        "instance": 99,
+        "relation_instance": 332,
+        "property": 3,
+        "concept": 1
+      },
+      "components": 11
+    },
+    {
+      "variant": "production-default",
+      "completed_articles": 1,
+      "coverage_completed": 0,
+      "production_revision": "c64e897b5a0f0e950981b0536b7bbba6335fa4b4499d41207f0d2d06b33416fa",
+      "focus": null,
+      "domain_relations": 16,
+      "mandatory_links": 10,
+      "node_kinds": {
+        "prototype": 4,
+        "instance": 10,
+        "relation_instance": 26,
+        "relation_type": 4
+      },
+      "components": 1
+    }
+  ],
+  "frozen_question_indices": [
+    4,
+    19,
+    25,
+    81,
+    261,
+    2205,
+    10,
+    13
+  ],
+  "production_default_review": {
+    "supported_domain_relations": 16,
+    "structured_qualification_flags": 1,
+    "remaining_gaps": [
+      "Additional source offers not retained",
+      "Temporal scope depends on offer/article context rather than explicit validity bounds"
+    ],
+    "review_file": "knowledge-integration-evaluation/production-default-structure-review.json"
+  }
+}

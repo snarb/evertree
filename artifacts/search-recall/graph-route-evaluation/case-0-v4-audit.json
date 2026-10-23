@@ -1,0 +1,601 @@
+{
+  "purpose": "Manual source-only diagnostic review; graph card meaning is distinct from connected native representation.",
+  "snapshot": "tmp/knowledge-graph-routes-v4/acquisition/0-19dddcfa/snapshot.json",
+  "snapshot_sha256": "7599cda157f5dfde498343111b85ebf22ea3ea2fe9fa4f34004e9f1b148ee00a",
+  "checklist_sha256": "0470cbc0478840737e44385ad859e4f26745fec3a06bda301dbce5517960f9ee",
+  "counts": {
+    "domain_assertions": 68,
+    "meaning_status": {
+      "scope_weakened": 1,
+      "preserved_in_card_or_fields": 66,
+      "missing": 1
+    },
+    "with_representation_gaps": 12
+  },
+  "verdict": "Substantive omission of both subscriptions corrected. Continue to the next source with unchanged instruction, recording residual semantic and route gaps rather than claiming exhaustive extraction.",
+  "remaining_route_limits": [
+    "Taxonomy mostly Product; services and electronics not yet usefully distinguished.",
+    "Alexa, Fire TV category and credit issuers still sometimes remain strings.",
+    "The declared generic comparison predicate name PRODUCT_GENERATION_COMPARISON is reused for price comparisons, although the role bindings remain accurate."
+  ],
+  "source_availability": {
+    "nonstructural_relations_checked": 65,
+    "without_sources": 0,
+    "unavailable_sources": 0,
+    "not_a_semantic_support_judgement": true
+  },
+  "assertions": [
+    {
+      "assertion_id": "sale-01",
+      "supporting_object_ids": [
+        32
+      ],
+      "meaning_status": "scope_weakened",
+      "representation_gaps": [
+        "Eleven-day campaign duration is bound to Black Friday sale, although the original includes both Black Friday and Cyber Monday."
+      ]
+    },
+    {
+      "assertion_id": "sale-02",
+      "supporting_object_ids": [
+        26
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-03",
+      "supporting_object_ids": [
+        26
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-04",
+      "supporting_object_ids": [
+        27
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-05",
+      "supporting_object_ids": [
+        28
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-06",
+      "supporting_object_ids": [
+        29
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-07",
+      "supporting_object_ids": [
+        30
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-01",
+      "supporting_object_ids": [
+        43
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-02",
+      "supporting_object_ids": [
+        43
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-03",
+      "supporting_object_ids": [
+        60,
+        61,
+        62
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Alexa is a string; no shared assistant identity links Echo and Fire TV."
+      ]
+    },
+    {
+      "assertion_id": "echo-04",
+      "supporting_object_ids": [
+        60
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-05",
+      "supporting_object_ids": [
+        61
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-06",
+      "supporting_object_ids": [
+        62
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-07",
+      "supporting_object_ids": [
+        63
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-08",
+      "supporting_object_ids": [
+        68
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-09",
+      "supporting_object_ids": [
+        70
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-10",
+      "supporting_object_ids": [
+        71
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-01",
+      "supporting_object_ids": [
+        65
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-02",
+      "supporting_object_ids": [
+        65
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-03",
+      "supporting_object_ids": [
+        65
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-04",
+      "supporting_object_ids": [
+        65
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Nine dollars monthly saving remains in description, not a numeric role."
+      ]
+    },
+    {
+      "assertion_id": "audible-05",
+      "supporting_object_ids": [
+        65
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-06",
+      "supporting_object_ids": [
+        65
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Credit issuer is named in bonus description, not a participant ID."
+      ]
+    },
+    {
+      "assertion_id": "mgm-01",
+      "supporting_object_ids": [
+        66
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Fire TVs class is a string, so no class-to-instance route to the subscription."
+      ]
+    },
+    {
+      "assertion_id": "mgm-02",
+      "supporting_object_ids": [
+        66
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "mgm-03",
+      "supporting_object_ids": [
+        66
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Free price is explicit in description but has no numeric zero role."
+      ]
+    },
+    {
+      "assertion_id": "mgm-04",
+      "supporting_object_ids": [
+        66
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-01",
+      "supporting_object_ids": [
+        82
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-02",
+      "supporting_object_ids": [
+        83
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-03",
+      "supporting_object_ids": [
+        84
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-04",
+      "supporting_object_ids": [
+        81
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-05",
+      "supporting_object_ids": [
+        80
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-06",
+      "supporting_object_ids": [
+        86
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-07",
+      "supporting_object_ids": [
+        85
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-08",
+      "supporting_object_ids": [
+        87
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-09",
+      "supporting_object_ids": [
+        88
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-10",
+      "supporting_object_ids": [
+        91,
+        92
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-11",
+      "supporting_object_ids": [
+        89
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-01",
+      "supporting_object_ids": [
+        100
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-02",
+      "supporting_object_ids": [
+        106
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-03",
+      "supporting_object_ids": [
+        101
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-04",
+      "supporting_object_ids": [
+        102
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-05",
+      "supporting_object_ids": [
+        103
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-06",
+      "supporting_object_ids": [
+        104
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-07",
+      "supporting_object_ids": [
+        105
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Alexa remains a string, preventing the shared assistant route."
+      ]
+    },
+    {
+      "assertion_id": "surface-01",
+      "supporting_object_ids": [
+        107
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-02",
+      "supporting_object_ids": [
+        107
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "25-percent discount remains a qualification string."
+      ]
+    },
+    {
+      "assertion_id": "surface-03",
+      "supporting_object_ids": [
+        95,
+        107
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-04",
+      "supporting_object_ids": [
+        113
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-05",
+      "supporting_object_ids": [
+        108
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-06",
+      "supporting_object_ids": [
+        108
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Processor generation is embedded in a string."
+      ]
+    },
+    {
+      "assertion_id": "surface-07",
+      "supporting_object_ids": [
+        109
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Processor generation is embedded in a string."
+      ]
+    },
+    {
+      "assertion_id": "surface-08",
+      "supporting_object_ids": [
+        127
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-09",
+      "supporting_object_ids": [
+        115
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-10",
+      "supporting_object_ids": [
+        111,
+        112
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-01",
+      "supporting_object_ids": [
+        128
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-02",
+      "supporting_object_ids": [
+        128
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-03",
+      "supporting_object_ids": [
+        117,
+        128
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-04",
+      "supporting_object_ids": [
+        128
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-05",
+      "supporting_object_ids": [
+        130
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-06",
+      "supporting_object_ids": [
+        129
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-07",
+      "supporting_object_ids": [
+        132
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "quest-01",
+      "supporting_object_ids": [
+        137
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "quest-02",
+      "supporting_object_ids": [
+        137
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "quest-03",
+      "supporting_object_ids": [
+        137
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "quest-04",
+      "supporting_object_ids": [
+        137
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Amazon credit issuer remains in a string despite an existing Amazon identity."
+      ]
+    },
+    {
+      "assertion_id": "quest-05",
+      "supporting_object_ids": [
+        137
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "quest-06",
+      "supporting_object_ids": [],
+      "meaning_status": "missing",
+      "representation_gaps": [
+        "The article marker legend is stored, but the Quest fire marker is not connected to this offer."
+      ]
+    }
+  ]
+}

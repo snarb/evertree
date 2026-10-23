@@ -44,13 +44,12 @@ class ToolsMixin:
         except TimeoutError:
             if name != "graph.search":
                 raise
-            return self._semantics().results(
-                args["query"],
-                args.get("kind"),
-                [],
+            return self._semantics().failed_search(
+                args["queries"],
                 [{"channel": "budget", "error": "Task time budget exhausted"}],
-                args.get("limit", 20),
-                task_id,
+                kinds=args.get("kinds"),
+                limit=args.get("limit", 10),
+                task_id=task_id,
                 scope=semantic_scope.get(),
             )
         finally:
@@ -93,25 +92,35 @@ class ToolsMixin:
             try:
                 result = await self._run_program(task_id, "semantic_search", args)
             except ProgramExecutionError as exc:
-                return self._semantics().results(
-                    args["query"],
-                    args.get("kind"),
-                    [],
+                return self._semantics().failed_search(
+                    args["queries"],
                     [{"channel": "runtime", "error": str(exc)}],
-                    args.get("limit", 20),
-                    task_id,
+                    kinds=args.get("kinds"),
+                    limit=args.get("limit", 10),
+                    task_id=task_id,
                     scope=semantic_scope.get(),
                 )
             return result["result"]
         if name == "record_analysis":
             return self._record_analysis(task_id, args)
         if name == "graph.integrate":
-            result = await self._run_program(task_id, "knowledge_integration", args)
-            return result["result"]
+            result = await self._run_integration(task_id, args)
+            output = dict(result["result"])
+            if "processing" in output:
+                progress = output["processing"]
+                output["processing"] = {
+                    "status": progress["status"],
+                    "processed_units": len(progress["completed"]),
+                    "pending_units": len(progress["pending"]),
+                    "failed_units": len(progress["failed"]),
+                }
+            return output
         if name.startswith("graph."):
             return await self._graph_tool(task_id, name, args)
         if name == "recall":
             return json_value(self.memory.retrieve(args["query"], limit=10))
+        if name == "read_source":
+            return await self._semantics().execute("memory.read_source", args, {"task_id": task_id})
         if name == "create_candidate":
             program = self._program(args["program"], allow_inactive=True)
             candidate = self.lifecycle.create_candidate(
@@ -198,7 +207,7 @@ class ToolsMixin:
         """Route shared semantic tools through task-scoped reads and checked writes."""
         from ..core.semantics.reading import fact_card, fact_nodes, resolve
 
-        if name in {"graph.query", "graph.walk"}:
+        if name in {"graph.query", "graph.walk", "graph.sources"}:
             return await self._semantics().execute(name, args, {"task_id": task_id})
         if name == "graph.history" and type(args["subject"]) is int:
             return json_value(self.graph.changes_of(args["subject"]))
@@ -292,8 +301,13 @@ class ToolsMixin:
                 revision=metadata["program"]["revision"],
                 owner_run=self._run_map.get(metadata.get("run_id")),
             )
-        if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
-            if method in {"semantic.sources", "semantic.write"}:
+        if method.startswith("semantic.") or method in {
+            "graph.query",
+            "graph.walk",
+            "graph.sources",
+            "memory.read_source",
+        }:
+            if method in {"semantic.sources", "semantic.prepare_sources", "semantic.write"}:
                 metadata = self._semantic_metadata(state, payload, metadata)
             return await self._semantics().execute(method, payload, metadata)
         if method == "resolve_program":

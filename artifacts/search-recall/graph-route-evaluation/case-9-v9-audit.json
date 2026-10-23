@@ -1,0 +1,487 @@
+{
+  "purpose": "Source-only grouped diagnostic audit; this is neither atomic recall nor a matched reader result.",
+  "snapshot": "tmp/knowledge-graph-routes-v9/acquisition/9-e2bcd4df/snapshot.json",
+  "snapshot_sha256": "84d764b6a699718dbf395f71508088c8bb0a0a6a17d8d370354eb0d2664423ad",
+  "checklist_sha256": "d277d0d95d0a42be2f03f54ccdae5f87d1ef8d54c2f2137a09c0af648b4e888d",
+  "counts": {
+    "grouped_assertions": 45,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 40,
+      "chronology_scope_weakened": 1,
+      "conflicting_qualification": 2,
+      "owner_scope_lost": 1,
+      "forecast_scope_overextended": 1
+    },
+    "rows_with_caveats": 10,
+    "invocations": 31,
+    "declared_incomplete_invocations": 1
+  },
+  "acquisition_seconds": 1601.1586141249863,
+  "positive_checks": [
+    "Application, scheduled launch, historical other-state offers and possible future entrants remain distinct.",
+    "Detailed caps, delivery periods, bonus-bet allocation, expiry and stake-exclusion rules largely survive.",
+    "DraftKings prelive/welcome exclusion is explicit; its three later welcome components have shared parent-offer identity1664.",
+    "Source-internal $150/eight$25 conflict was not silently repaired.",
+    "Model explicitly removed relation-schema IDs incorrectly used as offering participants.",
+    "No actual betting or account-registration action was invented from procedural prose."
+  ],
+  "remaining_limits": [
+    "Two separate FanDuel promotions have a conflicting merged qualification.",
+    "BetRivers minimum odds lost operator scope; existing500-character boundary context began just after its name.",
+    "Some exact citations support only part of the stored terms; opening full original or boundary context remains necessary.",
+    "Mixed metadata/body chronology and collective-to-individual forecast expansion remain.",
+    "The planned boundary-context repair will be a separate source-only regression, not a retroactive correction of this snapshot."
+  ],
+  "assertions": [
+    {
+      "assertion_id": "vermont-01",
+      "supporting_object_ids": [
+        1607,
+        1614,
+        1630,
+        1631
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-02",
+      "supporting_object_ids": [
+        1601,
+        1614,
+        1717,
+        1726
+      ],
+      "meaning_status": "chronology_scope_weakened",
+      "representation_gaps": [
+        "Metadata publication September26 and later November events both survive, but several current-status facts are confidently anchored to September; actual update chronology remains unestablished."
+      ]
+    },
+    {
+      "assertion_id": "vermont-03",
+      "supporting_object_ids": [
+        1615,
+        1616,
+        1617,
+        1618,
+        1619
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-04",
+      "supporting_object_ids": [
+        1626,
+        1638
+      ],
+      "meaning_status": "conflicting_qualification",
+      "representation_gaps": [
+        "Fact1638 incorrectly combines the separate $100 prelive offer with the $10 deposit/$5 wager requirements of the $200 welcome offer. Correct separate facts1626/1625 also exist; they do not retract the conflation."
+      ]
+    },
+    {
+      "assertion_id": "vermont-05",
+      "supporting_object_ids": [
+        1625,
+        1638,
+        1645
+      ],
+      "meaning_status": "conflicting_qualification",
+      "representation_gaps": [
+        "The correct $200 qualifying-wager/outcome facts coexist with wrong scope in1638."
+      ]
+    },
+    {
+      "assertion_id": "vermont-06",
+      "supporting_object_ids": [
+        1646
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-07",
+      "supporting_object_ids": [
+        1627,
+        1639,
+        1640
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-08",
+      "supporting_object_ids": [
+        1654
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-09",
+      "supporting_object_ids": [
+        1671
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-10",
+      "supporting_object_ids": [
+        1669
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-11",
+      "supporting_object_ids": [
+        1681,
+        1682,
+        1683
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Detailed terms1682/1683 cite first child fragment6387/text; its boundary context and next child6413/text contain those details, but the exact cited text alone does not support them. Full original remains accessible."
+      ]
+    },
+    {
+      "assertion_id": "vermont-12",
+      "supporting_object_ids": [
+        1682,
+        1683,
+        1684,
+        1686,
+        1688
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Some detailed terms have only broad-original/boundary-context support rather than an accurate narrow cited fragment."
+      ]
+    },
+    {
+      "assertion_id": "vermont-13",
+      "supporting_object_ids": [
+        1683
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Both inconsistent reported150 and eight25 amounts survive; the graph does not explicitly diagnose their arithmetic inconsistency."
+      ]
+    },
+    {
+      "assertion_id": "vermont-14",
+      "supporting_object_ids": [
+        1684,
+        1685,
+        1692,
+        1693
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-15",
+      "supporting_object_ids": [
+        1630,
+        1690
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-16",
+      "supporting_object_ids": [
+        1694
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Referral promotion and BetMGM Rewards remain prose, after the model removed two wrongly inserted schema IDs from1694."
+      ]
+    },
+    {
+      "assertion_id": "vermont-17",
+      "supporting_object_ids": [
+        1695
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-18",
+      "supporting_object_ids": [
+        1695,
+        1698
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-19",
+      "supporting_object_ids": [
+        1698,
+        1701,
+        1702,
+        1704
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-20",
+      "supporting_object_ids": [
+        1614,
+        1717
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Unknown Vermont terms are preserved, but the as-ofSeptember26 wording in1717 assumes a body chronology the supplied metadata cannot establish."
+      ]
+    },
+    {
+      "assertion_id": "vermont-21",
+      "supporting_object_ids": [
+        1715,
+        1716
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-22",
+      "supporting_object_ids": [
+        1719,
+        1721
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-23",
+      "supporting_object_ids": [
+        1631,
+        1726,
+        1731
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-24",
+      "supporting_object_ids": [
+        1727,
+        1734
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-25",
+      "supporting_object_ids": [
+        1737,
+        1739
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-26",
+      "supporting_object_ids": [
+        1740,
+        1741
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-27",
+      "supporting_object_ids": [
+        1742,
+        1743
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-28",
+      "supporting_object_ids": [
+        1751,
+        1752,
+        1757
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-29",
+      "supporting_object_ids": [
+        1753,
+        1754
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-30",
+      "supporting_object_ids": [
+        1751,
+        1757
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-31",
+      "supporting_object_ids": [
+        1757,
+        1761
+      ],
+      "meaning_status": "owner_scope_lost",
+      "representation_gaps": [
+        "Fact1761 has no sportsbook or offer role: BetRivers-specific -200-or-longer rule was generalized to generic Bonus Bets1641. Boundary context dropped the operator name510characters back."
+      ]
+    },
+    {
+      "assertion_id": "vermont-32",
+      "supporting_object_ids": [
+        1768,
+        1769
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-33",
+      "supporting_object_ids": [
+        1770
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-34",
+      "supporting_object_ids": [
+        1771
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-35",
+      "supporting_object_ids": [
+        1772
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-36",
+      "supporting_object_ids": [
+        1773,
+        1777
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-37",
+      "supporting_object_ids": [
+        1774
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-38",
+      "supporting_object_ids": [
+        1775
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-39",
+      "supporting_object_ids": [
+        1776
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-40",
+      "supporting_object_ids": [
+        1779
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-41",
+      "supporting_object_ids": [
+        1780,
+        1781,
+        1782,
+        1783,
+        1784,
+        1818
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-42",
+      "supporting_object_ids": [
+        1800,
+        1801,
+        1802,
+        1803,
+        1804,
+        1805,
+        1806,
+        1807,
+        1808,
+        1809,
+        1810,
+        1811,
+        1812,
+        1813,
+        1814,
+        1815,
+        1816,
+        1817
+      ],
+      "meaning_status": "forecast_scope_overextended",
+      "representation_gaps": [
+        "Collective forecast of promotions for Boston-team fans was expanded into separate forecasts for every named team, retaining NFL promotion example even for MLB/NBA/NHL teams."
+      ]
+    },
+    {
+      "assertion_id": "vermont-43",
+      "supporting_object_ids": [
+        1822,
+        1824
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-44",
+      "supporting_object_ids": [
+        1626,
+        1671,
+        1822
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "vermont-45",
+      "supporting_object_ids": [
+        1824
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    }
+  ]
+}

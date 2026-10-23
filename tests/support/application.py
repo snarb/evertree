@@ -18,9 +18,16 @@ def is_evidence_request(request):
     return "evidence" in targets.get("items", {}).get("properties", {})
 
 
-async def tool_events(request_id, request, handler, calls):
+async def tool_events(request_id, request, handler, calls, *, finish=True):
     """Exercise the provider's native callback boundary with correlated events."""
     declared = {tool.name for tool in request.tools}
+    calls = list(calls)
+    if (
+        finish
+        and "finish_section" in declared
+        and not any(name == "finish_section" for name, _ in calls)
+    ):
+        calls.append(("finish_section", {"complete": True, "remaining": ""}))
     yield LLMEvent("session", {"provider": "scripted", "id": request_id})
     for index, (name, arguments) in enumerate(calls):
         assert name in declared

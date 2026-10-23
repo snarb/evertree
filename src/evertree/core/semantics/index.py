@@ -7,8 +7,12 @@ import os
 import re
 import urllib.request
 from array import array
+from dataclasses import asdict
+
+import tiktoken
 
 from ..graph.types import normalize_name
+from .searching import search_kinds
 
 
 class OpenAIEmbeddings:
@@ -53,6 +57,8 @@ class RedisSearchIndex:
         self._ready = set()
         self._vectors_ready = set()
         self.last_error = None
+        self._documents_key = None
+        self._documents_cache = []
 
     def _redis(self):
         if self.client is None:
@@ -65,7 +71,13 @@ class RedisSearchIndex:
         return self.client
 
     def _generation(self, nodes):
-        data = [self.config.embedding_model, self.config.embedding_dimensions, nodes]
+        data = [
+            4,
+            self.config.embedding_model,
+            self.config.embedding_dimensions,
+            asdict(self.config.search),
+            nodes,
+        ]
         digest = hashlib.sha256(
             json.dumps(data, sort_keys=True, ensure_ascii=False).encode()
         ).hexdigest()
@@ -76,7 +88,10 @@ class RedisSearchIndex:
         client = self._redis()
         for raw in await client.execute_command("FT._LIST"):
             index = raw.decode() if isinstance(raw, bytes) else raw
-            if not index.startswith(self.namespace + ":") or index == self._current:
+            if not index.startswith(self.namespace + ":") or index in {
+                self._current,
+                self._current + ":vectors",
+            }:
                 continue
             await client.execute_command("FT.DROPINDEX", index, "DD")
             self._ready.discard(index)
@@ -84,7 +99,69 @@ class RedisSearchIndex:
 
     @staticmethod
     def _text(node):
-        return node["name"] + " " + (node.get("description") or "")
+        text = node["name"] + " " + (node.get("description") or "")
+        fields = {
+            key: node[key]
+            for key in (
+                "relation",
+                "relation_description",
+                "args",
+                "signature",
+                "properties",
+                "valid_from",
+                "valid_until",
+            )
+            if key in node
+        }
+        if "args" in fields:
+            fields["args"] = dict(fields["args"])
+            for slot in node.get("signature", []):
+                if slot["value_type"] not in {"node", "concept", "prototype", "instance", "facet"}:
+                    continue
+                value = fields["args"].get(slot["label"])
+
+                def named(reference):
+                    # Reference IDs must not masquerade as measured numbers. Opaque data stays intact.
+                    return {key: reference[key] for key in ("name", "kind")}
+
+                if isinstance(value, list):
+                    fields["args"][slot["label"]] = [named(reference) for reference in value]
+                elif value is not None:
+                    fields["args"][slot["label"]] = named(value)
+        return text + (
+            "\n" + json.dumps(fields, ensure_ascii=False, sort_keys=True) if fields else ""
+        )
+
+    def _documents(self, nodes):
+        key = self._generation(nodes)
+        if key != self._documents_key:
+            encoder = tiktoken.get_encoding("cl100k_base")
+            size, overlap = self.config.search.chunk_tokens, self.config.search.chunk_overlap
+            documents = []
+            for node in nodes:
+                text = self._text(node)
+                tokens = encoder.encode(text, disallowed_special=())
+                _, offsets = encoder.decode_with_offsets(tokens)
+                for position, start in enumerate(range(0, len(tokens), size - overlap)):
+                    end = min(start + size, len(tokens))
+                    documents.append(
+                        {
+                            "id": node["id"],
+                            "key": f"{node['id']}:{position}",
+                            "kind": node["kind"],
+                            "text": text[
+                                offsets[start] : offsets[end] if end < len(tokens) else len(text)
+                            ],
+                        }
+                    )
+                    if start + size >= len(tokens):
+                        break
+            self._documents_key, self._documents_cache = key, documents
+        return self._documents_cache
+
+    @staticmethod
+    def _algorithm(count):
+        return "FLAT" if count < 10000 else "HNSW"
 
     async def _indexed(self, index, count):
         while True:
@@ -100,6 +177,7 @@ class RedisSearchIndex:
         """Publish a complete lexical generation for a graph snapshot before exposing it to readers."""
         client = self._redis()
         index = self._generation(nodes)
+        documents = self._documents(nodes)
         async with self._prepare_lock:
             from redis.exceptions import ResponseError
 
@@ -107,7 +185,7 @@ class RedisSearchIndex:
                 try:
                     raw = await client.execute_command("FT.INFO", index)
                     info = dict(zip(raw[::2], raw[1::2]))
-                    if int(info.get(b"num_docs", 0)) != len(nodes):
+                    if int(info.get(b"num_docs", 0)) != len(documents):
                         self._ready.discard(index)
                         self._vectors_ready.discard(index)
                 except ResponseError as exc:
@@ -135,32 +213,22 @@ class RedisSearchIndex:
                         "TEXT",
                         "kind",
                         "TAG",
-                        "vector",
-                        "VECTOR",
-                        "HNSW",
-                        6,
-                        "TYPE",
-                        "FLOAT32",
-                        "DIM",
-                        self.config.embedding_dimensions,
-                        "DISTANCE_METRIC",
-                        "COSINE",
                     )
                 except ResponseError as exc:
                     if "Index already exists" not in str(exc):
                         raise
                 pipe = client.pipeline(transaction=False)
-                for node in nodes:
+                for node in documents:
                     pipe.hset(
-                        index + ":node:" + str(node["id"]),
+                        index + ":node:" + node["key"],
                         mapping={
-                            "text": normalize_name(self._text(node)),
+                            "text": normalize_name(node["text"]),
                             "kind": node["kind"],
                             "identity": node["id"],
                         },
                     )
                 await pipe.execute()
-                await self._indexed(index, len(nodes))
+                await self._indexed(index, len(documents))
                 self._ready.add(index)
             self._current = index
             try:
@@ -174,11 +242,53 @@ class RedisSearchIndex:
         """Populate missing embeddings for a current index."""
         client = self._redis()
         async with self._vectors_lock:
+            from redis.exceptions import ResponseError
+
+            documents = self._documents(nodes)
+            vector_index = index + ":vectors"
             if index in self._vectors_ready:
-                return
-            for start in range(0, len(nodes), 32):
-                batch = nodes[start : start + 32]
-                texts = [self._text(n) for n in batch]
+                try:
+                    raw = await client.execute_command("FT.INFO", vector_index)
+                    info = dict(zip(raw[::2], raw[1::2]))
+                    if int(info.get(b"num_docs", 0)) == len(documents):
+                        return
+                except ResponseError as exc:
+                    if not any(
+                        text in str(exc).casefold()
+                        for text in ("unknown index", "no such index", "index not found")
+                    ):
+                        raise
+                self._vectors_ready.discard(index)
+            try:
+                await client.execute_command(
+                    "FT.CREATE",
+                    vector_index,
+                    "ON",
+                    "HASH",
+                    "PREFIX",
+                    1,
+                    vector_index + ":node:",
+                    "SCHEMA",
+                    "kind",
+                    "TAG",
+                    "vector",
+                    "VECTOR",
+                    self._algorithm(len(documents)),
+                    6,
+                    "TYPE",
+                    "FLOAT32",
+                    "DIM",
+                    self.config.embedding_dimensions,
+                    "DISTANCE_METRIC",
+                    "COSINE",
+                )
+            except ResponseError as exc:
+                if "Index already exists" not in str(exc):
+                    raise
+            self._ready.add(vector_index)
+            for start in range(0, len(documents), 32):
+                batch = documents[start : start + 32]
+                texts = [n["text"] for n in batch]
                 keys = [
                     self.namespace
                     + ":embedding:"
@@ -209,87 +319,149 @@ class RedisSearchIndex:
                 for node, key in zip(batch, keys, strict=True):
                     vector = cached[key]
                     pipe.set(key, vector, ex=30 * 24 * 60 * 60)
-                    pipe.hset(index + ":node:" + str(node["id"]), "vector", vector)
+                    pipe.hset(
+                        vector_index + ":node:" + node["key"],
+                        mapping={"kind": node["kind"], "identity": node["id"], "vector": vector},
+                    )
                 await pipe.execute()
+            await self._indexed(vector_index, len(documents))
             self._vectors_ready.add(index)
 
     @staticmethod
-    def _ids(result):
-        return [
-            int(
-                result[i].decode().rsplit(":", 1)[1]
-                if isinstance(result[i], bytes)
-                else result[i].rsplit(":", 1)[1]
+    def _ids(result, *, lexical=False):
+        best = {}
+        for position in range(1, len(result), 3 if lexical else 2):
+            raw = result[position + (2 if lexical else 1)]
+            fields = dict(zip(raw[::2], raw[1::2], strict=True))
+            identity = int(fields.get(b"identity", fields.get("identity")))
+            score = (
+                float(result[position + 1])
+                if lexical
+                else -float(fields.get(b"distance", fields.get("distance", 0)))
             )
-            for i in range(1, len(result), 2)
-        ]
+            best[identity] = max(score, best.get(identity, -float("inf")))
+        # Equal passage scores must not make object ranks depend on Redis insertion order.
+        return sorted(best, key=lambda identity: (-best[identity], identity))
+
+    def _fetch_count(self, nodes, quota):
+        # One object's matching passages must not consume another object's quota.
+        counts = {}
+        for document in self._documents(nodes):
+            identity = document["id"]
+            counts[identity] = counts.get(identity, 0) + 1
+        return min(len(self._documents_cache), quota * max(counts.values(), default=1))
 
     @staticmethod
-    def _kind(kind):
-        if kind is None:
+    def _kinds(kinds):
+        kinds = search_kinds(kinds)
+        if kinds is None:
             return "*"
-        return "@kind:{" + re.sub(r"([^\w])", r"\\\1", kind.strip().casefold()) + "}"
+        return "@kind:{" + "|".join(re.sub(r"([^\w])", r"\\\1", kind) for kind in kinds) + "}"
 
-    async def lexical(self, nodes, query, kind=None):
-        """Rank up to seven graph identities by Redis BM25 over the current graph."""
-        index = await self._ensure(nodes)
-        terms = re.findall(r"\w+", normalize_name(query), flags=re.UNICODE)
-        if not terms:
+    async def _ranked(self, commands):
+        pipe = self._redis().pipeline(transaction=False)
+        for command in commands:
+            pipe.execute_command(*command)
+        replies = await pipe.execute(raise_on_error=False)
+        return [
+            {"ids": [], "error": str(reply)}
+            if isinstance(reply, Exception)
+            else {"ids": self._ids(reply, lexical="WITHSCORES" in command)}
+            for command, reply in zip(commands, replies, strict=True)
+        ]
+
+    async def lexical(self, nodes, queries, kinds=None):
+        """Retrieve distinct objects by their best lexical passage in one pipeline."""
+        kinds = search_kinds(kinds)
+        if not queries:
             return []
-        text_query = "@text:(" + "|".join(terms) + ")"
-        if kind is not None:
-            text_query = self._kind(kind) + " " + text_query
-        result = await self._redis().execute_command(
-            "FT.SEARCH",
-            index,
-            text_query,
-            "SCORER",
-            "BM25STD",
-            "RETURN",
-            1,
-            "identity",
-            "LIMIT",
-            0,
-            7,
-            "TIMEOUT",
-            0,
-            "DIALECT",
-            2,
-        )
-        return self._ids(result)
-
-    async def vector(self, nodes, query, kind=None):
-        """Rank up to twelve graph identities by embedding distance over the current graph."""
         index = await self._ensure(nodes)
-        embeddings_task = asyncio.create_task(self.embeddings.embed([query]))
+        quota = self.config.search.bm25_candidates
+        fetch = self._fetch_count(nodes, quota)
+        commands, positions = [], []
+        rows = [{"ids": []} for _ in queries]
+        for position, query in enumerate(queries):
+            terms = re.findall(r"\w+", normalize_name(query), flags=re.UNICODE)
+            if not terms:
+                continue
+            text_query = "@text:(" + "|".join(terms) + ")"
+            if kinds is not None:
+                text_query = self._kinds(kinds) + " " + text_query
+            positions.append(position)
+            commands.append(
+                (
+                    "FT.SEARCH",
+                    index,
+                    text_query,
+                    "WITHSCORES",
+                    "SCORER",
+                    "BM25STD",
+                    "RETURN",
+                    1,
+                    "identity",
+                    "LIMIT",
+                    0,
+                    fetch,
+                    "TIMEOUT",
+                    0,
+                    "DIALECT",
+                    2,
+                )
+            )
+        if commands:
+            for position, row in zip(positions, await self._ranked(commands), strict=True):
+                rows[position] = {**row, "ids": row["ids"][:quota]}
+        return rows
+
+    async def vector(self, nodes, queries, kinds=None):
+        """Retrieve distinct objects by nearest passage using batched query embeddings."""
+        kinds = search_kinds(kinds)
+        if not queries:
+            return []
+        index = await self._ensure(nodes)
+        quota = self.config.search.vector_candidates
+        fetch = self._fetch_count(nodes, quota)
+        runtime = (
+            f" EF_RUNTIME {max(200, fetch)}"
+            if self._algorithm(len(self._documents_cache)) == "HNSW"
+            else ""
+        )
+        embeddings_task = asyncio.create_task(self.embeddings.embed(queries))
         try:
             await self._ensure_vectors(index, nodes)
-            vector = (await embeddings_task)[0]
-            if len(vector) != self.config.embedding_dimensions:
-                raise ValueError("Query embedding dimensions mismatch")
-            blob = array("f", vector).tobytes()
-            result = await self._redis().execute_command(
-                "FT.SEARCH",
-                index,
-                "(" + self._kind(kind) + ")=>[KNN 12 @vector $query AS distance]",
-                "PARAMS",
-                2,
-                "query",
-                blob,
-                "SORTBY",
-                "distance",
-                "RETURN",
-                1,
-                "identity",
-                "LIMIT",
-                0,
-                12,
-                "TIMEOUT",
-                0,
-                "DIALECT",
-                2,
-            )
-            return self._ids(result)
+            vectors = await embeddings_task
+            if len(vectors) != len(queries) or any(
+                len(vector) != self.config.embedding_dimensions for vector in vectors
+            ):
+                raise ValueError("Query embedding count or dimensions mismatch")
+            commands = [
+                (
+                    "FT.SEARCH",
+                    index + ":vectors",
+                    "("
+                    + self._kinds(kinds)
+                    + f")=>[KNN {fetch} @vector $query{runtime} AS distance]",
+                    "PARAMS",
+                    2,
+                    "query",
+                    array("f", vector).tobytes(),
+                    "SORTBY",
+                    "distance",
+                    "RETURN",
+                    2,
+                    "identity",
+                    "distance",
+                    "LIMIT",
+                    0,
+                    fetch,
+                    "TIMEOUT",
+                    0,
+                    "DIALECT",
+                    2,
+                )
+                for vector in vectors
+            ]
+            return [{**row, "ids": row["ids"][:quota]} for row in await self._ranked(commands)]
         finally:
             if not embeddings_task.done():
                 embeddings_task.cancel()

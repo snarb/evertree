@@ -1,0 +1,637 @@
+{
+  "purpose": "Manual source-checklist audit of second first-article iteration; diagnostic, not benchmark answer accuracy.",
+  "checklist_sha256": "0470cbc0478840737e44385ad859e4f26745fec3a06bda301dbce5517960f9ee",
+  "acquired_snapshot": "tmp/knowledge-graph-routes-v2/acquired.json",
+  "acquired_sha256": "c6517c3cbda3c46762422a228f68bfd6db646fdcd9099415baa960fbce71900a",
+  "production_revision": "eac0ad9c0a1bbfd45e7ccbbac42232794848ebb0bf5cdd9e972a4234a8eeb48d",
+  "counts": {
+    "domain_assertions": 68,
+    "assertions_with_identified_representation_gaps": 31,
+    "graph_kinds_including_bootstrap": {
+      "prototype": 11,
+      "relation_type": 21,
+      "relation_instance": 107,
+      "instance": 40
+    }
+  },
+  "verdict": "Participants and reported product/offer facts are now linked; prose Claims are absent. Numeric values and comparison counterparts are still often buried in strings. One uncertain exact price is unnecessarily weakened to approximately. Empty document headings consumed 62 tool calls in the final section, creating no product facts. Do not equate 107 relation instances with 107 supported domain assertions.",
+  "further_limitations": [
+    "Most electronics use a broad Consumer Electronics class; taxonomy is shallow.",
+    "Nearly all predicates are article-reporting schemas; routes through shared products exist, but usefulness against text-only retrieval remains unmeasured.",
+    "This graph was reviewed with source checklist, not future questions or answer labels."
+  ],
+  "assertions": [
+    {
+      "assertion_id": "sale-01",
+      "supporting_object_ids": [
+        40
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-02",
+      "supporting_object_ids": [
+        40
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-03",
+      "supporting_object_ids": [
+        40
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "relative timing only in description"
+      ]
+    },
+    {
+      "assertion_id": "sale-04",
+      "supporting_object_ids": [
+        40
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-05",
+      "supporting_object_ids": [
+        40,
+        41
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-06",
+      "supporting_object_ids": [
+        41
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "sale-07",
+      "supporting_object_ids": [
+        41
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-01",
+      "supporting_object_ids": [
+        42
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-02",
+      "supporting_object_ids": [
+        42
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-03",
+      "supporting_object_ids": [
+        62
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "Alexa remains a string rather than a shared participant"
+      ]
+    },
+    {
+      "assertion_id": "echo-04",
+      "supporting_object_ids": [
+        62
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "separate supported task bundled into context string"
+      ]
+    },
+    {
+      "assertion_id": "echo-05",
+      "supporting_object_ids": [
+        62
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "separate supported task bundled into context string"
+      ]
+    },
+    {
+      "assertion_id": "echo-06",
+      "supporting_object_ids": [
+        62
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "separate supported task bundled into context string"
+      ]
+    },
+    {
+      "assertion_id": "echo-07",
+      "supporting_object_ids": [
+        63
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "magnitude and unit combined in string"
+      ]
+    },
+    {
+      "assertion_id": "echo-08",
+      "supporting_object_ids": [
+        64
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "echo-09",
+      "supporting_object_ids": [
+        64
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "supported use bundled into comparison context"
+      ]
+    },
+    {
+      "assertion_id": "echo-10",
+      "supporting_object_ids": [
+        64
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "supported use bundled into comparison context"
+      ]
+    },
+    {
+      "assertion_id": "audible-01",
+      "supporting_object_ids": [
+        72
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-02",
+      "supporting_object_ids": [
+        72
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-03",
+      "supporting_object_ids": [
+        72
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-04",
+      "supporting_object_ids": [
+        72
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "reported saving only in description"
+      ]
+    },
+    {
+      "assertion_id": "audible-05",
+      "supporting_object_ids": [
+        72
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "audible-06",
+      "supporting_object_ids": [
+        72
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "mgm-01",
+      "supporting_object_ids": [
+        80
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "all-Fire-TV scope only in text; product role binds one 65-inch TV"
+      ]
+    },
+    {
+      "assertion_id": "mgm-02",
+      "supporting_object_ids": [
+        80
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "mgm-03",
+      "supporting_object_ids": [
+        80
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "free stated in description, without a numeric zero field"
+      ]
+    },
+    {
+      "assertion_id": "mgm-04",
+      "supporting_object_ids": [
+        80
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-01",
+      "supporting_object_ids": [
+        54,
+        66
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-02",
+      "supporting_object_ids": [
+        66
+      ],
+      "meaning_status": "preserved with weakened price comparator",
+      "representation_gaps": [
+        "possibly available exact price weakened to approximately/possibly comparator"
+      ]
+    },
+    {
+      "assertion_id": "ipad-03",
+      "supporting_object_ids": [
+        65
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-04",
+      "supporting_object_ids": [
+        52
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "storage only in participant name, not a numeric fact"
+      ]
+    },
+    {
+      "assertion_id": "ipad-05",
+      "supporting_object_ids": [
+        54
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "storage only in participant name, not a numeric fact"
+      ]
+    },
+    {
+      "assertion_id": "ipad-06",
+      "supporting_object_ids": [
+        68
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "magnitude and unit combined in string"
+      ]
+    },
+    {
+      "assertion_id": "ipad-07",
+      "supporting_object_ids": [
+        67
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "magnitude and unit combined in string"
+      ]
+    },
+    {
+      "assertion_id": "ipad-08",
+      "supporting_object_ids": [
+        68
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-09",
+      "supporting_object_ids": [
+        69
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "ipad-10",
+      "supporting_object_ids": [
+        69
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "ninth-generation comparison counterpart only in text, no participant role"
+      ]
+    },
+    {
+      "assertion_id": "ipad-11",
+      "supporting_object_ids": [
+        70
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-01",
+      "supporting_object_ids": [
+        56
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "screen size only in participant name, not a numeric fact"
+      ]
+    },
+    {
+      "assertion_id": "tv-02",
+      "supporting_object_ids": [
+        78
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-03",
+      "supporting_object_ids": [
+        77
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "magnitude and unit combined in string"
+      ]
+    },
+    {
+      "assertion_id": "tv-04",
+      "supporting_object_ids": [
+        73
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-05",
+      "supporting_object_ids": [
+        74
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-06",
+      "supporting_object_ids": [
+        75
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "tv-07",
+      "supporting_object_ids": [
+        76
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "Alexa remains a string rather than a shared participant"
+      ]
+    },
+    {
+      "assertion_id": "surface-01",
+      "supporting_object_ids": [
+        89
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-02",
+      "supporting_object_ids": [
+        89
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "discount only in editorial string"
+      ]
+    },
+    {
+      "assertion_id": "surface-03",
+      "supporting_object_ids": [
+        81,
+        89
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "model year only in description/timing string"
+      ]
+    },
+    {
+      "assertion_id": "surface-04",
+      "supporting_object_ids": [
+        105
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-05",
+      "supporting_object_ids": [
+        91
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-06",
+      "supporting_object_ids": [
+        91
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "processor generation combined into string"
+      ]
+    },
+    {
+      "assertion_id": "surface-07",
+      "supporting_object_ids": [
+        93
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "processor generation combined into string"
+      ]
+    },
+    {
+      "assertion_id": "surface-08",
+      "supporting_object_ids": [
+        92,
+        106
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-09",
+      "supporting_object_ids": [
+        90
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "surface-10",
+      "supporting_object_ids": [
+        91
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "compared Go 2 named only in feature context; separate price comparison does link it"
+      ]
+    },
+    {
+      "assertion_id": "bose-01",
+      "supporting_object_ids": [
+        94
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-02",
+      "supporting_object_ids": [
+        94
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-03",
+      "supporting_object_ids": [
+        85,
+        94
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-04",
+      "supporting_object_ids": [
+        94
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-05",
+      "supporting_object_ids": [
+        95
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "bose-06",
+      "supporting_object_ids": [
+        96
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "magnitude and unit combined in string"
+      ]
+    },
+    {
+      "assertion_id": "bose-07",
+      "supporting_object_ids": [
+        102
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "quest-01",
+      "supporting_object_ids": [
+        98
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "quest-02",
+      "supporting_object_ids": [
+        98
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "comparison price only in price_comparison string"
+      ]
+    },
+    {
+      "assertion_id": "quest-03",
+      "supporting_object_ids": [
+        98
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "saving only in price_comparison string"
+      ]
+    },
+    {
+      "assertion_id": "quest-04",
+      "supporting_object_ids": [
+        98
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "credit only in deal_timing string"
+      ]
+    },
+    {
+      "assertion_id": "quest-05",
+      "supporting_object_ids": [
+        98
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "required code only in deal_timing string, correctly scoped to credit"
+      ]
+    },
+    {
+      "assertion_id": "quest-06",
+      "supporting_object_ids": [
+        98,
+        46
+      ],
+      "meaning_status": "preserved in graph card text or fields",
+      "representation_gaps": [
+        "fire marker and legend require interpretation, no direct all-time-low value"
+      ]
+    }
+  ]
+}

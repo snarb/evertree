@@ -1,0 +1,2169 @@
+{
+  "notice": "Fresh derived index, Jev disabled, cached embeddings only; these are diagnostic replay ranks, not recovered historical ranks. All questions were already observed. Original misses remain preserved.",
+  "manifest": {
+    "implementation_sha256": "359dcf42cc2d15715e6f099bbf44032d665edf91068dfda234be3ed0c8658bff",
+    "seed": 20261021,
+    "dataset": {
+      "origin": {
+        "repository": "https://github.com/yixuantt/MultiHop-RAG",
+        "dataset": "https://huggingface.co/datasets/yixuantt/MultiHopRAG",
+        "revision": "71ac0d0bd1f951d2d6b70311f7d2ae404e1ffa82",
+        "files": {
+          "corpus.json": {
+            "url": "https://huggingface.co/datasets/yixuantt/MultiHopRAG/resolve/71ac0d0bd1f951d2d6b70311f7d2ae404e1ffa82/corpus.json",
+            "sha256": "20b61b5ab84de84a927420c5d265b7ec8d859ae49980699958a787ade9e4d28f",
+            "bytes": 6785567,
+            "rows": 609
+          },
+          "MultiHopRAG.json": {
+            "url": "https://huggingface.co/datasets/yixuantt/MultiHopRAG/resolve/71ac0d0bd1f951d2d6b70311f7d2ae404e1ffa82/MultiHopRAG.json",
+            "sha256": "03cfb4926461f868684903aadc8024447bdda5bb3f6804741424cce338515bff",
+            "bytes": 5171312,
+            "rows": 2556
+          }
+        }
+      },
+      "original_question_indices": [
+        4,
+        7,
+        11,
+        19,
+        21,
+        25,
+        36,
+        41,
+        52,
+        55,
+        56,
+        57,
+        58,
+        60,
+        62,
+        67,
+        71,
+        72,
+        73,
+        74,
+        79,
+        81,
+        84,
+        87,
+        94,
+        95,
+        98,
+        99,
+        111,
+        132,
+        136,
+        140,
+        144,
+        145,
+        156,
+        157,
+        165,
+        170,
+        171,
+        174,
+        175,
+        176,
+        180,
+        182,
+        186,
+        190,
+        200,
+        212,
+        214,
+        216,
+        220,
+        221,
+        228,
+        230,
+        238,
+        240,
+        244,
+        245,
+        246,
+        248,
+        249,
+        255,
+        257,
+        258,
+        260,
+        261,
+        264,
+        271,
+        272,
+        278,
+        279,
+        280,
+        282,
+        295,
+        296,
+        299,
+        301,
+        307,
+        308,
+        312,
+        313,
+        315,
+        317,
+        322,
+        329,
+        335,
+        343,
+        351,
+        353,
+        366,
+        368,
+        370,
+        372,
+        373,
+        376,
+        377,
+        378,
+        381,
+        385,
+        391,
+        398,
+        400,
+        403,
+        410,
+        411,
+        418,
+        423,
+        424,
+        425,
+        428,
+        435,
+        437,
+        438,
+        440,
+        443,
+        445,
+        447,
+        451,
+        452,
+        459,
+        466,
+        476,
+        481,
+        495,
+        500,
+        504,
+        519,
+        523,
+        529,
+        530,
+        533,
+        534,
+        542,
+        548,
+        550,
+        552,
+        555,
+        560,
+        561,
+        562,
+        565,
+        574,
+        575,
+        582,
+        583,
+        588,
+        590,
+        592,
+        599,
+        601,
+        605,
+        606,
+        607,
+        608,
+        609,
+        615,
+        617,
+        620,
+        626,
+        628,
+        629,
+        635,
+        637,
+        640,
+        641,
+        644,
+        645,
+        659,
+        682,
+        686,
+        692,
+        694,
+        695,
+        699,
+        701,
+        702,
+        707,
+        715,
+        717,
+        719,
+        722,
+        723,
+        724,
+        725,
+        730,
+        735,
+        737,
+        743,
+        747,
+        750,
+        755,
+        766,
+        771,
+        775,
+        784,
+        787,
+        792,
+        793,
+        794,
+        799,
+        800,
+        802,
+        807,
+        809,
+        811,
+        814,
+        817,
+        821,
+        828,
+        832,
+        833,
+        836,
+        840,
+        841,
+        849,
+        851,
+        853,
+        857,
+        859,
+        863,
+        865,
+        868,
+        872,
+        877,
+        888,
+        899,
+        906,
+        907,
+        914,
+        915,
+        917,
+        926,
+        932,
+        933,
+        934,
+        939,
+        941,
+        945,
+        948,
+        949,
+        951,
+        952,
+        958,
+        960,
+        964,
+        968,
+        976,
+        977,
+        979,
+        980,
+        986,
+        987,
+        989,
+        992,
+        1000,
+        1003,
+        1005,
+        1010,
+        1013,
+        1016,
+        1020,
+        1027,
+        1029,
+        1033,
+        1057,
+        1060,
+        1064,
+        1065,
+        1069,
+        1079,
+        1086,
+        1091,
+        1092,
+        1097,
+        1101,
+        1102,
+        1109,
+        1110,
+        1123,
+        1136,
+        1148,
+        1150,
+        1157,
+        1169,
+        1174,
+        1175,
+        1179,
+        1180,
+        1184,
+        1201,
+        1211,
+        1215,
+        1216,
+        1219,
+        1230,
+        1231,
+        1233,
+        1243,
+        1246,
+        1249,
+        1253,
+        1255,
+        1260,
+        1261,
+        1262,
+        1269,
+        1273,
+        1274,
+        1277,
+        1284,
+        1287,
+        1295,
+        1296,
+        1298,
+        1299,
+        1302,
+        1310,
+        1317,
+        1319,
+        1320,
+        1331,
+        1337,
+        1340,
+        1353,
+        1355,
+        1365,
+        1367,
+        1369,
+        1371,
+        1375,
+        1388,
+        1389,
+        1390,
+        1392,
+        1393,
+        1395,
+        1397,
+        1400,
+        1402,
+        1403,
+        1407,
+        1409,
+        1411,
+        1414,
+        1419,
+        1420,
+        1426,
+        1430,
+        1435,
+        1437,
+        1440,
+        1443,
+        1448,
+        1449,
+        1452,
+        1455,
+        1458,
+        1459,
+        1463,
+        1470,
+        1473,
+        1478,
+        1483,
+        1491,
+        1492,
+        1498,
+        1501,
+        1504,
+        1507,
+        1509,
+        1523,
+        1524,
+        1525,
+        1526,
+        1527,
+        1536,
+        1539,
+        1546,
+        1551,
+        1552,
+        1554,
+        1556,
+        1563,
+        1564,
+        1565,
+        1567,
+        1568,
+        1572,
+        1573,
+        1574,
+        1580,
+        1582,
+        1587,
+        1593,
+        1600,
+        1605,
+        1606,
+        1612,
+        1613,
+        1617,
+        1628,
+        1630,
+        1636,
+        1637,
+        1658,
+        1675,
+        1677,
+        1690,
+        1691,
+        1697,
+        1698,
+        1703,
+        1708,
+        1713,
+        1715,
+        1721,
+        1722,
+        1723,
+        1729,
+        1731,
+        1736,
+        1741,
+        1754,
+        1759,
+        1766,
+        1774,
+        1780,
+        1783,
+        1784,
+        1787,
+        1791,
+        1792,
+        1798,
+        1801,
+        1803,
+        1805,
+        1806,
+        1822,
+        1825,
+        1837,
+        1840,
+        1850,
+        1855,
+        1858,
+        1869,
+        1874,
+        1877,
+        1881,
+        1883,
+        1895,
+        1897,
+        1905,
+        1909,
+        1912,
+        1918,
+        1924,
+        1926,
+        1930,
+        1936,
+        1944,
+        1946,
+        1948,
+        1950,
+        1953,
+        1960,
+        1966,
+        1967,
+        1969,
+        1970,
+        1972,
+        1973,
+        1978,
+        1979,
+        1984,
+        1988,
+        1989,
+        1990,
+        1992,
+        1994,
+        1996,
+        2001,
+        2019,
+        2020,
+        2030,
+        2033,
+        2036,
+        2039,
+        2044,
+        2045,
+        2051,
+        2055,
+        2058,
+        2059,
+        2060,
+        2061,
+        2062,
+        2063,
+        2069,
+        2075,
+        2076,
+        2082,
+        2084,
+        2095,
+        2098,
+        2100,
+        2102,
+        2107,
+        2114,
+        2117,
+        2119,
+        2124,
+        2126,
+        2130,
+        2131,
+        2136,
+        2139,
+        2144,
+        2147,
+        2153,
+        2158,
+        2163,
+        2167,
+        2170,
+        2180,
+        2184,
+        2188,
+        2189,
+        2197,
+        2201,
+        2206,
+        2209,
+        2210,
+        2215,
+        2217,
+        2226,
+        2228,
+        2230,
+        2237,
+        2238,
+        2253,
+        2254,
+        2259,
+        2262,
+        2264,
+        2268,
+        2269,
+        2274,
+        2276,
+        2281,
+        2282,
+        2289,
+        2295,
+        2311,
+        2317,
+        2327,
+        2329,
+        2330,
+        2334,
+        2339,
+        2340,
+        2348,
+        2355,
+        2356,
+        2369,
+        2371,
+        2377,
+        2379,
+        2380,
+        2385,
+        2387,
+        2388,
+        2390,
+        2391,
+        2394,
+        2395,
+        2405,
+        2408,
+        2424,
+        2426,
+        2431,
+        2448,
+        2452,
+        2461,
+        2464,
+        2468,
+        2481,
+        2482,
+        2484,
+        2496,
+        2497,
+        2498,
+        2500,
+        2501,
+        2503,
+        2507,
+        2508,
+        2511,
+        2513,
+        2514,
+        2515,
+        2520,
+        2528,
+        2531,
+        2533,
+        2535,
+        2536,
+        2543,
+        2548,
+        2553
+      ],
+      "files": {
+        "articles.json": {
+          "sha256": "65c9522175e0de5a20416f189538341aa8148845dddcc7dab8d8a50e24a1103c",
+          "rows": 253
+        },
+        "questions.json": {
+          "sha256": "8b85fd0b0aa7ccad1926359a3d880c249ceb02f07d7b49ca9b5978e7267211d1",
+          "rows": 609
+        }
+      },
+      "coverage": {
+        "articles": 253,
+        "questions": 609,
+        "question_types": {
+          "inference_query": 106,
+          "comparison_query": 334,
+          "temporal_query": 169
+        },
+        "evidence_count": 1410,
+        "distinct_sources_per_question": {
+          "2": 481,
+          "3": 95,
+          "4": 33
+        },
+        "missing_sources": [],
+        "nonliteral_facts": [],
+        "empty_bodies": []
+      }
+    },
+    "question_indices": [
+      209
+    ],
+    "original_question_indices": [
+      832
+    ],
+    "excluded_query_count": 0,
+    "exclusion_files_sha256": {},
+    "category_distractors": 0,
+    "node_count": 253,
+    "protocol": "Original complete labels and records from a fingerprint-checked restored dataset. Gold/answer fields never enter graph cards. Optional original category distractors are retained. Null queries remain distinct rather than collapsing all empty gold groups together."
+  },
+  "cases": [
+    {
+      "index": 200,
+      "question": "Does 'The Guardian' describe 'the match' as a showcase of equal financial power between teams, while 'CBSSports.com' focuses on the current performance of the 'Dallas team' without mentioning their financial status?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.cbssports.com/nfl/news/priscos-week-12-nfl-picks-jaguars-beat-texans-in-afc-south-battle-saints-get-key-divisional-win-vs-falcons/",
+          "title": "Prisco's Week 12 NFL picks: Jaguars beat Texans in AFC South battle, Saints get key divisional win vs. Falcons",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "The Commanders are coming off a dud last week against the Giants, while Dallas is flying high."
+          ]
+        },
+        {
+          "url": "https://www.theguardian.com/football/2023/nov/01/chelsea-blackburn-carabao-cup-fourth-round-match-report",
+          "title": "Chelsea secure last-eight spot after Raheem Sterling sinks Blackburn",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "“It was the millionaires of the Premier League against the youngsters of the Championship,” reflected the former Denmark forward."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Does 'The Guardian' describe 'the match' as a showcase of equal financial power between teams, while 'CBSSports.com' focuses on the current performance of the 'Dallas team' without mentioning their financial status?",
+          "gold": [
+            {
+              "title": "Prisco's Week 12 NFL picks: Jaguars beat Texans in AFC South battle, Saints get key divisional win vs. Falcons",
+              "url": "https://www.cbssports.com/nfl/news/priscos-week-12-nfl-picks-jaguars-beat-texans-in-afc-south-battle-saints-get-key-divisional-win-vs-falcons/",
+              "bm25_rank": 14,
+              "vector_rank": null,
+              "fused_rank": 36,
+              "rrf": 0.013513513513513514
+            },
+            {
+              "title": "Chelsea secure last-eight spot after Raheem Sterling sinks Blackburn",
+              "url": "https://www.theguardian.com/football/2023/nov/01/chelsea-blackburn-carabao-cup-fourth-round-match-report",
+              "bm25_rank": null,
+              "vector_rank": 25,
+              "fused_rank": 52,
+              "rrf": 0.011764705882352941
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Christmas Day preview: 49ers, Ravens square off in potential Super Bowl sneak peek",
+              "bm25_rank": 2,
+              "vector_rank": 28,
+              "rrf": 0.02749266862170088
+            },
+            {
+              "title": "Everton players and fans will be fired up by points penalty, asserts Sean Dyche",
+              "bm25_rank": 1,
+              "vector_rank": 31,
+              "rrf": 0.02738245361196181
+            },
+            {
+              "title": "Cowboys vs. 49ers live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "bm25_rank": 22,
+              "vector_rank": 8,
+              "rrf": 0.02690100430416069
+            },
+            {
+              "title": "How U.S. Women’s Soccer Team Lured Emma Hayes Away From Chelsea",
+              "bm25_rank": 15,
+              "vector_rank": 16,
+              "rrf": 0.02649122807017544
+            },
+            {
+              "title": "Ten Hag demands both positivity and pragmatism from erratic Onana",
+              "bm25_rank": 33,
+              "vector_rank": 5,
+              "rrf": 0.026137303556658397
+            },
+            {
+              "title": "Ange aghast as Spurs suffer ‘unbelievable’ West Ham turnaround – with two of the worst goals you’ll see",
+              "bm25_rank": 4,
+              "vector_rank": 38,
+              "rrf": 0.02582908163265306
+            },
+            {
+              "title": "Man United vs Chelsea head to head record, all-time results between Premier League giants",
+              "bm25_rank": 54,
+              "vector_rank": 2,
+              "rrf": 0.02490096208262592
+            },
+            {
+              "title": "Liverpool enjoy home comforts but Dyche’s Everton offer derby danger | Andy Hunter",
+              "bm25_rank": 31,
+              "vector_rank": 12,
+              "rrf": 0.02487789987789988
+            },
+            {
+              "title": "Inter Miami friendly matches for 2024 preseason: Lionel Messi to play Newell's Old Boys, China tour cancelled",
+              "bm25_rank": 10,
+              "vector_rank": 39,
+              "rrf": 0.024386724386724387
+            },
+            {
+              "title": "Fantasy Football Week 13 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 19,
+              "vector_rank": 46,
+              "rrf": 0.02209219011225221
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 407,
+      "question": "After the report by CBSSports.com on October 12, 2023, indicating a rumored romance between Taylor Swift and Travis Kelce, and the subsequent report by The Independent - Life and Style on December 6, 2023, discussing Taylor Swift's openness about her relationship with Travis Kelce, was there a change in the reporting of the nature of their relationship?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.foxnews.com/lifestyle/young-taylor-swift-fans-go-viral-struggling-open-stars-cd-making-me-laugh",
+          "title": "Young Taylor Swift fans go viral for struggling to open the star's CD: 'Making me laugh'",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "Since it was uploaded, the video has garnered over 2.7 million views and 5,952 comments — one written by Taylor Swift herself."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "After the report by CBSSports.com on October 12, 2023, indicating a rumored romance between Taylor Swift and Travis Kelce, and the subsequent report by The Independent - Life and Style on December 6, 2023, discussing Taylor Swift's openness about her relationship with Travis Kelce, was there a change in the reporting of the nature of their relationship?",
+          "gold": [
+            {
+              "title": "Young Taylor Swift fans go viral for struggling to open the star's CD: 'Making me laugh'",
+              "url": "https://www.foxnews.com/lifestyle/young-taylor-swift-fans-go-viral-struggling-open-stars-cd-making-me-laugh",
+              "bm25_rank": 34,
+              "vector_rank": 13,
+              "fused_rank": 19,
+              "rrf": 0.024336928009326728
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Taylor Swift-Travis Kelce timeline: Everything to know about rumored romance between pop star, Chiefs TE",
+              "bm25_rank": 1,
+              "vector_rank": 1,
+              "rrf": 0.03278688524590164
+            },
+            {
+              "title": "Taylor Swift reveals secret start to her relationship with Travis Kelce",
+              "bm25_rank": 2,
+              "vector_rank": 2,
+              "rrf": 0.03225806451612903
+            },
+            {
+              "title": "Travis Kelce faces backlash after comments about ‘finding a breeder’ resurface amid Taylor Swift romance",
+              "bm25_rank": 4,
+              "vector_rank": 4,
+              "rrf": 0.03125
+            },
+            {
+              "title": "Fans spot Travis Kelce wearing Taylor Swift-themed friendship bracelet before she attended his game",
+              "bm25_rank": 7,
+              "vector_rank": 3,
+              "rrf": 0.030798389007344232
+            },
+            {
+              "title": "Taylor Swift is Time’s Person of the Year",
+              "bm25_rank": 3,
+              "vector_rank": 7,
+              "rrf": 0.030798389007344232
+            },
+            {
+              "title": "Travis Kelce says he tried to delete his ‘nonsense’ tweets before they went viral",
+              "bm25_rank": 6,
+              "vector_rank": 6,
+              "rrf": 0.030303030303030304
+            },
+            {
+              "title": "When pop culture and sport collide: A timeline of Taylor Swift’s NFL takeover",
+              "bm25_rank": 8,
+              "vector_rank": 5,
+              "rrf": 0.030090497737556562
+            },
+            {
+              "title": "Is the Coverage on Taylor Swift and Travis Kelce’s Romance Nothing but Hype or a Pivotal Shift in NFL’s Century-Old Game Plan Towards Global Recognition?",
+              "bm25_rank": 5,
+              "vector_rank": 8,
+              "rrf": 0.030090497737556562
+            },
+            {
+              "title": "FanDuel 'Prop Stars' Picks: Best bets for Travis Kelce & Taylor Swift-inspired props for Chiefs-Jets Week 4",
+              "bm25_rank": 9,
+              "vector_rank": 9,
+              "rrf": 0.028985507246376812
+            },
+            {
+              "title": "Chiefs vs. Packers live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "bm25_rank": 10,
+              "vector_rank": 11,
+              "rrf": 0.028370221327967807
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 574,
+      "question": "Which public figure engaged in a rumored romance with a Chiefs TE, who made a friendship bracelet as a gesture of interest, commented on a viral TikTok video about fans struggling with her CD, and has been recognized by Time’s Person of the Year while also experiencing major events privately without media awareness, as reported by sources including FOX News - Lifestyle, CBSSports.com, BBC News - Entertainment & Arts, and The Independent - Life and Style?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.bbc.co.uk/news/entertainment-arts-66910595?at_medium=RSS&at_campaign=KARANGA",
+          "title": "Taylor Swift's 1989: The stories behind her biggest album",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "\"It was almost like this very strange, subtle clue to the media that they don't know everything that happened in that relationship, and I can have something really major and traumatic happen to me and they don't know about it,\" she told NPR."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Which public figure engaged in a rumored romance with a Chiefs TE, who made a friendship bracelet as a gesture of interest, commented on a viral TikTok video about fans struggling with her CD, and has been recognized by Time’s Person of the Year while also experiencing major events privately without media awareness, as reported by sources including FOX News - Lifestyle, CBSSports.com, BBC News - Entertainment & Arts, and The Independent - Life and Style?",
+          "gold": [
+            {
+              "title": "Taylor Swift's 1989: The stories behind her biggest album",
+              "url": "https://www.bbc.co.uk/news/entertainment-arts-66910595?at_medium=RSS&at_campaign=KARANGA",
+              "bm25_rank": 9,
+              "vector_rank": 35,
+              "fused_rank": 12,
+              "rrf": 0.02501906941266209
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Fans spot Travis Kelce wearing Taylor Swift-themed friendship bracelet before she attended his game",
+              "bm25_rank": 1,
+              "vector_rank": 2,
+              "rrf": 0.03252247488101534
+            },
+            {
+              "title": "Taylor Swift-Travis Kelce timeline: Everything to know about rumored romance between pop star, Chiefs TE",
+              "bm25_rank": 3,
+              "vector_rank": 1,
+              "rrf": 0.032266458495966696
+            },
+            {
+              "title": "Taylor Swift reveals secret start to her relationship with Travis Kelce",
+              "bm25_rank": 4,
+              "vector_rank": 3,
+              "rrf": 0.03149801587301587
+            },
+            {
+              "title": "Taylor Swift is Time’s Person of the Year",
+              "bm25_rank": 6,
+              "vector_rank": 5,
+              "rrf": 0.030536130536130537
+            },
+            {
+              "title": "Young Taylor Swift fans go viral for struggling to open the star's CD: 'Making me laugh'",
+              "bm25_rank": 2,
+              "vector_rank": 11,
+              "rrf": 0.03021353930031804
+            },
+            {
+              "title": "Travis Kelce faces backlash after comments about ‘finding a breeder’ resurface amid Taylor Swift romance",
+              "bm25_rank": 5,
+              "vector_rank": 8,
+              "rrf": 0.030090497737556562
+            },
+            {
+              "title": "Travis Kelce says he tried to delete his ‘nonsense’ tweets before they went viral",
+              "bm25_rank": 8,
+              "vector_rank": 7,
+              "rrf": 0.029631255487269532
+            },
+            {
+              "title": "When pop culture and sport collide: A timeline of Taylor Swift’s NFL takeover",
+              "bm25_rank": 12,
+              "vector_rank": 4,
+              "rrf": 0.029513888888888888
+            },
+            {
+              "title": "Is the Coverage on Taylor Swift and Travis Kelce’s Romance Nothing but Hype or a Pivotal Shift in NFL’s Century-Old Game Plan Towards Global Recognition?",
+              "bm25_rank": 10,
+              "vector_rank": 6,
+              "rrf": 0.029437229437229435
+            },
+            {
+              "title": "From Justin Timberlake to Sam Asghari: A timeline of Britney Spears’ relationships",
+              "bm25_rank": 7,
+              "vector_rank": 10,
+              "rrf": 0.029211087420042643
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 573,
+      "question": "Which NFL quarterback, featured in articles from Sporting News, Sportskeeda, and CBSSports.com, threw four touchdowns against the Cowboys, has accumulated significant fantasy points over recent games, boasts an undefeated start to the season, but struggles with a decreased completion rate and yards per attempt when under pressure?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.sportingnews.com/us/fantasy/news/dfs-picks-week-15-draftkings-fanduel-sleepers-value-lineup/49b050404a7a45697029c296",
+          "title": "NFL DFS picks Week 15: Best sleepers, value players for FanDuel, DraftKings, SuperDraft lineups",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "Purdy has been scorching, with 57.9 DK points over San Francisco's past two games and at least 23.8 in five of the Niners' past six."
+          ]
+        },
+        {
+          "url": "https://www.sportskeeda.com/nfl/why-brock-purdy-called-mr-irrelevant-story-behind-49ers-qb-s-nickname-explained",
+          "title": "Why is Brock Purdy called Mr. Irrelevant? Story behind 49ers QB's nickname explained",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "So far, Purdy has started the 2023 NFL season where he left off, opening the season with a 5-0 record."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Which NFL quarterback, featured in articles from Sporting News, Sportskeeda, and CBSSports.com, threw four touchdowns against the Cowboys, has accumulated significant fantasy points over recent games, boasts an undefeated start to the season, but struggles with a decreased completion rate and yards per attempt when under pressure?",
+          "gold": [
+            {
+              "title": "NFL DFS picks Week 15: Best sleepers, value players for FanDuel, DraftKings, SuperDraft lineups",
+              "url": "https://www.sportingnews.com/us/fantasy/news/dfs-picks-week-15-draftkings-fanduel-sleepers-value-lineup/49b050404a7a45697029c296",
+              "bm25_rank": 63,
+              "vector_rank": 9,
+              "fused_rank": 29,
+              "rrf": 0.022622834924001415
+            },
+            {
+              "title": "Why is Brock Purdy called Mr. Irrelevant? Story behind 49ers QB's nickname explained",
+              "url": "https://www.sportskeeda.com/nfl/why-brock-purdy-called-mr-irrelevant-story-behind-49ers-qb-s-nickname-explained",
+              "bm25_rank": 50,
+              "vector_rank": 11,
+              "fused_rank": 25,
+              "rrf": 0.02317541613316261
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "NFL Fantasy Football Week 5 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 1,
+              "vector_rank": 2,
+              "rrf": 0.03252247488101534
+            },
+            {
+              "title": "NFL Fantasy Football Week 6 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 2,
+              "vector_rank": 3,
+              "rrf": 0.03200204813108039
+            },
+            {
+              "title": "Fantasy Football Week 13 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 3,
+              "vector_rank": 8,
+              "rrf": 0.03057889822595705
+            },
+            {
+              "title": "Christmas Day preview: 49ers, Ravens square off in potential Super Bowl sneak peek",
+              "bm25_rank": 6,
+              "vector_rank": 10,
+              "rrf": 0.029437229437229435
+            },
+            {
+              "title": "Baker Mayfield stats today: Buccaneers QB keeps Tampa Bay atop NFC South with sparkling showing vs. Packers",
+              "bm25_rank": 16,
+              "vector_rank": 4,
+              "rrf": 0.028782894736842105
+            },
+            {
+              "title": "Seahawks-Cowboys Fantasy Start 'Em Sit 'Em Week 13: Should you start Zach Charbonnet, Jake Ferguson on TNF?",
+              "bm25_rank": 4,
+              "vector_rank": 18,
+              "rrf": 0.02844551282051282
+            },
+            {
+              "title": "MVPs for all 16 AFC teams at the midpoint",
+              "bm25_rank": 18,
+              "vector_rank": 5,
+              "rrf": 0.028205128205128206
+            },
+            {
+              "title": "Hottest seat on each NFC team: Buns burning for these four head coaches",
+              "bm25_rank": 13,
+              "vector_rank": 12,
+              "rrf": 0.02758751902587519
+            },
+            {
+              "title": "NFL roundup: Pats hit new low as Lions reach 9-3 for first time since 1962",
+              "bm25_rank": 19,
+              "vector_rank": 7,
+              "rrf": 0.027583600982429624
+            },
+            {
+              "title": "Cowboys vs. 49ers live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "bm25_rank": 5,
+              "vector_rank": 22,
+              "rrf": 0.027579737335834898
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 213,
+      "question": "After the Sporting News report on December 12, 2023, stating that Manchester United are out of European competitions, did The Guardian's report on the same day maintain consistency regarding the performance and future outlook of Manchester United?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.sportingnews.com/us/soccer/news/champions-league-permutations-scenarios-teams-groups-round-16/6a97ebef38a68bc175d441c5",
+          "title": "Champions League permutations, scenarios: What teams need to qualify from groups for 2023/24 Round of 16 stage",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "Manchester United are out of Europe altogether after a limp display against Bayern at Old Trafford, where Kingsley Coman sealed a 1-0 win for Thomas Tuchel's side."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "After the Sporting News report on December 12, 2023, stating that Manchester United are out of European competitions, did The Guardian's report on the same day maintain consistency regarding the performance and future outlook of Manchester United?",
+          "gold": [
+            {
+              "title": "Champions League permutations, scenarios: What teams need to qualify from groups for 2023/24 Round of 16 stage",
+              "url": "https://www.sportingnews.com/us/soccer/news/champions-league-permutations-scenarios-teams-groups-round-16/6a97ebef38a68bc175d441c5",
+              "bm25_rank": 8,
+              "vector_rank": 13,
+              "fused_rank": 12,
+              "rrf": 0.028404512489927477
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "From Ten Hag’s future to a leaking roof: Ratcliffe’s Manchester United in-tray",
+              "bm25_rank": 2,
+              "vector_rank": 4,
+              "rrf": 0.031754032258064516
+            },
+            {
+              "title": "Manchester divided as ten Hag pressure mounts after United Hammered, Ange-ball pays off again as Spurs sink Everton",
+              "bm25_rank": 1,
+              "vector_rank": 6,
+              "rrf": 0.031544957774465976
+            },
+            {
+              "title": "Erik ten Hag could pay the price for Manchester United’s incompetent Champions League campaign",
+              "bm25_rank": 10,
+              "vector_rank": 2,
+              "rrf": 0.0304147465437788
+            },
+            {
+              "title": "Manchester United out of Europe after defeat to Bayern Munich",
+              "bm25_rank": 9,
+              "vector_rank": 3,
+              "rrf": 0.03036576949620428
+            },
+            {
+              "title": "Ten Hag’s Manchester United stand up and die at club stuck in the past tense | Barney Ronay",
+              "bm25_rank": 13,
+              "vector_rank": 1,
+              "rrf": 0.03009207275993712
+            },
+            {
+              "title": "Ten Hag demands both positivity and pragmatism from erratic Onana",
+              "bm25_rank": 5,
+              "vector_rank": 8,
+              "rrf": 0.030090497737556562
+            },
+            {
+              "title": "Man United vs Chelsea head to head record, all-time results between Premier League giants",
+              "bm25_rank": 3,
+              "vector_rank": 12,
+              "rrf": 0.02976190476190476
+            },
+            {
+              "title": "Man United next manager: Assessing candidates to replace Erik ten Hag if Red Devils sack Dutch boss",
+              "bm25_rank": 7,
+              "vector_rank": 9,
+              "rrf": 0.029418126757516764
+            },
+            {
+              "title": "Man United vs Chelsea final score, result and highlights as Scott McTominay brace gives Ten Hag vital win",
+              "bm25_rank": 6,
+              "vector_rank": 11,
+              "rrf": 0.029236022193768675
+            },
+            {
+              "title": "Paul Mitchell signed Tottenham and Chelsea superstars, fell out with Daniel Levy and has tailor-made plan for Manchester United",
+              "bm25_rank": 4,
+              "vector_rank": 15,
+              "rrf": 0.028958333333333336
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 528,
+      "question": "Which celebrity, known for experiencing significant events away from media scrutiny, was recognized by 'The Independent - Life and Style' as Time's Person of the Year, has been rumored to be romantically linked with a Chiefs TE according to 'CBSSports.com', and was also spotted supporting at Arrowhead Stadium as reported by 'The Age'?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.bbc.co.uk/news/entertainment-arts-66910595?at_medium=RSS&at_campaign=KARANGA",
+          "title": "Taylor Swift's 1989: The stories behind her biggest album",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "\"It was almost like this very strange, subtle clue to the media that they don't know everything that happened in that relationship, and I can have something really major and traumatic happen to me and they don't know about it,\" she told NPR."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Which celebrity, known for experiencing significant events away from media scrutiny, was recognized by 'The Independent - Life and Style' as Time's Person of the Year, has been rumored to be romantically linked with a Chiefs TE according to 'CBSSports.com', and was also spotted supporting at Arrowhead Stadium as reported by 'The Age'?",
+          "gold": [
+            {
+              "title": "Taylor Swift's 1989: The stories behind her biggest album",
+              "url": "https://www.bbc.co.uk/news/entertainment-arts-66910595?at_medium=RSS&at_campaign=KARANGA",
+              "bm25_rank": 43,
+              "vector_rank": 48,
+              "fused_rank": 18,
+              "rrf": 0.018967997123336928
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Taylor Swift-Travis Kelce timeline: Everything to know about rumored romance between pop star, Chiefs TE",
+              "bm25_rank": 2,
+              "vector_rank": 1,
+              "rrf": 0.03252247488101534
+            },
+            {
+              "title": "Fans spot Travis Kelce wearing Taylor Swift-themed friendship bracelet before she attended his game",
+              "bm25_rank": 1,
+              "vector_rank": 3,
+              "rrf": 0.032266458495966696
+            },
+            {
+              "title": "Taylor Swift reveals secret start to her relationship with Travis Kelce",
+              "bm25_rank": 4,
+              "vector_rank": 2,
+              "rrf": 0.031754032258064516
+            },
+            {
+              "title": "Travis Kelce says he tried to delete his ‘nonsense’ tweets before they went viral",
+              "bm25_rank": 3,
+              "vector_rank": 6,
+              "rrf": 0.031024531024531024
+            },
+            {
+              "title": "When pop culture and sport collide: A timeline of Taylor Swift’s NFL takeover",
+              "bm25_rank": 6,
+              "vector_rank": 4,
+              "rrf": 0.030776515151515152
+            },
+            {
+              "title": "Taylor Swift is Time’s Person of the Year",
+              "bm25_rank": 5,
+              "vector_rank": 5,
+              "rrf": 0.03076923076923077
+            },
+            {
+              "title": "Travis Kelce faces backlash after comments about ‘finding a breeder’ resurface amid Taylor Swift romance",
+              "bm25_rank": 7,
+              "vector_rank": 9,
+              "rrf": 0.029418126757516764
+            },
+            {
+              "title": "From Justin Timberlake to Sam Asghari: A timeline of Britney Spears’ relationships",
+              "bm25_rank": 8,
+              "vector_rank": 13,
+              "rrf": 0.028404512489927477
+            },
+            {
+              "title": "FanDuel 'Prop Stars' Picks: Best bets for Travis Kelce & Taylor Swift-inspired props for Chiefs-Jets Week 4",
+              "bm25_rank": 13,
+              "vector_rank": 8,
+              "rrf": 0.028404512489927477
+            },
+            {
+              "title": "Is the Coverage on Taylor Swift and Travis Kelce’s Romance Nothing but Hype or a Pivotal Shift in NFL’s Century-Old Game Plan Towards Global Recognition?",
+              "bm25_rank": 20,
+              "vector_rank": 7,
+              "rrf": 0.027425373134328357
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 175,
+      "question": "Which NFL team, featured in both CBSSports.com and Sporting News articles, has recently adjusted their offensive strategy by decreasing their passing play percentage and has seen similar offensive results with a new quarterback as they did with their previous one, thanks to contributions from their running game and defense?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.cbssports.com/fantasy/football/news/nfl-fantasy-football-week-5-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+          "title": "NFL Fantasy Football Week 5 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "Week 4 was the first time all year the Vikings DIDN'T throw the ball on at least 69% of their snaps."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Which NFL team, featured in both CBSSports.com and Sporting News articles, has recently adjusted their offensive strategy by decreasing their passing play percentage and has seen similar offensive results with a new quarterback as they did with their previous one, thanks to contributions from their running game and defense?",
+          "gold": [
+            {
+              "title": "NFL Fantasy Football Week 5 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "url": "https://www.cbssports.com/fantasy/football/news/nfl-fantasy-football-week-5-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+              "bm25_rank": 11,
+              "vector_rank": 22,
+              "fused_rank": 13,
+              "rrf": 0.026279628993473032
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "N.F.L. Executives on the Biggest Questions Facing Super Bowl Contenders",
+              "bm25_rank": 3,
+              "vector_rank": 1,
+              "rrf": 0.032266458495966696
+            },
+            {
+              "title": "NFL power rankings: Lions, 49ers level up; Texans jump Bengals, Bills; Jets, Patriots sink to bottom for Week 11",
+              "bm25_rank": 2,
+              "vector_rank": 2,
+              "rrf": 0.03225806451612903
+            },
+            {
+              "title": "Christmas Day preview: 49ers, Ravens square off in potential Super Bowl sneak peek",
+              "bm25_rank": 6,
+              "vector_rank": 4,
+              "rrf": 0.030776515151515152
+            },
+            {
+              "title": "MVPs for all 16 AFC teams at the midpoint",
+              "bm25_rank": 8,
+              "vector_rank": 8,
+              "rrf": 0.029411764705882353
+            },
+            {
+              "title": "Prisco's Week 12 NFL picks: Jaguars beat Texans in AFC South battle, Saints get key divisional win vs. Falcons",
+              "bm25_rank": 1,
+              "vector_rank": 21,
+              "rrf": 0.0287391216352965
+            },
+            {
+              "title": "Patriots vs. Steelers FanDuel Picks: NFL DFS lineup advice for Week 14 TNF single-game tournaments",
+              "bm25_rank": 4,
+              "vector_rank": 18,
+              "rrf": 0.02844551282051282
+            },
+            {
+              "title": "Fantasy Football Week 13 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 19,
+              "vector_rank": 5,
+              "rrf": 0.02804284323271665
+            },
+            {
+              "title": "NFL Fantasy Football Week 6 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 14,
+              "vector_rank": 12,
+              "rrf": 0.027402402402402402
+            },
+            {
+              "title": "Hottest seat on each NFC team: Buns burning for these four head coaches",
+              "bm25_rank": 12,
+              "vector_rank": 14,
+              "rrf": 0.027402402402402402
+            },
+            {
+              "title": "FanDuel Picks Week 15: Best NFL DFS lineup advice for daily fantasy football tournaments",
+              "bm25_rank": 7,
+              "vector_rank": 23,
+              "rrf": 0.026973565905412694
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 425,
+      "question": "Has the reporting style on players achieving first downs in Sporting News articles remained consistent between the article featuring Anthony Hankerson on October 7, 2023, and the one highlighting A.J. Dillon on December 3, 2023?",
+      "original_runs": [
+        "independent-off-results.json",
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.sportingnews.com/us/ncaa-football/news/chiefs-packers-live-score-highlights-sunday-night-football/515656cb05afc1845e0dd402",
+          "title": "Chiefs vs. Packers live score, updates, highlights from NFL 'Sunday Night Football' game",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "10:03 p.m.: Love hits Dillon out in the front, who makes his defender miss before racing beyond the marker for a first down."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Has the reporting style on players achieving first downs in Sporting News articles remained consistent between the article featuring Anthony Hankerson on October 7, 2023, and the one highlighting A.J. Dillon on December 3, 2023?",
+          "gold": [
+            {
+              "title": "Chiefs vs. Packers live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "url": "https://www.sportingnews.com/us/ncaa-football/news/chiefs-packers-live-score-highlights-sunday-night-football/515656cb05afc1845e0dd402",
+              "bm25_rank": 36,
+              "vector_rank": 49,
+              "fused_rank": 21,
+              "rrf": 0.01959097859327217
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "NFL Fantasy Football Week 5 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 3,
+              "vector_rank": 4,
+              "rrf": 0.03149801587301587
+            },
+            {
+              "title": "Patriots vs. Broncos live score, updates, highlights from NFL Sunday night football game",
+              "bm25_rank": 10,
+              "vector_rank": 5,
+              "rrf": 0.02967032967032967
+            },
+            {
+              "title": "Dolphins vs. Eagles live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "bm25_rank": 12,
+              "vector_rank": 6,
+              "rrf": 0.02904040404040404
+            },
+            {
+              "title": "Colorado vs. Arizona State live score, updates, highlights from Week 6 college football game",
+              "bm25_rank": 2,
+              "vector_rank": 27,
+              "rrf": 0.027623285131627734
+            },
+            {
+              "title": "Vikings vs. Broncos live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "bm25_rank": 5,
+              "vector_rank": 28,
+              "rrf": 0.02674825174825175
+            },
+            {
+              "title": "Is the Coverage on Taylor Swift and Travis Kelce’s Romance Nothing but Hype or a Pivotal Shift in NFL’s Century-Old Game Plan Towards Global Recognition?",
+              "bm25_rank": 8,
+              "vector_rank": 30,
+              "rrf": 0.025816993464052286
+            },
+            {
+              "title": "Bills vs. Chargers odds, props, predictions: Buffalo faces struggling L.A. with eyes on AFC playoff picture",
+              "bm25_rank": 34,
+              "vector_rank": 14,
+              "rrf": 0.02415181138585394
+            },
+            {
+              "title": "NFL roundup: Pats hit new low as Lions reach 9-3 for first time since 1962",
+              "bm25_rank": 63,
+              "vector_rank": 3,
+              "rrf": 0.024003097173828883
+            },
+            {
+              "title": "Ole Miss vs. Georgia live score, updates, highlights from Week 11 college football game",
+              "bm25_rank": 24,
+              "vector_rank": 24,
+              "rrf": 0.023809523809523808
+            },
+            {
+              "title": "Fantasy Football Week 13 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 16,
+              "vector_rank": 34,
+              "rrf": 0.02379619260918253
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 304,
+      "question": "Does the Sporting News article reporting the Dallas Cowboys' victory over the Seattle Seahawks in Week 13 of the NFL season align with the same source's report on the New York Red Bulls' win against FC Cincinnati with a score of 2-1 in terms of both teams achieving a victory?",
+      "original_runs": [
+        "independent-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.sportingnews.com/us/soccer/news/chicago-fire-vs-inter-miami-live-score-result-highlights-mls/d8db8ff58b96efe28439016d",
+          "title": "Chicago Fire vs Inter Miami live score, result, updates, highlights from Lionel Messi in MLS match",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "Around the rest of the league, the New York Red Bulls have picked up a massive three points off Eastern Conference leaders FC Cincinnati with a 2-1 win, while CF Montreal grabbed a last-gasp equalizer against the Houston Dynamo, and Charlotte FC pummeled Toronto FC 3-0."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Does the Sporting News article reporting the Dallas Cowboys' victory over the Seattle Seahawks in Week 13 of the NFL season align with the same source's report on the New York Red Bulls' win against FC Cincinnati with a score of 2-1 in terms of both teams achieving a victory?",
+          "gold": [
+            {
+              "title": "Chicago Fire vs Inter Miami live score, result, updates, highlights from Lionel Messi in MLS match",
+              "url": "https://www.sportingnews.com/us/soccer/news/chicago-fire-vs-inter-miami-live-score-result-highlights-mls/d8db8ff58b96efe28439016d",
+              "bm25_rank": 7,
+              "vector_rank": 34,
+              "fused_rank": 11,
+              "rrf": 0.025563671006668783
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Seahawks-Cowboys Fantasy Start 'Em Sit 'Em Week 13: Should you start Zach Charbonnet, Jake Ferguson on TNF?",
+              "bm25_rank": 1,
+              "vector_rank": 5,
+              "rrf": 0.03177805800756621
+            },
+            {
+              "title": "NFL standings: Updated AFC, NFC playoff picture for Week 13 of 2023 season",
+              "bm25_rank": 3,
+              "vector_rank": 3,
+              "rrf": 0.031746031746031744
+            },
+            {
+              "title": "Seahawks vs. Giants live score, updates, highlights from NFL 'Monday Night Football' game",
+              "bm25_rank": 5,
+              "vector_rank": 2,
+              "rrf": 0.0315136476426799
+            },
+            {
+              "title": "Cowboys vs. 49ers live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "bm25_rank": 9,
+              "vector_rank": 1,
+              "rrf": 0.030886196246139225
+            },
+            {
+              "title": "Fantasy Football Week 13 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 10,
+              "vector_rank": 4,
+              "rrf": 0.029910714285714284
+            },
+            {
+              "title": "Prisco's Week 12 NFL picks: Jaguars beat Texans in AFC South battle, Saints get key divisional win vs. Falcons",
+              "bm25_rank": 4,
+              "vector_rank": 13,
+              "rrf": 0.0293236301369863
+            },
+            {
+              "title": "Inter Miami vs FC Cincinnati live score, result, updates, highlights with Lionel Messi's MLS playoffs on line",
+              "bm25_rank": 2,
+              "vector_rank": 17,
+              "rrf": 0.029116045245077504
+            },
+            {
+              "title": "NFL power rankings: Lions, 49ers level up; Texans jump Bengals, Bills; Jets, Patriots sink to bottom for Week 11",
+              "bm25_rank": 13,
+              "vector_rank": 9,
+              "rrf": 0.02819138376017471
+            },
+            {
+              "title": "Monday Night Football DraftKings Picks: NFL DFS lineup advice for Week 15 Eagles-Seahawks Showdown tournaments",
+              "bm25_rank": 6,
+              "vector_rank": 32,
+              "rrf": 0.026021080368906456
+            },
+            {
+              "title": "Best sportsbook bonus offers for NFL Monday Night Football Eagles vs. Seahawks: Claim over $5,000 in bonuses from Bet365, BetMGM, BetRivers, Caesars Sportsbook, DraftKings and FanDuel ",
+              "bm25_rank": 11,
+              "vector_rank": 25,
+              "rrf": 0.025849212924606464
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 275,
+      "question": "After Sporting News reported on NBA MVP odds with Jokic and Giannis as early favorites on October 4, 2023, did the approach of sportsbooks, as mentioned in a later article from Sporting News on November 1, 2023, regarding the use of new data and analytics by oddsmakers to set betting lines, remain consistent or change?",
+      "original_runs": [
+        "focused-off-results.json",
+        "focused-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.sportingnews.com/us/betting/news/totals-betting/89d715d33e3744b79fb24820",
+          "title": "Totals Betting - What is an Over/Under Bet?",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "When you see a total, such as 210.5 in a basketball game, it represents the combined score anticipated from both teams."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Sporting News October 4 2023 NBA MVP odds Jokic Giannis early favorites",
+          "gold": [
+            {
+              "title": "Totals Betting - What is an Over/Under Bet?",
+              "url": "https://www.sportingnews.com/us/betting/news/totals-betting/89d715d33e3744b79fb24820",
+              "bm25_rank": 16,
+              "vector_rank": null,
+              "fused_rank": 43,
+              "rrf": 0.013157894736842105
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "NBA MVP Odds 2024 Season - Jokic and Giannis early favorites",
+              "bm25_rank": 1,
+              "vector_rank": 1,
+              "rrf": 0.03278688524590164
+            },
+            {
+              "title": "NBA Rookie of the Year Odds - Wembanyama the early favorite",
+              "bm25_rank": 4,
+              "vector_rank": 2,
+              "rrf": 0.031754032258064516
+            },
+            {
+              "title": "NBA Prop Bets - Best Team and Player Props 2023/24 Season",
+              "bm25_rank": 2,
+              "vector_rank": 5,
+              "rrf": 0.0315136476426799
+            },
+            {
+              "title": "The Best NBA Betting Sites and Apps for the 2023-24 Season",
+              "bm25_rank": 3,
+              "vector_rank": 4,
+              "rrf": 0.03149801587301587
+            },
+            {
+              "title": "NFL awards odds: Six longshots bettors should consider for MVP, OPOY, DPOY and more",
+              "bm25_rank": 6,
+              "vector_rank": 3,
+              "rrf": 0.031024531024531024
+            },
+            {
+              "title": "Is Kevin Durant the Most Disrespected Superstar in the History of NBA?",
+              "bm25_rank": 15,
+              "vector_rank": 10,
+              "rrf": 0.02761904761904762
+            },
+            {
+              "title": "Bills vs. Chargers odds, props, predictions: Buffalo faces struggling L.A. with eyes on AFC playoff picture",
+              "bm25_rank": 14,
+              "vector_rank": 15,
+              "rrf": 0.02684684684684685
+            },
+            {
+              "title": "USC basketball futures odds to win Pac-12, NCAA tourney ahead of Bronny James collegiate debut",
+              "bm25_rank": 26,
+              "vector_rank": 6,
+              "rrf": 0.026779422128259338
+            },
+            {
+              "title": "College football odds, lines, schedule for Week 6: Texas, Alabama, Notre Dame among favorites in ranked games",
+              "bm25_rank": 10,
+              "vector_rank": 21,
+              "rrf": 0.026631393298059962
+            },
+            {
+              "title": "Are NBA Christmas Day Games a Better Tradition Than NFL Thanksgiving Day Games?",
+              "bm25_rank": 5,
+              "vector_rank": 31,
+              "rrf": 0.026373626373626377
+            }
+          ]
+        },
+        {
+          "query": "Sporting News November 1 2023 oddsmakers new data analytics set betting lines",
+          "gold": [
+            {
+              "title": "Totals Betting - What is an Over/Under Bet?",
+              "url": "https://www.sportingnews.com/us/betting/news/totals-betting/89d715d33e3744b79fb24820",
+              "bm25_rank": 6,
+              "vector_rank": 28,
+              "fused_rank": 17,
+              "rrf": 0.026515151515151516
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Line Shopping in Sports Betting - How to Find the Best Odds",
+              "bm25_rank": 1,
+              "vector_rank": 5,
+              "rrf": 0.03177805800756621
+            },
+            {
+              "title": "NBA MVP Odds 2024 Season - Jokic and Giannis early favorites",
+              "bm25_rank": 2,
+              "vector_rank": 4,
+              "rrf": 0.031754032258064516
+            },
+            {
+              "title": "Moneyline Betting - What is the Moneyline and How Does it Work?",
+              "bm25_rank": 3,
+              "vector_rank": 7,
+              "rrf": 0.030798389007344232
+            },
+            {
+              "title": "NBA Rookie of the Year Odds - Wembanyama the early favorite",
+              "bm25_rank": 4,
+              "vector_rank": 6,
+              "rrf": 0.030776515151515152
+            },
+            {
+              "title": "College Bowl Odds, Spreads, Money Lines and Totals - NCAAF 2023 Bowl Season",
+              "bm25_rank": 16,
+              "vector_rank": 2,
+              "rrf": 0.02928692699490662
+            },
+            {
+              "title": "MLB Betting Sites & Apps - The Best Baseball Sportsbooks 2023",
+              "bm25_rank": 5,
+              "vector_rank": 13,
+              "rrf": 0.029083245521601686
+            },
+            {
+              "title": "NBA Prop Bets - Best Team and Player Props 2023/24 Season",
+              "bm25_rank": 8,
+              "vector_rank": 10,
+              "rrf": 0.028991596638655463
+            },
+            {
+              "title": "College football odds, lines, schedule for Week 6: Texas, Alabama, Notre Dame among favorites in ranked games",
+              "bm25_rank": 18,
+              "vector_rank": 3,
+              "rrf": 0.028693528693528692
+            },
+            {
+              "title": "NFL Best Bets Week 9: Colts clobber Panthers, Dolphins drop Chiefs in Germany",
+              "bm25_rank": 26,
+              "vector_rank": 1,
+              "rrf": 0.028021349599695006
+            },
+            {
+              "title": "The Best NBA Betting Sites and Apps for the 2023-24 Season",
+              "bm25_rank": 9,
+              "vector_rank": 14,
+              "rrf": 0.028006267136701922
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "question": "Did the Yardbarker article describe Alex Verdugo's offensive performance as league-average, while the Sporting News article reported the San Francisco 49ers' offensive performance as strong, despite Christian McCaffrey not scoring?",
+      "original_runs": [
+        "focused-off-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac",
+          "title": "NFL power rankings: Lions, 49ers level up; Texans jump Bengals, Bills; Jets, Patriots sink to bottom for Week 11",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "The 49ers had a surprise offensive get-well game in Jacksonville with Brock Purdy leading the way and all his key supporting weapons doing damage, even without Christian McCaffrey scoring."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Yardbarker Alex Verdugo offensive performance league average",
+          "gold": [
+            {
+              "title": "NFL power rankings: Lions, 49ers level up; Texans jump Bengals, Bills; Jets, Patriots sink to bottom for Week 11",
+              "url": "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac",
+              "bm25_rank": 19,
+              "vector_rank": 53,
+              "fused_rank": 20,
+              "rrf": 0.021507785370225158
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Top 25 MLB offseason trade candidates",
+              "bm25_rank": 5,
+              "vector_rank": 2,
+              "rrf": 0.0315136476426799
+            },
+            {
+              "title": "MLB free agency tracker: Live updates on news, rumors, signings and trades after 2023 Winter Meetings",
+              "bm25_rank": 12,
+              "vector_rank": 1,
+              "rrf": 0.03028233151183971
+            },
+            {
+              "title": "MLB Winter Meetings tracker: Live updates on news, rumors, signings and trades for 2023 free agency",
+              "bm25_rank": 8,
+              "vector_rank": 5,
+              "rrf": 0.030090497737556562
+            },
+            {
+              "title": "M.L.B. Superstar Shohei Ohtani to Sign $700 Million Deal With Dodgers",
+              "bm25_rank": 24,
+              "vector_rank": 3,
+              "rrf": 0.027777777777777776
+            },
+            {
+              "title": "Yankees Gear Up for 2024 Season After Horrendous Year, But Could Letting This Star Go Spell Another Big Mistake?",
+              "bm25_rank": 21,
+              "vector_rank": 6,
+              "rrf": 0.02749719416386083
+            },
+            {
+              "title": "NFL Fantasy Football Week 6 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 11,
+              "vector_rank": 18,
+              "rrf": 0.02690501986276634
+            },
+            {
+              "title": "MVPs for all 16 AFC teams at the midpoint",
+              "bm25_rank": 2,
+              "vector_rank": 33,
+              "rrf": 0.026881720430107527
+            },
+            {
+              "title": "Christmas Day preview: 49ers, Ravens square off in potential Super Bowl sneak peek",
+              "bm25_rank": 1,
+              "vector_rank": 42,
+              "rrf": 0.02619736419157827
+            },
+            {
+              "title": "Hottest seat on each NFC team: Buns burning for these four head coaches",
+              "bm25_rank": 3,
+              "vector_rank": 37,
+              "rrf": 0.026182294223531334
+            },
+            {
+              "title": "Who’s the next Gawn, Grundy or Dusty? AFL’s talent guru names top 40 draft prospects and compares them to current stars",
+              "bm25_rank": 7,
+              "vector_rank": 30,
+              "rrf": 0.02603648424543947
+            }
+          ]
+        },
+        {
+          "query": "Sporting News San Francisco 49ers offense strong Christian McCaffrey did not score",
+          "gold": [
+            {
+              "title": "NFL power rankings: Lions, 49ers level up; Texans jump Bengals, Bills; Jets, Patriots sink to bottom for Week 11",
+              "url": "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac",
+              "bm25_rank": 2,
+              "vector_rank": 28,
+              "fused_rank": 11,
+              "rrf": 0.02749266862170088
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Cowboys vs. 49ers live score, updates, highlights from NFL 'Sunday Night Football' game",
+              "bm25_rank": 1,
+              "vector_rank": 2,
+              "rrf": 0.03252247488101534
+            },
+            {
+              "title": "Christmas Day preview: 49ers, Ravens square off in potential Super Bowl sneak peek",
+              "bm25_rank": 3,
+              "vector_rank": 1,
+              "rrf": 0.032266458495966696
+            },
+            {
+              "title": "49ers cap space 2024: Why Chase Young trade may not be a pure rental for San Francisco",
+              "bm25_rank": 4,
+              "vector_rank": 5,
+              "rrf": 0.031009615384615385
+            },
+            {
+              "title": "Hottest seat on each NFC team: Buns burning for these four head coaches",
+              "bm25_rank": 8,
+              "vector_rank": 3,
+              "rrf": 0.03057889822595705
+            },
+            {
+              "title": "N.F.L. Executives on the Biggest Questions Facing Super Bowl Contenders",
+              "bm25_rank": 5,
+              "vector_rank": 6,
+              "rrf": 0.030536130536130537
+            },
+            {
+              "title": "DraftKings Picks Week 14: Best NFL DFS lineup advice for daily fantasy football tournaments",
+              "bm25_rank": 6,
+              "vector_rank": 7,
+              "rrf": 0.03007688828584351
+            },
+            {
+              "title": "NFL roundup: Pats hit new low as Lions reach 9-3 for first time since 1962",
+              "bm25_rank": 10,
+              "vector_rank": 4,
+              "rrf": 0.029910714285714284
+            },
+            {
+              "title": "Fantasy Football Week 13 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 7,
+              "vector_rank": 16,
+              "rrf": 0.028083267871170464
+            },
+            {
+              "title": "NFL Fantasy Football Week 6 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 12,
+              "vector_rank": 12,
+              "rrf": 0.027777777777777776
+            },
+            {
+              "title": "NFL Fantasy Football Week 5 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+              "bm25_rank": 17,
+              "vector_rank": 8,
+              "rrf": 0.027692895339954164
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 155,
+      "question": "What type of establishments, as reported by Sporting News, are known to modify their betting lines based on news or sentiment about a team's performance, provide welcome bonuses with specific conditions, generate profit irrespective of betting outcomes, and alter NBA Rookie of the Year odds according to collected information?",
+      "original_runs": [
+        "focused-off-results.json",
+        "focused-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.sportingnews.com/us/betting/news/spread-betting/c740afa218dca67d75929ee4",
+          "title": "Point Spread Betting - What is a Point Spread Bet?",
+          "returned_in_replay": false,
+          "gold_facts": [
+            "If a piece of news or a prevailing sentiment starts to gain traction about a particular team's increased chances of winning, this can influence how people bet, leading sportsbooks to adjust their lines accordingly."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "Sporting News establishments modify betting lines news sentiment team performance welcome bonuses conditions profit regardless betting outcomes NBA Rookie of the Year odds information",
+          "gold": [
+            {
+              "title": "Point Spread Betting - What is a Point Spread Bet?",
+              "url": "https://www.sportingnews.com/us/betting/news/spread-betting/c740afa218dca67d75929ee4",
+              "bm25_rank": 11,
+              "vector_rank": 16,
+              "fused_rank": 15,
+              "rrf": 0.027242401779095628
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "NBA Rookie of the Year Odds - Wembanyama the early favorite",
+              "bm25_rank": 1,
+              "vector_rank": 1,
+              "rrf": 0.03278688524590164
+            },
+            {
+              "title": "The Best NBA Betting Sites and Apps for the 2023-24 Season",
+              "bm25_rank": 3,
+              "vector_rank": 2,
+              "rrf": 0.03200204813108039
+            },
+            {
+              "title": "NBA Prop Bets - Best Team and Player Props 2023/24 Season",
+              "bm25_rank": 2,
+              "vector_rank": 4,
+              "rrf": 0.031754032258064516
+            },
+            {
+              "title": "NBA MVP Odds 2024 Season - Jokic and Giannis early favorites",
+              "bm25_rank": 8,
+              "vector_rank": 3,
+              "rrf": 0.03057889822595705
+            },
+            {
+              "title": "Moneyline Betting - What is the Moneyline and How Does it Work?",
+              "bm25_rank": 5,
+              "vector_rank": 7,
+              "rrf": 0.030309988518943745
+            },
+            {
+              "title": "MLB Betting Sites & Apps - The Best Baseball Sportsbooks 2023",
+              "bm25_rank": 6,
+              "vector_rank": 11,
+              "rrf": 0.029236022193768675
+            },
+            {
+              "title": "Line Shopping in Sports Betting - How to Find the Best Odds",
+              "bm25_rank": 9,
+              "vector_rank": 8,
+              "rrf": 0.02919863597612958
+            },
+            {
+              "title": "Best sports betting promo codes for college basketball: Claim $5,000+ in bonuses from Caesars Sportsbook, BetMGM, Bet365, FanDuel, DraftKings, BetRivers",
+              "bm25_rank": 13,
+              "vector_rank": 5,
+              "rrf": 0.029083245521601686
+            },
+            {
+              "title": "Vermont Sportsbook Promos and Sports Betting Launch News",
+              "bm25_rank": 4,
+              "vector_rank": 19,
+              "rrf": 0.028283227848101264
+            },
+            {
+              "title": "2023 Kentucky online sports betting sites: Best legal sportsbooks, promos, bonuses, mobile apps, how to bet",
+              "bm25_rank": 15,
+              "vector_rank": 9,
+              "rrf": 0.02782608695652174
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 341,
+      "question": "Does 'The Guardian' article describe 'the match' as a contest of disparity between a wealthy team and a young team, while the 'Sporting News' article focuses on 'Shohei Ohtani's' decision on team selection without mentioning any disparity?",
+      "original_runs": [
+        "focused-jev-results.json"
+      ],
+      "originally_missing": [
+        {
+          "url": "https://www.theguardian.com/football/2023/nov/01/chelsea-blackburn-carabao-cup-fourth-round-match-report",
+          "title": "Chelsea secure last-eight spot after Raheem Sterling sinks Blackburn",
+          "returned_in_replay": true,
+          "gold_facts": [
+            "“It was the millionaires of the Premier League against the youngsters of the Championship,” reflected the former Denmark forward."
+          ]
+        }
+      ],
+      "rankings": [
+        {
+          "query": "The Guardian match wealthy team young team disparity",
+          "gold": [
+            {
+              "title": "Chelsea secure last-eight spot after Raheem Sterling sinks Blackburn",
+              "url": "https://www.theguardian.com/football/2023/nov/01/chelsea-blackburn-carabao-cup-fourth-round-match-report",
+              "bm25_rank": 56,
+              "vector_rank": 1,
+              "fused_rank": 8,
+              "rrf": 0.025014132278123234
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Liverpool enjoy home comforts but Dyche’s Everton offer derby danger | Andy Hunter",
+              "bm25_rank": 6,
+              "vector_rank": 4,
+              "rrf": 0.030776515151515152
+            },
+            {
+              "title": "Man United vs Chelsea head to head record, all-time results between Premier League giants",
+              "bm25_rank": 1,
+              "vector_rank": 11,
+              "rrf": 0.03047794966520434
+            },
+            {
+              "title": "Craft beer and cheese boxes: Swans tap into something ‘uniquely Sydney’ to draw AFLW crowds | Jack Snape",
+              "bm25_rank": 8,
+              "vector_rank": 19,
+              "rrf": 0.027364110201042444
+            },
+            {
+              "title": "England choose survival over oblivion and a chance of summer trip to France | Jonathan Liew",
+              "bm25_rank": 13,
+              "vector_rank": 14,
+              "rrf": 0.027212143650499815
+            },
+            {
+              "title": "Manchester United face Galatasaray with high hopes but bad memories",
+              "bm25_rank": 34,
+              "vector_rank": 2,
+              "rrf": 0.026767330130404943
+            },
+            {
+              "title": "Carabao Cup fixtures, draws, results, TV channel, and live streams for every round of EFL League Cup 2023/24",
+              "bm25_rank": 5,
+              "vector_rank": 31,
+              "rrf": 0.026373626373626377
+            },
+            {
+              "title": "Champions League permutations, scenarios: What teams need to qualify from groups for 2023/24 Round of 16 stage",
+              "bm25_rank": 7,
+              "vector_rank": 30,
+              "rrf": 0.02603648424543947
+            },
+            {
+              "title": "Chelsea secure last-eight spot after Raheem Sterling sinks Blackburn",
+              "bm25_rank": 56,
+              "vector_rank": 1,
+              "rrf": 0.025014132278123234
+            },
+            {
+              "title": "Ten Hag demands both positivity and pragmatism from erratic Onana",
+              "bm25_rank": 30,
+              "vector_rank": 12,
+              "rrf": 0.025
+            },
+            {
+              "title": "Salah seals emphatic Europa League win for Liverpool against Toulouse",
+              "bm25_rank": 15,
+              "vector_rank": 28,
+              "rrf": 0.024696969696969696
+            }
+          ]
+        },
+        {
+          "query": "Sporting News Shohei Ohtani decision team selection disparity",
+          "gold": [
+            {
+              "title": "Chelsea secure last-eight spot after Raheem Sterling sinks Blackburn",
+              "url": "https://www.theguardian.com/football/2023/nov/01/chelsea-blackburn-carabao-cup-fourth-round-match-report",
+              "bm25_rank": null,
+              "vector_rank": null,
+              "fused_rank": null,
+              "rrf": null
+            }
+          ],
+          "top_ten": [
+            {
+              "title": "Shohei Ohtani rumors tracker: Latest news, updates on Dodgers, Cubs & more as free agency short list emerges",
+              "bm25_rank": 1,
+              "vector_rank": 2,
+              "rrf": 0.03252247488101534
+            },
+            {
+              "title": "Shohei Ohtani rumors tracker: Latest news, updates on free agent's MLB future",
+              "bm25_rank": 2,
+              "vector_rank": 1,
+              "rrf": 0.03252247488101534
+            },
+            {
+              "title": "M.L.B. Superstar Shohei Ohtani to Sign $700 Million Deal With Dodgers",
+              "bm25_rank": 4,
+              "vector_rank": 3,
+              "rrf": 0.03149801587301587
+            },
+            {
+              "title": "MLB free agency tracker: Live updates on news, rumors, signings and trades after 2023 Winter Meetings",
+              "bm25_rank": 3,
+              "vector_rank": 5,
+              "rrf": 0.03125763125763126
+            },
+            {
+              "title": "MLB Winter Meetings tracker: Live updates on news, rumors, signings and trades for 2023 free agency",
+              "bm25_rank": 5,
+              "vector_rank": 4,
+              "rrf": 0.031009615384615385
+            },
+            {
+              "title": "Unraveling Potential Reasons Why the Dodgers May Not Pursue Shohei Ohtani and Mike Trout in Free Agency Despite Their Availability",
+              "bm25_rank": 6,
+              "vector_rank": 6,
+              "rrf": 0.030303030303030304
+            },
+            {
+              "title": "Amidst Managerial Shake-Ups, These 5 MLB Teams Are Looking for a New Leader: Who Are the Top Candidates?",
+              "bm25_rank": 8,
+              "vector_rank": 8,
+              "rrf": 0.029411764705882353
+            },
+            {
+              "title": "After a Stunning Snub, College Football Is Facing an Identity Crisis",
+              "bm25_rank": 11,
+              "vector_rank": 14,
+              "rrf": 0.027598020555767037
+            },
+            {
+              "title": "Top 25 MLB offseason trade candidates",
+              "bm25_rank": 21,
+              "vector_rank": 7,
+              "rrf": 0.027271052146674038
+            },
+            {
+              "title": "MLB Betting Sites & Apps - The Best Baseball Sportsbooks 2023",
+              "bm25_rank": 13,
+              "vector_rank": 16,
+              "rrf": 0.026856524873828405
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

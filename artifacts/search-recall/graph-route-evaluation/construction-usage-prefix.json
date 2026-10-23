@@ -1,0 +1,84 @@
+{
+  "purpose": "Construction usage of six completed audited articles; embeddings and reader evaluation excluded. Not a monetary cost estimate.",
+  "method": "Take the last cumulative usage event once per native request, then sum across requests. Cached inputs are a subset of input tokens.",
+  "articles": [
+    {
+      "trace": "tmp/knowledge-graph-routes-v4/acquisition/0-19dddcfa/trace.json",
+      "usage": {
+        "total_tokens": 5012004,
+        "input_tokens": 4989166,
+        "cached_input_tokens": 4656000,
+        "output_tokens": 22838,
+        "reasoning_output_tokens": 8178
+      },
+      "uncached_input_tokens": 333166,
+      "tool_calls": 161,
+      "invocations_without_available_usage": 0
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v7/acquisition/1-6c8572c3/trace.json",
+      "usage": {
+        "total_tokens": 18792195,
+        "input_tokens": 18730680,
+        "cached_input_tokens": 18037760,
+        "output_tokens": 61515,
+        "reasoning_output_tokens": 25338
+      },
+      "uncached_input_tokens": 692920,
+      "tool_calls": 399,
+      "invocations_without_available_usage": 0
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v7/acquisition/2-e9e83d5f/trace.json",
+      "usage": {
+        "total_tokens": 10647292,
+        "input_tokens": 10605170,
+        "cached_input_tokens": 9943168,
+        "output_tokens": 42122,
+        "reasoning_output_tokens": 15882
+      },
+      "uncached_input_tokens": 662002,
+      "tool_calls": 259,
+      "invocations_without_available_usage": 0
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v7/acquisition/3-9943bdc9/trace.json",
+      "usage": {
+        "total_tokens": 10256431,
+        "input_tokens": 10218181,
+        "cached_input_tokens": 9687424,
+        "output_tokens": 38250,
+        "reasoning_output_tokens": 11771
+      },
+      "uncached_input_tokens": 530757,
+      "tool_calls": 249,
+      "invocations_without_available_usage": 0
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v8/acquisition/4-a7079940/trace.json",
+      "usage": {
+        "total_tokens": 5675738,
+        "input_tokens": 5651065,
+        "cached_input_tokens": 5254656,
+        "output_tokens": 24673,
+        "reasoning_output_tokens": 9229
+      },
+      "uncached_input_tokens": 396409,
+      "tool_calls": 147,
+      "invocations_without_available_usage": 0
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v8/acquisition/5-094b242f/trace.json",
+      "usage": {
+        "total_tokens": 12995134,
+        "input_tokens": 12947268,
+        "cached_input_tokens": 12203136,
+        "output_tokens": 47866,
+        "reasoning_output_tokens": 19417
+      },
+      "uncached_input_tokens": 744132,
+      "tool_calls": 258,
+      "invocations_without_available_usage": 0
+    }
+  ]
+}

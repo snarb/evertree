@@ -146,7 +146,7 @@ async def test_search_on_identical_large_graph(corpus_graph):
     try:
         for case, query, labels in QUERIES:
             started = time.perf_counter()
-            raw = (await session.call("semantic_search", {"query": query})).result
+            raw = (await session.call("semantic_search", {"queries": [query]})).result
             retrieval_seconds = time.perf_counter() - started
             targets = {
                 label: [n.id for n in named_instances(session.graph, label)] for label in labels

@@ -1,0 +1,628 @@
+{
+  "purpose": "Manual source-checklist audit, not answer accuracy or a claim of perfectly structured coverage.",
+  "snapshot": "tmp/knowledge-graph-routes-v7/acquisition/1-6c8572c3/snapshot.json",
+  "snapshot_sha256": "1dbd34a8ffbcf6498f7d13b089e56353541502a2d3b43df778c0a6c4eb6c91ae",
+  "checklist_sha256": "3bddd97b1e7d78019e8a38fd72eb5c4171491a503cafdcf1fb99a9727344b79e",
+  "counts": {
+    "domain_assertions": 70,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 65,
+      "scope_or_role_weakened": 4,
+      "ambiguous_representation": 1
+    },
+    "previous_eight_omissions_restored": 8,
+    "model_invocations": 14,
+    "explicit_incomplete_decisions": 3,
+    "with_representation_gaps": 9
+  },
+  "seconds": 1084.1358161660028,
+  "verdict": "All previously absent assertions are represented. No checklist row is wholly absent, but five have meaning/scope concerns and additional structural gaps remain. Continue to the next diagnostic article with the same instruction; do not report 100% correct graph extraction.",
+  "improvements": [
+    "Gary Glover is typed as Person.",
+    "Reported downward market moves consistently use positive magnitude and separate direction.",
+    "Funding objectives remain distinct from completed amounts; currency is not silently replaced with USD or AUD.",
+    "FTC and state attorneys general share one case with Amazon; allegations remain allegations.",
+    "Historical shutdown statistics keep analyst, index and common sample qualifications."
+  ],
+  "assertions": [
+    {
+      "assertion_id": "betashares-01",
+      "supporting_object_ids": [
+        151
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "ETF-provider classification remains in the organization description."
+      ]
+    },
+    {
+      "assertion_id": "betashares-02",
+      "supporting_object_ids": [
+        174
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "betashares-03",
+      "supporting_object_ids": [
+        172
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "betashares-04",
+      "supporting_object_ids": [
+        172
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "betashares-05",
+      "supporting_object_ids": [
+        173
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "betashares-06",
+      "supporting_object_ids": [
+        175
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-01",
+      "supporting_object_ids": [
+        176
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-02",
+      "supporting_object_ids": [
+        177
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-03",
+      "supporting_object_ids": [
+        178
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "star-01",
+      "supporting_object_ids": [
+        157
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Casino-operator classification remains in the organization description."
+      ]
+    },
+    {
+      "assertion_id": "star-02",
+      "supporting_object_ids": [
+        182
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "star-03",
+      "supporting_object_ids": [
+        179
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "star-04",
+      "supporting_object_ids": [
+        183,
+        184
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "star-05",
+      "supporting_object_ids": [
+        180
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "star-06",
+      "supporting_object_ids": [
+        181
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-04",
+      "supporting_object_ids": [
+        211,
+        219
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-05",
+      "supporting_object_ids": [
+        212
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-06",
+      "supporting_object_ids": [
+        213
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-07",
+      "supporting_object_ids": [
+        214,
+        223
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-08",
+      "supporting_object_ids": [
+        215,
+        224
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-09",
+      "supporting_object_ids": [
+        218
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-10",
+      "supporting_object_ids": [
+        217
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "asx-11",
+      "supporting_object_ids": [
+        216,
+        226
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "glover-01",
+      "supporting_object_ids": [
+        201,
+        220
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "glover-02",
+      "supporting_object_ids": [
+        220,
+        239
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "glover-03",
+      "supporting_object_ids": [
+        240
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "glover-04",
+      "supporting_object_ids": [
+        221
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-01",
+      "supporting_object_ids": [
+        235
+      ],
+      "meaning_status": "scope_or_role_weakened",
+      "representation_gaps": [
+        "The source describes US stocks returning to June levels; the graph attaches this specifically to the S&P 500."
+      ]
+    },
+    {
+      "assertion_id": "us-02",
+      "supporting_object_ids": [
+        235
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-03",
+      "supporting_object_ids": [
+        236
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-04",
+      "supporting_object_ids": [
+        237
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-05",
+      "supporting_object_ids": [
+        238
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "rates-01",
+      "supporting_object_ids": [
+        244,
+        274,
+        263
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "rates-02",
+      "supporting_object_ids": [
+        257,
+        258
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "rates-03",
+      "supporting_object_ids": [
+        259
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "rates-04",
+      "supporting_object_ids": [
+        260
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "economy-01",
+      "supporting_object_ids": [
+        261
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "economy-02",
+      "supporting_object_ids": [
+        270,
+        272
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "shutdown-01",
+      "supporting_object_ids": [
+        283
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "shutdown-02",
+      "supporting_object_ids": [
+        275,
+        284
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "shutdown-03",
+      "supporting_object_ids": [
+        284,
+        285,
+        286
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Ten-day minimum remains inside sample_qualification text, not a numerical duration field."
+      ]
+    },
+    {
+      "assertion_id": "shutdown-04",
+      "supporting_object_ids": [
+        284
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "shutdown-05",
+      "supporting_object_ids": [
+        285
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "shutdown-06",
+      "supporting_object_ids": [
+        286
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "risks-01",
+      "supporting_object_ids": [
+        300
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "risks-02",
+      "supporting_object_ids": [
+        301
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "risks-03",
+      "supporting_object_ids": [
+        325,
+        328
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "risks-04",
+      "supporting_object_ids": [
+        327,
+        330
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-06",
+      "supporting_object_ids": [
+        305
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-07",
+      "supporting_object_ids": [
+        308,
+        309
+      ],
+      "meaning_status": "ambiguous_representation",
+      "representation_gaps": [
+        "INDEX_WEIGHTING_REPORT may be read as index composition weights, while the source describes Big Tech weighing on the declining index."
+      ]
+    },
+    {
+      "assertion_id": "us-08",
+      "supporting_object_ids": [
+        302
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-09",
+      "supporting_object_ids": [
+        303
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "us-10",
+      "supporting_object_ids": [
+        304
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "amazon-01",
+      "supporting_object_ids": [
+        318,
+        314
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "amazon-02",
+      "supporting_object_ids": [
+        319
+      ],
+      "meaning_status": "scope_or_role_weakened",
+      "representation_gaps": [
+        "Accuser role names FTC only; state attorneys general remain reachable through the case filing but are not jointly bound to this allegation."
+      ]
+    },
+    {
+      "assertion_id": "amazon-03",
+      "supporting_object_ids": [
+        320
+      ],
+      "meaning_status": "scope_or_role_weakened",
+      "representation_gaps": [
+        "Accuser role names FTC only; state attorneys general remain reachable through the case filing but are not jointly bound to this allegation."
+      ]
+    },
+    {
+      "assertion_id": "amazon-04",
+      "supporting_object_ids": [
+        321
+      ],
+      "meaning_status": "scope_or_role_weakened",
+      "representation_gaps": [
+        "Accuser role names FTC only; state attorneys general remain reachable through the case filing but are not jointly bound to this allegation."
+      ]
+    },
+    {
+      "assertion_id": "china-01",
+      "supporting_object_ids": [
+        344,
+        347,
+        354
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "china-02",
+      "supporting_object_ids": [
+        355
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "china-03",
+      "supporting_object_ids": [
+        356
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "europe-01",
+      "supporting_object_ids": [
+        335
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "europe-02",
+      "supporting_object_ids": [
+        336
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "oil-01",
+      "supporting_object_ids": [
+        342
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "oil-02",
+      "supporting_object_ids": [
+        343
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "oil-03",
+      "supporting_object_ids": [
+        358
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "senate-01",
+      "supporting_object_ids": [
+        362
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "senate-02",
+      "supporting_object_ids": [
+        374
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "senate-03",
+      "supporting_object_ids": [
+        364
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Former Qantas role remains in the person description; no shared Qantas identity."
+      ]
+    },
+    {
+      "assertion_id": "senate-04",
+      "supporting_object_ids": [
+        375,
+        377
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "senate-05",
+      "supporting_object_ids": [
+        376
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    }
+  ]
+}

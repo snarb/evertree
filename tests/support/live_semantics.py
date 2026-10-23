@@ -197,7 +197,9 @@ def load_completed_acquisition(path, case, source_version):
     return saved["learned"], saved["packets"], origin
 
 
-async def provider_result(provider, directory, payload, transcript, *, tool_handler=None):
+async def provider_result(
+    provider, directory, payload, transcript, *, tool_handler=None, timeout_seconds=120
+):
     """Record one isolated model invocation, including exchanges when it fails."""
     events, request_id = [], uuid4().hex
     try:
@@ -212,7 +214,7 @@ async def provider_result(provider, directory, payload, transcript, *, tool_hand
                 tools=tuple(ToolDefinition(**tool) for tool in payload.get("tools", [])),
                 model=MODEL,
                 effort=EFFORT,
-                timeout_seconds=120,
+                timeout_seconds=timeout_seconds,
             ),
             tool_handler=tool_handler,
         ):
@@ -244,6 +246,7 @@ async def native_semantic_context(
     role="exec",
     integration_context=None,
     operation_id="packet",
+    timeout_seconds=120,
 ):
     """Use production native-tool dialogue and handlers without worker or scheduler fixtures."""
 
@@ -264,7 +267,12 @@ async def native_semantic_context(
         assert method == "llm.run"
         request = {key: value for key, value in payload.items() if not key.startswith("_")}
         return await provider_result(
-            provider, directory, request, transcript, tool_handler=payload.get("_tool_handler")
+            provider,
+            directory,
+            request,
+            transcript,
+            tool_handler=payload.get("_tool_handler"),
+            timeout_seconds=timeout_seconds,
         )
 
     invocations = ProgramLLMInvocations(gateway)

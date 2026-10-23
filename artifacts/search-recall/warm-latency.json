@@ -1,0 +1,304 @@
+{
+  "manifest": {
+    "implementation_sha256": "687ea42cfecd6117d9386e76b1fd32caae933ee30066e58b813f08f438e36eba",
+    "seed": 20261021,
+    "question_indices": [
+      209,
+      560,
+      100,
+      237,
+      532,
+      146,
+      603,
+      501,
+      443,
+      549,
+      130,
+      70,
+      358,
+      536,
+      495,
+      48,
+      262,
+      180,
+      580,
+      72
+    ],
+    "excluded_pilot_indices": [
+      4,
+      11,
+      20,
+      28,
+      45,
+      51,
+      84,
+      86,
+      87,
+      94,
+      120,
+      148,
+      181,
+      184,
+      213,
+      216,
+      218,
+      225,
+      251,
+      260,
+      264,
+      270,
+      279,
+      296,
+      297,
+      304,
+      370,
+      373,
+      376,
+      391,
+      395,
+      411,
+      444,
+      468,
+      516,
+      552,
+      556,
+      559,
+      573,
+      598
+    ],
+    "node_count": 574,
+    "source_sha256": {
+      "sports_q.json": "867e175b989f8f6b7e09858a86bd3ad5858d90baae1117b675fec923bd71f010",
+      "sports.json": "d250713b04e4c2b4f7f6b93b25cbf1517d695bcc4652959930bb051a38f50646",
+      "sport_tree.pkl": "ecf476b3f513a9548fe8902311662494b0517fba7d5c3c66e23448eea46f8455"
+    },
+    "threshold": 0.05,
+    "model": "jev-1.13.0",
+    "protocol": "One warm canonical full-text index, cached document preparation excluded. Query embeddings always call OpenAI without local caching. Same query texts, alternating sequential/batch order across repeats. Jev off/on separately. No planning or answer-model calls. Latency only: batch Jev judges relevance to any query and need not return identical IDs to sequential Jev.",
+    "representation": "full-text",
+    "benchmark_indices": [
+      209,
+      560,
+      100,
+      237
+    ],
+    "retrieval": {
+      "bm25_candidates": 64,
+      "vector_candidates": 64,
+      "chunk_tokens": 768,
+      "chunk_overlap": 128
+    },
+    "jev": {
+      "enabled": false,
+      "model": "jev-1.13.0",
+      "threshold": 0.05,
+      "api_key_env": "TYPESAFE_API_KEY"
+    }
+  },
+  "results": [
+    {
+      "jev": false,
+      "batch": false,
+      "repeat": 0,
+      "seconds": 1.9752120830235071,
+      "calls": [
+        {
+          "queries": 1,
+          "seconds": 0.3769014999852516,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 0.7225754999672063,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 0.36401429102988914,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 0.5117096669855528,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        }
+      ]
+    },
+    {
+      "jev": false,
+      "batch": true,
+      "repeat": 0,
+      "seconds": 0.49314012500690296,
+      "calls": [
+        {
+          "queries": 4,
+          "seconds": 0.4931385830277577,
+          "status": "complete",
+          "warnings": [],
+          "returned": 39
+        }
+      ]
+    },
+    {
+      "jev": false,
+      "batch": true,
+      "repeat": 1,
+      "seconds": 0.47115075000328943,
+      "calls": [
+        {
+          "queries": 4,
+          "seconds": 0.4711498749675229,
+          "status": "complete",
+          "warnings": [],
+          "returned": 39
+        }
+      ]
+    },
+    {
+      "jev": false,
+      "batch": false,
+      "repeat": 1,
+      "seconds": 1.383955875004176,
+      "calls": [
+        {
+          "queries": 1,
+          "seconds": 0.33607837499585,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 0.34809308301191777,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 0.34486016700975597,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 0.35492129198974,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        }
+      ]
+    },
+    {
+      "jev": true,
+      "batch": false,
+      "repeat": 0,
+      "seconds": 15.350291500042658,
+      "calls": [
+        {
+          "queries": 1,
+          "seconds": 3.301952917012386,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 4.276632499997504,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 4.154864165990148,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 3.616796375019476,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        }
+      ]
+    },
+    {
+      "jev": true,
+      "batch": true,
+      "repeat": 0,
+      "seconds": 7.231024125008844,
+      "calls": [
+        {
+          "queries": 4,
+          "seconds": 7.231008832983207,
+          "status": "complete",
+          "warnings": [],
+          "returned": 39
+        }
+      ]
+    },
+    {
+      "jev": true,
+      "batch": true,
+      "repeat": 1,
+      "seconds": 6.992936208029278,
+      "calls": [
+        {
+          "queries": 4,
+          "seconds": 6.992931457993109,
+          "status": "complete",
+          "warnings": [],
+          "returned": 39
+        }
+      ]
+    },
+    {
+      "jev": true,
+      "batch": false,
+      "repeat": 1,
+      "seconds": 13.894573375000618,
+      "calls": [
+        {
+          "queries": 1,
+          "seconds": 2.9621338329743594,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 3.8294220420066267,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 4.018545583006926,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        },
+        {
+          "queries": 1,
+          "seconds": 3.084442916966509,
+          "status": "complete",
+          "warnings": [],
+          "returned": 10
+        }
+      ]
+    }
+  ]
+}

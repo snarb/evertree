@@ -1,0 +1,53 @@
+{
+  "purpose": "Diagnostic failure audit; not a complete score for the second article.",
+  "snapshot": "tmp/knowledge-graph-routes-v4/acquisition/1-5b526e40/snapshot.json",
+  "snapshot_sha256": "b1456661cf31bcedbdd0a7e381c3e2fb6631a0be5159aa99647205b5f70d5279",
+  "trace": "tmp/knowledge-graph-routes-v4/acquisition/1-5b526e40/trace.json",
+  "missing_assertions": [
+    "asx-05",
+    "asx-06",
+    "asx-07",
+    "asx-08",
+    "asx-09",
+    "asx-10",
+    "asx-11",
+    "glover-04"
+  ],
+  "incorrect_classification": {
+    "subject": 189,
+    "name": "Gary Glover",
+    "assigned_prototype": 11,
+    "assigned_class": "Organization",
+    "existing_correct_class": 138,
+    "correct_class": "Person"
+  },
+  "protocol_failure": {
+    "section_body_start": 825,
+    "section_body_end": 1631,
+    "final_model_message": "Extraction is incomplete. I saved CSL’s 1.4% decline and its reported effect on the healthcare sector as a connected fact. I did not finish capturing the other share moves, sector performance, gold price change, or Gary Glover’s commentary.",
+    "execution_marked_processed": true,
+    "cause": "The integration loop ignored ordinary final model text and treated any non-error return as section completion.",
+    "repair": "Require explicit finish_section completion decision; split declared incomplete or unacknowledged sections while preserving writes."
+  },
+  "known_other_limitations": [
+    "Classifying Glover as an organization was a separate model decision, not caused by the ignored completion message.",
+    "Several downward moves use positive magnitude plus direction whereas Star uses a signed negative magnitude plus direction; downstream comparisons must not assume a uniform numeric sign.",
+    "Star share currency was inferred as AUD while the source only supplies cents."
+  ],
+  "positive_examples": {
+    "acquisition_status_preserved": 168,
+    "completed_vs_target_funding": [
+      175,
+      176,
+      177
+    ],
+    "joined_shutdown_sample": 240,
+    "shared_amazon_identity": 12,
+    "allegations_not_findings": [
+      252,
+      253,
+      254
+    ]
+  },
+  "next_check": "Isolated rerun of the problematic source section against the first-article seed; do not label it a resumed matched acquisition."
+}

@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 from ..core.cognition.steps import AnalyticalNote
 from ..core.provider import ToolDefinition
+from ..core.semantics.tools import MULTIHOP_SEARCH_INSTRUCTIONS
 
 
 class AnswerVerification(BaseModel):
@@ -92,9 +93,10 @@ confirmed by the controller after independent verification and delivery.
 
 ## Remember useful work
 The trace is the saved log of inputs, operations and results. The graph holds selected,
-structured knowledge. KnowledgeIntegration automatically considers this step's experience
-for graph storage. Express useful emphasis and importance naturally in the text. The integrator
-selects what is worth retaining; its work does not require follow-up from you.
+structured knowledge. KnowledgeIntegration preserves nearly every distinct assertion in this
+step's experience, with shared participants, roles and qualifications. Express useful emphasis
+and importance naturally in the text; this changes priority, not baseline coverage. Incomplete
+processing remains explicit when an error or resource limit leaves material pending.
 For precise changes during this step, load graph_write_tools. Record new analysis with
 record_analysis first, then use its returned reference as a source for graph operations.
 You can also request early automatic selection with graph.integrate using saved experience
@@ -102,7 +104,20 @@ references and optional focus. The controller supplies the integrator's task con
 
 ## Tools and workspace
 Use graph.search to locate objects and graph.describe for their properties/schema.
+Choose kinds for the purpose of a search: relation_type for schemas, prototype for classes,
+instance/facet for participants and states, relation_instance/claim/note for assertions.
+Omit kinds when the representation is unknown; widen a filtered search when it leaves a gap.
+Different kinds compete for the same per-query budget, so group queries by their purpose.
+Search different objects, events and independently checkable clauses separately in one
+queries array, including conditions describing a single unknown object. Keep useful names, source
+and date constraints in each focused phrase so one topic cannot consume another topic's
+top-ten results. Do not add a topic merely because a source is said not to discuss it.
+{MULTIHOP_SEARCH_INSTRUCTIONS}
 Use graph.query for exact named-slot matches and graph.walk for repeated transitions.
+Use graph.sources on selected fact IDs, then read_source on returned references to read their
+original grounds without searching for the source again. Preserve the cited fragment and
+distinguish sources of previous versions from the current assertion. Read surrounding context
+when needed and verify explicit wording before claiming what an article says or omits.
 List reads report total and a token-bounded page; counts finish in one call without loading
 large lists. exists returns true/false/null without totals and stops at a definite match.
 Continue only when needed with next_page=true and optional max_items; Core stores cursors.
@@ -290,69 +305,74 @@ def semantic_tools():
     string = {"type": "string"}
     from dataclasses import replace
 
-    from ..core.semantics.tools import READ_TOOLS
+    from ..core.semantics.tools import READ_TOOLS, SEARCH_KIND_FILTER, SEARCH_QUERIES
 
-    return tuple(
-        replace(tool, name="graph." + tool.name)
-        for tool in READ_TOOLS
-        if tool.name
-        in {
-            "query",
-            "walk",
-            "read_property",
-            "summarize_property",
-            "interpret_property",
-            "select_properties",
-        }
-    ) + (
-        define(
-            "graph.search",
-            "Find graph objects by name, ID, or similarity of names and descriptions. Returns up to 20 candidates. Exact matches bypass indexes. Refine the query if none fits; no pagination.",
-            {
-                "query": reference,
-                "kind": string,
-                "limit": {"type": "integer", "minimum": 1, "maximum": 20},
-            },
-            ["query"],
-        ),
-        define(
-            "graph.describe",
-            "Describe an object with up to 7 properties and 7 relations. properties_total/relations_total precede truncated lists. focus=properties or relations returns that full list, without invoking computation. Other text filters both lists, with at most 7 relations and all matching properties. Prototype parent is one card or null; children lists up to 7 direct subtype names, preceded by children_total only when shortened. at is world time, defaults to now.",
-            {"subject": reference, "focus": string, "at": string},
-            ["subject"],
-        ),
-        define(
-            "graph.integrate",
-            "Ask KnowledgeIntegration to organize saved experience in the knowledge graph. Supply source_ref values or references returned by record_analysis. The controller provides the task requirements. The integrator independently selects useful knowledge.",
-            {
-                "experience_refs": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "event_ref": {"type": "integer"},
-                            "output_path": {
-                                "type": "array",
-                                "items": {"type": ["string", "integer"]},
-                            },
-                        },
-                        "required": ["event_ref"],
-                        "additionalProperties": False,
-                    },
-                    "minItems": 1,
+    return (
+        tuple(
+            replace(tool, name="graph." + tool.name)
+            for tool in READ_TOOLS
+            if tool.name
+            in {
+                "query",
+                "walk",
+                "sources",
+                "read_property",
+                "summarize_property",
+                "interpret_property",
+                "select_properties",
+            }
+        )
+        + (next(tool for tool in READ_TOOLS if tool.name == "read_source"),)
+        + (
+            define(
+                "graph.search",
+                "Find graph objects for a batch of names, IDs, or focused descriptions. Returns one list without duplicate objects, up to 10 per unique query. Batch independent needs at each step; use discovered names and relations for dependent follow-up searches. No pagination.",
+                {
+                    "queries": SEARCH_QUERIES,
+                    "kinds": SEARCH_KIND_FILTER,
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 10},
                 },
-                "focus": string,
-                "purpose": {"type": "string", "enum": ["task", "self_improvement"]},
-            },
-            ["experience_refs"],
-            False,
-        ),
-        ToolDefinition(
-            "record_analysis",
-            "Save a work note in the experience log and return its reference. Use its returned reference when graph operations need to cite new analysis during this step.",
-            AnalyticalNote.model_json_schema(),
-            read_only=False,
-        ),
+                ["queries"],
+            ),
+            define(
+                "graph.describe",
+                "Describe an object with up to 7 properties and 7 relations. properties_total/relations_total precede truncated lists. focus=properties or relations returns that full list, without invoking computation. Other text filters both lists, with at most 7 relations and all matching properties. Prototype parent is one card or null; children lists up to 7 direct subtype names, preceded by children_total only when shortened. at is world time, defaults to now.",
+                {"subject": reference, "focus": string, "at": string},
+                ["subject"],
+            ),
+            define(
+                "graph.integrate",
+                "Ask KnowledgeIntegration to preserve distinct assertions from saved experience as connected graph knowledge. Supply source_ref values or references returned by record_analysis. The controller provides task requirements. Focus sets priority without excluding the remaining assertions; unfinished processing stays explicit.",
+                {
+                    "experience_refs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "event_ref": {"type": "integer"},
+                                "output_path": {
+                                    "type": "array",
+                                    "items": {"type": ["string", "integer"]},
+                                },
+                            },
+                            "required": ["event_ref"],
+                            "additionalProperties": False,
+                        },
+                        "minItems": 1,
+                    },
+                    "focus": string,
+                    "purpose": {"type": "string", "enum": ["task", "self_improvement"]},
+                },
+                ["experience_refs"],
+                False,
+            ),
+            ToolDefinition(
+                "record_analysis",
+                "Save a work note in the experience log and return its reference. Use its returned reference when graph operations need to cite new analysis during this step.",
+                AnalyticalNote.model_json_schema(),
+                read_only=False,
+            ),
+        )
     )
 
 

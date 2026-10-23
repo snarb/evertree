@@ -1,0 +1,136 @@
+{
+  "protocol": "Live native model with actual Core reads. Synthetic graph, two opaque names absent from the question must be discovered through earlier tool results. Full provider trace remains in tmp/multi-hop-native-evaluation.",
+  "question": "How long is backup telemetry retained by the archive reached through the fallback route of Beacon f37215?",
+  "instructions": "For a question requiring several linked facts, first find an anchor and inspect what the returned facts actually establish. Use discovered names, identifiers and relations to choose the next search or read; batch only the needs that are independent at that step. Follow evidence until every required part is supported or a specific gap remains. A complete search reports completed retrieval channels, not exhaustive knowledge or proof that an object or fact is absent. Report unresolved parts instead of guessing. Use only graph tools for this fictional system. Start from the exact known object name. Cite IDs actually read. You have at most three searches, six total query entries and four describes. State unresolved gaps instead of inventing links.",
+  "reads": [
+    {
+      "name": "graph.search",
+      "arguments": {
+        "queries": [
+          "Beacon f37215"
+        ]
+      },
+      "result": {
+        "status": "complete",
+        "queries": [
+          {
+            "query": "Beacon f37215",
+            "status": "complete",
+            "exact": true,
+            "total": 1,
+            "ids": [
+              10
+            ]
+          }
+        ],
+        "items": [
+          {
+            "id": 10,
+            "name": "Beacon f37215",
+            "kind": "concept",
+            "description": "Its fallback route is RX-1cf4ce.",
+            "query_indices": [
+              0
+            ]
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "total": 1,
+        "exact": true
+      }
+    },
+    {
+      "name": "graph.search",
+      "arguments": {
+        "queries": [
+          "RX-1cf4ce"
+        ]
+      },
+      "result": {
+        "status": "complete",
+        "queries": [
+          {
+            "query": "RX-1cf4ce",
+            "status": "complete",
+            "exact": true,
+            "total": 1,
+            "ids": [
+              11
+            ]
+          }
+        ],
+        "items": [
+          {
+            "id": 11,
+            "name": "RX-1cf4ce",
+            "kind": "concept",
+            "description": "This route delivers backup telemetry to archive service SE-41b998.",
+            "query_indices": [
+              0
+            ]
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "total": 1,
+        "exact": true
+      }
+    },
+    {
+      "name": "graph.search",
+      "arguments": {
+        "queries": [
+          "SE-41b998"
+        ]
+      },
+      "result": {
+        "status": "complete",
+        "queries": [
+          {
+            "query": "SE-41b998",
+            "status": "complete",
+            "exact": true,
+            "total": 1,
+            "ids": [
+              12
+            ]
+          }
+        ],
+        "items": [
+          {
+            "id": 12,
+            "name": "SE-41b998",
+            "kind": "concept",
+            "description": "This archive retains backup telemetry for 17 days.",
+            "query_indices": [
+              0
+            ]
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "total": 1,
+        "exact": true
+      }
+    }
+  ],
+  "answer": {
+    "answer": "Backup telemetry is retained for 17 days by the archive reached through Beacon f37215’s fallback route.",
+    "evidence": [
+      {
+        "object_id": 10,
+        "supports": "Beacon f37215’s fallback route is RX-1cf4ce."
+      },
+      {
+        "object_id": 11,
+        "supports": "Route RX-1cf4ce delivers backup telemetry to archive service SE-41b998."
+      },
+      {
+        "object_id": 12,
+        "supports": "Archive service SE-41b998 retains backup telemetry for 17 days."
+      }
+    ],
+    "unresolved": []
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "purpose": "Observed classification failure and limits of its diagnosis; never supplied to acquisition or reader models.",
+  "trace": "tmp/knowledge-graph-routes-v4/acquisition/1-5b526e40/trace.json",
+  "trace_sha256": "f0c3511456a98d3483c378871fedac39078c0c26ae3887628d329cf3c0b290f0",
+  "invocation_index": 5,
+  "call_index": 10,
+  "call": {
+    "name": "create_instance",
+    "arguments": {
+      "name": "Gary Glover",
+      "description": "Novus Capital senior client adviser quoted on Australian market resilience and interest-rate expectations.",
+      "prototype": 11,
+      "sources": [
+        {
+          "event_ref": 511,
+          "output_path": [
+            "text"
+          ]
+        }
+      ]
+    }
+  },
+  "selected_class": {
+    "id": 11,
+    "name": "Organization",
+    "definition": "An identifiable organized body, including companies and publishers."
+  },
+  "employer_instance": {
+    "id": 185,
+    "name": "Novus Capital"
+  },
+  "existing_person_class": {
+    "id": 138,
+    "name": "Person",
+    "definition": "An individual human being."
+  },
+  "prototype_cards_in_prior_results_this_invocation": [
+    {
+      "id": 164,
+      "name": "Market Sector",
+      "description": "A category of publicly traded companies used to summarize market performance."
+    },
+    {
+      "id": 11,
+      "name": "Organization",
+      "description": null
+    },
+    {
+      "id": 33,
+      "name": "Product",
+      "description": "A tangible or digital item offered, used or sold."
+    }
+  ],
+  "observed": [
+    "The call selected the Organization prototype, not the employer instance.",
+    "The same prototype ID was used for companies immediately beforehand.",
+    "No Person prototype card occurs in prior tool results of this invocation."
+  ],
+  "unestablished": [
+    "The model’s internal reason for choosing that ID.",
+    "Whether this reflects semantic confusion, reuse of an available ID, or another cause."
+  ],
+  "instruction_action": "Remove employer-specific warning; define membership criteria and selection of a fitting class in general terms."
+}

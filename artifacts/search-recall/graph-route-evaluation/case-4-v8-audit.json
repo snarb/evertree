@@ -1,0 +1,296 @@
+{
+  "purpose": "Manual source-only diagnostic audit after generic class-definition clarification; not causal evidence that the clarification improved classification.",
+  "snapshot": "tmp/knowledge-graph-routes-v8/acquisition/4-a7079940/snapshot.json",
+  "snapshot_sha256": "3859015bb5566592d2d67b8943472d8b7613c17558854a973f080862ffededc5",
+  "checklist_sha256": "9370664b87778e506e4879e7a22021b095fd696ea99cb22953947bcc0da0d181",
+  "seconds": 471.918943208002,
+  "counts": {
+    "grouped_assertions": 30,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 26,
+      "partially_preserved": 3,
+      "preserved_with_unsupported_specificity": 1
+    },
+    "with_representation_gaps": 8,
+    "model_invocations": 8
+  },
+  "class_membership_review": {
+    "new_instances_checked": 11,
+    "incompatible_class_found": false,
+    "qualification": "One diagnostic source, with existing classes and identities; not a controlled before/after comparison.",
+    "hierarchy_caveats": [
+      "Song, Tweet and Television Program link to Media Work. Podcast remains parentless despite a compatible Media Work class later existing; instance membership correctness does not establish complete taxonomy."
+    ]
+  },
+  "additional_issue": "Fact705 treats 2011 as resurfacing timing from an ambiguous quoted remark, while the narrative says tweets from2010/2011 resurfaced near the report. The temporal interpretation is unsupported.",
+  "verdict": "New class memberships fit their descriptions and prior identities are reused. Several assertions remain partial or over-specific; source strings still block some traversal routes. No named correction is added to the prompt.",
+  "assertions": [
+    {
+      "assertion_id": "kelce-01",
+      "supporting_object_ids": [
+        694,
+        575
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-02",
+      "supporting_object_ids": [
+        690
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "Brotherhood preserved, but Jason’s Philadelphia Eagles affiliation is absent."
+      ]
+    },
+    {
+      "assertion_id": "kelce-03",
+      "supporting_object_ids": [
+        691,
+        695
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-04",
+      "supporting_object_ids": [
+        692,
+        704
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-05",
+      "supporting_object_ids": [
+        701
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-06",
+      "supporting_object_ids": [
+        691
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "X/Twitter rename remains context text, without a shared platform identity."
+      ]
+    },
+    {
+      "assertion_id": "kelce-07",
+      "supporting_object_ids": [
+        703
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-08",
+      "supporting_object_ids": [
+        704
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-09",
+      "supporting_object_ids": [
+        702
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-10",
+      "supporting_object_ids": [
+        726
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-11",
+      "supporting_object_ids": [
+        719,
+        726
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-12",
+      "supporting_object_ids": [
+        721,
+        727
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-13",
+      "supporting_object_ids": [
+        730
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-14",
+      "supporting_object_ids": [
+        729,
+        739
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-15",
+      "supporting_object_ids": [
+        729,
+        739
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-16",
+      "supporting_object_ids": [
+        736
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-17",
+      "supporting_object_ids": [
+        735
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-18",
+      "supporting_object_ids": [
+        707,
+        737
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-19",
+      "supporting_object_ids": [
+        748
+      ],
+      "meaning_status": "preserved_with_unsupported_specificity",
+      "representation_gaps": [
+        "Source says bracelet bearing his number;748 adds phone number without support in this supplied article."
+      ]
+    },
+    {
+      "assertion_id": "kelce-20",
+      "supporting_object_ids": [
+        743
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "Arrowhead Stadium is explicit in source but venue is null in743."
+      ]
+    },
+    {
+      "assertion_id": "kelce-21",
+      "supporting_object_ids": [
+        743
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-22",
+      "supporting_object_ids": [
+        744
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Three additional attendances remain event text rather than numerical count."
+      ]
+    },
+    {
+      "assertion_id": "kelce-23",
+      "supporting_object_ids": [
+        745
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Concert/tour is a string rather than addressable event shared with Swift."
+      ]
+    },
+    {
+      "assertion_id": "kelce-24",
+      "supporting_object_ids": [
+        746
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-25",
+      "supporting_object_ids": [
+        750
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Reunion is connected to both people but concert event remains prose."
+      ]
+    },
+    {
+      "assertion_id": "kelce-26",
+      "supporting_object_ids": [
+        751
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-27",
+      "supporting_object_ids": [
+        752,
+        753
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-28",
+      "supporting_object_ids": [
+        755
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-29",
+      "supporting_object_ids": [
+        755,
+        756
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kelce-30",
+      "supporting_object_ids": [
+        745,
+        746
+      ],
+      "meaning_status": "partially_preserved",
+      "representation_gaps": [
+        "Eras Tour and Karma survive as strings; Anti-Hero and All Too Well associations are absent."
+      ]
+    }
+  ]
+}

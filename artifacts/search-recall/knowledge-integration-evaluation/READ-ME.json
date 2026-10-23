@@ -1,0 +1,68 @@
+{
+  "purpose": "Diagnostic record, not an aggregate accuracy score. Source overlap and observed cases preclude independent acceptance.",
+  "manual_flags": [
+    {
+      "original_index": 19,
+      "issue": "Graph-only answer abstains because subscription/availability meaning was not retained; first judge incorrectly rewarded this as No. Label-blind oracle flags free-trial wording ambiguity."
+    },
+    {
+      "original_index": 25,
+      "issue": "Reports differ in certainty/framing; this does not necessarily establish a factual timeline contradiction."
+    },
+    {
+      "original_index": 261,
+      "issue": "Unnamed person and attribution of privacy require care. Revised judge still rewards unresolved required evidence; its correct=true is not reliable."
+    },
+    {
+      "original_index": 2205,
+      "issue": "Literal comparison binds Swift relationship-partner=Kelce and Kelce invitee=Swift. The expected Yes, both answer models and label-blind oracle conflate roles. Oracle even records distinct roles while concluding Yes. Flag for human semantic adjudication; original retained."
+    }
+  ],
+  "clear_improvements": [
+    {
+      "original_index": 4,
+      "before": "Wrong sportsbook/bonus; missing cross-source conditions.",
+      "after": "Caesars, conditional first-bet-loss offer up to $1000 and prospective Vermont status, grounded in facts244/475/487."
+    },
+    {
+      "original_index": 81,
+      "before": "Could not establish the Vermont offer.",
+      "after": "Matches the two source-specific offers while preserving expected/unconfirmed Vermont availability."
+    }
+  ],
+  "controls": "Both graph runs abstain on two original null queries. They are easy out-of-topic controls; they do not estimate whole-corpus false-positive rate.",
+  "source_assisted_followup": {
+    "representation": "Graph + saved original sources through actual recall",
+    "initial_failure": "Combined ten-result recall exposed the full original but the model overlooked explicit subscription conditions.",
+    "change": "Optional recall limit 1..10, source-by-source and clause-by-clause verification instructions; no source text truncation.",
+    "repeated_diagnostic_cases": [
+      4,
+      19,
+      25,
+      81,
+      261,
+      2205,
+      10,
+      13
+    ],
+    "supported_improvements": [
+      {
+        "original_index": 19,
+        "result": "Explicitly reads Peacock/NBCSports subscription terms, Fubo free trial and Polygon library-card/free-with-ads viewing options."
+      },
+      {
+        "original_index": 25,
+        "result": "Reads actual October and December reports and distinguishes public appearance from relationship start."
+      }
+    ],
+    "remaining_caveats": [
+      261,
+      2205
+    ],
+    "null_controls_abstained": [
+      10,
+      13
+    ],
+    "warning": "Observed/shared-document pilot; no independent answer accuracy score. Source URL lineage alone is not correctness."
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "purpose": "Source-only diagnostic checklist prepared before this article is acquired; grouped meanings and qualifications, not future-answer labels.",
+  "source": {
+    "title": "Taylor Swift is Time’s Person of the Year",
+    "author": "Chelsea Ritschel",
+    "source": "The Independent - Life and Style",
+    "published_at": "2023-12-06T13:55:17+00:00",
+    "category": "entertainment",
+    "url": "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html"
+  },
+  "source_record_sha256": "5f9988ed6c847131cc8afd0f68ffc25b2a155eb873156b570e030807f493e1a2",
+  "assertions": [
+    {
+      "id": "time-01",
+      "subject": "Taylor Swift",
+      "assertion": "named Time’s 2023 Person of the Year; announced Wednesday December 6"
+    },
+    {
+      "id": "time-02",
+      "subject": "Time Person of the Year selection",
+      "assertion": "editorial assessment of the individual shaping headlines over previous 12 months, for better or worse"
+    },
+    {
+      "id": "time-03",
+      "subject": "Other contenders",
+      "assertion": "Xi Jinping, King Charles III, live-action Barbie movie, Vladimir Putin; contenders, not joint winners"
+    },
+    {
+      "id": "time-04",
+      "subject": "Taylor Swift",
+      "assertion": "age 33 at reporting time; magazine described her combination of art and commerce as historically powerful"
+    },
+    {
+      "id": "time-05",
+      "subject": "Taylor Swift Time interview",
+      "assertion": "reported feeling especially proud, happy, creatively fulfilled and free; attributed self-assessment"
+    },
+    {
+      "id": "time-06",
+      "subject": "Eras Tour",
+      "assertion": "reported dominant 2023 ticket sales, record-breaking; estimated gross over 1.4 billion dollars, not an exact realized amount"
+    },
+    {
+      "id": "time-07",
+      "subject": "Eras Tour concert film",
+      "assertion": "global box office surpassed 250 million dollars since October opening weekend"
+    },
+    {
+      "id": "time-08",
+      "subject": "Swift-Kelce relationship",
+      "assertion": "article attributes 400-percent spike in NFL jersey sales to it; no narrower jersey population supplied"
+    },
+    {
+      "id": "time-09",
+      "subject": "Travis Kelce",
+      "assertion": "Kansas City Chiefs tight end"
+    },
+    {
+      "id": "time-10",
+      "subject": "Taylor Swift NFL attendance",
+      "assertion": "first appearance September; occasional appearances at Kelce games"
+    },
+    {
+      "id": "time-11",
+      "subject": "Some NFL fans",
+      "assertion": "criticized her attendance as distracting from games; attributed opinion, not universal fan belief"
+    },
+    {
+      "id": "time-12",
+      "subject": "Taylor Swift",
+      "assertion": "said she attended to support Travis and was unaware of whether broadcasts showed her too much"
+    },
+    {
+      "id": "time-13",
+      "subject": "Taylor Swift",
+      "assertion": "expressed newly discovered enjoyment of football"
+    },
+    {
+      "id": "time-14",
+      "subject": "Swift-Kelce romance",
+      "assertion": "Swift said it began after Kelce’s podcast shoutout about attempting to give her his phone number after an Eras Tour show"
+    },
+    {
+      "id": "time-15",
+      "subject": "Swift and Kelce",
+      "assertion": "began spending time together immediately afterward and were already a couple by first September Chiefs-game appearance"
+    },
+    {
+      "id": "time-16",
+      "subject": "First Chiefs-game appearance",
+      "assertion": "not their first date according to Swift; no exact first-date day supplied"
+    },
+    {
+      "id": "time-17",
+      "subject": "Joe Alwyn",
+      "assertion": "British actor; associated with Conversations with Friends"
+    },
+    {
+      "id": "time-18",
+      "subject": "Swift-Alwyn breakup",
+      "assertion": "revealed in April after six years of dating; announcement date not exact separation date"
+    },
+    {
+      "id": "time-19",
+      "subject": "Joe Alwyn privacy",
+      "assertion": "previously said discussing relationship fed a strange aspect of culture; attributed reason"
+    },
+    {
+      "id": "time-20",
+      "subject": "Swift-Kelce public relationship",
+      "assertion": "Swift described showing up for each other and mutual pride, contrasting with effort to conceal a relationship"
+    },
+    {
+      "id": "time-21",
+      "subject": "Eras Tour concert format",
+      "assertion": "over 180 minutes, more than 40 songs from at least 9 albums, 16 costume changes per concert"
+    },
+    {
+      "id": "time-22",
+      "subject": "Swift tour preparation",
+      "assertion": "daily treadmill exercise while singing entire set list aloud"
+    },
+    {
+      "id": "time-23",
+      "subject": "Swift training pace",
+      "assertion": "ran fast for fast songs; jogged or walked fast for slow songs"
+    },
+    {
+      "id": "time-24",
+      "subject": "Swift tour preparation",
+      "assertion": "stopped drinking; three months of dance training; said dancing was not her strong suit"
+    },
+    {
+      "id": "time-25",
+      "subject": "Swift recovery",
+      "assertion": "said she took a day to rest after a run of shows before next performance; largely stayed in bed except getting food"
+    },
+    {
+      "id": "time-26",
+      "subject": "Rio de Janeiro Eras Tour",
+      "assertion": "heat wave led to postponement of second night in Rio, Brazil"
+    },
+    {
+      "id": "time-27",
+      "subject": "Ana Clara Benevides",
+      "assertion": "fan, age 23; article reports death from cardiac arrest during Swift’s first performance in Brazil"
+    },
+    {
+      "id": "time-28",
+      "subject": "Postponement sequence",
+      "assertion": "decision followed the fan’s death; do not replace the explicitly stated heat-wave reason with inferred sole causation"
+    },
+    {
+      "id": "time-29",
+      "subject": "Swift performance commitment",
+      "assertion": "said she intends to perform despite illness, injury, heartbreak, discomfort or stress unless force majeure; attributed commitment, not proof of each condition occurring"
+    },
+    {
+      "id": "time-30",
+      "subject": "Scooter Braun",
+      "assertion": "acquired Big Machine Records in 2019, thereby gaining rights to masters of Swift’s first six studio albums"
+    },
+    {
+      "id": "time-31",
+      "subject": "Big Machine Records",
+      "assertion": "Swift’s longtime label at time described; distinguish label acquisition from recording rights"
+    },
+    {
+      "id": "time-32",
+      "subject": "Scooter Braun master sale",
+      "assertion": "sold masters to an unnamed investment fund in November 2020; deal believed over 300 million dollars"
+    },
+    {
+      "id": "time-33",
+      "subject": "Swift rerecorded albums",
+      "assertion": "four Taylor’s Version releases by article time; not all six original masters"
+    },
+    {
+      "id": "time-34",
+      "subject": "Fearless (Taylor’s Version)",
+      "assertion": "released April 2021"
+    },
+    {
+      "id": "time-35",
+      "subject": "Red (Taylor’s Version)",
+      "assertion": "released November 2021"
+    },
+    {
+      "id": "time-36",
+      "subject": "Speak Now (Taylor’s Version)",
+      "assertion": "released July 2023"
+    },
+    {
+      "id": "time-37",
+      "subject": "1989 (Taylor’s Version)",
+      "assertion": "released October 2023"
+    },
+    {
+      "id": "time-38",
+      "subject": "Swift success explanation",
+      "assertion": "she described cancellation and losing control of work as two painful catalysts; her interpretation, not independently proved causal effect"
+    },
+    {
+      "id": "time-39",
+      "subject": "Taylor Swift",
+      "assertion": "Grammy winner; no award count supplied"
+    },
+    {
+      "id": "time-40",
+      "subject": "Tree Paine",
+      "assertion": "Swift’s publicist; publicly denied rumors involving Swift and Alwyn; rumor contents unspecified"
+    },
+    {
+      "id": "time-41",
+      "subject": "Swift public attention",
+      "assertion": "said paparazzi and attention would not stop her living life or dining with friends"
+    },
+    {
+      "id": "time-42",
+      "subject": "Swift retrospective",
+      "assertion": "regretted years spent isolating at home and described herself as more trusting than six years earlier; attributed self-assessment"
+    }
+  ],
+  "negative_checks": [
+    "Exclude repeated newsletter controls and template errors as domain events.",
+    "Preserve greater-than, minimum, estimated and believed bounds; do not convert them to exact totals.",
+    "Do not invent investment-fund name, first-date day, breakup day, unspecified rumor contents or master-sale currency beyond source notation.",
+    "Preserve attribution for self-reports, editorial selection and causal claims; no independent medical or historical verification is implied."
+  ],
+  "checklist_counts": {
+    "grouped_domain_assertions": 42
+  }
+}

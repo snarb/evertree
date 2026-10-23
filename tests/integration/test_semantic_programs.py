@@ -4,6 +4,8 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+import pytest
+
 from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.runtime.controller import ProgramSpec, Runtime
 from evertree.core.tokens import current_read_context
@@ -61,7 +63,7 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
             assert "create_claim" in {tool["name"] for tool in payload["tools"]}
             attempts.append(json.loads(payload["prompt"]))
             call = payload["_tool_handler"]
-            await call("search", {"query": "Process"})
+            await call("search", {"queries": ["Process"]})
             fields = {
                 "name": "Cat classification",
                 "description": "A cat is an animal.",
@@ -99,6 +101,7 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
                 assert walked["total"] == 0
             finally:
                 current_read_context.reset(token)
+            await call("finish_section", {"complete": True, "remaining": ""})
             return {"text": ""}
         if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
             return await world.service.execute(method, payload, metadata)
@@ -113,6 +116,7 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
     try:
         result = await runtime.execute("task", parent, arguments, run_id="remember")
         assert len(result.result["writes"]) == 1
+        assert result.result["processing"]["status"] == "processed"
         assert world.graph.find("Cat classification").kind == "claim"
         assert len(attempts) == 1 and tool_results[0]["error"]
         assert len([e for e in traces if e["type"] == "run_started"]) == 3
@@ -124,7 +128,8 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
         await runtime.close()
 
 
-async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_path):
+@pytest.mark.parametrize("kinds", [None, ["RELATION_TYPE", "concept", "relation_type"]])
+async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_path, kinds):
     """Real IPC and DBOS prove concurrent reads, ordered results, and replay without index calls."""
     import asyncio
 
@@ -151,13 +156,17 @@ async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_pat
             return [ids[0], ids[2]] if name == "bm25" else [ids[1], ids[2]]
 
         async def lexical(self, *args):
-            return await self.leg("bm25")
+            assert args[2] == (["concept", "relation_type"] if kinds is not None else None)
+            ids = await self.leg("bm25")
+            return [{"ids": ids} for _ in args[1]]
 
         async def vector(self, *args):
-            return await self.leg("vector")
+            assert args[2] == (["concept", "relation_type"] if kinds is not None else None)
+            ids = await self.leg("vector")
+            return [{"ids": ids} for _ in args[1]]
 
     world = semantic_world(index=Index(), config=SemanticConfig())
-    ids = [node.id for node in world.graph.nodes()][:3]
+    ids = [node.id for node in world.graph.nodes() if node.kind == "relation_type"][:3]
 
     async def gateway(method, payload):
         payload = dict(payload)
@@ -169,12 +178,24 @@ async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_pat
     runtime = Runtime(tmp_path / "runtime", tmp_path / "repo", gateway, process_factory=TestProcess)
     try:
         spec = ProgramSpec(1, paths[0], revision, role="model")
-        result = await runtime.execute("task", spec, {"query": "missing"}, run_id="search")
+        result = await runtime.execute(
+            "task", spec, {"queries": ["missing", "another"], "kinds": kinds}, run_id="search"
+        )
         assert result.result["status"] == "complete", result.result
         assert started == {"bm25", "vector"}
         assert [item["id"] for item in result.result["items"]] == [ids[2], ids[0], ids[1]]
-        replay = await runtime.execute("task", spec, {"query": "missing"}, run_id="search")
+        replay = await runtime.execute(
+            "task", spec, {"queries": ["missing", "another"], "kinds": kinds}, run_id="search"
+        )
         assert replay.result == result.result and len(reads) == 2
+        reviews = [run for run in world.memory.runs if run.program == "SemanticSearchReview"]
+        assert len(reviews) == 2
+        for review in reviews:
+            key = json_value(review.arguments["key"])
+            assert world.service._search_confirmation(key) is True
+            assert world.service._search_confirmation([*key[:3], None]) is (
+                True if kinds is None else None
+            )
     finally:
         await runtime.close()
 
@@ -237,6 +258,7 @@ async def test_interrupted_integration_replays_completed_write_and_continues_sam
                 },
             )
             assert result["object"] == saved_id
+            await call("finish_section", {"complete": True, "remaining": ""})
             return {"text": "Done"}
         if method == "semantic.write":
             writes.append(payload["operation_key"])
@@ -261,7 +283,10 @@ async def test_interrupted_integration_replays_completed_write_and_continues_sam
         )
         assert [write["object"] for write in result.result["writes"]] == [saved_id, saved_id]
         assert world.graph.get(saved_id).description == "The pump is 20 C"
-        assert writes == ["1", "2"]
+        assert len(writes) == 2 and len(set(writes)) == 2
+        assert [key.rsplit(":", 1)[1] for key in writes] == ["1", "2"]
+        assert writes[0].rsplit(":", 1)[0] == writes[1].rsplit(":", 1)[0]
+        assert result.result["processing"]["status"] == "processed"
         changes = [change for change in world.graph._history if saved_id in change.after]
         assert len(changes) == 2
         assert len(calls) == 2

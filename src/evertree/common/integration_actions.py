@@ -2,6 +2,7 @@
 
 import logging
 
+from evertree.core.semantics.searching import query_key
 from evertree.core.semantics.tools import CREATE_ACTIONS, TOOLS_BY_NAME, validate_action
 
 _log = logging.getLogger(__name__)
@@ -62,18 +63,25 @@ class SemanticTools:
     def remember_read(self, name, arguments, result):
         """Share explicit consciousness reads with the creation review gate."""
         self._track_shown_candidates(result)
-        if (
-            name == "search"
-            and isinstance(arguments.get("query"), str)
-            and not arguments.get("kind")
-        ):
-            self._searches[arguments["query"].strip().casefold()] = result
+        if name == "search" and arguments.get("kinds") is None:
+            self._remember_search(result)
 
-    async def _search(self, query, reads):
-        key = query.strip().casefold()
-        result = await self._search_port(query)
-        self._searches[key] = result
-        reads.append({"tool": "search", "query": query, "result": result})
+    def _remember_search(self, result):
+        by_id = {node["id"]: node for node in result.get("items", [])}
+        for row in result.get("queries", []):
+            if isinstance(row["query"], str):
+                self._searches[query_key(row["query"])] = {
+                    **row,
+                    "items": [by_id[i] for i in row["ids"] if i in by_id],
+                }
+
+    async def _search(self, queries, reads, kinds=None, limit=10):
+        result = await self._search_port(queries, kinds=kinds, limit=limit)
+        if kinds is None:
+            self._remember_search(result)
+        reads.append(
+            {"tool": "search", "queries": queries, "kinds": kinds, "limit": limit, "result": result}
+        )
         return result
 
     async def _describe(self, subject, reads):
@@ -90,10 +98,10 @@ class SemanticTools:
         the model reviewed them and chose to create anyway.
         """
         name = action["name"]
-        key = name.strip().casefold()
+        key = query_key(name)
         previous = self._searches.get(key)
         if previous is None:
-            found = await self._search(name, reads)
+            found = await self._search([name], reads)
             # A new name still needs a search, but already shown candidates need no review.
             unseen = [
                 node
@@ -184,7 +192,9 @@ class SemanticTools:
             action = {**arguments, "action": name}
             validate_action(action)
             if name == "search":
-                result = await self._search(action["query"], reads)
+                result = await self._search(
+                    action["queries"], reads, action.get("kinds"), action.get("limit", 10)
+                )
             elif name == "describe" and not any(
                 arguments.get(k) is not None for k in ("focus", "at")
             ):

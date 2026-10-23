@@ -1,0 +1,282 @@
+[
+  {
+    "query": "Does the Sportskeeda article suggest a more successful start to the 2023 NFL season for Brock Purdy compared to the CBSSports.com article's assessment of his performance under pressure?",
+    "queries": [
+      "Sportskeeda Brock Purdy start to 2023 NFL season",
+      "CBSSports.com Brock Purdy performance under pressure"
+    ]
+  },
+  {
+    "query": "Who is the soccer player that, after scoring his first international goals in 2020 and having a prolific start with Borussia Dortmund in the Bundesliga, has the chance to finish as the top scorer of 2023 with two games left for Manchester City and has contributed to their historic treble, as reported by TalkSport, The New York Times, and The Guardian?",
+    "queries": [
+      "soccer player first international goals 2020 TalkSport The New York Times The Guardian",
+      "Borussia Dortmund prolific Bundesliga start TalkSport The New York Times The Guardian",
+      "Manchester City top scorer 2023 two games left TalkSport The New York Times The Guardian",
+      "Manchester City historic treble contribution TalkSport The New York Times The Guardian"
+    ]
+  },
+  {
+    "query": "Do the 'Sporting News' article's claims about Vermont state residents' support for Boston-based teams and the 'Fortune' article's claims about Billie Jean King's ownership involvement in sports teams both indicate a connection to specific sports teams or leagues?",
+    "queries": [
+      "Sporting News Vermont residents support Boston-based teams",
+      "Fortune Billie Jean King ownership involvement sports teams"
+    ]
+  },
+  {
+    "query": "Has the broadcasting platform for NFL 'Thursday Night Football' games for NFL fans across the United States as reported by Sporting News changed between the game featuring the Detroit Lions and Green Bay Packers on September 28, 2023, and the game featuring the Chicago Bears and Carolina Panthers on November 9, 2023?",
+    "queries": [
+      "Sporting News September 28 2023 Thursday Night Football Detroit Lions Green Bay Packers broadcast platform",
+      "Sporting News November 9 2023 Thursday Night Football Chicago Bears Carolina Panthers broadcast platform"
+    ]
+  },
+  {
+    "query": "After Sporting News reported on NBA MVP odds with Jokic and Giannis as early favorites on October 4, 2023, did the approach of sportsbooks, as mentioned in a later article from Sporting News on November 1, 2023, regarding the use of new data and analytics by oddsmakers to set betting lines, remain consistent or change?",
+    "queries": [
+      "Sporting News October 4 2023 NBA MVP odds Jokic Giannis early favorites",
+      "Sporting News November 1 2023 oddsmakers new data analytics set betting lines"
+    ]
+  },
+  {
+    "query": "Between the Sporting News report on Inter Miami's season ticket prices following Lionel Messi's arrival published on October 4, 2023, and the Sporting News report on Inter Miami's exclusion from the MLS playoffs published on October 7, 2023, was there a change in the team's postseason prospects as reported by the news source?",
+    "queries": [
+      "Sporting News October 4 2023 Inter Miami season ticket prices Lionel Messi arrival",
+      "Sporting News October 7 2023 Inter Miami excluded MLS playoffs postseason prospects"
+    ]
+  },
+  {
+    "query": "Does the Sporting News article about Scott McTominay suggest he is the top scorer for Manchester United in the same way that the Sporting News article about the Major League Soccer scoring list indicates Chris Wondolowski leads with 171 goals?",
+    "queries": [
+      "Sporting News Scott McTominay Manchester United top scorer",
+      "Sporting News Major League Soccer scoring list Chris Wondolowski 171 goals"
+    ]
+  },
+  {
+    "query": "Does the article from 'The Independent - Life and Style' suggest the same reason for \"Britney Spears and Justin Timberlake's breakup\" as the reason for \"Dillon Danis and Savannah Montano's relationship\" ending as reported by 'Essentially Sports'?",
+    "queries": [
+      "The Independent Life and Style Britney Spears Justin Timberlake breakup reason",
+      "Essentially Sports Dillon Danis Savannah Montano relationship ending reason"
+    ]
+  },
+  {
+    "query": "Between the Sporting News article published on September 28, 2023, highlighting bettors' opportunities with Travis Kelce & Taylor Swift-inspired props and the November 1, 2023, article explaining point spread betting, has the Sporting News' portrayal of the influence of news or sentiment on bettors and sportsbooks remained consistent or inconsistent?",
+    "queries": [
+      "Sporting News September 28 2023 Travis Kelce Taylor Swift inspired betting props bettors news sentiment",
+      "Sporting News November 1 2023 point spread betting news sentiment bettors sportsbooks"
+    ]
+  },
+  {
+    "query": "Which football club, discussed on both TalkSport and Sporting News, has both set an unwanted record by conceding 14 goals in the Champions League group stages and has been eliminated from European competitions following a defeat at their home ground, known as Old Trafford?",
+    "queries": [
+      "TalkSport football club Champions League group stages conceded 14 goals unwanted record",
+      "Sporting News club eliminated from European competitions defeat Old Trafford"
+    ]
+  },
+  {
+    "query": "Has the 'Sporting News' maintained consistency in its explanation of sports betting terms, specifically regarding 'Bettors who wager on the \"over\"' before November 6, 2023, as compared to its earlier report on November 1, 2023?",
+    "queries": [
+      "Sporting News bettors who wager on the over explanation before November 6 2023",
+      "Sporting News November 1 2023 point spread betting explanation"
+    ]
+  },
+  {
+    "query": "Which football team, now excluded from European competitions due to a defeat by Bayern at Old Trafford, historically outperformed another Premier League giant with seven wins in their first 12 encounters from 1905 to 1913, according to Sporting News?",
+    "queries": [
+      "Sporting News football team eliminated European competitions Bayern defeat Old Trafford",
+      "Sporting News Premier League club seven wins first 12 encounters 1905 1913"
+    ]
+  },
+  {
+    "query": "Between the Sporting News report on the best NBA betting sites and apps for the 2023-24 season published on October 2, 2023, and the Sporting News report on NBA Rookie of the Year odds with Wembanyama as the early favorite published on October 4, 2023, was there agreement in how Sportsbooks approach their offerings and adjustments in betting lines?",
+    "queries": [
+      "Sporting News October 2 2023 best NBA betting sites apps 2023-24 season sportsbooks offerings betting lines",
+      "Sporting News October 4 2023 NBA Rookie of the Year odds Wembanyama early favorite sportsbooks betting lines"
+    ]
+  },
+  {
+    "query": "Does the 'Sporting News' article suggest that the Seattle Seahawks are currently on a losing streak, in contrast to the 'Essentially Sports' article which discusses the Houston Astros having had a successful streak prior to their controversy?",
+    "queries": [
+      "Sporting News Seattle Seahawks losing streak",
+      "Essentially Sports Houston Astros successful streak before controversy"
+    ]
+  },
+  {
+    "query": "Does the 'Sporting News' article suggest that 'Sports betting apps and live streaming' have a positive impact on the golf betting experience, while 'Essentially Sports' indicates a negative trend in 'Golf competitiveness'?",
+    "queries": [
+      "Sporting News sports betting apps live streaming golf betting experience",
+      "Essentially Sports golf competitiveness trend"
+    ]
+  },
+  {
+    "query": "Does the 'Sporting News' article suggest that Cristian Romero's action in the Manchester United match was expected to be followed by an apology, while 'The Age' implies that people are willing to accept allegations of foul play regarding Google's search practices?",
+    "queries": [
+      "Sporting News Cristian Romero action Manchester United match expected apology",
+      "The Age allegations foul play Google search practices public acceptance"
+    ]
+  },
+  {
+    "query": "Which NFL player, featured in articles by 'The Guardian', 'The New York Times', and 'Sporting News', scored two touchdowns in a single game for the Miami Dolphins, has a significant number of receiving yards partway through the season, but might face challenges reaching 2,000-plus receiving yards due to the strong pass defenses of upcoming opponents?",
+    "queries": [
+      "The Guardian Miami Dolphins player scored two touchdowns in one game significant receiving yards 2,000 receiving yards pass defenses",
+      "The New York Times Miami Dolphins player scored two touchdowns in one game significant receiving yards 2,000 receiving yards pass defenses",
+      "Sporting News Miami Dolphins player scored two touchdowns in one game significant receiving yards 2,000 receiving yards pass defenses"
+    ]
+  },
+  {
+    "query": "After Sporting News reported on Johnny Cardoso's inclusion in the USMNT squad post-injury on October 4, 2023, and CBSSports.com announced De'Von Achane's move to Injured Reserve on October 12, 2023, which player's status changed between the two reports, Johnny Cardoso or De'Von Achane?",
+    "queries": [
+      "Sporting News October 4 2023 Johnny Cardoso USMNT squad post injury status",
+      "CBSSports.com October 12 2023 De'Von Achane Injured Reserve status"
+    ]
+  },
+  {
+    "query": "Does the Sporting News article suggest that streaming services require a subscription for viewing the Cowboys vs. 49ers game, in contrast to the Polygon article's claim about film availability on streaming platforms without a subscription?",
+    "queries": [
+      "Sporting News Cowboys vs 49ers game streaming services subscription required",
+      "Polygon film availability streaming platforms without subscription"
+    ]
+  },
+  {
+    "query": "Which player, who is seen as a catalyst for the youth movement in Argentina's forward line and is expected to have a significant rest period before participating in CONMEBOL World Cup qualifying matches, was anticipated to play most of the second half against Paraguay after not starting the match, according to reports from Sporting News?",
+    "queries": [
+      "Sporting News Argentina forward youth movement expected rest CONMEBOL World Cup qualifying Paraguay second half did not start"
+    ]
+  },
+  {
+    "query": "Does 'The Guardian' article describe 'the match' as a contest of disparity between a wealthy team and a young team, while the 'Sporting News' article focuses on 'Shohei Ohtani's' decision on team selection without mentioning any disparity?",
+    "queries": [
+      "The Guardian match wealthy team young team disparity",
+      "Sporting News Shohei Ohtani decision team selection disparity"
+    ]
+  },
+  {
+    "query": "Has the approach of Sportsbooks in adjusting betting lines and odds, as reported by Sporting News after October 4, 2023, and before November 1, 2023, remained consistent?",
+    "queries": [
+      "Sporting News sportsbooks adjusting betting lines odds after October 4 2023 before November 1 2023"
+    ]
+  },
+  {
+    "query": "Did the 'Sporting News' report on Brock Purdy's performance before or after highlighting the New Orleans' comeback with two fourth quarter touchdowns in the NFL games?",
+    "queries": [
+      "Sporting News Brock Purdy performance New Orleans comeback two fourth quarter touchdowns NFL games publication date"
+    ]
+  },
+  {
+    "query": "Does the Sporting News article on prop betting suggest that sportsbooks generally refund player prop bets if the player doesn't play, while the Sporting News article on BetRivers specifies that BetRivers offers a refund in bonus bets of a certain amount if the first bet loses?",
+    "queries": [
+      "Sporting News prop betting sportsbook refund player prop bets player does not play",
+      "Sporting News BetRivers bonus bet refund if first bet loses amount"
+    ]
+  },
+  {
+    "query": "Does the 'Sporting News' article identify Scott McTominay as Manchester United's top scorer for the season, while the 'TalkSport' article suggests Erling Haaland has the chance to become the overall top scorer in 2023, indicating a difference in the scope of their scoring achievements?",
+    "queries": [
+      "Sporting News Scott McTominay Manchester United top scorer season",
+      "TalkSport Erling Haaland chance overall top scorer 2023"
+    ]
+  },
+  {
+    "query": "Did the Yardbarker article describe Alex Verdugo's offensive performance as league-average, while the Sporting News article reported the San Francisco 49ers' offensive performance as strong, despite Christian McCaffrey not scoring?",
+    "queries": [
+      "Yardbarker Alex Verdugo offensive performance league average",
+      "Sporting News San Francisco 49ers offense strong Christian McCaffrey did not score"
+    ]
+  },
+  {
+    "query": "Who, according to various articles from Sporting News, can make money by engaging in activities such as placing prop bets on the performance of a team at a specific point in a game, deciding on the outcome of individual matches or the winning team in golf events, and taking advantage of bonus offers when their selected team wins on moneyline bets?",
+    "queries": [
+      "Sporting News prop bets team performance at a specific point in a game who can make money",
+      "Sporting News golf betting individual matches winning team who can make money",
+      "Sporting News moneyline bets bonus offers selected team wins who can make money"
+    ]
+  },
+  {
+    "query": "Did the 'Sporting News' article suggest that the Dallas Cowboys' offensive effectiveness against the 49ers came early in the game, while the same source indicates that Joe Mixon's offensive role for the Cincinnati Bengals has decreased due to Joe Burrow's absence?",
+    "queries": [
+      "Sporting News Dallas Cowboys offensive effectiveness against 49ers early in game",
+      "Sporting News Joe Mixon Cincinnati Bengals offensive role decreased Joe Burrow absence"
+    ]
+  },
+  {
+    "query": "Which football club, recently discussed in articles from 'The Guardian', 'The Roar | Sports Writers Blog', and 'BBC News - Entertainment & Arts', had a significant change in league position due to a points penalty after a series of wins, and is recognized for its history and community importance as emphasized by Farhad Moshiri following an introduction by its late chairman Bill Kenwright?",
+    "queries": [
+      "The Guardian football club points penalty league position after series of wins",
+      "The Roar Sports Writers Blog football club points penalty league position after series of wins",
+      "BBC News Entertainment & Arts Farhad Moshiri late chairman Bill Kenwright club history community importance"
+    ]
+  },
+  {
+    "query": "Does the CBSSports.com article suggest that Terry McLaurin's performance in specific games was more variable compared to the consistent performance of The Chiefs' star rookie as mentioned in another CBSSports.com article?",
+    "queries": [
+      "CBSSports.com Terry McLaurin performance specific games variability",
+      "CBSSports.com Chiefs star rookie consistent performance"
+    ]
+  },
+  {
+    "query": "Does the Sporting News article expect T.J. Hockenson to participate in the Sunday game, in contrast to the CBSSports.com article where Dennis Allen suggests Chris Olave, despite being a full participant in practice, is still uncertain to play due to concussion protocol?",
+    "queries": [
+      "Sporting News T.J. Hockenson Sunday game expected to play",
+      "CBSSports.com Dennis Allen Chris Olave full practice participant concussion protocol uncertain to play"
+    ]
+  },
+  {
+    "query": "Does the 'Essentially Sports' article claim that Canelo Alvarez has a specific net worth figure in 2023, while the 'CBSSports.com' article focuses on the fan base's perception of David Benavidez as a successor to Canelo Alvarez, without mentioning any financial figures?",
+    "queries": [
+      "Essentially Sports Canelo Alvarez net worth 2023",
+      "CBSSports.com David Benavidez successor to Canelo Alvarez fan perception"
+    ]
+  },
+  {
+    "query": "What type of establishments, as reported by Sporting News, are known to modify their betting lines based on news or sentiment about a team's performance, provide welcome bonuses with specific conditions, generate profit irrespective of betting outcomes, and alter NBA Rookie of the Year odds according to collected information?",
+    "queries": [
+      "Sporting News establishments modify betting lines news sentiment team performance welcome bonuses conditions profit regardless betting outcomes NBA Rookie of the Year odds information"
+    ]
+  },
+  {
+    "query": "Did the article from 'The Age' about Tyler Mitchell suggest that his career has been unsuccessful due to his early photography experiences, while the article from 'The Roar | Sports Writers Blog' about Graham Arnold indicates that his career choices involved staying with the Australian national team despite offers from Europe?",
+    "queries": [
+      "The Age Tyler Mitchell early photography experiences unsuccessful career",
+      "The Roar Sports Writers Blog Graham Arnold stayed with Australian national team offers from Europe"
+    ]
+  },
+  {
+    "query": "Does 'The Guardian' article suggest that the efficiency of the press, the closing of the angles, and the command of space are essential measures of how 'the team' is functioning as a collective, while the 'Polygon' article implies that 'Game challenges' require players to work together in a similar or different manner?",
+    "queries": [
+      "The Guardian press efficiency closing angles command of space measures team collective functioning",
+      "Polygon game challenges players work together"
+    ]
+  },
+  {
+    "query": "What type of establishments, as reported by Sporting News, are known to modify their betting lines and odds in response to team news, player injuries, or roster changes, and can still secure profit irrespective of the wager's result, while also specifically altering NBA Rookie of the Year betting odds based on new information?",
+    "queries": [
+      "Sporting News establishments modify betting lines odds team news player injuries roster changes profit regardless wager result NBA Rookie of the Year odds new information"
+    ]
+  },
+  {
+    "query": "Does the Sporting News article suggest that the Dallas Cowboys' late offensive effectiveness was a factor in the game's outcome, while the same source implies that Frank Reich's position as head coach is at risk due to the Carolina Panthers' poor offensive performance throughout the game?",
+    "queries": [
+      "Sporting News Dallas Cowboys late offensive effectiveness game outcome",
+      "Sporting News Frank Reich head coach position at risk Carolina Panthers poor offensive performance"
+    ]
+  },
+  {
+    "query": "Does the TechCrunch article mention Michael Lewis being present during an event related to Sam Bankman-Fried, while the Essentially Sports article discusses Ross Chastain's presence in both on-track and off-track events in 2023?",
+    "queries": [
+      "TechCrunch Michael Lewis present event related to Sam Bankman-Fried",
+      "Essentially Sports Ross Chastain on-track off-track events 2023"
+    ]
+  },
+  {
+    "query": "After Sporting News reported on Najee Harris being the preferred goal-line back for the Steelers with touchdowns in three recent games on December 7, 2023, did Rivals report any touchdowns by Jonah Coleman for the Wildcats in the game against Utah before that date?",
+    "queries": [
+      "Sporting News December 7 2023 Najee Harris preferred Steelers goal-line back touchdowns three recent games",
+      "Rivals Jonah Coleman Wildcats touchdowns game against Utah before December 7 2023"
+    ]
+  },
+  {
+    "query": "Did the 'Sporting News' article on Sean Payton's decision to attempt a field goal and the 'Sporting News' article on Andre Blake's goalkeeping performance both describe a situation where the coach or player chose a conservative strategy in their respective sports scenarios?",
+    "queries": [
+      "Sporting News Sean Payton decision attempt field goal conservative strategy",
+      "Sporting News Andre Blake goalkeeping performance conservative strategy"
+    ]
+  }
+]

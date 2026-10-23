@@ -1,0 +1,165 @@
+[
+  {
+    "original_index": 4,
+    "query": "Which online betting platform provides a welcome bonus of up to $1000 in bonus bets for new customers' first losses, runs NBA betting promotions, and is anticipated to extend the same sign-up offer to new users in Vermont, as reported by both CBSSports.com and Sporting News?",
+    "answer": {
+      "answer": "Caesars Sportsbook. CBSSports.com reports that new customers can receive up to $1,000 in bonus bets if their first bet loses (object 18). Sporting News anticipates Caesars will offer that same first-bet offer to new Vermont users (object 19), and also says Caesars runs NBA betting promotions (object 17).",
+      "evidence": [
+        {
+          "object_id": 18,
+          "supports": "CBSSports.com identifies Caesars Sportsbook and says new customers can get up to $1,000 in bonus bets if they lose their first bet."
+        },
+        {
+          "object_id": 19,
+          "supports": "Sporting News says it expects Caesars to offer new Vermont sign-ups up to a $1,000 Bonus Bet if their first bet loses."
+        },
+        {
+          "object_id": 17,
+          "supports": "Sporting News says Caesars offers NBA betting and runs NBA betting promotions for existing players."
+        }
+      ],
+      "unresolved": []
+    }
+  },
+  {
+    "original_index": 19,
+    "query": "Does the Sporting News article suggest that streaming services do not require a subscription for viewing the Cowboys vs. 49ers game, in contrast to the Polygon article's claim about film availability on streaming platforms without a subscription?",
+    "answer": {
+      "answer": "No. The Sporting News article says Peacock and NBCSports.com require a subscription; it mentions a free trial for Fubo and says Canadian viewers can use DAZN, without specifying DAZN’s subscription terms. Polygon, by contrast, lists particular films as free with ads or free with a library card, alongside films available through paid streaming or rental. So the articles describe different access options; neither supports a blanket claim that streaming services require no subscription.",
+      "evidence": [
+        {
+          "object_id": 20,
+          "supports": "The article explicitly says Peacock or NBCSports.com streaming requires a subscription, Fubo offers a free trial, and Canadian viewers can stream through DAZN."
+        },
+        {
+          "object_id": 21,
+          "supports": "The article lists specific films as free with ads or free with a library card, while also listing paid streaming and rental options."
+        }
+      ],
+      "unresolved": [
+        "The Sporting News article does not specify DAZN’s subscription terms or whether Fubo access remains free after its trial."
+      ]
+    }
+  },
+  {
+    "original_index": 25,
+    "query": "Was the news about Taylor Swift's relationship with Travis Kelce inconsistent with the later report from The Independent - Life and Style on December 6, 2023?",
+    "answer": {
+      "answer": "No clear inconsistency. The earlier CBS Sports article described the relationship as rumored and reported that Swift and Kelce were getting to know each other after she attended a game. The December 6 Independent article later said Swift and Kelce had started hanging out earlier and were already a couple by that first game. The later report adds a more definite account of their private timeline; it does not directly contradict the earlier article’s qualified reporting.",
+      "evidence": [
+        {
+          "object_id": 16,
+          "supports": "The October 12 CBS Sports timeline calls the relationship rumored/apparent and quotes a source saying they were having a “great time getting to know each other.”"
+        },
+        {
+          "object_id": 15,
+          "supports": "The December 6 Independent report says their romance began after Kelce’s podcast shoutout, they immediately began hanging out, and they were already a couple when Swift attended her first Chiefs game."
+        }
+      ],
+      "unresolved": []
+    }
+  },
+  {
+    "original_index": 81,
+    "query": "Between the report from Sporting News on September 26, 2023, and the report from CBSSports.com, was there consistency in the promotional offers reported for new customers at Caesars Sportsbook?",
+    "answer": {
+      "answer": "Yes. The offers were consistent in their main terms: both reports said new Caesars Sportsbook customers could receive up to $1,000 in bonus bets if their first bet lost. Sporting News also specified a promo code and a 30-day window to place the first bet; the CBSSports.com report gave the offer amount and loss condition but not those details in its Caesars summary.",
+      "evidence": [
+        {
+          "object_id": 19,
+          "supports": "Sporting News report published September 26, 2023 says new sign-ups were eligible for up to a $1,000 Bonus Bet if their first bet lost."
+        },
+        {
+          "object_id": 18,
+          "supports": "CBSSports.com report says new Caesars customers could get up to $1,000 in bonus bets if they lost their first bet."
+        }
+      ],
+      "unresolved": []
+    }
+  },
+  {
+    "original_index": 261,
+    "query": "Does the article from 'The Independent - Life and Style' claim that Taylor Swift is secretive about her relationship with a specific individual, in contrast to the 'CBSSports.com' article which discusses her rumored romance but focuses on her attendance and performance at a specific venue?",
+    "answer": {
+      "answer": "Not quite. The Independent article says Taylor Swift and her former partner Joe Alwyn were notoriously private as a couple, and notes that Alwyn had said he did not want to discuss their relationship. It also says Swift described her relationship with Travis Kelce as public and said she had nothing to hide. The CBSSports.com article covers their rumored romance through a timeline, including Swift attending Chiefs games and Kelce’s invitation for her to see him “rock the stage” at Arrowhead Stadium. So the comparison fits if the specific individual is Joe Alwyn, but the Independent article does not say Swift herself was secretive about her relationship with Kelce. [15, 16]",
+      "evidence": [
+        {
+          "object_id": 15,
+          "supports": "The article identifies Joe Alwyn as Swift’s former partner, calls the former couple notoriously private, and quotes Swift describing her relationship with Travis Kelce as public."
+        },
+        {
+          "object_id": 16,
+          "supports": "The article presents a timeline of the rumored Swift–Kelce romance, detailing her attendance at Chiefs games and Kelce’s Arrowhead Stadium invitation."
+        }
+      ],
+      "unresolved": []
+    }
+  },
+  {
+    "original_index": 2205,
+    "query": "Does the article from 'The Independent - Life and Style' about Taylor Swift being Time’s Person of the Year claim that she is open about her relationship with the same individual that 'The Independent - Life and Style' reports Travis Kelce invited to one of his games at Arrowhead Stadium?",
+    "answer": {
+      "answer": "Yes. The Person of the Year article says Taylor Swift has nothing to hide in her relationship with Travis Kelce. The other article says Kelce invited Swift to one of his games at Arrowhead Stadium, so the individual is the same person: Taylor Swift.",
+      "evidence": [
+        {
+          "object_id": 15,
+          "supports": "Identifies Travis Kelce as Swift’s partner and quotes her saying she has nothing to hide in their relationship."
+        },
+        {
+          "object_id": 14,
+          "supports": "Reports that Kelce invited Swift to one of his Arrowhead Stadium games."
+        }
+      ],
+      "unresolved": []
+    }
+  },
+  {
+    "original_index": 10,
+    "query": "Considering the information from a BBC article detailing Sridevi's achievements in the Indian film industry and a Times of India report on her posthumous honors, which single character from a film portrayed by Sridevi has been recognized for its cultural impact and has also been commemorated with a special award after her passing?",
+    "answer": {
+      "answer": "I can’t determine the character from the available graph evidence. The retrieved articles I inspected are unrelated to Sridevi, so they do not establish the cultural impact or posthumous award clues.",
+      "evidence": [
+        {
+          "object_id": 13,
+          "supports": "The inspected article is a Yardbarker NFL preview and contains no Sridevi or film-character information."
+        },
+        {
+          "object_id": 15,
+          "supports": "The inspected article is about Taylor Swift being named Time’s Person of the Year and contains no Sridevi or posthumous-honor information."
+        },
+        {
+          "object_id": 17,
+          "supports": "The inspected article is about NBA Rookie of the Year odds and contains no relevant Sridevi or character information."
+        }
+      ],
+      "unresolved": [
+        "The graph search did not retrieve the BBC article or Times of India report described in the question.",
+        "The character’s film, cultural recognition, and commemorative award after Sridevi’s passing remain unverified."
+      ]
+    }
+  },
+  {
+    "original_index": 13,
+    "query": "What is the first letter of the name of the company that, according to an article from The Financial Times, received the most European patents in 2021, and is also mentioned in a Bloomberg article as having faced a significant legal challenge at the European Patent Office over one of its key patents?",
+    "answer": {
+      "answer": "I can’t determine the first letter from the graph evidence. The articles I inspected are unrelated to the patent clues: ID 10 is a Mashable Cyber Monday article, ID 13 is a Yardbarker NFL article, and ID 18 is a CBS Sports betting article.",
+      "evidence": [
+        {
+          "object_id": 10,
+          "supports": "Its description identifies it as a Mashable Cyber Monday deals article, not the Financial Times or Bloomberg patent article."
+        },
+        {
+          "object_id": 13,
+          "supports": "Its description identifies it as a Yardbarker NFL preview, not an article about patents."
+        },
+        {
+          "object_id": 18,
+          "supports": "Its description identifies it as a CBS Sports article about Kentucky sports betting, not an article about patents."
+        }
+      ],
+      "unresolved": [
+        "The graph searches did not return evidence identifying the company in the Financial Times article or linking that company to the Bloomberg article’s European Patent Office challenge."
+      ]
+    }
+  }
+]

@@ -754,6 +754,8 @@ CAUSES_UNDER(
 
 #topic_details
 
+The current consciousness tool `recall(query, limit?)` returns retained experience groups with their original outputs and provenance. `limit` is optional, defaults to ten, and accepts one through ten. For detailed comparisons, identify sources through graph reads and retrieve one source/title and one required clause at a time with a small limit. Verify the original passage and its qualifications; a missing graph fact or preview does not establish absence from the source. Graph object IDs and trace event IDs are separate namespaces.
+
 Memory is retrieved from two related stores:
 
 ```text
@@ -1030,13 +1032,30 @@ A persistent result is retained longer because it participates in long-term reas
 
 ### Integrating Recorded Experience
 
-Recording, graph integration and compaction answer separate questions. Runtime records the full registered experience without requiring a significance judgment for each item. [[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] decides how recorded experience should be made available in the persistent graph. Compaction later revisits the amount and form of retained material under the existing lifecycle.
+Recording, graph integration and compaction answer separate questions. Runtime records the full registered experience. [[Semantics Plane#Knowledge Integration|KnowledgeIntegration]] aims to preserve nearly every distinct assertion as connected knowledge, retaining source qualifications and references. Compaction later revisits retained material under its own lifecycle; the current trace compactor does not automatically merge or remove noisy semantic graph relations.
+
+Exact source reading is available through `graph.sources` followed by `read_source`. It follows
+recorded graph changes and explicit source dependencies, preserving nested `TraceOutputRef`
+paths and the distinction between original assertions and later corrections. Split sections have
+retained fragment addresses, their original paths/ranges, and separately readable context. It does not use
+the broader retention traversal through run arguments/caller context as a relevance selector.
+Text or deterministic JSON is paged without dropping content; reading does not restore deleted
+events, alter retention or substitute a fuzzy match for an unavailable reference. Unfinished
+integration retains its sources independently of the enclosing task's ordinary retention pins.
 
 Experience includes [[Cognition and Attention#Conscious Step Contract|intermediate analytical results of consciousness]], not just external observations and final answers. A planning iteration, failed hypothesis or partial explanation can be a trace-local Note with addressable parts. The next step receives the latest Note through working state even if integration chooses not to materialize it. Internal analyses remain separate from outgoing user messages.
 
-Routine observations and analytical results use one integration mechanism. The learnable Program selects useful organization from task requirements, optional focus, the author's emphasis, discoveries and reasons in ordinary text. There is no per-source review status or formal preservation obligation. A coherent persistent Note is useful when finer formalization would lose meaning. Large sets of ordinary measurements may remain accessible without creating a Facet for every value.
+Routine observations and analytical results use one integration mechanism. The learnable Program preserves nearly every distinct source-supported assertion, choosing its representation from task requirements and the meaning of the material. Optional focus changes the order of attention, not the baseline coverage. Processing checkpoints distinguish completed, pending and failed sections; a completed section records execution, not proof that every assertion was extracted. A coherent persistent Note is useful when finer formalization would lose meaning. Large sets of ordinary measurements may remain accessible without creating a Facet for every value.
 
-The task checkpoint tracks packet progress, source boundaries, versions and unexamined material. A completed integration with no writes is valid. Processing errors enter technical diagnostics and do not undo successful writes or block the task. A failed packet is not resubmitted at every step; other unexamined packets remain available. Own integration traces do not continually feed a new automatic cycle. Stable operation keys recover each completed write's saved result without duplicate mutation.
+KnowledgeIntegration ends each model section through `finish_section(complete, remaining)`.
+An ordinary final message is not a completion receipt. A declared remainder or missing receipt
+preserves writes and splits the unfinished section; an indivisible remainder is recorded as a
+failed gap. Unresolved work and repairs accompany child sections and explicit retries as
+unverified model reports, not source evidence. Only an explicit completion decision advances
+the processed checkpoint. This is
+execution bookkeeping, not an independent proof of semantic coverage.
+
+The task checkpoint tracks packet progress, source boundaries, versions and unexamined material. A completed integration with no writes is valid when the section contains no new assertion, qualification, correction or missing connection. Processing errors enter technical diagnostics and do not undo successful writes or block the task. A failed packet is not resubmitted at every step; other unexamined packets remain available. Own integration traces do not continually feed a new automatic cycle. Stable operation keys recover each completed write's saved result without duplicate mutation.
 
 Every direct graph operation retains before/after state, recording time and the sources that caused it. Corrections append history; deleting an object from the current graph does not erase its history or trace sources. An operation's audit retains its own grounds outside semantic fact properties, without changing fact identity or creating independent evidence. Unrelated input material is not pinned by a shared integration report. The normal retention closure still applies to any source that a fact actually needs. Repeated integration does not increase belief.
 

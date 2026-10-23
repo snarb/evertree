@@ -17,6 +17,7 @@ from typing import Any, Literal
 from evertree.core.sandbox.process import SandboxLimits, start_process
 
 from ..backup import _extended, _restore_io, safe_remove_tree
+from ..semantics.searching import search_kinds
 from .coordination import semantic_scope
 from .llm import ProgramLLMInvocations
 from .repository import (
@@ -367,8 +368,12 @@ class Runtime:
             scopes.pop(run_id)
             return None
         payload = request.get("payload", {})
-        signature = (run_id, payload.get("query"), payload.get("kind"))
         indexes = {"semantic.bm25", "semantic.vector"}
+        signature = (
+            run_id,
+            payload.get("queries"),
+            search_kinds(payload.get("kinds")) if method in indexes else None,
+        )
         if pending and not (
             method in indexes
             and active["known_runs"][run_id]["role"] == "model"

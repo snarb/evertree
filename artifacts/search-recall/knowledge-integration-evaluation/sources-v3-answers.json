@@ -1,0 +1,255 @@
+[
+  {
+    "original_index": 4,
+    "query": "Which online betting platform provides a welcome bonus of up to $1000 in bonus bets for new customers' first losses, runs NBA betting promotions, and is anticipated to extend the same sign-up offer to new users in Vermont, as reported by both CBSSports.com and Sporting News?",
+    "answer": {
+      "answer": "Caesars Sportsbook. CBSSports.com reported a new-customer offer of up to $1,000 in bonus bets if the first bet loses; Sporting News said Caesars runs NBA betting promotions and anticipated that it would offer Vermont users the same first-loss offer. The Vermont offer was described prospectively, not as confirmed.",
+      "evidence": [
+        {
+          "kind": "memory_event",
+          "id": 518,
+          "supports": "The CBSSports.com article says Caesars’ new customers could get up to $1,000 in bonus bets if they lose their first bet."
+        },
+        {
+          "kind": "memory_event",
+          "id": 476,
+          "supports": "The Sporting News NBA article says Caesars offers a competitive welcome bonus and runs NBA betting promotions for existing players."
+        },
+        {
+          "kind": "memory_event",
+          "id": 620,
+          "supports": "The Sporting News Vermont article says it expected Caesars to offer the same first-loss bonus of up to $1,000 in Vermont."
+        },
+        {
+          "kind": "graph_object",
+          "id": 487,
+          "supports": "Records the Sporting News report as an anticipated, unconfirmed Caesars Vermont offer of up to $1,000 in Bonus Bets after a first-bet loss."
+        }
+      ],
+      "unresolved": []
+    },
+    "tool_calls": 6,
+    "lineage_gold_hits": [
+      "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+      "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd",
+      "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+    ]
+  },
+  {
+    "original_index": 19,
+    "query": "Does the Sporting News article suggest that streaming services do not require a subscription for viewing the Cowboys vs. 49ers game, in contrast to the Polygon article's claim about film availability on streaming platforms without a subscription?",
+    "answer": {
+      "answer": "No. Sporting News says viewers can stream the game on Peacock or NBCSports.com “with a subscription”; it also lists Fubo, which offers a free trial. That suggests a trial option, but the article does not say the game is generally available without a subscription. Polygon, by contrast, explicitly lists some film options as free with ads or with a library card—for example, *Sunset Boulevard* is streaming on Paramount+ and free with a library card on Hoopla or Kanopy. So the contrast is qualified: Polygon names specific free access options, while Sporting News names a free trial and subscription services.",
+      "evidence": [
+        {
+          "kind": "memory_event",
+          "id": 669,
+          "supports": "Sporting News passage names Peacock and NBCSports.com with a subscription and Fubo with a free trial."
+        },
+        {
+          "kind": "memory_event",
+          "id": 735,
+          "supports": "Polygon passage says *Sunset Boulevard* streams on Paramount+ and is free with a library card on Hoopla or Kanopy; the same article also lists some films free with ads."
+        },
+        {
+          "kind": "graph_object",
+          "id": 293,
+          "supports": "Identifies “Watch great noir this Noirvember” as the Polygon article discussed in the source passage."
+        }
+      ],
+      "unresolved": []
+    },
+    "tool_calls": 4,
+    "lineage_gold_hits": [
+      "https://www.polygon.com/what-to-watch/23959772/best-noir-movies-watch-streaming-neo-noir",
+      "https://www.sportingnews.com/us/nfl/news/cowboys-49ers-live-score-highlights-sunday-night-football/e46d8e03c6a948aa82f859c3"
+    ]
+  },
+  {
+    "original_index": 25,
+    "query": "Was the news about Taylor Swift's relationship with Travis Kelce inconsistent with the later report from The Independent - Life and Style on December 6, 2023?",
+    "answer": {
+      "answer": "No clear inconsistency is shown. The October 12 CBS Sports timeline described the relationship as apparent or rumored and reported Swift’s September 24 game attendance; it did not say that the game was their first date or when their relationship began (memory event 436; graph object 178). The December 6 Independent report quotes Swift saying they were already a couple by that game, and joking that people might mistake it for their first date (memory event 388; graph objects 172 and 165). The later report adds a more specific account; it would conflict only with an earlier claim that they first became a couple at the game, which the retrieved CBS timeline does not make.",
+      "evidence": [
+        {
+          "kind": "memory_event",
+          "id": 436,
+          "supports": "The October 12 CBS Sports timeline frames the relationship as apparent or rumored and covers Swift attending the September 24 game, without stating that the game was their first date or that the relationship began then."
+        },
+        {
+          "kind": "memory_event",
+          "id": 388,
+          "supports": "The December 6 Independent article quotes Swift saying they were already a couple by her first Chiefs game in September, and that people might think they had their first date there."
+        },
+        {
+          "kind": "graph_object",
+          "id": 178,
+          "supports": "Identifies the October 12, 2023 CBS Sports Swift–Kelce timeline article."
+        },
+        {
+          "kind": "graph_object",
+          "id": 172,
+          "supports": "Records the December report’s account that Swift and Kelce were already a couple by her first Chiefs game; it gives no exact start date."
+        },
+        {
+          "kind": "graph_object",
+          "id": 165,
+          "supports": "Identifies The Independent article published December 6, 2023."
+        }
+      ],
+      "unresolved": []
+    },
+    "tool_calls": 5,
+    "lineage_gold_hits": [
+      "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/",
+      "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html"
+    ]
+  },
+  {
+    "original_index": 81,
+    "query": "Between the report from Sporting News on September 26, 2023, and the report from CBSSports.com, was there consistency in the promotional offers reported for new customers at Caesars Sportsbook?",
+    "answer": {
+      "answer": "Yes, the reported core offer was consistent: both described new customers receiving up to $1,000 in bonus bets if their first bet lost. There is a qualification: Sporting News said this was Caesars’ expected Vermont offer, based on its offer elsewhere, and did not confirm that the promotion would be available in Vermont. CBSSports.com reported the offer in its Kentucky guide.",
+      "evidence": [
+        {
+          "kind": "memory_event",
+          "id": 620,
+          "supports": "Sporting News’s September 26, 2023 article says new sign-ups could receive up to a $1,000 Bonus Bet if their first bet lost, while qualifying this as an expected Vermont offer."
+        },
+        {
+          "kind": "memory_event",
+          "id": 518,
+          "supports": "CBSSports.com’s October 13, 2023 Kentucky guide says new customers could get up to $1,000 in bonus bets if they lost their first bet."
+        },
+        {
+          "kind": "graph_object",
+          "id": 487,
+          "supports": "Records Sporting News’s Caesars offer and explicitly qualifies it as expected, not confirmed for Vermont."
+        },
+        {
+          "kind": "graph_object",
+          "id": 244,
+          "supports": "Records CBSSports.com’s Caesars new customer offer as up to $1,000 in bonus bets if the first bet is lost."
+        }
+      ],
+      "unresolved": []
+    },
+    "tool_calls": 4,
+    "lineage_gold_hits": [
+      "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+      "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+    ]
+  },
+  {
+    "original_index": 261,
+    "query": "Does the article from 'The Independent - Life and Style' claim that Taylor Swift is secretive about her relationship with a specific individual, in contrast to the 'CBSSports.com' article which discusses her rumored romance but focuses on her attendance and performance at a specific venue?",
+    "answer": {
+      "answer": "Yes, with a qualification: The Independent describes Taylor Swift’s former relationship with Joe Alwyn as notoriously private, and says Alwyn did not want to discuss it. In the same article, Swift says she and Travis Kelce have nothing to hide. The CBSSports.com article covers the rumored Swift–Kelce romance as a timeline centered on her attendance at Chiefs games and Kelce’s invitation to see him “rock the stage” at Arrowhead Stadium. So the contrast is broadly accurate, though The Independent distinguishes Alwyn from Kelce, and CBS discusses a football game venue rather than a concert performance.",
+      "evidence": [
+        {
+          "kind": "memory_event",
+          "id": 388,
+          "supports": "The Independent article’s full text identifies Joe Alwyn as the notoriously private former partner and quotes Swift saying she and Kelce have nothing to hide."
+        },
+        {
+          "kind": "memory_event",
+          "id": 436,
+          "supports": "The CBSSports.com article’s full text frames the story as a rumored-romance timeline, reports Swift’s Chiefs-game attendance, and quotes Kelce inviting her to see him perform at Arrowhead."
+        },
+        {
+          "kind": "graph_object",
+          "id": 165,
+          "supports": "Identifies the Independent article, “Taylor Swift is Time’s Person of the Year,” as the source."
+        },
+        {
+          "kind": "graph_object",
+          "id": 178,
+          "supports": "Identifies the CBSSports.com Swift–Kelce timeline article as the source."
+        },
+        {
+          "kind": "graph_object",
+          "id": 185,
+          "supports": "Records Kelce’s invitation for Swift to attend the Chiefs–Bears game at Arrowhead."
+        },
+        {
+          "kind": "graph_object",
+          "id": 186,
+          "supports": "Records Swift’s attendance at the Chiefs–Bears game, supporting the article’s focus on attendance."
+        }
+      ],
+      "unresolved": []
+    },
+    "tool_calls": 3,
+    "lineage_gold_hits": [
+      "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/",
+      "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html"
+    ]
+  },
+  {
+    "original_index": 2205,
+    "query": "Does the article from 'The Independent - Life and Style' about Taylor Swift being Time’s Person of the Year claim that she is open about her relationship with the same individual that 'The Independent - Life and Style' reports Travis Kelce invited to one of his games at Arrowhead Stadium?",
+    "answer": {
+      "answer": "Yes. The Person of the Year article says Swift had “nothing to hide in her new relationship with Kelce.” The other Independent article says Kelce invited the “Anti-Hero” singer to one of his games at Arrowhead Stadium, and she accepted. Both articles identify the person as Taylor Swift.",
+      "evidence": [
+        {
+          "kind": "memory_event",
+          "id": 388,
+          "supports": "The article identifies Kelce as Swift’s partner and says she had nothing to hide in the relationship."
+        },
+        {
+          "kind": "memory_event",
+          "id": 342,
+          "supports": "The article says Kelce invited Swift to one of his games at Arrowhead Stadium and that she accepted on September 24."
+        },
+        {
+          "kind": "graph_object",
+          "id": 165,
+          "supports": "Identifies the Person of the Year article."
+        },
+        {
+          "kind": "graph_object",
+          "id": 151,
+          "supports": "Identifies the article reporting Kelce’s invitation."
+        },
+        {
+          "kind": "graph_object",
+          "id": 417,
+          "supports": "Records the invitation as Kelce inviting Taylor Swift to one of his Chiefs games."
+        }
+      ],
+      "unresolved": []
+    },
+    "tool_calls": 4,
+    "lineage_gold_hits": [
+      "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html",
+      "https://www.independent.co.uk/life-style/taylor-swift-travis-kelce-tweets-b2453410.html"
+    ]
+  },
+  {
+    "original_index": 10,
+    "query": "Considering the information from a BBC article detailing Sridevi's achievements in the Indian film industry and a Times of India report on her posthumous honors, which single character from a film portrayed by Sridevi has been recognized for its cultural impact and has also been commemorated with a special award after her passing?",
+    "answer": {
+      "answer": "I can’t identify the character from the retrieved evidence. The available graph results and recalled article passages did not establish what the BBC article or the Times of India report said about Sridevi, the character, or the posthumous award.",
+      "evidence": [],
+      "unresolved": [
+        "The BBC article’s relevant passage was not retrieved, so its claims about Sridevi’s achievements and the character’s cultural impact remain unverified.",
+        "The Times of India report’s relevant passage was not retrieved, so the special award and its connection to a character remain unverified."
+      ]
+    },
+    "tool_calls": 6,
+    "lineage_gold_hits": []
+  },
+  {
+    "original_index": 13,
+    "query": "What is the first letter of the name of the company that, according to an article from The Financial Times, received the most European patents in 2021, and is also mentioned in a Bloomberg article as having faced a significant legal challenge at the European Patent Office over one of its key patents?",
+    "answer": {
+      "answer": "I can’t determine the first letter from the retrieved evidence: it did not identify either the Financial Times patent leader or the company in the Bloomberg patent challenge.",
+      "evidence": [],
+      "unresolved": [
+        "The retrieved graph results and recalled article passages did not support linking the two clues to the same company."
+      ]
+    },
+    "tool_calls": 8,
+    "lineage_gold_hits": []
+  }
+]

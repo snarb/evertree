@@ -26,15 +26,17 @@ The Semantics subsystem describes **static meaning**: concepts and facts about t
 
 ## Consciousness Interface
 
-Consciousness uses compact semantic tools; separate Programs handle retrieval and integration of experience. Consciousness and reasoning Programs express insights, emphasis and what matters in their analytical text. Integration independently selects useful experience and organizes it without requiring their authors to design graph mutations or review integration statuses. Names are the default address; integer IDs remain available. Ambiguous names return candidates.
+Consciousness uses compact semantic tools; separate Programs handle retrieval and integration of experience. Consciousness and reasoning Programs express insights, emphasis and what matters in their analytical text. Integration preserves distinct source assertions and organizes their shared participants and qualifications without requiring their authors to design graph mutations. Technical processing status tracks unfinished sections separately from semantic completeness. Names are the default address; integer IDs remain available. Ambiguous names return candidates.
 
 | Tool | Purpose |
 | --- | --- |
-| `graph.search(query, kind?, limit=20)` | Find existing objects by name, ID, or indexed name and description similarity. |
+| `graph.search(queries, kinds?, limit=10)` | Find existing objects by name, ID, or indexed stored meaning; optionally restrict to a union of kinds before retrieval quotas. |
 | `graph.describe(subject, focus?, at?)` | Describe an object with previews of 7 properties and 7 relations; `focus="properties"` or `focus="relations"` returns the corresponding full list. |
 | `graph.read_property(subject, property, at?, parameters?)` | Read a property through Attribution Runtime, preserving uncertainty and sources. |
 | `graph.query(relation?, subject?, bindings?, where?, select?, result?, fields?, at?, max_items?, next_page?)` | Match recorded facts by named slots; return projections, unique nodes, counts or existence. |
 | `graph.walk(start, relation, from_slot, to_slot, max_depth?, where?, result?, fields?, at?, max_items?, next_page?)` | Follow one relation's node roles breadth-first, preserving full supporting facts. |
+| `graph.sources(subjects?, max_items?, next_page?)` | Inventory exact retained sources of selected object/fact IDs across their recorded change history. |
+| `read_source(reference?, next_page?)` | Read one exact retained fragment without ranking; continue long content without losing the remainder. |
 | `graph.integrate(experience_refs, focus?)` | Integrate recorded experience and analytical results through `KnowledgeIntegration.exec`. |
 | `load_tool_set(name)` | Load specialized tools for one logical invocation; see [[Cognition and Attention#Dynamic Tool Sets]]. |
 
@@ -59,16 +61,26 @@ pages when the neighborhood is large. Property discovery never invokes computati
 
 ### Retrieval Contract
 
-1. **Exact first:** resolve integer ID or normalized name in GraphStore, respecting `kind`. Return up to 20 exact alternatives without Redis or embeddings. Canonical names take precedence over same-named facts unless `kind` selects facts.
-2. **Parallel retrieval:** BM25 returns 7 candidates and vector search returns 12. Both indexes use name + description. Embeddings default to `text-embedding-3-large`, 3072 dimensions. Exact-name and BM25 matching normalize Unicode, case and whitespace; embeddings retain the original text because case can carry meaning.
-3. **Merge and rank:** deduplicate by stable ID and combine the ordered lists with reciprocal rank fusion (constant 60). Preserve the contributing index names on each result. An index failure yields `incomplete`; results from the other index remain available. Search creates no knowledge.
-4. **Bounded results:** return only the best 20 compact cards, or fewer with an explicit limit of 1–20. No cursor or next-page operation exists for search. Refine the query or kind when the candidates do not fit. Each call performs a fresh search.
+1. **Validate the batch:** `queries` is a nonempty array of nonblank text or positive integer IDs. Normalize Unicode, case and whitespace to remove duplicate text queries, retaining the first spelling; numeric names remain distinct from integer IDs. `limit` is a per-query ceiling of 1–10.
+2. **Exact first:** resolve every ID or normalized name in GraphStore, respecting `kinds`. Omitted/null means all kinds; a supplied nonempty list is normalized, deduplicated and validated, with OR semantics. Unfiltered canonical names take precedence over same-named facts; explicit kinds select all matching allowed kinds. Exact queries bypass Redis, embeddings and Jev; unresolved IDs are exact empty results.
+3. **Parallel retrieval:** one BM25 batch and one vector batch return up to 64 distinct objects each per unresolved query, configured by `[semantics.search]`. Index current names, descriptions, stored properties/conditions, relation schemas and typed fact arguments as overlapping 768-token passages with 128-token overlap. Node-valued roles expose participant names/kinds; reference IDs are excluded from indexed text so they cannot mimic measured values. Current result cards retain those IDs, roles and values for reads and Jev. Participant renames change dependent fact projections and invalidate the derived generation; collapse hits by graph ID using the best passage rank before each channel's object quota. Fetch enough passages to prevent one object's passages consuming another object's quota. Queries share index preparation, batched embeddings and Redis pipelines. Embeddings default to `text-embedding-3-large`, 3072 dimensions and retain original query text. Indexes below 10,000 passages use FLAT for exact vector neighbors; larger ones use HNSW with `EF_RUNTIME >= max(200, passage fetch count)`.
+4. **Merge, filter and rank:** fuse lexical and vector ranks separately for each query with reciprocal rank fusion (constant 60). Optional Core-hosted Jev evaluates each unique non-exact candidate once for relevance to any query, including partial utility or possible identity equivalence. Keep probabilities at or above the configured threshold, preserving RRF order. Exact matches are never filtered. Failed Jev batches retain all their candidates and return warnings, without changing search completeness.
+5. **Bounded union:** take up to `limit` results per query, then deduplicate by stable ID. Exact matches precede other candidates, which sort by summed RRF across queries and stable ID for ties. Each card includes contributing index channels and query indices. `queries` summaries retain each query's status, exactness, candidate total and returned IDs; cards appear only once. There is no pagination. An index failure marks only affected queries incomplete; the overall status is incomplete when any query is incomplete.
 
-Query one named object or focused meaning at a time. Type names and field names embedded in text are search terms, not filters; combining identities, states and schema terminology dilutes retrieval. Start with an exact name when available, then inspect candidates with `describe`. Its `STATE_IDENTITY` and `IDENTITY_TYPE` links let the caller navigate from a Facet to its Instance and from that Instance to its Prototype and other Facets. Search separately for missing meanings. Preview counts disclose omitted items. The shared write handler searches each proposed name within the current model invocation and shows candidates not yet known to that model. Successful writes return permanent IDs and actual object cards; they extend the model's knowledge without invalidating earlier searches. A new name still requires its own search. Explicit searches always execute again. Similarity candidates are not proof of equivalence or existence; vector retrieval also returns neighbors when nothing is a good match.
+Each SemanticSearch invocation is one retrieval hop. For dependent questions, the owning model first searches an anchor, inspects actual returned facts, then uses discovered names, IDs or relations in subsequent searches, `describe`, `query` or `walk`. Batch independent needs within the current hop; later queries may depend on evidence unavailable in the original question. Track participant roles through each hop and verify that the same unknown satisfies the required predicates; connected participants are not interchangeable. Continue until all requested parts have support or retain explicit unresolved gaps. Channel completion is not exhaustive semantic coverage and cannot establish absence from an unreturned result. The Core search service does not run a nested model planner.
+
+Use one named object or focused meaning per array entry and batch independent queries together. Comparisons involving multiple subjects need separate focused queries per object/event, retaining useful name, source and date constraints; each receives its own top-ten budget. Type and field names embedded in text are keywords, not filters. Inspect candidates with `describe`: `STATE_IDENTITY` and `IDENTITY_TYPE` navigate from a Facet to its Instance, Prototype and other Facets. A new proposed name needs its own complete search in the current model invocation. The shared write handler remembers each query's completeness and candidate presentation separately, including after recovery. Own writes do not invalidate earlier searches. An incomplete repeated search revokes the affected name's earlier confirmation. Explicit searches always execute again; similarity candidates are not proof of equivalence or existence.
+
+`[semantics.jev]` configures `enabled=false`, `model="jev-1.13.0"`, `threshold=0.05` and `api_key_env="TYPESAFE_API_KEY"`. Thresholds must be finite numbers in [0, 1]; zero bypasses filtering. Credentials load only in trusted Core from `.env` with environment precedence. Typesafe receives queries and current graph cards in batches of at most 128, also bounded by a conservative 16,000-token estimate including question overhead; at most two HTTP calls run concurrently, each with a 10-second deadline. Cards are never truncated to fit; a single oversized card still fails open if the server rejects it. Strict Noul answer validation requires exactly the supplied IDs and finite probabilities in [0, 1]. The threshold requires independent validation of ≥99% retention of relevant raw candidates before top-ten truncation. On the restored 253-article diagnostic corpus, a frozen forty-question validation retained all 99/99 labelled relevant candidates at 0.05 without warnings; this is a sample measurement, not a universal recall guarantee.
 
 Runtime keeps the graph unchanged throughout a SemanticSearch call, including gaps between Core operations. BM25 and vector retrieval may overlap within that call; no other Program or write may interleave. Search therefore carries no graph-revision token and has no graph-changed retry protocol. Search reviews belong to one logical model invocation, inherited by its search children; a nested integration or a new conscious turn has its own scope. Core retains its own search-completeness confirmation for the invocation; normal execution and recovery use that same confirmation, never a Program-returned status. Tool handlers replay to reconstruct candidate presentation.
 
 Redis is a derived cache prepared on demand from the current graph. Graph commits do not schedule background indexing. The next indexed search prepares the current content fingerprint, reuses cached embeddings, and removes obsolete index versions after the preceding search has finished. Parallel channels share index preparation; failed embeddings leave lexical retrieval available with an incomplete search status. Loss of Redis data or restoration of an older agent backup rebuilds the cache from GraphStore.
+
+Each content generation owns separate lexical and vector indexes and HASH records.
+Populating embeddings never rewrites lexical documents or changes BM25 statistics.
+Vector publication waits for its indexed document count; loss of either index is repaired
+independently. Generation cleanup retains both current indexes and drops both obsolete ones.
 
 
 When integrating a substantial source, build useful connected groups incrementally: classes,
@@ -78,6 +90,15 @@ independently checkable assertion, not a shortcut for bundling directly represen
 state intervals and relationships. Preserve source timezones; runtime location cannot fill a
 missing timezone. Unknown boundaries remain unknown. Specific objects participate in their
 own facts; their Prototype IDs describe classes and do not stand in for those objects.
+
+Select search kinds by purpose: `relation_type` for schemas, `prototype` for classes,
+`instance`/`facet` for participants and states, and `relation_instance`/`claim`/`note` for
+assertions. Queries of the same purpose share a batch. A missing narrow result requires
+widening or an unresolved gap, never a claim of global absence. Core keys search confirmation
+by query, normalized filter and invocation; creation checks only the unfiltered key. Narrow
+failures cannot revoke broad confirmation, and narrow successes cannot repair a broad failure.
+Both Redis channels apply the kind union before their candidate quotas; each query still has
+one final ten-object ceiling across its selected kinds.
 
 ### Exact Slot Reads and Walks
 
@@ -105,6 +126,29 @@ to 1; explicit null requests all reachable levels. A breadth-first traversal exp
 supporting facts are retained through cycles and multiple paths. Results report minimum depth;
 a later applicable path can establish applicability despite an earlier unknown path.
 Walk result modes are `nodes` (default), `count_nodes` and `exists`.
+
+Heterogeneous paths use successive exact queries or walks, each retaining the relevant named
+roles. A taxonomy route walks `SUBTYPE_OF` from `supertype` to `type`, includes the starting
+class, then queries `IDENTITY_TYPE` with `args.type in` those IDs and selects `instance`.
+It then reads domain predicates of the discovered instances. These selections are independent
+of text RRF/top-ten ranking; unconsumed pages still prevent an exhaustive-selection claim.
+
+`graph.sources` accepts nonempty positive integer subject IDs, or a continuation. It follows
+each subject's recorded changes and explicit event dependencies, not every neighboring fact or
+the wider run arguments/caller context used for retention. Results deduplicate exact
+`(event_ref, output_path)` references and retain bindings to subjects and change versions,
+including changed fields and the latest-change marker. These are provenance bindings, not an
+independent assertion of current evidential support. A rename does not hide earlier sources;
+an old source is not automatically support for a corrected assertion. Entity sources refer to
+that entity's changes; query its facts and select their IDs for their sources.
+
+`read_source` resolves the chosen exact fragment, exposing a separate context reference for
+surrounding material. It returns original text or deterministically serialized JSON, with
+Unicode character offsets and `has_more`; offsets do not create fictional output paths.
+Both operations obey the existing read-context budget and task-local pagination conventions.
+Graph source selections reject changed graph revisions; continuations reject changed or
+unavailable underlying events. Missing/non-addressable material is explicit. Reading does not
+change retention, restore deleted experience or invoke similarity search, embeddings or Jev.
 
 Without `at`, reads include recorded facts without temporal filtering. With `at`, outside
 facts are excluded and unknown applicability remains explicit. Counts split applicable and
@@ -151,7 +195,7 @@ No Python execution interface or external graph representation is introduced.
 
 ### Storage and Models
 
-GraphStore remains authoritative; **Redis 8.4+ with Search** is a rebuildable index. Every graph commit, including lifecycle changes, updates it. Content generations prevent restored state from reading a newer index; obsolete unused generations are removed. Index failure cannot undo a graph commit or block exact lookup. BM25 and vector queries remain separate for their 7/12 quotas; fuzzy search is omitted.
+GraphStore remains authoritative; **Redis 8.4+ with Search** is a rebuildable index. Graph commits do not perform index I/O; the next search prepares the current generation. Content generations include passage settings and prevent restored state from reading a newer index; obsolete unused generations are removed. Index failure cannot undo a graph commit or block exact lookup. BM25 and vector queries retain separate configurable candidate quotas; fuzzy search is omitted. Passage expansion belongs only to the disposable index: it never creates graph objects or changes their identities.
 
 Integration uses **`gpt-6-luna / high`** through Codex SDK. Its model/effort is configurable; consciousness keeps its own profile. Redis and the separate embedding API credentials remain in core. Configuration and local/managed Redis setup are in the repository README.
 
@@ -161,20 +205,42 @@ Integration uses **`gpt-6-luna / high`** through Codex SDK. Its model/effort is 
 
 Programs call the same mechanism through `call_program(ctx, "knowledge_integration", {"experience_refs": ..., "focus": ...})`. Runtime supplies authoritative task specification and revision, constraints and remaining budget. Caller text cannot replace this context. In the MVP, agent personality, Values and selected Self knowledge do not guide knowledge preservation and are not supplied as integration context. Isolated evaluations use their own task context.
 
-Integration independently selects facts, connections, insights and connected explanations worth organizing. Emphasis and requests such as “remember this” appear in ordinary analytical text and guide that choice; they do not establish a machine-checked preservation obligation. Routine or already represented material can remain in trace without any additional tool call. Usually, reusable knowledge becomes graph elements; a Note is an occasional choice for source text whose wording or complete argument has independent value. Losing an individual insight is not a failure of the enclosing task.
+Integration aims to preserve nearly every distinct assertion in supplied experience, including secondary details whose future usefulness is unknown. Repeated wording with the same meaning and grounds, formatting and technical bookkeeping need no duplicate graph fact. This is a semantic coverage objective, not a machine-checked guarantee. `focus` and ordinary analytical emphasis set attention priority without excluding the remaining assertions. Notes remain appropriate for source wording or complete arguments with independent value.
+
+For each distinct assertion, integration identifies participants, predicates, values and qualifications. Relationships and numerical observations use native identities, relation instances or properties. A missing predicate schema can be defined; it does not justify a prose fallback. Reported or uncertain assertions retain attribution and conditions; neither a relation nor a Claim independently verifies truth. Shared participants use node-valued roles so facts can join across sections. Joint predicates retain all their roles rather than losing meaning in pairwise projections. Co-occurrence, invented causality, negative facts from silence, inverse duplicates and inferred transitive shortcuts are excluded. Compaction does not supply an implemented automatic cleanup of arbitrary semantic edges.
 
 Generalization supplements useful operational knowledge. A component and its configuration may
 be needed for later diagnosis or modification even when the underlying mechanism is familiar.
 Retain the owner, value and unit of such a setting; a general Concept about the mechanism does
-not replace that local assertion. This is a selection criterion, not exhaustive source coverage.
+not replace that local assertion. Coverage includes qualifiers, exceptions and explicit negative statements.
 
 The model uses declared tools to search/read, create a concept or class, identify an instance, describe a state, define or use a relation, create a Claim, save a Note, update an object or delete objects. Each write selects its grounds. Code assigns permanent IDs and constructs mandatory identity links, schemas and the internal `GraphDelta`. Existing objects are used by ID. The model neither prepares transaction payloads nor reconstructs an execution report.
 
 Each successful tool writes immediately. The shared `update(object, changes, sources)` changes only supplied fields; compound fields replace their previous value without an implicit deep merge. `delete(objects, sources)` removes the listed objects together from the current graph, without cascading; remaining references to a deleted object reject the operation. Deleting current knowledge does not erase its change history or source traces. Core protects identity, executable Programs, assessed evidence and other protected objects, and checks allowed fields, intervals, schemas and references.
 
-Search is an orchestration step before creating identities, not only a prompt suggestion: a nonempty result is shown before creation proceeds; incomplete search cannot authorize creation. `search(query)` returns at most 20 candidates with no pagination; refine the query when none fits. Required object/schema reads are automatic. Own writes do not require repeating an earlier complete search in the same invocation. A failed call returns its error; earlier successful writes remain saved. Core returns permanent object IDs, actual changed object cards and the graph revision.
+Search is an orchestration step before creating identities, not only a prompt suggestion: a nonempty result is shown before creation proceeds; incomplete search cannot authorize creation. `search(queries)` returns a deduplicated union of at most 10 candidates per unique query with no pagination; refine individual queries when none fits. Required object/schema reads are automatic. Own writes do not require repeating an earlier complete search in the same invocation. A failed call returns its error; earlier successful writes remain saved. Core returns permanent object IDs, actual changed object cards and the graph revision.
 
-Integration uses the shared [[Process Plane/Program Layer#Native Model Tools in Programs|`llm_with_tools` interface]] with native tools and a Program-local handler. Callbacks execute at workflow level, so child Programs and durable gateway operations retain their normal boundaries. Normal model completion ends the invocation, including an invocation with zero writes. Its technical result is `{writes: [...]}`, built in code from successful tool results. There is no model completion tool, per-source decision coverage or integration status for consciousness to resolve.
+Integration uses the shared [[Process Plane/Program Layer#Native Model Tools in Programs|`llm_with_tools` interface]] with native tools and a Program-local handler. Source partitioning is deterministic and lossless across structured fields, paragraphs and sentences, retaining original references and neighboring context. Automatic and explicit integration share the partitioner. Core records partial selections as addressable `ExperienceFragments` with exact original paths/ranges and explicit source dependencies. The model receives the selected text/data separately from boundary metadata. Preparation is journaled and repeated calls reuse the retained fragment; write authority remains tied to the original inputs and integration operation. Each section invocation has fresh search-review state and deterministic section/attempt-prefixed write keys. Calls remain sequential. Tool-limit exhaustion preserves writes and bisects the unfinished unit; indivisible failures and provider errors remain explicit rather than processed. An explicit completion decision means the model reports no known remaining work, not that every assertion was successfully represented.
+
+KnowledgeIntegration ends each model section through `finish_section(complete, remaining)`.
+An ordinary final message is not a completion receipt. A declared remainder or missing receipt
+preserves writes and splits the unfinished section; an indivisible remainder is recorded as a
+failed gap. Unresolved work and repairs accompany child sections and explicit retries as
+unverified model reports, not source evidence. Only an explicit completion decision advances
+the processed checkpoint. This is
+execution bookkeeping, not an independent proof of semantic coverage.
+Completion is local to the supplied section. A prior report about another section, or a fact
+the source never supplies, does not make the current section unfinished. The model retains
+uncertainty and reports only outstanding work grounded in the current section or required
+for its assertions; it does not turn neighboring context into additional extraction scope.
+Boundary context starts with 500 characters on each side and extends to a paragraph boundary
+within another 500 characters, supporting blank lines with LF or CRLF. The bounded window
+does not prove that every referent is present; the retained original remains available.
+Text partitioning and adaptive bisection prefer paragraph boundaries before sentence or line
+boundaries, keeping short paragraphs with their local timestamps and qualifications. Oversized
+paragraphs still split without dropping characters, using neighboring context for continuation.
+
+The technical result contains successful `writes` and code-generated `processing` state with completed, pending and failed units. The model supplies only its completion decision and any remaining work; code computes the execution record. The application resumes retained pending work, retries failed units only on explicit retry, and drains remaining automatic packets before completion while its task allowance permits. Budget exhaustion or interruption retains the unprocessed tail and its source dependencies. Normal DBOS replay reconstructs tool exchanges without duplicating writes; a failed packet does not authorize marking its source processed.
 
 `save_note` copies an addressable source without regenerating its text. For a typed analytical Note or a runtime analytical-text fragment, it copies the text; other structured sources are retained as JSON. The copied source is always a ground; `sources` supplies only additional grounds and may be empty. Source references retain fragment origin, and runtime schedules remaining fragments.
 
@@ -198,7 +264,14 @@ The model receives task requirements and source contents with usable references.
 | Claim | An independently checkable assertion lacking an adequate native representation. It may be a hypothesis, supported conclusion or refuted explanation; uncertainty alone does not require a Claim. |
 | Note | Self-contained source text worth retrieving intact, such as a short historical speech or an exceptional argument. Also extract graph assertions only when they have independent value. |
 
-Specific classes belong in a useful abstraction hierarchy: for example, Pump is a subtype of Equipment. Integration searches for the nearest justified broader class and reuses it or creates it before the child. Missing graph content alone is not a reason to leave the child parentless. Ordinary definitional classification can organize source objects even when the source does not enumerate their ancestors; it does not establish empirical properties or provide additional independent evidence. Existing classes can acquire the missing `SUBTYPE_OF` relation without a duplicate class. This is an is-a classification, distinct from part-whole or usage relations; a broad root or an unjustified classification can remain parentless. Further ancestors are added for useful shared knowledge, not to exhaust a universal taxonomy.
+A Prototype defines a reusable category and what qualifies an object as its member.
+An Instance's class membership asserts that the object satisfies that category's definition.
+Select the class by its meaning and check the referenced card; search for or create a suitable
+class when none is known. A role identifies how an object participates in a particular relation;
+record that participation with the relation's named arguments. An object's association with
+another participant does not by itself establish membership in that participant's class.
+
+Specific classes belong in a useful abstraction hierarchy: for example, Pump is a subtype of Equipment. Every member of the child class must also meet the parent class's definition. Integration searches for the nearest justified broader class and reuses it or creates it before the child. Missing graph content alone is not a reason to leave the child parentless. Ordinary definitional classification can organize source objects even when the source does not enumerate their ancestors; it does not establish empirical properties or provide additional independent evidence. Existing classes can acquire the missing `SUBTYPE_OF` relation without a duplicate class. This is an is-a classification, distinct from part-whole or usage relations; a broad root or an unjustified classification can remain parentless. Further ancestors are added for useful shared knowledge, not to exhaust a universal taxonomy.
 
 State time is the time described by the experience, not its recording time. Facet boundaries may be unknown; unknown dates alone neither require a Note nor prevent structured state storage. Relative temporal conditions remain in the description or ordinary relations. A dated read distinguishes applicable, outside and unknown: an unknown boundary is not an infinite interval and does not establish a current state. A prior state is closed only with grounds for a transition. Bulk measurements can stay in an accessible dataset or coherent trace result linked to their object and conditions; one value need not create one graph node. Extraction preserves qualifications, counterexamples, uncertainty and dependencies between grounds and conclusions.
 
@@ -226,6 +299,13 @@ Both semantic Programs follow the normal learning and independent evaluation lif
 > 2. **Its signature:** which slots exist, their labels, roles/types, and cardinalities.
 > 3. **Views (projections):** named “views” of the same fact (how to retrieve arguments in different directions) **without creating inverse relations or copying data**.
 ^def-RelationType
+
+Each role has a specific semantic meaning within that predicate. `define_relation` accepts
+an optional `description` for each role, retained in `Slot.description` and exposed through
+schema reads and serialization. Supply it when the label alone does not make direction or
+scope clear. Core validates structural value types; matching a type does not establish that
+the value satisfies the role's meaning. Integration checks the filled assertion against the
+source, including participant roles, measured quantity and qualifications.
 
 > [!important]
 > Principle: **there is one fact**. “Inverses” and “directions” are **views/projections** (queries), not separate relation instances.

@@ -146,8 +146,10 @@ class TaskExecutionMixin:
 
             remember_refs(json.loads(request.prompt))
 
-            async def search(query):
-                return await self._dispatch_tool(task_id, "graph.search", {"query": query})
+            async def search(queries, *, kinds=None, limit=10):
+                return await self._dispatch_tool(
+                    task_id, "graph.search", {"queries": queries, "kinds": kinds, "limit": limit}
+                )
 
             async def describe(subject):
                 return await self._graph_tool(task_id, "graph.describe", {"subject": subject})

@@ -1,0 +1,172 @@
+{
+  "purpose": "Source-only diagnostic checklist prepared before this article is acquired; grouped meanings, not question-derived answer labels.",
+  "source": {
+    "title": "Travis Kelce says he tried to delete his ‘nonsense’ tweets before they went viral",
+    "author": "Amber Raiken",
+    "source": "The Independent - Life and Style",
+    "published_at": "2023-11-25T14:50:53+00:00",
+    "category": "entertainment",
+    "url": "https://www.independent.co.uk/life-style/taylor-swift-travis-kelce-tweets-b2453410.html"
+  },
+  "source_record_sha256": "e66f4edfb365eed74b8a97cc018f14f9b58bed0d0cccbbf9cf337b4247107377",
+  "assertions": [
+    {
+      "id": "kelce-01",
+      "subject": "Travis Kelce",
+      "assertion": "Kansas City Chiefs football player, age 34 at reporting time"
+    },
+    {
+      "id": "kelce-02",
+      "subject": "Jason Kelce",
+      "assertion": "Travis’s brother; Philadelphia Eagles player"
+    },
+    {
+      "id": "kelce-03",
+      "subject": "New Heights",
+      "assertion": "podcast with Travis and Jason Kelce; discussed old posts in episode aired November 22"
+    },
+    {
+      "id": "kelce-04",
+      "subject": "Travis Kelce",
+      "assertion": "reported attempting to delete old posts before they became viral; attempts not confirmed deletion"
+    },
+    {
+      "id": "kelce-05",
+      "subject": "Travis old posts",
+      "assertion": "posts from 2010 and 2011 resurfaced amid reported relationship with Taylor Swift"
+    },
+    {
+      "id": "kelce-06",
+      "subject": "X",
+      "assertion": "social platform formerly named Twitter"
+    },
+    {
+      "id": "kelce-07",
+      "subject": "Travis Kelce",
+      "assertion": "said his old posts received little attention at the time; retain his attribution rather than literal verified zero followers"
+    },
+    {
+      "id": "kelce-08",
+      "subject": "Travis Kelce",
+      "assertion": "said he had wanted old tweets deleted since entering the league; no league-entry date supplied"
+    },
+    {
+      "id": "kelce-09",
+      "subject": "Jason Kelce",
+      "assertion": "joked about enthusiasm for college-era Travis posts"
+    },
+    {
+      "id": "kelce-10",
+      "subject": "Jimmy Fallon",
+      "assertion": "performed a song with his band on The Tonight Show using Kelce’s old tweets"
+    },
+    {
+      "id": "kelce-11",
+      "subject": "The Ballad of Travis Kelce",
+      "assertion": "title of the song performed by Fallon and band; not a song composed by Kelce"
+    },
+    {
+      "id": "kelce-12",
+      "subject": "Travis squirrel post",
+      "assertion": "said he gave a squirrel bread and it ate it; post misspelled squirrel as squirle"
+    },
+    {
+      "id": "kelce-13",
+      "subject": "Travis Kelce",
+      "assertion": "explained that he used Twitter like a diary and posted casual remarks for fun"
+    },
+    {
+      "id": "kelce-14",
+      "subject": "Jason Kelce",
+      "assertion": "mocked squirrel spelling and attributed the post’s viral reaction to spelling; his opinion, not established causation"
+    },
+    {
+      "id": "kelce-15",
+      "subject": "Jason Kelce",
+      "assertion": "joked he would use the same spelling; conditional enthusiasm about feeding a squirrel, not an observed feeding by Jason"
+    },
+    {
+      "id": "kelce-16",
+      "subject": "Fans of couple",
+      "assertion": "shared screenshots of old Kelce posts on X earlier in reporting month"
+    },
+    {
+      "id": "kelce-17",
+      "subject": "Travis 2010 Chipotle post",
+      "assertion": "expressed preference for Chipotle; historical post, not a current endorsement agreement"
+    },
+    {
+      "id": "kelce-18",
+      "subject": "Travis Kelce and Taylor Swift",
+      "assertion": "reported romantically linked since summer; initial paragraph says rumored relationship, later narrative treats it as relationship"
+    },
+    {
+      "id": "kelce-19",
+      "subject": "July dating speculation",
+      "assertion": "followed Kelce saying he tried and failed to give Swift a friendship bracelet bearing his number at an Eras Tour show"
+    },
+    {
+      "id": "kelce-20",
+      "subject": "Travis Kelce",
+      "assertion": "later invited Swift on his podcast to a game at Arrowhead Stadium"
+    },
+    {
+      "id": "kelce-21",
+      "subject": "Taylor Swift",
+      "assertion": "accepted invitation and attended on September 24; no opponent given"
+    },
+    {
+      "id": "kelce-22",
+      "subject": "Taylor Swift",
+      "assertion": "attended three more Kelce games after September 24 by reporting time"
+    },
+    {
+      "id": "kelce-23",
+      "subject": "Travis Kelce",
+      "assertion": "attended Swift’s Eras Tour show in Buenos Aires, Argentina on November 11"
+    },
+    {
+      "id": "kelce-24",
+      "subject": "Taylor Swift Karma performance",
+      "assertion": "changed lyrics at that concert to reference the Chiefs player and relationship; no need to reproduce copyrighted lyrics"
+    },
+    {
+      "id": "kelce-25",
+      "subject": "Taylor Swift and Travis Kelce",
+      "assertion": "after concert she ran into his arms and kissed him; he took her backstage"
+    },
+    {
+      "id": "kelce-26",
+      "subject": "Travis Kelce WSJ Magazine interview",
+      "assertion": "published November 20; expressed admiration for Swift’s musicianship and intelligence, said he was learning every day"
+    },
+    {
+      "id": "kelce-27",
+      "subject": "Travis Kelce",
+      "assertion": "acknowledged unusual public attention to personal relationship and said he was not running away from it"
+    },
+    {
+      "id": "kelce-28",
+      "subject": "Travis Kelce",
+      "assertion": "described paparazzi and scrutiny around Swift’s home, restaurants and flights; attributed observations"
+    },
+    {
+      "id": "kelce-29",
+      "subject": "Travis Kelce",
+      "assertion": "described Swift as enjoying life despite scrutiny and said he should not act strangely about it"
+    },
+    {
+      "id": "kelce-30",
+      "subject": "Taylor Swift",
+      "assertion": "performer associated in the article with Eras Tour, Karma, Anti-Hero and All Too Well; titles as identifiers, not reproduced lyrics"
+    }
+  ],
+  "negative_checks": [
+    "Repeated newsletter signup copy and validation templates are page controls, not evidence that a person signed up.",
+    "Do not infer an exact year/day for relative dates beyond source context, game opponents, successful deletion, a particular bracelet number, or an endorsement contract.",
+    "Reported jokes, opinions and motivations are attributed, not unconditional established causes."
+  ],
+  "checklist_counts": {
+    "grouped_domain_assertions": 30
+  }
+}
