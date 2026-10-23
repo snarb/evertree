@@ -1159,6 +1159,12 @@ The text of a composed response is an internal result. **Sending a response to a
 
 Internal `analysis` is never used as the default outgoing response. Only `user_message` supplies text for delivery. `propose_completion` asks the controller to check that input and specification versions are still current, task constraints are satisfied, and independent answer verification succeeds. Integration results do not gate completion. Only then may it deliver the final response and mark the Task successful. Completion of a conscious step is not completion of its Task.
 
+Answer composition and verification check the full proposition, preserving participants,
+attribution, time and conditions. Evidence for a weaker statement does not establish the
+requested statement. The opening conclusion must agree with its qualifications; compound
+or ambiguous questions require explicit distinctions instead of an unconditional affirmation.
+An absence of support remains distinct from evidence that a proposition is false.
+
 Therefore, preparation that detects missing data returns that information to the caller. The caller decides whether to request information from the user, read another source, wait for continuation, or change the solution method. Feedback by itself does not authorize sending a message or taking an external action.
 
 ### Checking the Overall Flow Against Scenarios

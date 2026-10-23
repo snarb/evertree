@@ -194,6 +194,9 @@ results and limitations; relation counts alone do not establish answer quality o
 The [matched graph-reader diagnostic](artifacts/search-recall/graph-route-evaluation/RESULTS.md)
 found less displayed material with transitions, increased answer time and no demonstrated
 answer-quality improvement. It does not establish full-corpus acceptance.
+Answer composition and verification preserve the requested proposition's participants,
+attribution and conditions, and check that the opening conclusion agrees with its caveats.
+Finding the right facts does not by itself establish a correct final answer.
 
 ## Semantic search configuration
 
