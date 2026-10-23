@@ -1,0 +1,46 @@
+{
+  "purpose": "One inspected source-only regression on the same original fragment; not independent extraction evidence or matched retrieval benefit.",
+  "old_snapshot": "tmp/knowledge-graph-routes-v9/acquisition/9-e2bcd4df/snapshot.json",
+  "old_bad_fact": 1761,
+  "cause": "Fixed500-character preceding context dropped a subject510characters back.",
+  "change": "Generic bounded paragraph alignment, with LF/CRLF support; no corpus-specific prompt changes.",
+  "old_context_characters": 500,
+  "new_context_characters": 521,
+  "source_section": {
+    "source": 0,
+    "path": [
+      "article",
+      "body"
+    ],
+    "start": 17628,
+    "end": 18506
+  },
+  "seed_projection_manifest": "tmp/knowledge-graph-boundary-seed-v10-manifest.json",
+  "projection_limit": "Graph projected before this section first wrote schema1758; original memory retained for source access. Not full historical DBOS replay.",
+  "native_result": {
+    "snapshot": "tmp/knowledge-graph-boundary-exact-v10/snapshot.json",
+    "snapshot_sha256": "9e093a0334a18c7795eae878289e2bf2ec30d155be27fc49af817c13bde025d3",
+    "model_completed": true,
+    "invocations": 1,
+    "tool_calls": 41,
+    "seconds": 120.34411445801379,
+    "scoped_odds_fact": 1762,
+    "sportsbook": 1745,
+    "separate_stake_return_fact": 1763,
+    "offer_identity_explicit": false
+  },
+  "limitations": [
+    "Single adaptively selected regression; nondeterministic model call does not isolate a population effect.",
+    "Correct owner is present in a typed role; the exact offer identity remains implicit through that owner and the source.",
+    "Original full-prefix graph was not retroactively changed or human-corrected.",
+    "An earlier run used an end eight characters beyond the original due to an invocation mistake; it is preserved but excluded from the exact-fragment claim."
+  ],
+  "excluded_run": "tmp/knowledge-graph-boundary-v10",
+  "verification": {
+    "affected": 90,
+    "fast": 958,
+    "native_source_preparation": 2,
+    "related_integration": 8,
+    "lint_format_layout": "passed"
+  }
+}

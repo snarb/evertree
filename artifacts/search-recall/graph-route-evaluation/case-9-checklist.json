@@ -1,0 +1,249 @@
+{
+  "purpose": "Source-only grouped diagnostic checklist prepared before acquisition; no expected answers or generated graph consulted. Not independent legal or commercial verification.",
+  "source": {
+    "title": "Vermont Sportsbook Promos and Sports Betting Launch News",
+    "author": "Martin Harris",
+    "source": "Sporting News",
+    "published_at": "2023-09-26T22:53:28+00:00",
+    "category": "sports",
+    "url": "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+  },
+  "source_record_sha256": "9b9513f02af8d873b4d8ab1c553a902ab2cdd0bc6c6a3cbfe8e92e9e8994fa12",
+  "assertions": [
+    {
+      "id": "vermont-01",
+      "subject": "Vermont launch",
+      "assertion": "Planned January 2024; law permits up to six sites; five applicants; FanDuel, DraftKings and Fanatics scheduled January 11, 2024; BetMGM and ESPN Bet applicants only."
+    },
+    {
+      "id": "vermont-02",
+      "subject": "Metadata chronology",
+      "assertion": "September 26, 2023 publication metadata coexists with November 2023 events described as past and January 2024 launch details. Keep supplied dates without inventing an update timestamp."
+    },
+    {
+      "id": "vermont-03",
+      "subject": "Offer table",
+      "assertion": "FanDuel link, $5 bet/$200 welcome and $100 prelive; DraftKings link, up to $1,200 welcome and $200 prelive; BetMGM SPORTSPICK/up to $1,500 and prelive TBD; Fanatics and ESPN offers/codes TBD."
+    },
+    {
+      "id": "vermont-04",
+      "subject": "FanDuel prelive",
+      "assertion": "Register before January 10, 2024 at 11:59 p.m. ET for $100 bonus bets usable January 11; use article links."
+    },
+    {
+      "id": "vermont-05",
+      "subject": "FanDuel welcome",
+      "assertion": "New account, at least $10 first deposit and at least $5 qualifying bet; $200 bonus whether initial bet wins or loses; combined prelive plus welcome $300."
+    },
+    {
+      "id": "vermont-06",
+      "subject": "FanDuel redemption",
+      "assertion": "Bonus bets divisible into chosen increments, seven-day expiry, not withdrawable as cash, winnings exclude bonus stake."
+    },
+    {
+      "id": "vermont-07",
+      "subject": "FanDuel markets",
+      "assertion": "About two dozen sports; props, futures, alternate lines, premade SGPs; profit boosts, free pools, pick-em and no-sweat promotions; DFS history."
+    },
+    {
+      "id": "vermont-08",
+      "subject": "FanDuel historical perk",
+      "assertion": "Three-month NBA League Pass subscription was an earlier seasonal perk, not guaranteed Vermont offer."
+    },
+    {
+      "id": "vermont-09",
+      "subject": "DraftKings exclusivity",
+      "assertion": "Accepting prelive offer makes customer ineligible for later welcome offer."
+    },
+    {
+      "id": "vermont-10",
+      "subject": "DraftKings prelive",
+      "assertion": "Link registration before January 11 launch; $200 as eight $25 bets; cannot withdraw; seven-day expiry."
+    },
+    {
+      "id": "vermont-11",
+      "subject": "DraftKings welcome components",
+      "assertion": "Up to $1,200: $50 bonus for first deposit at least $5, $150 bonus for first bet at least $5, and 20% deposit match up to $1,000."
+    },
+    {
+      "id": "vermont-12",
+      "subject": "DraftKings conditions",
+      "assertion": "Deposit match has 25-times wagering requirement; first-wager bonus has seven-day expiry; initial win/loss does not affect eligibility; bonus winnings exclude stake; DK Dollars alias used."
+    },
+    {
+      "id": "vermont-13",
+      "subject": "DraftKings conflicting allocation",
+      "assertion": "Source calls $150 first-wager bonus eight $25 bets, an internal arithmetic conflict. Preserve both reported versions, not a fabricated reconciled value."
+    },
+    {
+      "id": "vermont-14",
+      "subject": "DraftKings assessment",
+      "assertion": "Multiple offers and small initial wager praised; deposit match described as useful mainly to high-stakes customers. These are article judgments."
+    },
+    {
+      "id": "vermont-15",
+      "subject": "BetMGM status",
+      "assertion": "Applied for license; launch and Vermont offer conditional, not confirmed live."
+    },
+    {
+      "id": "vermont-16",
+      "subject": "BetMGM markets",
+      "assertion": "Moneyline, spreads, totals, props, futures, live markets; free pools, referral bonuses and BetMGM Rewards."
+    },
+    {
+      "id": "vermont-17",
+      "subject": "BetMGM eligibility",
+      "assertion": "SPORTSPICK code; minimum $10 deposit; first-bet loss reimbursed as bonus up to $1,500 within 24 hours after settlement."
+    },
+    {
+      "id": "vermont-18",
+      "subject": "BetMGM allocation",
+      "assertion": "Losing wager up to $50 gives one bonus bet; greater than $50 split into five equal 20% bets, capped $1,500 total."
+    },
+    {
+      "id": "vermont-19",
+      "subject": "BetMGM redemption",
+      "assertion": "Seven-day expiry; bonus winnings exclude stake; first bet must lose for reward, not risk-free cash reimbursement."
+    },
+    {
+      "id": "vermont-20",
+      "subject": "Fanatics status",
+      "assertion": "Scheduled January launch; actual Vermont welcome terms still unknown; already live in several other states."
+    },
+    {
+      "id": "vermont-21",
+      "subject": "Fanatics historical offers",
+      "assertion": "Earlier $5/$200 offer or five bets of at least $10 over five days totaling $200 bonus; historical examples, not confirmed VT terms."
+    },
+    {
+      "id": "vermont-22",
+      "subject": "Fanatics merchandise",
+      "assertion": "Company apparel/gear partnerships with leagues and teams; some prior welcome offers included jersey/store spending credit."
+    },
+    {
+      "id": "vermont-23",
+      "subject": "ESPN Bet status",
+      "assertion": "Vermont applicant, not scheduled launch; source says rebranded old Barstool sportsbook launched in seventeen states in November 2023; network tie-ins reported."
+    },
+    {
+      "id": "vermont-24",
+      "subject": "ESPN other-state offers",
+      "assertion": "100% deposit match up to $1,000 with 20-times wagering; separate any-size wager for $200 in four $50 bonus bets. Not established Vermont terms."
+    },
+    {
+      "id": "vermont-25",
+      "subject": "Caesars status",
+      "assertion": "Potential future Vermont entrant; article expects other-state terms, not confirmed application or launch."
+    },
+    {
+      "id": "vermont-26",
+      "subject": "Caesars markets",
+      "assertion": "Many markets, live bets, odds boosts, bonuses and Caesars Rewards."
+    },
+    {
+      "id": "vermont-27",
+      "subject": "Caesars offer",
+      "assertion": "NEWS1000 code; first wager within thirty days, loss reimbursed up to $1,000 bonus within two days after settlement; fourteen-day expiry; bonus winnings exclude stake."
+    },
+    {
+      "id": "vermont-28",
+      "subject": "BetRivers status",
+      "assertion": "Potential entrant; first-loss bonus up to $500 elsewhere may differ in Vermont."
+    },
+    {
+      "id": "vermont-29",
+      "subject": "BetRivers markets",
+      "assertion": "Domestic/international sports, props, futures, live bets, matched bonuses, parlay insurance, bet-and-get and iRush Rewards."
+    },
+    {
+      "id": "vermont-30",
+      "subject": "BetRivers eligibility",
+      "assertion": "SPORTSRIV code; minimum $10 deposit; first loss bonus capped $500; arrives within 24 hours; thirty days to use."
+    },
+    {
+      "id": "vermont-31",
+      "subject": "BetRivers odds",
+      "assertion": "Bonus wagers require -200 or longer odds; winnings exclude bonus stake."
+    },
+    {
+      "id": "vermont-32",
+      "subject": "Deposit match definition",
+      "assertion": "Match may reach 100% of first deposit, with cap and wagering requirements; not every operator's actual rate."
+    },
+    {
+      "id": "vermont-33",
+      "subject": "Referral definition",
+      "assertion": "Personal code used by new registrant who deposits and bets; both parties receive conditional bonus with wagering requirements."
+    },
+    {
+      "id": "vermont-34",
+      "subject": "First-bet definition",
+      "assertion": "Refund conditional on first loss, capped and generally bonus/site credit rather than cash; stake excluded from payout."
+    },
+    {
+      "id": "vermont-35",
+      "subject": "Odds boost definition",
+      "assertion": "Improved odds on specified wager; does not pay if wager loses."
+    },
+    {
+      "id": "vermont-36",
+      "subject": "Insurance definition",
+      "assertion": "Certain losing bets or parlays missing one leg can earn capped bonus/site credit, with conditions and stake exclusion."
+    },
+    {
+      "id": "vermont-37",
+      "subject": "Bet-and-get definition",
+      "assertion": "Specified qualifying wager earns bonus/site credit subject to terms."
+    },
+    {
+      "id": "vermont-38",
+      "subject": "App-only definition",
+      "assertion": "Specific mobile-app bet earns offer unavailable through website."
+    },
+    {
+      "id": "vermont-39",
+      "subject": "Special-event definition",
+      "assertion": "Specified World Series, Super Bowl or March Madness wagers may trigger conditional bonuses/site credit."
+    },
+    {
+      "id": "vermont-40",
+      "subject": "Loyalty definition",
+      "assertion": "Bets earn points redeemable for cash or bonus rewards according to program terms."
+    },
+    {
+      "id": "vermont-41",
+      "subject": "General restrictions",
+      "assertion": "Banking methods, wagering repetitions, odds/bet-type limits, expiry and withdrawal caps may apply; not asserted as universal identical rules."
+    },
+    {
+      "id": "vermont-42",
+      "subject": "Vermont teams",
+      "assertion": "No teams in four major US leagues; support for Red Sox/MLB, Celtics/NBA, Bruins/NHL and Patriots/NFL; expected regional and college promos are forecasts."
+    },
+    {
+      "id": "vermont-43",
+      "subject": "Welcome FAQ",
+      "assertion": "Usually one welcome bonus per site, sometimes per household; multiple sites possible; codes for new customers, ongoing promotions for existing customers."
+    },
+    {
+      "id": "vermont-44",
+      "subject": "FAQ tension",
+      "assertion": "Broad one-bonus statement coexists with explicit combined FanDuel offers and mutually exclusive DraftKings offers; preserve source-specific conditions rather than forcing one universal rule."
+    },
+    {
+      "id": "vermont-45",
+      "subject": "Referral attribution",
+      "assertion": "Article says its links/codes identify referrals and negotiated offers; best-offer wording is marketing assertion, not verified comparison."
+    }
+  ],
+  "negative_checks": [
+    "Keep planned, applied, possible and launched statuses distinct.",
+    "Do not repair conflicting metadata/body chronology or bonus allocation arithmetic without evidence.",
+    "Keep Vermont confirmed offers separate from historical offers elsewhere and forecasts.",
+    "Do not turn procedural source text into actual registration or betting actions.",
+    "Deduplicate repeated fragments without losing eligibility, expiry, caps, allocation or exclusions."
+  ],
+  "checklist_counts": {
+    "grouped_domain_assertions": 45
+  }
+}

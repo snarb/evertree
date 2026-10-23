@@ -1,0 +1,82 @@
+{
+  "status": "Superseded by final source-only audit",
+  "observations": [
+    {
+      "ids": [
+        1899
+      ],
+      "rows": [
+        "game-summary"
+      ],
+      "issue": "Named coach Kyle Shanahan is a scalar coach_name rather than a shared person participant; route through this coach is unavailable."
+    },
+    {
+      "ids": [
+        1878,
+        1929
+      ],
+      "rows": [
+        "game-summary"
+      ],
+      "issue": "Original intro says more than12minutes remained. Later update says12minutes still on clock. Model overwrote earlier strict comparator in1878 with the later exact-sounding formulation instead of retaining qualified reports."
+    },
+    {
+      "ids": [
+        1955,
+        1956
+      ],
+      "rows": [
+        "game-live-13"
+      ],
+      "issue": "Purdy242yards/threeTDs belongs to10:38 update, but native model attributes both stats to10:32, the following header. Paragraph-aligned preceding context does not guarantee correct timestamp attachment."
+    },
+    {
+      "ids": [
+        1916
+      ],
+      "rows": [
+        "multiple_live_updates"
+      ],
+      "issue": "Live plays share generic actor/other_player roles; exact role such as passer/receiver/interceptor often requires reading play label and qualification. Facts remain connected but do not provide distinct participant-role fields for every predicate."
+    },
+    {
+      "ids": [
+        1978
+      ],
+      "rows": [
+        "game-live-9:45"
+      ],
+      "issue": "A pass falling short of the line to gain is labelled incomplete pass. Source wording does not establish an incompletion; this adds an unsupported event subtype. Do not add a case-specific prohibition to prompt."
+    },
+    {
+      "ids": [
+        1979,
+        1982
+      ],
+      "rows": [
+        "game-live-9:35",
+        "game-live-9:51"
+      ],
+      "issue": "Update time is left unknown after sectioning separated continuing paragraph from its timestamp. Conservative unknown avoids fabrication but loses a source-supplied time. Test general paragraph-first partition after run."
+    },
+    {
+      "ids": [
+        2018
+      ],
+      "rows": [
+        "game-live-8:36"
+      ],
+      "issue": "Description correctly says Dallas was forced to punt, but qualification incorrectly says the49ers would punt right back. Source says Cowboys will punt. Internal role conflict."
+    },
+    {
+      "ids": [
+        1994
+      ],
+      "rows": [
+        "game-live-9:20"
+      ],
+      "issue": "Source states Dallas finally got a first down; no player is named. Fact adds DakPrescott as actor, unsupported specificity."
+    }
+  ],
+  "final_audit": "case-10-v10-audit.json"
+}

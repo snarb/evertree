@@ -117,7 +117,12 @@ async def test_plan_experiment_revision_and_final_result_are_separate_iterations
     records = [event for event in app.memory.events if event.operator == "conscious_step_result"]
     assert len(records) == 4
     assert all(event.output_type.endswith(".ConsciousStepResult") for event in records)
-    assert len([r for r in app.provider.requests if is_integration_request(r)]) == 4
+    supplied = [
+        json.loads(request.prompt)["material"]["experience"]
+        for request in app.provider.requests
+        if is_integration_request(request)
+    ]
+    assert all(text in json.dumps(supplied) for text in texts)
 
 
 async def test_preserved_insight_uses_note_without_self_reinforcing_belief(app):
@@ -171,20 +176,31 @@ async def test_large_experience_and_more_than_forty_events_are_all_considered(ap
     for _ in range(12):
         await app._integrate_step(task)
     reviewed = [
-        item["reference"]
+        item
         for request in app.provider.requests
         for item in json.loads(request.prompt)["material"]["experience"]
     ]
-    assert all(ref in reviewed for ref in originals)
-    fragments = [
-        app.memory.resolve(TraceOutputRef(**ref)) for ref in reviewed if ref not in originals
-    ]
-    assert len(fragments) > 1
-    assert all(part["source_ref"]["event_ref"] == large.id for part in fragments)
-    reconstructed = "".join(
-        part["text"] for part in sorted(fragments, key=lambda part: part["offset"])
-    )
-    assert json.loads(reconstructed) == json_value(large.output)
+    for index, ref in enumerate([*originals, json_value(app.memory.output_ref(large))]):
+        fragments = [
+            item
+            for item in reviewed
+            if item.get("source_reference", item["reference"])["event_ref"] == ref["event_ref"]
+            and item.get("location", {}).get("path") == ["series"]
+        ]
+        assert fragments
+        reconstructed = "".join(
+            part["content"]
+            for part in sorted(fragments, key=lambda part: part["location"]["start"])
+        )
+        assert reconstructed == ("v" * 1500 if index < len(originals) else "x" * 50000)
+        if index < len(originals):
+            assert all(
+                any(
+                    context.get("values", {}).get("index") == index
+                    for context in part["source_context"]
+                )
+                for part in fragments
+            )
     assert app.graph.revision == before and "integration" not in task.step_state
 
 
@@ -520,7 +536,7 @@ async def test_explicit_conscious_search_is_reused_after_own_write(app):
 
         async def lexical(self, nodes, query, kind):
             self.queries.append(query)
-            return []
+            return [{"ids": []} for _ in query]
 
     index = Index()
     app.search_index = index
@@ -528,7 +544,7 @@ async def test_explicit_conscious_search_is_reused_after_own_write(app):
     app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Write")
     source = app._record_analysis(task.id, {"text": "A pump is useful"})
     calls = [
-        ("graph.search", {"query": "Useful pump"}),
+        ("graph.search", {"queries": ["Useful pump"]}),
         ("graph.save_note", {"name": "Explanation", "source": source, "sources": []}),
         ("graph.create_concept", {"name": "Useful pump", "description": None, "sources": [source]}),
     ]
@@ -553,4 +569,4 @@ async def test_explicit_conscious_search_is_reused_after_own_write(app):
         conversation=True,
     )
     assert app.graph.find("Useful pump") is not None
-    assert index.queries == ["Useful pump"]
+    assert index.queries == [["Useful pump"]]

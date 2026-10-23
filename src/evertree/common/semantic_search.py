@@ -1,43 +1,51 @@
-"""Search authoritative graph cards through the two derived indexes."""
+"""Search authoritative graph cards through two batched derived indexes."""
 
 import asyncio
 
 from evertree.core.semantics import api as semantics
+from evertree.core.semantics.searching import search_kinds, search_limit, search_queries
 
 
-async def search(ctx, query, kind=None, limit=20):
-    """Try exact graph lookup, then fuse lexical and vector ranks while reporting failed channels."""
-    if kind is not None:
-        kind = kind.strip().casefold()
-    exact = await semantics.lookup(ctx, query, kind=kind, limit=limit)
+async def search(ctx, queries, kinds=None, limit=10):
+    """Resolve exact identities, then fuse each query's lexical and vector candidates."""
+    queries = search_queries(queries)
+    search_limit(limit)
+    kinds = search_kinds(kinds)
+    exact = await semantics.lookup(ctx, queries, kinds=kinds, limit=limit)
     if exact is not None:
         return {"result": exact, "feedback": None}
 
     async def channel(name, rank):
         try:
-            ids = await rank(ctx, query, kind=kind)
-            return list(dict.fromkeys(ids)), None
-        except Exception as exc:  # noqa: BLE001 -- preserve the other index and report partial search
-            return [], {"channel": name, "error": str(exc)}
+            rows = await rank(ctx, queries, kinds=kinds)
+            if len(rows) != len(queries):
+                raise ValueError("Search channel response count mismatch")
+            return rows
+        except Exception as exc:  # noqa: BLE001 -- preserve candidates from the other index
+            return [{"ids": [], "error": str(exc)} for _ in queries]
 
-    (lexical, lexical_error), (vector, vector_error) = await asyncio.gather(
+    lexical, vector = await asyncio.gather(
         channel("bm25", semantics.bm25), channel("vector", semantics.vector)
     )
-    scores = {}
-    channels = {}
-    for name, ids in (("bm25", lexical), ("vector", vector)):
-        for rank, identity in enumerate(ids, 1):
-            # Rank fusion rewards agreement without comparing incompatible index scores.
-            scores[identity] = scores.get(identity, 0) + 1 / (60 + rank)
-            channels.setdefault(identity, []).append(name)
-    ranked = sorted(scores, key=lambda identity: (-scores[identity], identity))
-    errors = [error for error in (lexical_error, vector_error) if error is not None]
-    result = await semantics.results(
-        ctx,
-        query,
-        kind=kind,
-        items=[{"id": identity, "channels": channels[identity]} for identity in ranked],
-        errors=errors,
-        limit=limit,
-    )
+    rankings = []
+    for left, right in zip(lexical, vector, strict=True):
+        scores, channels, errors = {}, {}, []
+        for name, row in (("bm25", left), ("vector", right)):
+            if row.get("error"):
+                errors.append({"channel": name, "error": row["error"]})
+            for rank, identity in enumerate(dict.fromkeys(row["ids"]), 1):
+                # Index scores are incomparable; agreement between ranks is useful.
+                scores[identity] = scores.get(identity, 0) + 1 / (60 + rank)
+                channels.setdefault(identity, []).append(name)
+        ranked = sorted(scores, key=lambda identity: (-scores[identity], identity))
+        rankings.append(
+            {
+                "items": [
+                    {"id": identity, "channels": channels[identity], "score": scores[identity]}
+                    for identity in ranked
+                ],
+                "errors": errors,
+            }
+        )
+    result = await semantics.results(ctx, queries, kinds=kinds, rankings=rankings, limit=limit)
     return {"result": result, "feedback": None}

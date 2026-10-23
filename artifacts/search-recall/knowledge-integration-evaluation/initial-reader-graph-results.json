@@ -1,0 +1,204 @@
+[
+  {
+    "original_index": 4,
+    "query": "Which online betting platform provides a welcome bonus of up to $1000 in bonus bets for new customers' first losses, runs NBA betting promotions, and is anticipated to extend the same sign-up offer to new users in Vermont, as reported by both CBSSports.com and Sporting News?",
+    "answer": {
+      "answer": "The clues point to BetMGM Sportsbook: Sporting News reports a prospective Vermont first-bet-loss offer for BetMGM, and CBSSports.com also reports a first-bet-loss offer for BetMGM. However, the graph gives both offers as up to $1,500, not $1,000. The $1,000 offer in the CBSSports.com report belongs to Caesars Sportsbook, and the graph does not establish a Caesars Vermont offer. So the requested clues do not all line up; NBA promotions are also not established by the retrieved facts.",
+      "evidence": [
+        {
+          "object_id": 243,
+          "supports": "CBSSports.com’s Kentucky guide reports BetMGM’s first-wager-loss signup offer as up to $1,500 in bonus bets."
+        },
+        {
+          "object_id": 261,
+          "supports": "Sporting News reports a prospective BetMGM Vermont first-bet-loss offer, also up to $1,500."
+        },
+        {
+          "object_id": 256,
+          "supports": "Sporting News described BetMGM as a Vermont license applicant and possible 2024 launch candidate; launch was not confirmed."
+        },
+        {
+          "object_id": 244,
+          "supports": "CBSSports.com reports Caesars’ first-bet-loss offer as up to $1,000 in bonus bets."
+        }
+      ],
+      "unresolved": [
+        "The graph does not support the $1,000 amount for BetMGM; its reported amount is $1,500.",
+        "No retrieved graph fact establishes NBA betting promotions for either BetMGM or Caesars.",
+        "The graph does not establish a Caesars welcome offer in Vermont."
+      ]
+    }
+  },
+  {
+    "original_index": 19,
+    "query": "Does the Sporting News article suggest that streaming services do not require a subscription for viewing the Cowboys vs. 49ers game, in contrast to the Polygon article's claim about film availability on streaming platforms without a subscription?",
+    "answer": {
+      "answer": "The graph does not support that contrast. Sporting News is recorded as reporting the Cowboys–49ers matchup and kickoff time, but the retrieved facts say nothing about streaming services or subscription requirements. The Polygon fact retrieved says the article recommends *The Maltese Falcon*; it does not establish the film’s availability on streaming platforms or whether a subscription is needed. So the graph cannot confirm either claim about subscription requirements.",
+      "evidence": [
+        {
+          "object_id": 271,
+          "supports": "Sporting News reports Dallas visiting San Francisco on October 8, 2023, with an 8:20 p.m. ET kickoff; no streaming or subscription details are included in this fact."
+        },
+        {
+          "object_id": 299,
+          "supports": "Polygon recommends *The Maltese Falcon* in its classics section; this fact does not state where the film is available or whether viewing requires a subscription."
+        },
+        {
+          "object_id": 303,
+          "supports": "Identifies Polygon as the publisher of the article."
+        }
+      ],
+      "unresolved": [
+        "Whether Sporting News says the game can be viewed on streaming services without a subscription.",
+        "Whether Polygon says the film is available on streaming platforms without a subscription."
+      ]
+    }
+  },
+  {
+    "original_index": 25,
+    "query": "Was the news about Taylor Swift's relationship with Travis Kelce inconsistent with the later report from The Independent - Life and Style on December 6, 2023?",
+    "answer": {
+      "answer": "The available facts do not show an inconsistency. The earlier CBS Sports timeline reported Kelce’s invitation, Swift’s September 24 game attendance, and their first photographed departure together; those reports describe events and public speculation, not a claim that they were not dating. The December 6 Independent article later reported Swift’s account that they were already a couple when she attended that game. That adds relationship context without contradicting the earlier reported events.",
+      "evidence": [
+        {
+          "object_id": 178,
+          "supports": "Identifies the earlier CBS Sports timeline article."
+        },
+        {
+          "object_id": 185,
+          "supports": "Reports Kelce’s invitation to Swift and links her subsequent attendance to the September 24 game."
+        },
+        {
+          "object_id": 186,
+          "supports": "Reports Swift attended the September 24 Chiefs game."
+        },
+        {
+          "object_id": 187,
+          "supports": "Reports the pair were photographed together leaving that game, without stating their relationship status."
+        },
+        {
+          "object_id": 165,
+          "supports": "Identifies The Independent’s report published December 6, 2023."
+        },
+        {
+          "object_id": 172,
+          "supports": "Reports Swift’s account that they were already a couple when she attended her first Chiefs game in September."
+        }
+      ],
+      "unresolved": [
+        "If you mean a different earlier news report that explicitly said they were not a couple, that report is not established by the retrieved facts."
+      ]
+    }
+  },
+  {
+    "original_index": 81,
+    "query": "Between the report from Sporting News on September 26, 2023, and the report from CBSSports.com, was there consistency in the promotional offers reported for new customers at Caesars Sportsbook?",
+    "answer": {
+      "answer": "The available graph evidence does not establish consistency: the Sporting News report dated September 26, 2023, records offers for FanDuel, DraftKings, and BetMGM, but no Caesars offer. The CBSSports.com report says Caesars offered new customers up to $1,000 in bonus bets if their first bet lost. Since the reports do not provide two Caesars offers to compare, consistency is unresolved. These are publication-time reports, not verification that the offers were available later.",
+      "evidence": [
+        {
+          "object_id": 248,
+          "supports": "Identifies the Sporting News report and its September 26, 2023 publication date."
+        },
+        {
+          "object_id": 258,
+          "supports": "Sporting News report’s FanDuel offer."
+        },
+        {
+          "object_id": 259,
+          "supports": "Sporting News report’s DraftKings prelaunch offer."
+        },
+        {
+          "object_id": 260,
+          "supports": "Sporting News report’s DraftKings welcome offer."
+        },
+        {
+          "object_id": 261,
+          "supports": "Sporting News report’s BetMGM offer; the retrieved promotional-offer records for this article contain no Caesars offer."
+        },
+        {
+          "object_id": 244,
+          "supports": "CBSSports.com report’s Caesars new customer offer: up to $1,000 in bonus bets if the first bet loses."
+        },
+        {
+          "object_id": 206,
+          "supports": "Identifies the CBSSports.com report."
+        }
+      ],
+      "unresolved": [
+        "Whether the Sporting News report had any Caesars offer outside the retrieved offer records; the available graph facts do not state one."
+      ]
+    }
+  },
+  {
+    "original_index": 261,
+    "query": "Does the article from 'The Independent - Life and Style' claim that Taylor Swift is secretive about her relationship with a specific individual, in contrast to the 'CBSSports.com' article which discusses her rumored romance but focuses on her attendance and performance at a specific venue?",
+    "answer": {
+      "answer": "The CBSSports.com article does discuss Swift and Travis Kelce’s rumored romance while reporting that she attended the Chiefs–Bears game at Arrowhead Stadium and that Kelce had invited her to see him perform there (fact 185); it also reports her attendance at the venue (fact 186). The Independent article I could identify reports that Swift and Kelce were a couple by the time of that game (fact 172), but the available facts do not say she was secretive about the relationship. So the contrast in the question is not fully supported by the graph.",
+      "evidence": [
+        {
+          "object_id": 172,
+          "supports": "The Independent article reports Swift and Travis Kelce were already a couple when she attended her first Chiefs game in September 2023; it does not establish that she was secretive."
+        },
+        {
+          "object_id": 185,
+          "supports": "The CBSSports.com article reports Kelce invited Swift to a Chiefs game and described the invitation as a chance to see him perform at Arrowhead."
+        },
+        {
+          "object_id": 186,
+          "supports": "The CBSSports.com article reports Swift attended the Chiefs–Bears game at Arrowhead Stadium."
+        }
+      ],
+      "unresolved": [
+        "Whether the Independent article claims Swift was secretive about her relationship with Kelce: the retrieved facts do not establish this."
+      ]
+    }
+  },
+  {
+    "original_index": 2205,
+    "query": "Does the article from 'The Independent - Life and Style' about Taylor Swift being Time’s Person of the Year claim that she is open about her relationship with the same individual that 'The Independent - Life and Style' reports Travis Kelce invited to one of his games at Arrowhead Stadium?",
+    "answer": {
+      "answer": "Yes. The Time Person of the Year article reports Taylor Swift’s account that she and Travis Kelce were already a couple when she attended her first Chiefs game. The invitation article says Kelce invited Swift to a game at Arrowhead, so the individual is the same: Travis Kelce. The graph supports that she discussed their relationship, though it does not confirm the article’s exact wording that she was “open about” it.",
+      "evidence": [
+        {
+          "object_id": 165,
+          "supports": "Identifies the December 6, 2023 Independent article about Swift being Time’s Person of the Year."
+        },
+        {
+          "object_id": 172,
+          "supports": "Reports that Swift said she and Travis Kelce were already a couple by the time she attended her first Chiefs game."
+        },
+        {
+          "object_id": 185,
+          "supports": "Reports that Kelce invited Swift to a Chiefs game at Arrowhead."
+        }
+      ],
+      "unresolved": [
+        "Whether the article uses the exact phrase “open about” is not established by the graph facts read."
+      ]
+    }
+  },
+  {
+    "original_index": 10,
+    "query": "Considering the information from a BBC article detailing Sridevi's achievements in the Indian film industry and a Times of India report on her posthumous honors, which single character from a film portrayed by Sridevi has been recognized for its cultural impact and has also been commemorated with a special award after her passing?",
+    "answer": {
+      "answer": "I can’t identify the character from the available graph results. The searches did not return relevant Sridevi or BBC/Times of India records, so naming one would be a guess.",
+      "evidence": [],
+      "unresolved": [
+        "The graph results do not establish which Sridevi character was recognized for cultural impact or commemorated with a special award after her passing."
+      ]
+    }
+  },
+  {
+    "original_index": 13,
+    "query": "What is the first letter of the name of the company that, according to an article from The Financial Times, received the most European patents in 2021, and is also mentioned in a Bloomberg article as having faced a significant legal challenge at the European Patent Office over one of its key patents?",
+    "answer": {
+      "answer": "I can’t determine the first letter from the available graph results. The searches did not return relevant Financial Times or Bloomberg patent articles, so the company is unverified.",
+      "evidence": [],
+      "unresolved": [
+        "The company reported by The Financial Times as receiving the most European patents in 2021 is not established.",
+        "The Bloomberg article’s European Patent Office challenge and its connection to that company are not established."
+      ]
+    }
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "position": 1,
+    "failure": "Review must classify every actual read exactly once",
+    "attempt": 1,
+    "retained_trace": "tmp/knowledge-graph-routes-v11/route-answer-review/1-attempt-1-invalid-read-coverage/trace.json",
+    "trace_sha256": "cf91b8e4ae9f11fa6891a4f91ef4f8a2345cf5754d3cae6bad8f373623f23e59",
+    "action": "Retry the same frozen judge input once; reader answers remain unchanged. Do not choose verdicts based on favorability.",
+    "detail": "Invented read_index 4 for graph_routes, whose reads are only 0..3."
+  },
+  {
+    "position": 1,
+    "attempt": 2,
+    "failure": "Review verdict contradicts its reported gaps",
+    "retained_trace": "tmp/knowledge-graph-routes-v11/route-answer-review/1-attempt-2-contradictory-verdict/trace.json",
+    "trace_sha256": "f6391817ca337841d8c7a11bac9dc3a4de6e6fc17eacc1c2538b843124616a30",
+    "action": "No further random retry of this question. Preserve both verdicts; assess conservative structural repair separately from raw judgment."
+  },
+  {
+    "position": 4,
+    "attempt": 1,
+    "failure": "Review must classify every actual read exactly once",
+    "detail": "graph_routes omitted read_index7, the final exact game-attendance query.",
+    "retained_trace": "tmp/knowledge-graph-routes-v11/route-answer-review/4/first-attempt.json",
+    "trace_sha256": "a80830181caa87dceb4cd616e89ae4fbad4bef8e7f418e94605c2c3901a2f9a7",
+    "action": "No retry. Retain first judgment; mark missing read uncertain so it widens the upper irrelevant-token bound."
+  }
+]

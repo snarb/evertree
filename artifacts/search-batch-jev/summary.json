@@ -1,0 +1,158 @@
+{
+  "manifest": {
+    "seed": 20261021,
+    "question_indices": [
+      209,
+      560,
+      100,
+      237,
+      532,
+      146,
+      603,
+      501,
+      443,
+      549,
+      130,
+      70,
+      358,
+      536,
+      495,
+      48,
+      262,
+      180,
+      580,
+      72
+    ],
+    "excluded_pilot_indices": [
+      4,
+      11,
+      20,
+      28,
+      45,
+      51,
+      84,
+      86,
+      87,
+      94,
+      120,
+      148,
+      181,
+      184,
+      213,
+      216,
+      218,
+      225,
+      251,
+      260,
+      264,
+      270,
+      279,
+      296,
+      297,
+      304,
+      370,
+      373,
+      376,
+      391,
+      395,
+      411,
+      444,
+      468,
+      516,
+      552,
+      556,
+      559,
+      573,
+      598
+    ],
+    "node_count": 1369,
+    "source_sha256": {
+      "sports_q.json": "867e175b989f8f6b7e09858a86bd3ad5858d90baae1117b675fec923bd71f010",
+      "sports.json": "d250713b04e4c2b4f7f6b93b25cbf1517d695bcc4652959930bb051a38f50646",
+      "sport_tree.pkl": "ecf476b3f513a9548fe8902311662494b0517fba7d5c3c66e23448eea46f8455"
+    },
+    "threshold": 0.05,
+    "model": "jev-1.13.0",
+    "protocol": "Frozen new gold groups; no tuning on evaluation outcomes. Title/summary cards only. Same current flat graph for sequential and batch calls. Warm index; no LLM planning time included.",
+    "implementation_sha256": "22b7e0b8391825170f8442a2eb911614513909657cd5f8295aa3e62361ce2b35"
+  },
+  "timings": [
+    {
+      "jev": false,
+      "batch_size": 1,
+      "seconds": 5.819256666989531,
+      "median_request_seconds": 0.24865437499829568,
+      "calls": 20
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "seconds": 1.6181396250030957,
+      "median_request_seconds": 0.32818616699660197,
+      "calls": 5
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "seconds": 10.86743441701401,
+      "median_request_seconds": 0.5302062914706767,
+      "calls": 20
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "seconds": 3.861731124983635,
+      "median_request_seconds": 0.6973558339523152,
+      "calls": 5
+    }
+  ],
+  "quality": [
+    {
+      "jev": false,
+      "batch_size": 1,
+      "gold": 37,
+      "hits": 20,
+      "returned": 56,
+      "precision": 0.35714285714285715,
+      "recall": 0.5405405405405406,
+      "relevant_raw_candidates": 20,
+      "relevant_candidates_retained": 20,
+      "relevant_candidate_retention": 1.0
+    },
+    {
+      "jev": false,
+      "batch_size": 4,
+      "gold": 37,
+      "hits": 20,
+      "returned": 56,
+      "precision": 0.35714285714285715,
+      "recall": 0.5405405405405406,
+      "relevant_candidate_retention": null
+    },
+    {
+      "jev": true,
+      "batch_size": 1,
+      "gold": 37,
+      "hits": 20,
+      "returned": 56,
+      "precision": 0.35714285714285715,
+      "recall": 0.5405405405405406,
+      "relevant_raw_candidates": 20,
+      "relevant_candidates_retained": 20,
+      "relevant_candidate_retention": 1.0
+    },
+    {
+      "jev": true,
+      "batch_size": 4,
+      "gold": 37,
+      "hits": 20,
+      "returned": 54,
+      "precision": 0.37037037037037035,
+      "recall": 0.5405405405405406,
+      "relevant_candidate_retention": null
+    }
+  ],
+  "all_searches_complete": true,
+  "filter_warnings": 0,
+  "retention_target_passed": true
+}

@@ -1,0 +1,1062 @@
+{
+  "purpose": "Source-first manual diagnostic of one native acquisition; not an independent benchmark and not a retrieval/answer score.",
+  "checklist": "artifacts/search-recall/graph-route-evaluation/case-0-checklist.json",
+  "checklist_sha256": "0470cbc0478840737e44385ad859e4f26745fec3a06bda301dbce5517960f9ee",
+  "acquired_snapshot": "tmp/knowledge-graph-routes-case-0-v1/acquired.json",
+  "acquired_sha256": "562803dc1462dbca8b57b12cde9c2d55102960bd5d7da34364aa6377039a2b9c",
+  "review_order": "Checklist frozen and hash sent to coordinator before generated snapshot/trace were inspected. Only first source article inspected; no questions, gold answers or future cases read.",
+  "scope": {
+    "source_articles": 1,
+    "domain_assertions": 68,
+    "generated_nodes_excluding_bootstrap": {
+      "prototype": 4,
+      "relation_instance": 10,
+      "instance": 2,
+      "relation_type": 6,
+      "claim": 14
+    },
+    "claim_count": 14,
+    "native_relation_count": 10,
+    "taxonomy_and_identity_facts": 4,
+    "article_metadata_facts": 6,
+    "domain_native_facts": 0,
+    "domain_connected_assertions": 0,
+    "domain_prose_status": {
+      "preserved_in_prose": 64,
+      "partial": 3,
+      "missing": 1
+    }
+  },
+  "verdict": "Technically completed acquisition, but failed the required connected domain representation. Most substantive meanings survive in prose and original source; they cannot be traversed as product/offer/value relationships.",
+  "native_fact_audit": {
+    "metadata_facts": [
+      {
+        "id": 26,
+        "predicate": "PUBLISHED_BY",
+        "args": {
+          "article": 16,
+          "publisher": 18
+        },
+        "participants": [
+          16,
+          18
+        ]
+      },
+      {
+        "id": 27,
+        "predicate": "ARTICLE_TITLE",
+        "args": {
+          "article": 16,
+          "title": "200+ of the best deals from Amazon's Cyber Monday sale"
+        },
+        "participants": [
+          16
+        ]
+      },
+      {
+        "id": 28,
+        "predicate": "ARTICLE_PUBLICATION_TIME",
+        "args": {
+          "article": 16,
+          "timestamp": "2023-11-27T08:45:59+00:00"
+        },
+        "participants": [
+          16
+        ]
+      },
+      {
+        "id": 29,
+        "predicate": "ARTICLE_CATEGORY",
+        "args": {
+          "article": 16,
+          "category": "entertainment"
+        },
+        "participants": [
+          16
+        ]
+      },
+      {
+        "id": 30,
+        "predicate": "ARTICLE_URL",
+        "args": {
+          "article": 16,
+          "url": "https://mashable.com/article/cyber-monday-deals-amazon-2023"
+        },
+        "participants": [
+          16
+        ]
+      },
+      {
+        "id": 31,
+        "predicate": "ARTICLE_AUTHOR_FIELD",
+        "args": {
+          "article": 16,
+          "author_value": null
+        },
+        "participants": [
+          16
+        ]
+      }
+    ],
+    "metadata_meanings_supported": true,
+    "structural_fact_ids": [
+      12,
+      15,
+      17,
+      19
+    ],
+    "actual_domain_participants": [],
+    "unlinked_claim_ids": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ],
+    "warning": "The harness label domain_assertions counts arbitrary non-structural relation instances, including article metadata. Its value 6 is not substantive domain-fact coverage."
+  },
+  "assertion_audit": [
+    {
+      "assertion_id": "sale-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        33
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "sale-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        33
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "sale-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        33
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "sale-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        33
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "sale-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        33
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "sale-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        34
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "sale-07",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        34
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "partial",
+      "detail": "Measurement conversions reduced to unspecified conversions."
+    },
+    {
+      "assertion_id": "echo-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "partial",
+      "detail": "Turning off lights reduced to generic smart-light control."
+    },
+    {
+      "assertion_id": "echo-07",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-08",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-09",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "echo-10",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        36
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "audible-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        37
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "audible-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        37
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "audible-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        37
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "audible-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        37
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "audible-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        37
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "audible-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        37
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "mgm-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        38
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "mgm-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        38
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "mgm-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        38
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "mgm-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        38
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-07",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-08",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-09",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-10",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "ipad-11",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        39
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "tv-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        40
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "tv-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        40
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "tv-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        40
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "tv-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        40
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "tv-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        40
+      ],
+      "text_status": "partial",
+      "detail": "Room-lighting dependence omitted; only adaptive brightness retained."
+    },
+    {
+      "assertion_id": "tv-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        40
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "tv-07",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        40
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-07",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-08",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-09",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "surface-10",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        41
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "bose-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        42
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "bose-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        42
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "bose-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        42
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "bose-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [],
+      "text_status": "missing",
+      "detail": "Uniqueness among Bose over-ear offers under $200 omitted."
+    },
+    {
+      "assertion_id": "bose-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        42
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "bose-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        42
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "bose-07",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        42
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "quest-01",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        43
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "quest-02",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        43
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "quest-03",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        43
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "quest-04",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        43
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "quest-05",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        43
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    },
+    {
+      "assertion_id": "quest-06",
+      "native_fact_ids": [],
+      "participant_ids": [],
+      "graph_status": "not_structurally_represented",
+      "text_node_ids": [
+        43
+      ],
+      "text_status": "preserved_in_prose",
+      "detail": "Meaning is retained in an unlinked summary Claim, without separately addressable participant/value roles."
+    }
+  ],
+  "unsupported_or_misleading": [
+    {
+      "node_id": 32,
+      "name": "Article record is partial",
+      "problem": "Delivery wrapper partial_source/source_context was stored as an assertion about the original article being incomplete. Original full body was retained and processed by the next section. Transport metadata is not article knowledge.",
+      "severity": "high"
+    }
+  ],
+  "other_omissions": [
+    {
+      "scope": "publication/update metadata",
+      "detail": "Claim 34 preserves November 27 update date but not body update time 5:00 a.m. EST; publication timestamp exists as distinct metadata fact28."
+    },
+    {
+      "scope": "source navigation",
+      "detail": "Claim44 is a prose list of category headings, not a product taxonomy; GoPro subheading is omitted. No inference of concrete offers from empty headings is warranted."
+    }
+  ],
+  "execution": {
+    "processing_status": "processed",
+    "processed_sections": 2,
+    "pending_sections": 0,
+    "failed_sections": 0,
+    "tool_calls_by_section": [
+      {
+        "search": 2,
+        "create_prototype": 5,
+        "create_instance": 2,
+        "define_relation": 6,
+        "relate": 6,
+        "create_claim": 1,
+        "query": 1
+      },
+      {
+        "search": 3,
+        "create_claim": 13,
+        "query": 1,
+        "describe": 2,
+        "sources": 1
+      }
+    ],
+    "tool_call_count_by_section": [
+      23,
+      20
+    ],
+    "readback": "Body run queried relation Claim as if it were a RelationType, described two summary Claims, and read their provenance. It did not check participant-to-fact-to-participant traversal.",
+    "observed_errors": [
+      {
+        "section": 0,
+        "tool": "create_prototype",
+        "arguments": {
+          "name": "Information Resource",
+          "description": "A recorded or published information artifact, including articles and other documents.",
+          "parent": null,
+          "sources": [
+            {
+              "event_ref": 1,
+              "output_path": [
+                "article",
+                "section"
+              ]
+            }
+          ]
+        },
+        "result": {
+          "error": "dangling TraceOutputRef"
+        }
+      },
+      {
+        "section": 1,
+        "tool": "query",
+        "arguments": {
+          "relation": "Claim",
+          "result": "matches",
+          "where": [
+            {
+              "field": "fact.name",
+              "op": "in",
+              "value": [
+                "Amazon 2023 Cyber Monday sale timeline",
+                "Echo Show deal description",
+                "Amazon iPad deal comparison",
+                "Meta Quest 2 Cyber Monday offer",
+                "Amazon sale article deal categories"
+              ]
+            }
+          ],
+          "fields": [
+            "description"
+          ],
+          "max_items": 20
+        },
+        "result": {
+          "status": "not_found",
+          "candidates": [],
+          "candidates_total": 0
+        }
+      }
+    ],
+    "no_evidence_of": "No timeout, pending section, or exhausted tool limit explains the representation failure."
+  },
+  "source_access": {
+    "test": "Restore acquired snapshot in real SemanticService using EmptyIndex and offline token encoder; call actual graph.sources and memory.read_source. No network, embeddings or model calls.",
+    "checks": [
+      {
+        "subject": 16,
+        "reference": {
+          "event_ref": 1,
+          "output_path": [
+            "article"
+          ]
+        },
+        "context_reference": {
+          "event_ref": 1,
+          "output_path": []
+        },
+        "format": "json",
+        "characters": 6240,
+        "matches_original_exactly": true,
+        "scope": "article_record",
+        "complete": true
+      },
+      {
+        "subject": 33,
+        "reference": {
+          "event_ref": 1,
+          "output_path": [
+            "article",
+            "body"
+          ]
+        },
+        "context_reference": {
+          "event_ref": 1,
+          "output_path": []
+        },
+        "format": "text",
+        "characters": 5813,
+        "matches_original_exactly": true,
+        "scope": "entire_body",
+        "complete": true
+      },
+      {
+        "subject": 43,
+        "reference": {
+          "event_ref": 1,
+          "output_path": [
+            "article",
+            "body"
+          ]
+        },
+        "context_reference": {
+          "event_ref": 1,
+          "output_path": []
+        },
+        "format": "text",
+        "characters": 5813,
+        "matches_original_exactly": true,
+        "scope": "entire_body",
+        "complete": true
+      }
+    ],
+    "conclusion": "Exact full source is available once an article/Claim anchor is found, including details omitted from summaries. No native domain route exists to reach that anchor independently of text search.",
+    "slice_gap": "This case cites whole original body. Future sliced body sections must cite a durable exact fragment with original context dependency, not merely the full parent body path."
+  },
+  "priorities": [
+    {
+      "priority": 1,
+      "recommendation": "Make native participants and qualified facts mandatory for ordinary factual assertions. Missing schemas, uncertainty and source reporting do not justify falling back to summary Claims. Read back representative domain routes before finishing."
+    },
+    {
+      "priority": 1,
+      "recommendation": "Keep section/location/partial_source/source_context visibly separate from source content; never store delivery bookkeeping as world facts. Supplied source refs address original retained output, not the presentation wrapper."
+    },
+    {
+      "priority": 1,
+      "recommendation": "Record exact section fragments in trusted Core with source dependencies, so fact provenance identifies the actual source material presented while original context remains retrievable."
+    },
+    {
+      "priority": 2,
+      "recommendation": "Process manageable semantic clusters with shared participant identities; prioritize substantive participants/relations over creating a schema for every catalog metadata field."
+    },
+    {
+      "priority": 2,
+      "recommendation": "Keep article metadata, taxonomy edges, unlinked Claims and substantive domain facts separate in diagnostics. Edge count alone can report apparent success despite zero domain traversal coverage."
+    }
+  ],
+  "next_check": "Rerun this same article with revised representation instructions and exact-fragment handling, compare all68 rows and role/value/condition correctness, then proceed to another article. This is development iteration, not held-out quality evidence."
+}

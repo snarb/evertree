@@ -1,0 +1,401 @@
+{
+  "purpose": "Manual source-only diagnostic audit under unchanged generic class instruction. Counts grouped assertions, not statistically estimated semantic completeness.",
+  "snapshot": "tmp/knowledge-graph-routes-v8/acquisition/5-094b242f/snapshot.json",
+  "snapshot_sha256": "b001777d4119d8c9d4c6379c3438136cf8912c4a910e117cf3539d927f2d8ea2",
+  "checklist_sha256": "1643e8fb21e40c9777c026e73c580ba2bb67e3e476e917af458bd4d8e10a9742",
+  "seconds": 779.1338371249731,
+  "counts": {
+    "grouped_assertions": 42,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 37,
+      "preserved_with_wrong_subject_role": 4,
+      "missing": 1
+    },
+    "with_representation_gaps": 13,
+    "model_invocations": 14,
+    "explicit_incomplete_decisions": 2
+  },
+  "continuation_review": "Both incomplete reports concerned the same unfinished gross/sales/attendance passage; its values, opinions and reported causal claim were later saved. This is a successful technical continuation, not proof of all assertions.",
+  "class_review": "People, film/work, tour process, label and recordings use compatible categories. Barbie contender remains a media work rather than being classified from the award title. No causal before/after inference is made.",
+  "important_limit": "Generic attributed-remark schema is reused with Time magazine in the about-subject role for self-reports; exact role reads can therefore mislead despite correct prose. Keep as a measured representation error, without named prompt exceptions.",
+  "assertions": [
+    {
+      "assertion_id": "time-01",
+      "supporting_object_ids": [
+        762,
+        769
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-02",
+      "supporting_object_ids": [
+        769
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-03",
+      "supporting_object_ids": [
+        785
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-04",
+      "supporting_object_ids": [
+        783,
+        786
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-05",
+      "supporting_object_ids": [
+        782
+      ],
+      "meaning_status": "preserved_with_wrong_subject_role",
+      "representation_gaps": [
+        "The reported feeling is retained, but782 binds statement subject to Time magazine rather than Swift."
+      ]
+    },
+    {
+      "assertion_id": "time-06",
+      "supporting_object_ids": [
+        784,
+        794
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Currency is inferred as USD from dollar notation."
+      ]
+    },
+    {
+      "assertion_id": "time-07",
+      "supporting_object_ids": [
+        795
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Currency is inferred as USD from dollar notation; Swift-to-film authorship association remains description text."
+      ]
+    },
+    {
+      "assertion_id": "time-08",
+      "supporting_object_ids": [
+        807
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-09",
+      "supporting_object_ids": [
+        575
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-10",
+      "supporting_object_ids": [
+        809,
+        810
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-11",
+      "supporting_object_ids": [
+        811
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-12",
+      "supporting_object_ids": [
+        812
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-13",
+      "supporting_object_ids": [
+        813
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-14",
+      "supporting_object_ids": [
+        818,
+        826
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Podcast and concert remain strings, without shared event/podcast participant links."
+      ]
+    },
+    {
+      "assertion_id": "time-15",
+      "supporting_object_ids": [
+        820,
+        827
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-16",
+      "supporting_object_ids": [
+        821
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-17",
+      "supporting_object_ids": [
+        814,
+        822
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Actor’s role in Conversations with Friends remains context prose; no work participant."
+      ]
+    },
+    {
+      "assertion_id": "time-18",
+      "supporting_object_ids": [
+        819
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-19",
+      "supporting_object_ids": [
+        822
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-20",
+      "supporting_object_ids": [
+        823,
+        835
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-21",
+      "supporting_object_ids": [
+        831
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-22",
+      "supporting_object_ids": [
+        832
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-23",
+      "supporting_object_ids": [
+        832
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-24",
+      "supporting_object_ids": [
+        833,
+        834
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-25",
+      "supporting_object_ids": [
+        843
+      ],
+      "meaning_status": "preserved_with_wrong_subject_role",
+      "representation_gaps": [
+        "Rest-day account survives prose but843 binds subject to Time magazine instead of Swift; day count is prose."
+      ]
+    },
+    {
+      "assertion_id": "time-26",
+      "supporting_object_ids": [
+        842
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-27",
+      "supporting_object_ids": [
+        840,
+        841
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-28",
+      "supporting_object_ids": [
+        842
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-29",
+      "supporting_object_ids": [
+        844
+      ],
+      "meaning_status": "preserved_with_wrong_subject_role",
+      "representation_gaps": [
+        "Commitment and exception survive prose but844 binds subject to Time magazine instead of performer or performance."
+      ]
+    },
+    {
+      "assertion_id": "time-30",
+      "supporting_object_ids": [
+        872,
+        873
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Rights catalog names Swift but lacks an artist-valued link; acquisition and rights transfer otherwise join by Braun and catalog IDs."
+      ]
+    },
+    {
+      "assertion_id": "time-31",
+      "supporting_object_ids": [
+        851,
+        872
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Longtime artist/label association remains card description; no Swift-label role relation."
+      ]
+    },
+    {
+      "assertion_id": "time-32",
+      "supporting_object_ids": [
+        874
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Currency is inferred as USD from dollar notation."
+      ]
+    },
+    {
+      "assertion_id": "time-33",
+      "supporting_object_ids": [
+        875,
+        876,
+        877,
+        878
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-34",
+      "supporting_object_ids": [
+        875
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-35",
+      "supporting_object_ids": [
+        876
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-36",
+      "supporting_object_ids": [
+        877
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-37",
+      "supporting_object_ids": [
+        878
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-38",
+      "supporting_object_ids": [
+        882
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "time-39",
+      "supporting_object_ids": [],
+      "meaning_status": "missing",
+      "representation_gaps": [
+        "Grammy-winner qualifier is absent from graph representations reviewed."
+      ]
+    },
+    {
+      "assertion_id": "time-40",
+      "supporting_object_ids": [
+        880,
+        885
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Publicist association to Swift remains card text;885 binds denial to Alwyn and does not include Swift as participant."
+      ]
+    },
+    {
+      "assertion_id": "time-41",
+      "supporting_object_ids": [
+        886,
+        890
+      ],
+      "meaning_status": "preserved_with_wrong_subject_role",
+      "representation_gaps": [
+        "886 binds statement subject to Time magazine, while890 correctly binds Swift to dinner intention."
+      ]
+    },
+    {
+      "assertion_id": "time-42",
+      "supporting_object_ids": [
+        891,
+        892
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    }
+  ]
+}

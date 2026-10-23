@@ -1,0 +1,122 @@
+[
+  {
+    "original_index": 4,
+    "label_status": "supported",
+    "label_reason": "The source records identify Caesars Sportsbook: CBSSports.com reports up to $1,000 in bonus bets after a first-bet loss; Sporting News says Caesars runs NBA betting promotions and anticipates the same first-bet offer for Vermont sign-ups.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The response correctly names Caesars and cites read evidence 18, 17, and 19, which contain the Kentucky offer, NBA promotions, and anticipated Vermont offer."
+    },
+    "graph": {
+      "correct": false,
+      "grounded_in_reads": false,
+      "reason": "It incorrectly concludes that the clues do not line up, focusing on BetMGM’s separate $1,500 offer. Its reads include evidence that Caesars has the $1,000 offer, but omit the Sporting News NBA article and the Caesars Vermont passage, so they do not support its conclusion about all the clues."
+    }
+  },
+  {
+    "original_index": 19,
+    "label_status": "supported",
+    "label_reason": "The source records support “no”: Sporting News says Peacock and NBCSports.com require a subscription and mentions Fubo’s free trial. Polygon lists some films as free with ads or with a library card. The raw answer accurately distinguishes those specific options from a blanket claim about all streaming access.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The answer matches both supplied article records and cites their subscription and free viewing details. Its caveat that DAZN’s terms are unspecified is also accurate."
+    },
+    "graph": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The graph answer accurately says its retrieved facts do not establish the subscription contrast: they cover the game schedule and a film recommendation, but not streaming terms. Its limits are grounded in the graph read evidence."
+    }
+  },
+  {
+    "original_index": 25,
+    "label_status": "supported",
+    "label_reason": "The supplied articles support the expected answer, “no.” The October CBS Sports timeline reports rumors and says the pair were having a “great time getting to know each other,” but it does not say they were not a couple. The December 6 Independent report says they were already a couple by Swift’s first Chiefs game, so the later account adds private timeline detail without contradicting the earlier report.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The answer accurately distinguishes the earlier report’s qualified language from the later account. Read evidence 16 and 15 contains both relevant articles and supports the comparison."
+    },
+    "graph": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The answer correctly notes that the earlier timeline reports the invitation, game attendance, and joint departure without asserting they were not dating. Read evidence 185–187 and 172 supports those claims. The stated caveat about a different report explicitly denying a relationship is reasonable."
+    }
+  },
+  {
+    "original_index": 81,
+    "label_status": "supported",
+    "label_reason": "The original source records report matching core terms: Sporting News expected new Caesars sign-ups in Vermont to receive up to $1,000 in Bonus Bets if their first bet lost, and CBSSports.com reported up to $1,000 in bonus bets for new Caesars customers who lost their first bet. Sporting News additionally gives a promo code and a 30-day window. The reports concern different states and dates, so this supports consistency in the reported offer terms, not proof the offer was actually available in both states.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The answer correctly identifies the shared $1,000 maximum and first-bet-loss condition. Its read evidence includes both articles and supports those claims; it also accurately notes extra details in Sporting News that CBSSports.com’s Caesars summary omits."
+    },
+    "graph": {
+      "correct": false,
+      "grounded_in_reads": true,
+      "reason": "The graph answer incorrectly says consistency is unresolved: the original Sporting News source explicitly reports the expected Caesars offer, matching CBSSports.com’s core terms. Its read evidence contains the CBSSports.com offer but only Sporting News promotional records for other sportsbooks, so the stated limitation accurately reflects the incomplete graph reads, though those reads were insufficient to answer the question."
+    }
+  },
+  {
+    "original_index": 261,
+    "label_status": "ambiguous",
+    "label_reason": "The question does not name the individual. The Independent calls Swift and Joe Alwyn notoriously private, but says Swift has nothing to hide in her relationship with Travis Kelce. The CBSSports article covers their rumored romance, Swift’s game attendance, and Kelce’s invitation to see him perform at Arrowhead. Thus the comparison depends on whether it means Alwyn or Kelce; the expected answer “no” fits Kelce but not Alwyn.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The response identifies the Alwyn privacy claim, distinguishes it from Swift’s public relationship with Kelce, and describes the CBSSports article’s Arrowhead coverage. Its conditional answer handles the question’s ambiguity, and both relevant articles appear in its read evidence."
+    },
+    "graph": {
+      "correct": false,
+      "grounded_in_reads": false,
+      "reason": "The graph response treats the comparison as unsupported without accounting for the article’s statement that Swift and Alwyn were notoriously private. Its read evidence includes a relationship fact about Kelce but no fact about Alwyn or the privacy claim, so that conclusion is not adequately grounded in the retrieved graph evidence."
+    }
+  },
+  {
+    "original_index": 2205,
+    "label_status": "supported",
+    "label_reason": "Both original Independent articles support the answer: Swift says she has nothing to hide in her relationship with Kelce, and Kelce invited Swift to a game at Arrowhead. The individual in both claims is Taylor Swift.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The response identifies Taylor Swift as the invited individual and cites read evidence from both full article records supporting the relationship claim and the invitation."
+    },
+    "graph": {
+      "correct": false,
+      "grounded_in_reads": false,
+      "reason": "The graph response answers yes but misidentifies the shared individual as Travis Kelce; it is Taylor Swift. Its read evidence supports that Swift and Kelce were a couple and that Kelce invited Swift, but does not establish the article’s claim that Swift had nothing to hide in the relationship."
+    }
+  },
+  {
+    "original_index": 10,
+    "label_status": "unassessed",
+    "label_reason": "This is a null_query with no original source records provided, so the subset cannot establish whether the full corpus contains enough information to answer.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The response abstains and says the retrieved articles it inspected are unrelated. Its cited read evidence consists of unrelated sports and Taylor Swift articles, which supports that characterization; it does not claim the full corpus lacks an answer."
+    },
+    "graph": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The response abstains rather than guessing. Its read evidence contains no Sridevi records and consists of unrelated graph results, consistent with its statement that the available results do not establish the character."
+    }
+  },
+  {
+    "original_index": 13,
+    "label_status": "unassessed",
+    "label_reason": "This is a null_query with no supporting source records, so the supplied data cannot establish whether the original corpus lacks enough information.",
+    "raw": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The response abstains. Its cited read records identify unrelated Mashable, Yardbarker, and CBS Sports articles, which supports its statement that the inspected evidence does not establish the company."
+    },
+    "graph": {
+      "correct": true,
+      "grounded_in_reads": true,
+      "reason": "The response abstains. The graph read evidence describes unrelated articles and does not identify the company or the patent challenge, consistent with the stated uncertainty."
+    }
+  }
+]

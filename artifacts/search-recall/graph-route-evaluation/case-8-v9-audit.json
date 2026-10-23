@@ -1,0 +1,487 @@
+{
+  "purpose": "Source-only grouped diagnostic audit; preserved meaning in prose is distinct from a usable typed route. Not independent semantic recall or demonstrated answer benefit.",
+  "snapshot": "tmp/knowledge-graph-routes-v9/acquisition/8-893724b7/snapshot.json",
+  "snapshot_sha256": "a5de51ae95c89c2002247ddaffecd5992e84813ee375f913215678de8ce90404",
+  "checklist_sha256": "45999054229713435857889c220c4f9808cda97a247719eb745fb452893c3433",
+  "counts": {
+    "grouped_assertions": 48,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 48
+    },
+    "rows_with_caveats": 7,
+    "invocations": 21
+  },
+  "acquisition_seconds": 1655.1917873329949,
+  "positive_checks": [
+    "All six app table rows retain their own operator, app, platforms and features.",
+    "FanCash rates1/3/5 percent remain attached to the three wager categories.",
+    "First-loss offers preserve bonus-bet payment and the loss condition; FanDuel explicitly has no rewards program at the 2023 source date.",
+    "Kentucky retail and online dates remain distinct; the billion-dollar amount remains a forecast.",
+    "Hypothetical spread, moneyline, total and parlay examples retain their scenario status and joint participants/values.",
+    "Collective author CBS Sports Staff1300 is an Organization, not an individual Person.",
+    "Lamar Jackson641 is reused from earlier articles; the erroneous source-reported 2013 award date is attributed rather than silently corrected."
+  ],
+  "remaining_limits": [
+    "Program identities spanning sports have overly narrow basketball classes.",
+    "Some conferences, sport and achievement details remain strings, reducing traversal possibilities.",
+    "Repeated definitional and rewards assertions remain.",
+    "These 48 grouped rows are not an atomic factual-completeness denominator; no graph benefit claim follows."
+  ],
+  "assertions": [
+    {
+      "assertion_id": "kentucky-01",
+      "supporting_object_ids": [
+        1314,
+        1315
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-02",
+      "supporting_object_ids": [
+        1316,
+        1439
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-03",
+      "supporting_object_ids": [
+        1334,
+        1343,
+        1348
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-04",
+      "supporting_object_ids": [
+        1335
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-05",
+      "supporting_object_ids": [
+        1339,
+        1341,
+        1365
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-06",
+      "supporting_object_ids": [
+        1359,
+        1360
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-07",
+      "supporting_object_ids": [
+        1363,
+        1364,
+        1379,
+        1387
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-08",
+      "supporting_object_ids": [
+        1380,
+        1384,
+        1386
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-09",
+      "supporting_object_ids": [
+        1382,
+        1383,
+        1389,
+        1390
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-10",
+      "supporting_object_ids": [
+        1391,
+        1393,
+        1394,
+        1401,
+        1403
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-11",
+      "supporting_object_ids": [
+        1398,
+        1399,
+        1400,
+        1402
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-12",
+      "supporting_object_ids": [
+        1406
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-13",
+      "supporting_object_ids": [
+        1407,
+        1408,
+        1409
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-14",
+      "supporting_object_ids": [
+        1415,
+        1416,
+        1417
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-15",
+      "supporting_object_ids": [
+        1418,
+        1419,
+        1421
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "The source itself says a $1500 risk-free offer, without an explicit up-to qualifier; the frozen checklist adds that interpretation. The graph preserves the original bonus-bet/loss wording, not a cash refund."
+      ]
+    },
+    {
+      "assertion_id": "kentucky-16",
+      "supporting_object_ids": [
+        1422,
+        1423,
+        1426
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-17",
+      "supporting_object_ids": [
+        1424,
+        1425
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-18",
+      "supporting_object_ids": [
+        1436,
+        1437,
+        1438
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-19",
+      "supporting_object_ids": [
+        1440
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-20",
+      "supporting_object_ids": [
+        1451
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-21",
+      "supporting_object_ids": [
+        1454
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-22",
+      "supporting_object_ids": [
+        1455
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-23",
+      "supporting_object_ids": [
+        1456
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-24",
+      "supporting_object_ids": [
+        1457
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-25",
+      "supporting_object_ids": [
+        1458
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-26",
+      "supporting_object_ids": [
+        1468,
+        1470,
+        1472
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Athletic-program identity1459 is classified only as Basketball Team1110 despite also carrying football facts; sport-specific scope survives in individual predicates."
+      ]
+    },
+    {
+      "assertion_id": "kentucky-27",
+      "supporting_object_ids": [
+        1473
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Conference is a string, so traversal to a shared conference entity is unavailable."
+      ]
+    },
+    {
+      "assertion_id": "kentucky-28",
+      "supporting_object_ids": [
+        1469,
+        1471
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Athletic-program identity1461 is classified only as Basketball Team1110 despite also carrying football facts."
+      ]
+    },
+    {
+      "assertion_id": "kentucky-29",
+      "supporting_object_ids": [
+        1474,
+        1485
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Conference and achievement counts remain prose strings; player641 is nevertheless linked in separate award fact1485."
+      ]
+    },
+    {
+      "assertion_id": "kentucky-30",
+      "supporting_object_ids": [
+        1480
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Athletic-program identity1475 is classified only as Basketball Team1110 despite also carrying football facts."
+      ]
+    },
+    {
+      "assertion_id": "kentucky-31",
+      "supporting_object_ids": [
+        1481,
+        1482
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-32",
+      "supporting_object_ids": [
+        1515,
+        1517,
+        1518,
+        1519
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-33",
+      "supporting_object_ids": [
+        1508,
+        1509,
+        1513,
+        1514
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-34",
+      "supporting_object_ids": [
+        1520,
+        1521
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-35",
+      "supporting_object_ids": [
+        1522,
+        1523,
+        1524,
+        1525,
+        1526
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-36",
+      "supporting_object_ids": [
+        1537
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-37",
+      "supporting_object_ids": [
+        1549,
+        1551
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-38",
+      "supporting_object_ids": [
+        1552
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-39",
+      "supporting_object_ids": [
+        1561,
+        1562
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Numeric thresholds preserve the source’s imprecise Over126/Under125 wording; these are not independently verified mathematical rules."
+      ]
+    },
+    {
+      "assertion_id": "kentucky-40",
+      "supporting_object_ids": [
+        1563,
+        1564
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-41",
+      "supporting_object_ids": [
+        1565,
+        1569,
+        1570
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-42",
+      "supporting_object_ids": [
+        1571,
+        1572
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-43",
+      "supporting_object_ids": [
+        1573
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-44",
+      "supporting_object_ids": [
+        1574,
+        1580
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-45",
+      "supporting_object_ids": [
+        1578
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-46",
+      "supporting_object_ids": [
+        1579
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-47",
+      "supporting_object_ids": [
+        1592,
+        1593
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "kentucky-48",
+      "supporting_object_ids": [
+        1594
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    }
+  ]
+}

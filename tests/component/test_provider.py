@@ -160,7 +160,7 @@ async def test_sdk_thread_callback_keeps_application_execution_and_search_scope(
             scopes.append(semantic_scope.get())
             with pytest.raises(RuntimeBusy, match="execution chain"):
                 Context().run(app.graph.reserve_id)
-            return []
+            return [{"ids": []} for _ in args[1]]
 
     class DetachedClient(FakeClient):
         def turn_start(self, *args):
@@ -180,7 +180,7 @@ async def test_sdk_thread_callback_keeps_application_execution_and_search_scope(
                             "namespace": "graph",
                             "tool": "search",
                             "callId": "native-search",
-                            "arguments": {"query": "unrecorded weight phrase"},
+                            "arguments": {"queries": ["unrecorded weight phrase"]},
                         },
                     ),
                 )

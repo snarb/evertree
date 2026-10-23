@@ -928,7 +928,7 @@ def test_reserved_query_conditions_are_rejected_before_persisting_an_unreadable_
     refs, metadata = recorded_experience(world, "A source with a reserved condition")
     if kind == "reference":
         world.service.results(
-            action["name"], None, [], [], 20, metadata["task_id"], scope=metadata["semantic_scope"]
+            action["name"], None, [], [], 10, metadata["task_id"], scope=metadata["semantic_scope"]
         )
     before = (world.graph.snapshot(), world.memory.snapshot())
     rejected = write_action(

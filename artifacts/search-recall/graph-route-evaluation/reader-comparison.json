@@ -1,0 +1,587 @@
+{
+  "purpose": "Diagnostic matched-reader comparison, not calibrated accuracy or independent generalization. Automatic verdicts require the accompanying manual audit.",
+  "reader_manifest": {
+    "acquisition_revision": "ebeff9eeee983167afac0ae2bfb776d75cee0fdb1c2e84f55484fa37671371ac",
+    "reader_revision": "ebeff9eeee983167afac0ae2bfb776d75cee0fdb1c2e84f55484fa37671371ac",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "read_tokens": 32000,
+    "read_calls": 16,
+    "search_calls": 8,
+    "query_entries": 16,
+    "semantic_config": {
+      "remember": {
+        "model": "gpt-6-luna",
+        "effort": "high"
+      },
+      "read": {
+        "context_fraction": 0.6,
+        "max_items": 600,
+        "token_encoding": "o200k_base"
+      },
+      "jev": {
+        "enabled": false,
+        "model": "jev-1.13.0",
+        "threshold": 0.05,
+        "api_key_env": "TYPESAFE_API_KEY"
+      },
+      "search": {
+        "bm25_candidates": 64,
+        "vector_candidates": 64,
+        "chunk_tokens": 768,
+        "chunk_overlap": 128
+      },
+      "redis_url_env": "EVERTREE_REDIS_URL",
+      "openai_key_env": "OPENAI_API_KEY",
+      "embedding_model": "text-embedding-3-large",
+      "embedding_dimensions": 3072
+    },
+    "index_preparation": "Both channels prepared with a fixed label-free query before reader timing; recorded separately.",
+    "plan": {
+      "articles.json": {
+        "sha256": "7448fd44ff0b0090557d18554f576beeaa12d58bb8df0a9bff51753d5af73ded",
+        "rows": 12
+      },
+      "questions.json": {
+        "sha256": "117798441cdfb020dd68dc12c659a1dd409ca3116edd993658972a9f5a89531f",
+        "rows": 8
+      }
+    },
+    "variants": [
+      "raw",
+      "graph_search",
+      "graph_routes",
+      "graph_sources"
+    ],
+    "acquisition_sha256": "43ddac489358523d96a49de65a377137f3f6cde652e1dc5eb2699ffd827c9bef",
+    "evaluator_sha256": {
+      "artifacts/search-recall/graph_routes.py": "45c5072bb87817277c85bfbeff8de839f139adb66cb78abff5b0dea7c7d70a6c",
+      "artifacts/search-recall/integrated.py": "2662b0515c247395a60a066d5c2418e8a1c0de47f2dd22bb1557abe5c016b0fe",
+      "tests/support/search_session.py": "575e702f392574652fcf6aa04e3dca173e03f2cbbee52395e52bf2e98730f332",
+      "tests/support/live_semantics.py": "255a6711c461e1fb8c16b9de9bb92897d2301d734c6905e3426ef576ee5fa423"
+    },
+    "caveat": "Diagnostic pilot; no independent full-corpus acceptance claim. Source lineage is not answer correctness."
+  },
+  "review_manifest_sha256": "dea210ef751337a0cc1f1f57b3ddcd5d63e22b07a0605ced224235e01e73a5f7",
+  "review_output_sha256": "803fb09c5ca7e566452f052795015157478c233979fb23bd585bf31e42233b4b",
+  "method": "Supported answer requires correct AND grounded_in_reads AND no reader evaluation_errors. Null controls are reported separately. Judge read ratings are whole-result estimates; missing/duplicate ratings become uncertain, never invented relevant ratings.",
+  "cases": [
+    {
+      "position": 0,
+      "original_index": 4,
+      "label_status": "supported",
+      "label_reason": "The original CBS Sports article says Caesars Sportsbook offers new customers up to $1,000 in bonus bets if their first bet loses. The Sporting News articles say Caesars runs NBA betting promotions for existing players and expect it to offer Vermont sign-ups the same first-bet-loss offer; the Vermont claim is prospective.",
+      "structural_repair": null,
+      "variants": {
+        "raw": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_search": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_routes": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_sources": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        }
+      }
+    },
+    {
+      "position": 1,
+      "original_index": 19,
+      "label_status": "supported",
+      "label_reason": "The original Sporting News article says Peacock and NBCSports.com streams require a subscription and that Fubo offers a free trial; it lists DAZN for Canada without stating its access terms. Polygon lists free ad-supported and library-card viewing for some films, alongside other streaming and rental options. The label “no” is supported, with the qualification that Sporting News does not specify DAZN’s terms.",
+      "structural_repair": {
+        "source_trace": "tmp/knowledge-graph-routes-v11/route-answer-review/1-attempt-1-invalid-read-coverage/trace.json",
+        "sha256": "cf91b8e4ae9f11fa6891a4f91ef4f8a2345cf5754d3cae6bad8f373623f23e59",
+        "policy": "Keep first attempted judgment, discard ratings only for nonexistent reads; every actual read must retain exactly one original rating. Missing required parts disqualify correctness; unsupported claims disqualify grounding. No semantic ratings invented. Second attempt is retained but not selected.",
+        "warnings": [
+          {
+            "variant": "graph_routes",
+            "kind": "nonexistent_read_ratings_discarded",
+            "ratings": [
+              {
+                "read_index": 4,
+                "classification": "relevant",
+                "reason": "The excerpt gives Polygon’s availability terms for M, including ad-supported and library-card viewing."
+              }
+            ]
+          }
+        ]
+      },
+      "variants": {
+        "graph_search": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_routes": {
+          "correct": false,
+          "grounded_in_reads": false,
+          "supported": false
+        },
+        "graph_sources": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "raw": {
+          "correct": false,
+          "grounded_in_reads": false,
+          "supported": false
+        }
+      }
+    },
+    {
+      "position": 2,
+      "original_index": 25,
+      "label_status": "supported",
+      "label_reason": "The supplied original articles support “no”: the October CBSSports article describes dating rumors and an apparent relationship, while The Independent’s December 6 article reports Swift’s account that they were already a couple by her first Chiefs game. The earlier article does not say they were not a couple or that the game was their first date.",
+      "structural_repair": null,
+      "variants": {
+        "graph_routes": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_sources": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "raw": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_search": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        }
+      }
+    },
+    {
+      "position": 3,
+      "original_index": 81,
+      "label_status": "supported",
+      "label_reason": "The original articles support “Yes” at the level asked: both report an offer of up to $1,000 in bonus bets for new customers whose first bet loses. Sporting News describes the Vermont offer as an expectation based on offers elsewhere; CBSSports.com reports it in its Kentucky guide. The sources do not establish that all terms or state availability were identical.",
+      "structural_repair": null,
+      "variants": {
+        "graph_sources": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "raw": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_search": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_routes": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        }
+      }
+    },
+    {
+      "position": 4,
+      "original_index": 261,
+      "label_status": "supported",
+      "label_reason": "The supplied articles support “no” with a qualification: The Independent calls Swift and Joe Alwyn a private couple and attributes reluctance to discuss the relationship to Alwyn; it also reports Swift saying she had nothing to hide with Travis Kelce. CBSSports covers the rumored Swift–Kelce romance, including Chiefs-game attendance and Arrowhead Stadium. The articles do not establish that Swift herself was secretive about a relationship.",
+      "structural_repair": {
+        "source_trace": "tmp/knowledge-graph-routes-v11/route-answer-review/4/first-attempt.json",
+        "sha256": "a80830181caa87dceb4cd616e89ae4fbad4bef8e7f418e94605c2c3901a2f9a7",
+        "repair_code_sha256": "6ab32398c3e4342c3aaeb5ff7579494be47f8a581002a57650114c28a935cfd0",
+        "policy": "Retain first attempt; unknown/duplicate read ratings become uncertain; nonexistent reads are discarded; contradictory positive verdicts are downgraded. No semantic rating invented and no favorable retry selected.",
+        "warnings": [
+          {
+            "variant": "graph_routes",
+            "read_index": 7,
+            "kind": "uncertain_read",
+            "raw": []
+          }
+        ]
+      },
+      "variants": {
+        "raw": {
+          "correct": false,
+          "grounded_in_reads": true,
+          "supported": false
+        },
+        "graph_search": {
+          "correct": false,
+          "grounded_in_reads": true,
+          "supported": false
+        },
+        "graph_routes": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_sources": {
+          "correct": false,
+          "grounded_in_reads": false,
+          "supported": false
+        }
+      }
+    },
+    {
+      "position": 5,
+      "original_index": 2205,
+      "label_status": "contradicted",
+      "label_reason": "The articles identify Travis Kelce as the person Swift says she is open about her relationship with, and Taylor Swift as the person Kelce invited. Those are different participants, so the dataset label “Yes” is contradicted.",
+      "structural_repair": null,
+      "variants": {
+        "graph_search": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_routes": {
+          "correct": false,
+          "grounded_in_reads": false,
+          "supported": false
+        },
+        "graph_sources": {
+          "correct": false,
+          "grounded_in_reads": false,
+          "supported": false
+        },
+        "raw": {
+          "correct": false,
+          "grounded_in_reads": false,
+          "supported": false
+        }
+      }
+    },
+    {
+      "position": 6,
+      "original_index": 10,
+      "label_status": "unassessed",
+      "label_reason": "The supplied original articles contain no Sridevi, BBC, or Times of India material relevant to the query. Because this is only a subset of the corpus, that gap cannot establish whether the dataset label is supported or contradicted across the full corpus.",
+      "structural_repair": null,
+      "variants": {
+        "graph_routes": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_sources": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "raw": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_search": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        }
+      }
+    },
+    {
+      "position": 7,
+      "original_index": 13,
+      "label_status": "unassessed",
+      "label_reason": "The supplied original articles do not establish either the Financial Times patent ranking or the Bloomberg EPO challenge. Because this is only a subset of the corpus, that absence cannot establish that the answer is unsupported throughout the original corpus.",
+      "structural_repair": null,
+      "variants": {
+        "graph_sources": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "raw": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_search": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        },
+        "graph_routes": {
+          "correct": true,
+          "grounded_in_reads": true,
+          "supported": true
+        }
+      }
+    }
+  ],
+  "variants": {
+    "raw": {
+      "automatic_supported_in_topic": 3,
+      "in_topic_count": 6,
+      "automatic_acceptable_null_abstentions": 2,
+      "null_controls": 2,
+      "read_tokens": 144591,
+      "seconds": 78.21671916614287,
+      "usage": {
+        "total_tokens": 457717,
+        "input_tokens": 452827,
+        "cached_input_tokens": 266752,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4890,
+        "reasoning_output_tokens": 2419
+      },
+      "uncached_input_tokens": 186075,
+      "read_relevance_counts": {
+        "mixed": 7,
+        "relevant": 4,
+        "irrelevant": 6,
+        "administrative": 2
+      },
+      "read_relevance_tokens": {
+        "mixed": 60626,
+        "relevant": 24430,
+        "irrelevant": 59491,
+        "administrative": 44
+      },
+      "irrelevant_tokens_lower_bound": 59491,
+      "irrelevant_tokens_upper_bound": 120117,
+      "tool_counts": {
+        "graph.search": 17,
+        "graph.describe": 2
+      }
+    },
+    "graph_search": {
+      "automatic_supported_in_topic": 5,
+      "in_topic_count": 6,
+      "automatic_acceptable_null_abstentions": 2,
+      "null_controls": 2,
+      "read_tokens": 161850,
+      "seconds": 94.0371477091685,
+      "usage": {
+        "total_tokens": 458544,
+        "input_tokens": 452650,
+        "cached_input_tokens": 243584,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5894,
+        "reasoning_output_tokens": 2816
+      },
+      "uncached_input_tokens": 209066,
+      "read_relevance_counts": {
+        "mixed": 12,
+        "irrelevant": 8
+      },
+      "read_relevance_tokens": {
+        "mixed": 106482,
+        "irrelevant": 55368
+      },
+      "irrelevant_tokens_lower_bound": 55368,
+      "irrelevant_tokens_upper_bound": 161850,
+      "tool_counts": {
+        "graph.search": 20
+      }
+    },
+    "graph_routes": {
+      "automatic_supported_in_topic": 4,
+      "in_topic_count": 6,
+      "automatic_acceptable_null_abstentions": 2,
+      "null_controls": 2,
+      "read_tokens": 126784,
+      "seconds": 124.19929620693438,
+      "usage": {
+        "total_tokens": 802205,
+        "input_tokens": 794992,
+        "cached_input_tokens": 589440,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7213,
+        "reasoning_output_tokens": 3489
+      },
+      "uncached_input_tokens": 205552,
+      "read_relevance_counts": {
+        "mixed": 6,
+        "relevant": 16,
+        "irrelevant": 12,
+        "administrative": 4,
+        "uncertain": 1
+      },
+      "read_relevance_tokens": {
+        "mixed": 36941,
+        "relevant": 23493,
+        "irrelevant": 65788,
+        "administrative": 67,
+        "uncertain": 495
+      },
+      "irrelevant_tokens_lower_bound": 65788,
+      "irrelevant_tokens_upper_bound": 103224,
+      "tool_counts": {
+        "graph.search": 17,
+        "graph.query": 19,
+        "graph.describe": 3
+      }
+    },
+    "graph_sources": {
+      "automatic_supported_in_topic": 4,
+      "in_topic_count": 6,
+      "automatic_acceptable_null_abstentions": 2,
+      "null_controls": 2,
+      "read_tokens": 158574,
+      "seconds": 150.54420270898845,
+      "usage": {
+        "total_tokens": 1352567,
+        "input_tokens": 1343515,
+        "cached_input_tokens": 1085952,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 9052,
+        "reasoning_output_tokens": 4868
+      },
+      "uncached_input_tokens": 257563,
+      "read_relevance_counts": {
+        "mixed": 12,
+        "relevant": 28,
+        "irrelevant": 14,
+        "administrative": 5
+      },
+      "read_relevance_tokens": {
+        "mixed": 50400,
+        "relevant": 50981,
+        "irrelevant": 57112,
+        "administrative": 81
+      },
+      "irrelevant_tokens_lower_bound": 57112,
+      "irrelevant_tokens_upper_bound": 107512,
+      "tool_counts": {
+        "graph.search": 21,
+        "graph.query": 7,
+        "graph.sources": 9,
+        "read_source": 19,
+        "graph.describe": 3
+      }
+    }
+  },
+  "exact_source_reading": {
+    "cases": [
+      {
+        "position": 0,
+        "successful_read_calls": 4,
+        "actual_source_article_urls": [
+          "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+          "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd",
+          "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+        ],
+        "gold_article_urls": [
+          "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+          "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd",
+          "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+        ],
+        "gold_article_pairs_read": 3
+      },
+      {
+        "position": 1,
+        "successful_read_calls": 2,
+        "actual_source_article_urls": [
+          "https://www.polygon.com/what-to-watch/23959772/best-noir-movies-watch-streaming-neo-noir",
+          "https://www.sportingnews.com/us/nfl/news/cowboys-49ers-live-score-highlights-sunday-night-football/e46d8e03c6a948aa82f859c3"
+        ],
+        "gold_article_urls": [
+          "https://www.polygon.com/what-to-watch/23959772/best-noir-movies-watch-streaming-neo-noir",
+          "https://www.sportingnews.com/us/nfl/news/cowboys-49ers-live-score-highlights-sunday-night-football/e46d8e03c6a948aa82f859c3"
+        ],
+        "gold_article_pairs_read": 2
+      },
+      {
+        "position": 2,
+        "successful_read_calls": 3,
+        "actual_source_article_urls": [
+          "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/",
+          "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html"
+        ],
+        "gold_article_urls": [
+          "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/",
+          "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html",
+          "https://www.independent.co.uk/life-style/taylor-swift-travis-kelce-tweets-b2453410.html"
+        ],
+        "gold_article_pairs_read": 2
+      },
+      {
+        "position": 3,
+        "successful_read_calls": 3,
+        "actual_source_article_urls": [
+          "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+          "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+        ],
+        "gold_article_urls": [
+          "https://www.cbssports.com/general/news/2023-kentucky-online-sports-betting-sites-best-legal-sportsbooks-promos-bonuses-mobile-apps-how-to-bet/",
+          "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f"
+        ],
+        "gold_article_pairs_read": 2
+      },
+      {
+        "position": 4,
+        "successful_read_calls": 4,
+        "actual_source_article_urls": [
+          "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/",
+          "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html"
+        ],
+        "gold_article_urls": [
+          "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/",
+          "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html"
+        ],
+        "gold_article_pairs_read": 2
+      },
+      {
+        "position": 5,
+        "successful_read_calls": 2,
+        "actual_source_article_urls": [
+          "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/",
+          "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html"
+        ],
+        "gold_article_urls": [
+          "https://www.independent.co.uk/life-style/taylor-swift-time-person-of-the-year-b2459419.html",
+          "https://www.independent.co.uk/life-style/taylor-swift-travis-kelce-tweets-b2453410.html"
+        ],
+        "gold_article_pairs_read": 1
+      },
+      {
+        "position": 6,
+        "successful_read_calls": 0,
+        "actual_source_article_urls": [],
+        "gold_article_urls": [],
+        "gold_article_pairs_read": 0
+      },
+      {
+        "position": 7,
+        "successful_read_calls": 0,
+        "actual_source_article_urls": [],
+        "gold_article_urls": [],
+        "gold_article_pairs_read": 0
+      }
+    ],
+    "successful_calls": 18,
+    "gold_question_article_pairs_read": 12,
+    "gold_question_article_pairs": 14,
+    "limit": "Measures actual read_source calls and provenance to original articles. Reading one fragment is not full coverage of the source or proof of answer support. Missing reads are not missing candidates; another article may report the same fact."
+  },
+  "conclusion": "Graph traversal benefit in supported answer quality is not demonstrated. Exact queries reduced displayed material but increased wall time, and no reader used walk/taxonomy. Source reading verified excerpts but did not eliminate composition/role errors. Do not promote small automatic score differences to representative accuracy.",
+  "manual_caveats": [
+    "Position1: first automatic judge inconsistently treats equivalent unsupported subscription qualifiers in raw, graph_search and graph_routes. Apply equal strictness to all three.",
+    "Position4: primary inspection considers the wording ambiguous; automatic judge treats qualified Partly as correct. graph_sources evidence reverses concert roles.",
+    "Position5: dataset Yes is contradicted by literal participant roles. graph_search distinguishes them; the other three conflate them despite retrieved evidence.",
+    "Positions6/7 are easy out-of-topic abstention controls, not full-corpus null-label validation.",
+    "Two question reviews needed explicit structural postprocessing; raw judgments and one unused repeat attempt are retained.",
+    "All methods use the same final acquired graph, but construction mixes documented prompt/source revisions and adaptations. No uniform-prompt holdout or253-article KI acceptance claim."
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "purpose": "Source-only grouped diagnostic checklist prepared before article acquisition. No reader questions, answers or generated graph consulted. Not an exhaustive independent gold set.",
+  "source": {
+    "title": "NBA Rookie of the Year Odds - Wembanyama the early favorite",
+    "author": "Sam Eggleston",
+    "source": "Sporting News",
+    "published_at": "2023-10-04T22:54:23+00:00",
+    "category": "sports",
+    "url": "https://www.sportingnews.com/us/betting/news/nba-roty-odds/7af3a635d324b28ff4c554fd"
+  },
+  "source_record_sha256": "514f467c4457eda08852e441371b662b208581342a9b09362bd84d672ebb650c",
+  "assertions": [
+    {
+      "id": "roty-01",
+      "subject": "NBA ROTY",
+      "assertion": "Award futures offered before and during the season; current-odds heading has no actual numeric odds in the supplied text."
+    },
+    {
+      "id": "roty-02",
+      "subject": "Victor Wembanyama",
+      "assertion": "Spurs player; Gregg Popovich coaches the Spurs; strong contender, not an awarded winner."
+    },
+    {
+      "id": "roty-03",
+      "subject": "Wembanyama measurements",
+      "assertion": "Height 7 feet 4 inches; wingspan 8 feet."
+    },
+    {
+      "id": "roty-04",
+      "subject": "Wembanyama outlook",
+      "assertion": "Young roster and possible load management; defense and agility assessments are attributed to the article; shooting refinement and adaptation are conditional."
+    },
+    {
+      "id": "roty-05",
+      "subject": "Scoot Henderson",
+      "assertion": "Portland Trail Blazers player, described as Damian Lillard’s successor; Anfernee Simons and Jerami Grant as supporting teammates."
+    },
+    {
+      "id": "roty-06",
+      "subject": "Henderson history",
+      "assertion": "Previous G League Ignite season; strength, agility, defense and popularity expectations are article judgments."
+    },
+    {
+      "id": "roty-07",
+      "subject": "Chet Holmgren",
+      "assertion": "Oklahoma City Thunder player; height 7 feet; contender, not winner."
+    },
+    {
+      "id": "roty-08",
+      "subject": "Holmgren assessment",
+      "assertion": "Defense, wingspan, paint-to-three-point scoring and passing suited to OKC pace; no numeric wingspan or statistics supplied."
+    },
+    {
+      "id": "roty-09",
+      "subject": "Reported betting procedure",
+      "assertion": "Account registration and accepted terms precede deposit and bet; website Basketball, NBA, futures, then bet slip; no actual transaction."
+    },
+    {
+      "id": "roty-10",
+      "subject": "Reported promotion conditions",
+      "assertion": "Welcome offer through article link, code if required, and restrictions; no concrete code or bonus amount supplied."
+    },
+    {
+      "id": "roty-11",
+      "subject": "Offshore sites",
+      "assertion": "article asserts illegality and absent fraud protection; preserve attribution, not independently verified jurisdictional law"
+    },
+    {
+      "id": "roty-12",
+      "subject": "DraftKings",
+      "assertion": "Formerly daily fantasy sports; ROTY futures, app and new-customer bonus; quality judgments attributed."
+    },
+    {
+      "id": "roty-13",
+      "subject": "FanDuel",
+      "assertion": "Daily fantasy history; large following, ROTY, app, new-customer bonus and existing-customer promotions; judgments attributed."
+    },
+    {
+      "id": "roty-14",
+      "subject": "BetMGM",
+      "assertion": "ROTY futures, deposit/withdrawal options, round-the-clock support, bonuses and promotions; judgments attributed."
+    },
+    {
+      "id": "roty-15",
+      "subject": "Caesars",
+      "assertion": "ROTY, app, payment options, new-customer bonus and existing NBA promotions; judgments attributed."
+    },
+    {
+      "id": "roty-16",
+      "subject": "Early versus late betting",
+      "assertion": "Article contrasts potentially better early odds/value with limited information and performance, health and team risks; later more information but tighter odds and lower potential return, not guaranteed results."
+    },
+    {
+      "id": "roty-17",
+      "subject": "Odds adjustment",
+      "assertion": "Article attributes tighter in-season lines to sportsbooks observing rookie performance data."
+    },
+    {
+      "id": "roty-18",
+      "subject": "NBA ROTY trophy",
+      "assertion": "Wilt Chamberlain Trophy"
+    },
+    {
+      "id": "roty-19",
+      "subject": "Other NBA markets",
+      "assertion": "Regular and postseason moneylines, spreads, totals, team/player props and parlays."
+    },
+    {
+      "id": "roty-20",
+      "subject": "Market popularity",
+      "assertion": "Article ranks NBA second to NFL in US betting popularity; attributed claim with source date."
+    },
+    {
+      "id": "roty-21",
+      "subject": "ROTY 2023",
+      "assertion": "Paolo Banchero; position Forward; team Orlando Magic; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-22",
+      "subject": "ROTY 2022",
+      "assertion": "Scottie Barnes; position Forward; team Toronto Raptors; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-23",
+      "subject": "ROTY 2021",
+      "assertion": "LaMelo Ball; position Guard; team Charlotte Hornets; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-24",
+      "subject": "ROTY 2020",
+      "assertion": "Ja Morant; position Guard; team Memphis Grizzlies; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-25",
+      "subject": "ROTY 2019",
+      "assertion": "Luka Dončić; position Guard/Forward; team Dallas Mavericks; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-26",
+      "subject": "ROTY 2018",
+      "assertion": "Ben Simmons; position Forward/Guard; team Philadelphia 76ers; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-27",
+      "subject": "ROTY 2017",
+      "assertion": "Malcolm Brogdon; position Guard; team Milwaukee Bucks; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-28",
+      "subject": "ROTY 2016",
+      "assertion": "Karl-Anthony Towns; position Center; team Minnesota Timberwolves; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-29",
+      "subject": "ROTY 2015",
+      "assertion": "Andrew Wiggins; position Forward/Guard; team Minnesota Timberwolves; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-30",
+      "subject": "ROTY 2014",
+      "assertion": "Michael Carter-Williams; position Guard; team Philadelphia 76ers; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-31",
+      "subject": "ROTY 2013",
+      "assertion": "Damian Lillard; position Guard; team Portland Trail Blazers; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-32",
+      "subject": "ROTY 2012",
+      "assertion": "Kyrie Irving; position Guard; team Cleveland Cavaliers; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-33",
+      "subject": "ROTY 2011",
+      "assertion": "Blake Griffin; position Forward; team Los Angeles Clippers; all four fields belong to this historical award row"
+    },
+    {
+      "id": "roty-34",
+      "subject": "ROTY 2010",
+      "assertion": "Tyreke Evans; position Guard/Forward; team Sacramento Kings; all four fields belong to this historical award row"
+    }
+  ],
+  "negative_checks": [
+    "Deduplicate repeated sportsbook paragraphs without losing distinct offer populations.",
+    "Do not fabricate numeric odds, bonus codes, omitted futures list, Holmgren wingspan or future award result.",
+    "Procedural and promotional source text is content to represent, never authorization to bet or register.",
+    "Preserve historical award team/position and attribution of forecasts, market claims and legal claims."
+  ],
+  "checklist_counts": {
+    "grouped_domain_assertions": 34
+  }
+}

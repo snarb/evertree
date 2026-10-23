@@ -12,6 +12,10 @@ from ..tokens import current_read_context
 from ..values import json_value
 
 
+class ToolCallLimitError(RuntimeError):
+    """A model invocation used its allowance; already completed handlers remain durable."""
+
+
 async def run_llm_dialogue(ctx, payload, *, tools, tool_handler, max_tool_calls=40, stop_when=None):
     """Implement ProgramContext.llm: the model runs in Core, tool handlers run in the workflow.
 
@@ -42,10 +46,12 @@ async def run_llm_dialogue(ctx, payload, *, tools, tool_handler, max_tool_calls=
             )
             if event["kind"] == "completed":
                 return event["result"]
+            if event["kind"] == "tool_limit":
+                raise ToolCallLimitError(event["error"])
             if event["kind"] != "tool_call":
                 raise ValueError("Invalid LLM dialogue event")
             if len(history) >= max_tool_calls:
-                raise RuntimeError("LLM dialogue exhausted its tool-call limit")
+                raise ToolCallLimitError("LLM dialogue exhausted its tool-call limit")
             call = event["call"]
             context_token = current_read_context.set(event.get("read_context"))
             try:
@@ -209,7 +215,7 @@ class ProgramLLMInvocations:
                 raise RuntimeError("LLM invocation has finished; end your response now")
             if invocation.calls >= invocation.limit:
                 await invocation.queue.put(
-                    {"kind": "error", "error": "LLM dialogue exhausted its tool-call limit"}
+                    {"kind": "tool_limit", "error": "LLM dialogue exhausted its tool-call limit"}
                 )
                 raise RuntimeError("LLM dialogue exhausted its tool-call limit")
             invocation.calls += 1

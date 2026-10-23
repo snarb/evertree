@@ -67,6 +67,11 @@ async def llm_with_tools(
     )
 
 
+async def record_event(ctx: ProgramContext, operator: str, *, output: Any) -> Any:
+    """Persist code-generated Program progress through the existing durable trace boundary."""
+    return await ctx.step("trace", {"operator": operator, "arguments": {}, "output": output})
+
+
 async def next_observation(ctx: ProgramContext, *, timeout_seconds: float = 60) -> Any:
     """Wait for the next observation delivered to this exec Program run.
 

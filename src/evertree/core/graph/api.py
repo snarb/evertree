@@ -5,11 +5,30 @@ from __future__ import annotations
 from typing import Any
 
 from ..contracts import ProgramContext
+from ..tokens import current_read_context
 
 
 async def describe(ctx: ProgramContext, subject: str | int) -> Any:
     """Describe one graph subject with its properties and relations."""
     return await ctx.step("graph.describe", {"subject": subject}, journal=False)
+
+
+async def sources(
+    ctx: ProgramContext,
+    subjects: list[int] | None = None,
+    *,
+    max_items: int | None = None,
+    next_page: bool = False,
+) -> Any:
+    """List exact source references across selected graph objects' recorded history."""
+    payload = {"subjects": subjects, "max_items": max_items, "next_page": next_page}
+    if current_read_context.get() is not None:
+        payload["_read_context"] = current_read_context.get()
+    return await ctx.step(
+        "graph.sources",
+        payload,
+        journal=False,
+    )
 
 
 async def read(ctx: ProgramContext, name: str, arguments: dict) -> Any:

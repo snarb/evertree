@@ -153,6 +153,8 @@ class Provider:
                 assert summary["observations"]["count"] == 3
                 assert summary["observations"]["mean"] == pytest.approx(23 / 3)
                 answer = {"answer": "Three assessed dogs; the hypothetical dog is conditional."}
+        if any(item.name == "finish_section" for item in request.tools):
+            await tool("finish_section", complete=True, remaining="")
         for event in completed(answer):
             yield event
 

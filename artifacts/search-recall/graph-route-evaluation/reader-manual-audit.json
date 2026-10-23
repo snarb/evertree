@@ -1,0 +1,170 @@
+{
+  "purpose": "Supplementary source-based inspection of decisive answer and route traces. This is primary-agent manual review, not blinded independent evaluation; raw automatic verdicts remain unchanged.",
+  "reader_directory": "tmp/knowledge-graph-routes-v11",
+  "cases": [
+    {
+      "position": 0,
+      "original_index": 4,
+      "question": "Which online betting platform provides a welcome bonus of up to $1000 in bonus bets for new customers' first losses, runs NBA betting promotions, and is anticipated to extend the same sign-up offer to new users in Vermont, as reported by both CBSSports.com and Sporting News?",
+      "label_assessment": "supported",
+      "finding": "All four identify Caesars and combine the loss-triggered welcome offer, NBA promotions and prospective Vermont offer. Exact queries verify the shared sportsbook; the decisive facts were already present in initial search cards.",
+      "decisive_ids_or_references": [
+        "1422",
+        "1737",
+        "1207"
+      ],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/0/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/0/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/0/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/0/trace.json"
+      }
+    },
+    {
+      "position": 1,
+      "original_index": 19,
+      "question": "Does the Sporting News article suggest that streaming services do not require a subscription for viewing the Cowboys vs. 49ers game, in contrast to the Polygon article's claim about film availability on streaming platforms without a subscription?",
+      "label_assessment": "supported_with_qualification",
+      "finding": "All four answer No and distinguish paid game streams from some conditional free film options. Raw, graph_search and graph_routes additionally describe other film options as subscription services/streaming, although the supplied article lists platform names without explicitly stating those fees. Apply the same grounding standard to this extra claim in all three methods. graph_sources avoids that extra claim. The first automatic judge treats equivalent additions inconsistently across methods.",
+      "decisive_ids_or_references": [
+        "2088",
+        "2089",
+        "2090",
+        "read_source event 8089",
+        "read_source event 8545"
+      ],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/1/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/1/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/1/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/1/trace.json"
+      }
+    },
+    {
+      "position": 2,
+      "original_index": 25,
+      "question": "Was the news about Taylor Swift's relationship with Travis Kelce inconsistent with the later report from The Independent - Life and Style on December 6, 2023?",
+      "label_assessment": "supported",
+      "finding": "All four distinguish earlier rumor reporting from later confirmation, rather than interpreting rumor language as a denial. Earlier publication and later account do not establish a contradiction.",
+      "decisive_ids_or_references": [
+        "904",
+        "820",
+        "821"
+      ],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/2/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/2/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/2/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/2/trace.json"
+      }
+    },
+    {
+      "position": 3,
+      "original_index": 81,
+      "question": "Between the report from Sporting News on September 26, 2023, and the report from CBSSports.com, was there consistency in the promotional offers reported for new customers at Caesars Sportsbook?",
+      "label_assessment": "supported",
+      "finding": "All four preserve the shared up-to-$1000 first-bet-loss mechanics and the prospective status of Vermont availability. Matching reported mechanics is not proof every term was identical.",
+      "decisive_ids_or_references": [
+        "1422",
+        "1737",
+        "1743"
+      ],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/3/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/3/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/3/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/3/trace.json"
+      }
+    },
+    {
+      "position": 4,
+      "original_index": 261,
+      "question": "Does the article from 'The Independent - Life and Style' claim that Taylor Swift is secretive about her relationship with a specific individual, in contrast to the 'CBSSports.com' article which discusses her rumored romance but focuses on her attendance and performance at a specific venue?",
+      "label_assessment": "ambiguous",
+      "finding": "The question can refer to the private former couple or conflate it with the new relationship. Qualified answers explain both. Do not score a bare dataset No as a sufficient rubric. graph_sources evidence additionally reverses a concert role: it claims Swift attended Kelce’s concert; read_source event3295 explicitly says Kelce went to Swift’s concert. Its main answer is qualified, but that supporting statement is wrong.",
+      "decisive_ids_or_references": [
+        "828",
+        "823",
+        "884",
+        "904",
+        "1088",
+        "read_source event 3295"
+      ],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/4/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/4/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/4/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/4/trace.json"
+      }
+    },
+    {
+      "position": 5,
+      "original_index": 2205,
+      "question": "Does the article from 'The Independent - Life and Style' about Taylor Swift being Time’s Person of the Year claim that she is open about her relationship with the same individual that 'The Independent - Life and Style' reports Travis Kelce invited to one of his games at Arrowhead Stadium?",
+      "label_assessment": "contradicted",
+      "finding": "Dataset Yes does not fit the literal identity constraint. Swift’s partner is Kelce, while Kelce’s invitee is Swift. graph_search answers No with these roles. raw, graph_routes and graph_sources answer Yes despite displaying the same two distinct participants. These are answer-composition errors after evidence retrieval, not missing edges or candidate loss.",
+      "decisive_ids_or_references": [
+        "835",
+        "823",
+        "957",
+        "read_source events 2983 and 3459"
+      ],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/5/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/5/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/5/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/5/trace.json"
+      }
+    },
+    {
+      "position": 6,
+      "original_index": 10,
+      "question": "Considering the information from a BBC article detailing Sridevi's achievements in the Indian film industry and a Times of India report on her posthumous honors, which single character from a film portrayed by Sridevi has been recognized for its cultural impact and has also been commemorated with a special award after her passing?",
+      "label_assessment": "unassessed_null_control",
+      "finding": "All four abstain because the Sridevi material is absent from this 12-article subset. That does not establish global absence or validate the original null-query label. Read budgets still consume irrelevant cards.",
+      "decisive_ids_or_references": [],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/6/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/6/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/6/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/6/trace.json"
+      }
+    },
+    {
+      "position": 7,
+      "original_index": 13,
+      "question": "What is the first letter of the name of the company that, according to an article from The Financial Times, received the most European patents in 2021, and is also mentioned in a Bloomberg article as having faced a significant legal challenge at the European Patent Office over one of its key patents?",
+      "label_assessment": "unassessed_null_control",
+      "finding": "All four abstain on the FT/Bloomberg patent question. This is an easy out-of-topic subset control, not proof of broad corpus recall or global absence.",
+      "decisive_ids_or_references": [],
+      "readers": {
+        "raw": "tmp/knowledge-graph-routes-v11/routes/raw/7/trace.json",
+        "graph_search": "tmp/knowledge-graph-routes-v11/routes/graph_search/7/trace.json",
+        "graph_routes": "tmp/knowledge-graph-routes-v11/routes/graph_routes/7/trace.json",
+        "graph_sources": "tmp/knowledge-graph-routes-v11/routes/graph_sources/7/trace.json"
+      }
+    }
+  ],
+  "route_findings": {
+    "graph_routes_query_calls": 19,
+    "graph_routes_nonempty_query_calls": 13,
+    "graph_routes_empty_query_calls": 2,
+    "graph_routes_query_contract_errors": 4,
+    "graph_sources_query_calls": 7,
+    "graph_sources_nonempty_query_calls": 4,
+    "graph_sources_empty_query_calls": 1,
+    "graph_sources_query_contract_errors": 2,
+    "reader_walk_calls": 0,
+    "reader_explicit_taxonomy_queries": 0,
+    "successful_source_read_calls": 18,
+    "limits": "Useful exact checks exist, but most cited decisive facts already appeared in search. No observed autonomous taxonomy/walk success or clean answer rescued solely from below top-ten text retrieval is established by these pilot traces. Mechanical controlled tests are reported separately."
+  },
+  "open_issues": [
+    "Wrong roles, temporal scope and missing secondary assertions remain in acquired graph; see article audits.",
+    "Class-only participant retrieval is incomplete when instances stay under broader classes after narrower professions are introduced.",
+    "Reader query calls sometimes use a source article as a participant of a relation that has no article slot, omit relation when selecting slots, or pass a list to a scalar binding.",
+    "Correct retrieved participant IDs do not guarantee correct identity reasoning in the final answer.",
+    "Automatic semantic review can invent read indexes or contradict its own gaps; preserve raw attempts and qualify aggregate metrics.",
+    "No uniform-prompt independent validation over all253articles; graph construction is expensive and the pilot is adaptive."
+  ]
+}

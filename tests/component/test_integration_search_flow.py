@@ -54,7 +54,7 @@ async def test_found_facet_leads_to_identity_class_and_other_states_without_sear
     world = semantic_world()
     targets = seed_pump_history(world.graph)
     ctx = context(world, None, role="model")
-    found = await ctx.call("semantic_search", {"query": "Н-1 выключен"})
+    found = await ctx.call("semantic_search", {"queries": ["Н-1 выключен"]})
     assert [item["id"] for item in found.result["items"]] == [targets["off"].id]
     facet = _describe_for_model(await ctx.step("graph.describe", {"subject": targets["off"].id}))
     link = next(fact for fact in facet["relations"] if fact["relation"] == "STATE_IDENTITY")
@@ -80,16 +80,18 @@ async def test_reviewed_creation_reuses_search_and_links_missing_parent():
 
     class Neighbors(EmptyIndex):
         async def vector(self, nodes, query, kind):
-            return [nodes[0]["id"]]
+            return [{"ids": [nodes[0]["id"]]} for _ in query]
 
     world = semantic_world(index=Neighbors())
     refs, _ = recorded_experience(world, "Pump P1 is equipment used to move water.")
     ctx = context(world, None, role="exec")
     searches = []
 
-    async def search(query):
+    async def search(query, *, kinds=None, limit=10):
         searches.append(query)
-        return (await ctx.call("semantic_search", {"query": query})).result
+        return (
+            await ctx.call("semantic_search", {"queries": query, "kinds": kinds, "limit": limit})
+        ).result
 
     async def describe(subject):
         return await ctx.step("graph.describe", {"subject": subject})
@@ -119,4 +121,4 @@ async def test_reviewed_creation_reuses_search_and_links_missing_parent():
                 for fact in world.graph.facts("SUBTYPE_OF")
             )
         parent = child
-    assert searches == ["Equipment", "Pump"]
+    assert searches == [["Equipment"], ["Pump"]]

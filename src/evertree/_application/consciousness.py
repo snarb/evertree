@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 
-from evertree.core.cognition.steps import ConsciousStepResult, ConsciousStepSpec
+from evertree.core.cognition.steps import ConsciousStepResult, ConsciousStepSpec, trace_reference
 from evertree.core.cognition.tasks import TaskSpecification
 from evertree.core.contracts import task_outcome_context
 from evertree.core.evaluation.acceptance import VerificationResult
@@ -396,9 +396,15 @@ class ConsciousnessMixin:
                     ).model_dump(mode="json")
                     work["status"] = "ready"
                     continue
+            if decision.disposition == "propose_completion":
+                await self._drain_integration(state)
+            integration_status = self._integration_status(state)
             delivered = True
             if decision.user_message is not None:
-                self._results[state.id] = {"answer": decision.user_message}
+                self._results[state.id] = {
+                    "answer": decision.user_message,
+                    "integration_status": integration_status,
+                }
                 delivered = await self._deliver(state.id, decision.user_message)
             if state.terminal:
                 return
@@ -460,6 +466,16 @@ class ConsciousnessMixin:
 
     async def _stop_task(self, state, status, reason, verification=None):
         """Finalize a stopped task and record its outcome, evaluation and learning signals."""
+        integration_status = self._integration_status(state)
+        reviewed = {
+            json.dumps(ref, sort_keys=True)
+            for ref in state.step_state.get("integrated", {}).get(
+                str(state.specification.revision), []
+            )
+        }
+        for ref in self._bounded_experience(state, self._experience_refs(state)):
+            if json.dumps(ref, sort_keys=True) not in reviewed:
+                self.memory.retain(trace_reference(ref), "integration_pending:" + state.id)
         await self.runtime.cancel(state.id)
         self._pending_programs.pop(state.id, None)
         if self._semantic_service is not None:
@@ -481,7 +497,11 @@ class ConsciousnessMixin:
             "cancelled": "task_cancelled",
         }[status]
         await self._discard_workspaces(state.id)
-        await self._publish(kind, state.id, {"reason": reason})
+        await self._publish(
+            kind,
+            state.id,
+            {"reason": reason, "integration_status": integration_status},
+        )
 
     @staticmethod
     def _prompt_specification(state):

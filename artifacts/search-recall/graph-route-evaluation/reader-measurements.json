@@ -1,0 +1,1135 @@
+{
+  "purpose": "Frozen diagnostic reader measurements, not semantic correctness. Identical final graph for three graph variants; mixed acquisition revisions and adapted sources prevent holdout claims.",
+  "output_directory": "tmp/knowledge-graph-routes-v11",
+  "usage_method": "Last available cumulative usage per native provider request; cached input is included in input. Tool read tokens are estimated output size, not total model input.",
+  "timing_method": "Sum of native answer session times; index preparation excluded. One run per question/method, no uncertainty estimate.",
+  "variants": {
+    "raw": {
+      "reader_sha256": "971246a27ae0fa0b933f4c1db1bdbe20d3c84cc29b8f1db48bd9c8d1310ef995",
+      "read_tokens": 144591,
+      "six_in_topic_read_tokens": 85056,
+      "seconds": 78.21671916614287,
+      "six_in_topic_seconds": 53.76293304108549,
+      "tool_counts": {
+        "graph.search": 17,
+        "graph.describe": 2
+      },
+      "requested_search_filters": {
+        "whole_graph": 14,
+        "filtered": 3
+      },
+      "model_usage": {
+        "total_tokens": 457717,
+        "input_tokens": 452827,
+        "cached_input_tokens": 266752,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4890,
+        "reasoning_output_tokens": 2419
+      },
+      "uncached_input_tokens": 186075,
+      "cases": [
+        {
+          "position": 0,
+          "original_index": 4,
+          "read_tokens": 26777,
+          "seconds": 12.603394792065956,
+          "tool_counts": {
+            "graph.search": 2,
+            "graph.describe": 1
+          },
+          "requested_search_filters": {
+            "whole_graph": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 81683,
+            "input_tokens": 80960,
+            "cached_input_tokens": 49792,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 723,
+            "reasoning_output_tokens": 359
+          },
+          "uncached_input_tokens": 31168,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/0/trace.json",
+          "trace_sha256": "da7c25e78e95eec2215c97fd661f0910c58829ca367806c020a4ced22e10589f"
+        },
+        {
+          "position": 1,
+          "original_index": 19,
+          "read_tokens": 18120,
+          "seconds": 10.36533633293584,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.describe": 1
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 45753,
+            "input_tokens": 45079,
+            "cached_input_tokens": 22784,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 674,
+            "reasoning_output_tokens": 382
+          },
+          "uncached_input_tokens": 22295,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/1/trace.json",
+          "trace_sha256": "a063c75411eda36cd7a0c8143dce496507fb7af89e5a0d10c0b46483d45aaa2a"
+        },
+        {
+          "position": 2,
+          "original_index": 25,
+          "read_tokens": 13570,
+          "seconds": 10.11808975005988,
+          "tool_counts": {
+            "graph.search": 2
+          },
+          "requested_search_filters": {
+            "whole_graph": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 37779,
+            "input_tokens": 37076,
+            "cached_input_tokens": 17408,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 703,
+            "reasoning_output_tokens": 338
+          },
+          "uncached_input_tokens": 19668,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/2/trace.json",
+          "trace_sha256": "aa46162f564b338e0baee8cbaf53097f0e2c0ca6154ef9a27bd0fc3c06f6a2d8"
+        },
+        {
+          "position": 3,
+          "original_index": 81,
+          "read_tokens": 9848,
+          "seconds": 5.9862287499709055,
+          "tool_counts": {
+            "graph.search": 1
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 21217,
+            "input_tokens": 20836,
+            "cached_input_tokens": 5248,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 381,
+            "reasoning_output_tokens": 129
+          },
+          "uncached_input_tokens": 15588,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/3/trace.json",
+          "trace_sha256": "bd006422ee30e9ac0b89d538d7b0361a1111691344dca869684bd6015a998acd"
+        },
+        {
+          "position": 4,
+          "original_index": 261,
+          "read_tokens": 9962,
+          "seconds": 8.234138750005513,
+          "tool_counts": {
+            "graph.search": 2
+          },
+          "requested_search_filters": {
+            "whole_graph": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 33941,
+            "input_tokens": 33419,
+            "cached_input_tokens": 12160,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 522,
+            "reasoning_output_tokens": 199
+          },
+          "uncached_input_tokens": 21259,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/4/trace.json",
+          "trace_sha256": "39112d045920e3babaddfab43065478777ab28a283e7a1cc10a05b9f9c6f7d85"
+        },
+        {
+          "position": 5,
+          "original_index": 2205,
+          "read_tokens": 6779,
+          "seconds": 6.455744666047394,
+          "tool_counts": {
+            "graph.search": 1
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 18129,
+            "input_tokens": 17792,
+            "cached_input_tokens": 3968,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 337,
+            "reasoning_output_tokens": 95
+          },
+          "uncached_input_tokens": 13824,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/5/trace.json",
+          "trace_sha256": "5453f381815c875f2797fd313814aea03ab399ba699fcbe8d3172d8444ec8e28"
+        },
+        {
+          "position": 6,
+          "original_index": 10,
+          "read_tokens": 28133,
+          "seconds": 10.666629625018686,
+          "tool_counts": {
+            "graph.search": 3
+          },
+          "requested_search_filters": {
+            "whole_graph": 1,
+            "filtered": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 78936,
+            "input_tokens": 78295,
+            "cached_input_tokens": 43776,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 641,
+            "reasoning_output_tokens": 331
+          },
+          "uncached_input_tokens": 34519,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/6/trace.json",
+          "trace_sha256": "89d19386cae8d0f864eec9264398e75e075601b6eb5a2bb4775e752d7824955a"
+        },
+        {
+          "position": 7,
+          "original_index": 13,
+          "read_tokens": 31402,
+          "seconds": 13.78715650003869,
+          "tool_counts": {
+            "graph.search": 5
+          },
+          "requested_search_filters": {
+            "whole_graph": 4,
+            "filtered": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 3,
+              "name": "graph.search",
+              "error": "Result exceeds the remaining reading allowance; narrow the selection."
+            },
+            {
+              "read_index": 4,
+              "name": "graph.search",
+              "error": "Result exceeds the remaining reading allowance; narrow the selection."
+            }
+          ],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 140279,
+            "input_tokens": 139370,
+            "cached_input_tokens": 111616,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 909,
+            "reasoning_output_tokens": 586
+          },
+          "uncached_input_tokens": 27754,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/raw/7/trace.json",
+          "trace_sha256": "c38e2977a7688c6daf6d11da0ae394bde40de92f589e6f857ac173e7c210a3e1"
+        }
+      ]
+    },
+    "graph_search": {
+      "reader_sha256": "17478d8f704057b8e8e8a74086ad22b4a5fc0afc8283e6e83bde04a3aa88b7bd",
+      "read_tokens": 161850,
+      "six_in_topic_read_tokens": 106482,
+      "seconds": 94.0371477091685,
+      "six_in_topic_seconds": 65.23851604107767,
+      "tool_counts": {
+        "graph.search": 20
+      },
+      "requested_search_filters": {
+        "filtered": 17,
+        "whole_graph": 3
+      },
+      "model_usage": {
+        "total_tokens": 458544,
+        "input_tokens": 452650,
+        "cached_input_tokens": 243584,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5894,
+        "reasoning_output_tokens": 2816
+      },
+      "uncached_input_tokens": 209066,
+      "cases": [
+        {
+          "position": 0,
+          "original_index": 4,
+          "read_tokens": 22265,
+          "seconds": 9.920120167080313,
+          "tool_counts": {
+            "graph.search": 2
+          },
+          "requested_search_filters": {
+            "filtered": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 50982,
+            "input_tokens": 50434,
+            "cached_input_tokens": 17024,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 548,
+            "reasoning_output_tokens": 143
+          },
+          "uncached_input_tokens": 33410,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/0/trace.json",
+          "trace_sha256": "0e091a118e6f43ca7fba7edeb21f8b96929794a2ddab6f59eef6542f6b6e2e12"
+        },
+        {
+          "position": 1,
+          "original_index": 19,
+          "read_tokens": 24899,
+          "seconds": 11.106561749940738,
+          "tool_counts": {
+            "graph.search": 2
+          },
+          "requested_search_filters": {
+            "filtered": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 52657,
+            "input_tokens": 51982,
+            "cached_input_tokens": 21888,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 675,
+            "reasoning_output_tokens": 253
+          },
+          "uncached_input_tokens": 30094,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/1/trace.json",
+          "trace_sha256": "25617e64caa23d930c8e4414ce0af1fc407bdca2761d5689a9eec68e1d5acb63"
+        },
+        {
+          "position": 2,
+          "original_index": 25,
+          "read_tokens": 22993,
+          "seconds": 13.159165292046964,
+          "tool_counts": {
+            "graph.search": 3
+          },
+          "requested_search_filters": {
+            "filtered": 3
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 69106,
+            "input_tokens": 68215,
+            "cached_input_tokens": 38784,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 891,
+            "reasoning_output_tokens": 389
+          },
+          "uncached_input_tokens": 29431,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/2/trace.json",
+          "trace_sha256": "e6b078d124e0177633ff28a4d38ed364e90aa276acf2661d22806584ef6f5165"
+        },
+        {
+          "position": 3,
+          "original_index": 81,
+          "read_tokens": 13054,
+          "seconds": 9.396360083017498,
+          "tool_counts": {
+            "graph.search": 2
+          },
+          "requested_search_filters": {
+            "filtered": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 35878,
+            "input_tokens": 35361,
+            "cached_input_tokens": 20224,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 517,
+            "reasoning_output_tokens": 175
+          },
+          "uncached_input_tokens": 15137,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/3/trace.json",
+          "trace_sha256": "1b79a5306d22586bb80eb0053d13b7573a7cf3df56d0f65f91bd61a1cc590e6f"
+        },
+        {
+          "position": 4,
+          "original_index": 261,
+          "read_tokens": 16888,
+          "seconds": 12.064856791053899,
+          "tool_counts": {
+            "graph.search": 2
+          },
+          "requested_search_filters": {
+            "filtered": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 42655,
+            "input_tokens": 41757,
+            "cached_input_tokens": 18688,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 898,
+            "reasoning_output_tokens": 411
+          },
+          "uncached_input_tokens": 23069,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/4/trace.json",
+          "trace_sha256": "7e0f60fc0414dfe6bce5e42f19abc365a3a4e49863d014f69ce9191c6fafda3b"
+        },
+        {
+          "position": 5,
+          "original_index": 2205,
+          "read_tokens": 6383,
+          "seconds": 9.591451957938261,
+          "tool_counts": {
+            "graph.search": 1
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 17921,
+            "input_tokens": 17161,
+            "cached_input_tokens": 3840,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 760,
+            "reasoning_output_tokens": 565
+          },
+          "uncached_input_tokens": 13321,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/5/trace.json",
+          "trace_sha256": "9f888a558d786e40b3da9782ecf63d463f8b0698ac72bf72cd35a65123a7dc2c"
+        },
+        {
+          "position": 6,
+          "original_index": 10,
+          "read_tokens": 28145,
+          "seconds": 13.504392709000967,
+          "tool_counts": {
+            "graph.search": 3
+          },
+          "requested_search_filters": {
+            "filtered": 2,
+            "whole_graph": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 76214,
+            "input_tokens": 75418,
+            "cached_input_tokens": 44800,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 796,
+            "reasoning_output_tokens": 470
+          },
+          "uncached_input_tokens": 30618,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/6/trace.json",
+          "trace_sha256": "52c8c48d0e4d196860db3b59d0b13fb4a14d603c1fcd23aa47613780345e2475"
+        },
+        {
+          "position": 7,
+          "original_index": 13,
+          "read_tokens": 27223,
+          "seconds": 15.294238959089853,
+          "tool_counts": {
+            "graph.search": 5
+          },
+          "requested_search_filters": {
+            "filtered": 4,
+            "whole_graph": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 113131,
+            "input_tokens": 112322,
+            "cached_input_tokens": 78336,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 809,
+            "reasoning_output_tokens": 410
+          },
+          "uncached_input_tokens": 33986,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_search/7/trace.json",
+          "trace_sha256": "c6cca760546fa9e94ad678e0a1a84c9bbd709a226d85eeca640f41d14d286100"
+        }
+      ]
+    },
+    "graph_routes": {
+      "reader_sha256": "36d37737e70b83accc140268689fcd817f50200d5cd8091111463a1919788294",
+      "read_tokens": 126784,
+      "six_in_topic_read_tokens": 73919,
+      "seconds": 124.19929620693438,
+      "six_in_topic_seconds": 88.53406524902675,
+      "tool_counts": {
+        "graph.search": 17,
+        "graph.query": 19,
+        "graph.describe": 3
+      },
+      "requested_search_filters": {
+        "whole_graph": 6,
+        "filtered": 11
+      },
+      "model_usage": {
+        "total_tokens": 802205,
+        "input_tokens": 794992,
+        "cached_input_tokens": 589440,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7213,
+        "reasoning_output_tokens": 3489
+      },
+      "uncached_input_tokens": 205552,
+      "cases": [
+        {
+          "position": 0,
+          "original_index": 4,
+          "read_tokens": 13567,
+          "seconds": 12.01721262501087,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.query": 2
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 2,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 65857,
+            "input_tokens": 65151,
+            "cached_input_tokens": 44416,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 706,
+            "reasoning_output_tokens": 315
+          },
+          "uncached_input_tokens": 20735,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/0/trace.json",
+          "trace_sha256": "409fb63ec9325d64904575032ed956a5fdd254e9a5707d8e4d15cff210549d91"
+        },
+        {
+          "position": 1,
+          "original_index": 19,
+          "read_tokens": 22533,
+          "seconds": 16.324979790952057,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.query": 3
+          },
+          "requested_search_filters": {
+            "filtered": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 2,
+              "name": "graph.query",
+              "error": "ContractError: bindings, where and select require a relation"
+            }
+          ],
+          "nonempty_query_calls": 2,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 103418,
+            "input_tokens": 102579,
+            "cached_input_tokens": 52864,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 839,
+            "reasoning_output_tokens": 406
+          },
+          "uncached_input_tokens": 49715,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/1/trace.json",
+          "trace_sha256": "93638074b09b5b503d9b3869279f32d7771f2cc18e18b6abaec2be5e6e3fe5b3"
+        },
+        {
+          "position": 2,
+          "original_index": 25,
+          "read_tokens": 15504,
+          "seconds": 17.979215375031345,
+          "tool_counts": {
+            "graph.search": 2,
+            "graph.describe": 1,
+            "graph.query": 3
+          },
+          "requested_search_filters": {
+            "whole_graph": 1,
+            "filtered": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 4,
+              "name": "graph.query",
+              "error": "ContractError: bindings, where and select require a relation"
+            }
+          ],
+          "nonempty_query_calls": 2,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 115404,
+            "input_tokens": 114104,
+            "cached_input_tokens": 90496,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1300,
+            "reasoning_output_tokens": 751
+          },
+          "uncached_input_tokens": 23608,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/2/trace.json",
+          "trace_sha256": "37dc112137e0d6fb7bc92aeedbff95cdb3b034a29af15d4b3d6ebb1b811d5a7f"
+        },
+        {
+          "position": 3,
+          "original_index": 81,
+          "read_tokens": 5856,
+          "seconds": 13.212614624993876,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.query": 2,
+            "graph.describe": 2
+          },
+          "requested_search_filters": {
+            "filtered": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 1,
+              "name": "graph.query",
+              "error": "ContractError: article must reference an existing instance"
+            }
+          ],
+          "nonempty_query_calls": 1,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 67671,
+            "input_tokens": 66785,
+            "cached_input_tokens": 53120,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 886,
+            "reasoning_output_tokens": 403
+          },
+          "uncached_input_tokens": 13665,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/3/trace.json",
+          "trace_sha256": "e35e6ee2568a93b6b31e231f626d87b0d93b014bbb857c3713faf544a0e32ae1"
+        },
+        {
+          "position": 4,
+          "original_index": 261,
+          "read_tokens": 8650,
+          "seconds": 20.026991875027306,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.query": 7
+          },
+          "requested_search_filters": {
+            "filtered": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 5,
+              "name": "graph.query",
+              "error": "ContractError: select must name unique declared slots"
+            }
+          ],
+          "nonempty_query_calls": 4,
+          "empty_query_calls": 2,
+          "model_usage": {
+            "total_tokens": 124902,
+            "input_tokens": 123670,
+            "cached_input_tokens": 106368,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1232,
+            "reasoning_output_tokens": 498
+          },
+          "uncached_input_tokens": 17302,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/4/trace.json",
+          "trace_sha256": "04a23f9be7ceb21172d94f77aa85a6cd98ef6343967ab9c408a3a691cc0ead20"
+        },
+        {
+          "position": 5,
+          "original_index": 2205,
+          "read_tokens": 7809,
+          "seconds": 8.9730509580113,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.query": 2
+          },
+          "requested_search_filters": {
+            "filtered": 1
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 2,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 48274,
+            "input_tokens": 47748,
+            "cached_input_tokens": 37504,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 526,
+            "reasoning_output_tokens": 180
+          },
+          "uncached_input_tokens": 10244,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/5/trace.json",
+          "trace_sha256": "dd9f5df97468ebe722c40b8951aa846996ebe3db1454d7d0e1fbde43a51fd580"
+        },
+        {
+          "position": 6,
+          "original_index": 10,
+          "read_tokens": 27719,
+          "seconds": 17.841227541910484,
+          "tool_counts": {
+            "graph.search": 6
+          },
+          "requested_search_filters": {
+            "whole_graph": 2,
+            "filtered": 4
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 3,
+              "name": "graph.search",
+              "error": "Result exceeds the remaining reading allowance; narrow the selection."
+            }
+          ],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 180610,
+            "input_tokens": 179745,
+            "cached_input_tokens": 148608,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 865,
+            "reasoning_output_tokens": 457
+          },
+          "uncached_input_tokens": 31137,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/6/trace.json",
+          "trace_sha256": "5b5b6dc56a97a0f654d22d13343f2dd03f57c70ff4efc8dac43ed037eeb76ea1"
+        },
+        {
+          "position": 7,
+          "original_index": 13,
+          "read_tokens": 25146,
+          "seconds": 17.82400341599714,
+          "tool_counts": {
+            "graph.search": 4
+          },
+          "requested_search_filters": {
+            "whole_graph": 2,
+            "filtered": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 96069,
+            "input_tokens": 95210,
+            "cached_input_tokens": 56064,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 859,
+            "reasoning_output_tokens": 479
+          },
+          "uncached_input_tokens": 39146,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_routes/7/trace.json",
+          "trace_sha256": "c4c647fc645bb3e14cea3dc847eaf3bda8abee77fc722b465ac77ab3fda3b283"
+        }
+      ]
+    },
+    "graph_sources": {
+      "reader_sha256": "8e33484f53c9ff70fadeebaa807ccc99d428930b07288420726f435cfb0b84cb",
+      "read_tokens": 158574,
+      "six_in_topic_read_tokens": 101925,
+      "seconds": 150.54420270898845,
+      "six_in_topic_seconds": 113.82428458402865,
+      "tool_counts": {
+        "graph.search": 21,
+        "graph.query": 7,
+        "graph.sources": 9,
+        "read_source": 19,
+        "graph.describe": 3
+      },
+      "requested_search_filters": {
+        "filtered": 11,
+        "whole_graph": 10
+      },
+      "model_usage": {
+        "total_tokens": 1352567,
+        "input_tokens": 1343515,
+        "cached_input_tokens": 1085952,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 9052,
+        "reasoning_output_tokens": 4868
+      },
+      "uncached_input_tokens": 257563,
+      "cases": [
+        {
+          "position": 0,
+          "original_index": 4,
+          "read_tokens": 19486,
+          "seconds": 20.663407958112657,
+          "tool_counts": {
+            "graph.search": 2,
+            "graph.query": 1,
+            "graph.sources": 2,
+            "read_source": 4
+          },
+          "requested_search_filters": {
+            "filtered": 2
+          },
+          "successful_source_pages": 4,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 1,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 215887,
+            "input_tokens": 214963,
+            "cached_input_tokens": 186496,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 924,
+            "reasoning_output_tokens": 298
+          },
+          "uncached_input_tokens": 28467,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/0/trace.json",
+          "trace_sha256": "3efa25f8dd77f8b167c3b8b2e131e45b5a4ec79d9413182dc7d3d05863197570"
+        },
+        {
+          "position": 1,
+          "original_index": 19,
+          "read_tokens": 11379,
+          "seconds": 16.390639333054423,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.query": 1,
+            "graph.sources": 1,
+            "read_source": 2
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 2,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 1,
+          "model_usage": {
+            "total_tokens": 90511,
+            "input_tokens": 89243,
+            "cached_input_tokens": 69888,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1268,
+            "reasoning_output_tokens": 836
+          },
+          "uncached_input_tokens": 19355,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/1/trace.json",
+          "trace_sha256": "9f66c20a3de21c8b9f06c8809c84e9e828a3cc3dbaf1739ff651d14f06e99d47"
+        },
+        {
+          "position": 2,
+          "original_index": 25,
+          "read_tokens": 19280,
+          "seconds": 25.408499124925584,
+          "tool_counts": {
+            "graph.search": 2,
+            "graph.describe": 1,
+            "graph.query": 3,
+            "graph.sources": 1,
+            "read_source": 3
+          },
+          "requested_search_filters": {
+            "filtered": 2
+          },
+          "successful_source_pages": 3,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 2,
+              "name": "graph.query",
+              "error": "ContractError: bindings, where and select require a relation"
+            }
+          ],
+          "nonempty_query_calls": 2,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 202088,
+            "input_tokens": 200423,
+            "cached_input_tokens": 171520,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1665,
+            "reasoning_output_tokens": 953
+          },
+          "uncached_input_tokens": 28903,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/2/trace.json",
+          "trace_sha256": "6049d911a2fd6240d93e58ce2190a337517fb97bd8800fed9e9379fc75814942"
+        },
+        {
+          "position": 3,
+          "original_index": 81,
+          "read_tokens": 18691,
+          "seconds": 20.4039074589964,
+          "tool_counts": {
+            "graph.search": 2,
+            "graph.describe": 2,
+            "graph.query": 1,
+            "graph.sources": 2,
+            "read_source": 3
+          },
+          "requested_search_filters": {
+            "whole_graph": 2
+          },
+          "successful_source_pages": 3,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 3,
+              "name": "graph.query",
+              "error": "ContractError: article must reference an existing instance"
+            }
+          ],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 229466,
+            "input_tokens": 228167,
+            "cached_input_tokens": 200320,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1299,
+            "reasoning_output_tokens": 693
+          },
+          "uncached_input_tokens": 27847,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/3/trace.json",
+          "trace_sha256": "e400213baac9bece37255cc2869b818a195c8aaa2e9cf8c45549bd9806908433"
+        },
+        {
+          "position": 4,
+          "original_index": 261,
+          "read_tokens": 25109,
+          "seconds": 18.591373541974463,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.sources": 2,
+            "read_source": 5,
+            "graph.query": 1
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 4,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 6,
+              "name": "read_source",
+              "error": "ContractError: Source selection is exhausted"
+            }
+          ],
+          "nonempty_query_calls": 1,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 206821,
+            "input_tokens": 205764,
+            "cached_input_tokens": 142080,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1057,
+            "reasoning_output_tokens": 465
+          },
+          "uncached_input_tokens": 63684,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/4/trace.json",
+          "trace_sha256": "6da8ef5fc63856223e086452d3d59c5ccd376562d0f00830465e2542d02dc476"
+        },
+        {
+          "position": 5,
+          "original_index": 2205,
+          "read_tokens": 7980,
+          "seconds": 12.36645716696512,
+          "tool_counts": {
+            "graph.search": 1,
+            "graph.sources": 1,
+            "read_source": 2
+          },
+          "requested_search_filters": {
+            "whole_graph": 1
+          },
+          "successful_source_pages": 2,
+          "evaluation_errors": [],
+          "tool_errors": [],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 63575,
+            "input_tokens": 62927,
+            "cached_input_tokens": 47232,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 648,
+            "reasoning_output_tokens": 286
+          },
+          "uncached_input_tokens": 15695,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/5/trace.json",
+          "trace_sha256": "c0056be48a085e4f29c75c38121ccf8b38f7faebc70dea73576db674dcdc7c8f"
+        },
+        {
+          "position": 6,
+          "original_index": 10,
+          "read_tokens": 31827,
+          "seconds": 15.560186707996763,
+          "tool_counts": {
+            "graph.search": 5
+          },
+          "requested_search_filters": {
+            "whole_graph": 3,
+            "filtered": 2
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 3,
+              "name": "graph.search",
+              "error": "Result exceeds the remaining reading allowance; narrow the selection."
+            }
+          ],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 163047,
+            "input_tokens": 162103,
+            "cached_input_tokens": 122368,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 944,
+            "reasoning_output_tokens": 565
+          },
+          "uncached_input_tokens": 39735,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/6/trace.json",
+          "trace_sha256": "79e7c38fe1968f76b9770d4d9456f26ac869bb02c4421069db552b7a05b7867b"
+        },
+        {
+          "position": 7,
+          "original_index": 13,
+          "read_tokens": 24822,
+          "seconds": 21.15973141696304,
+          "tool_counts": {
+            "graph.search": 7
+          },
+          "requested_search_filters": {
+            "whole_graph": 2,
+            "filtered": 5
+          },
+          "successful_source_pages": 0,
+          "evaluation_errors": [],
+          "tool_errors": [
+            {
+              "read_index": 5,
+              "name": "graph.search",
+              "error": "Only 2 query entries remain; submit a smaller batch."
+            }
+          ],
+          "nonempty_query_calls": 0,
+          "empty_query_calls": 0,
+          "model_usage": {
+            "total_tokens": 181172,
+            "input_tokens": 179925,
+            "cached_input_tokens": 146048,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1247,
+            "reasoning_output_tokens": 772
+          },
+          "uncached_input_tokens": 33877,
+          "trace": "tmp/knowledge-graph-routes-v11/routes/graph_sources/7/trace.json",
+          "trace_sha256": "6b1c563d08d98492ebbbbfe9820d9df882a182f6c0c3617951d784ad625bc14a"
+        }
+      ]
+    }
+  },
+  "same_graph_routes_vs_search": {
+    "read_tokens": -0.2166573988260735,
+    "seconds": 0.32074716463167574,
+    "six_in_topic_read_tokens": -0.3058075543284311,
+    "six_in_topic_seconds": 0.3570827575734701,
+    "uncached_input_tokens": -0.016808089311509233
+  },
+  "same_graph_sources_vs_search": {
+    "read_tokens": -0.020240963855421734,
+    "seconds": 0.6009014137113242,
+    "six_in_topic_read_tokens": -0.042795965515298406,
+    "six_in_topic_seconds": 0.7447405534540172,
+    "uncached_input_tokens": 0.23196980857719574
+  },
+  "route_limit": "No reader used graph.walk or an explicit SUBTYPE_OF/IDENTITY_TYPE taxonomy query. Query calls include errors and empty selections; availability and graph connectivity are not independent retrieval benefit."
+}

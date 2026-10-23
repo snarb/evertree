@@ -158,10 +158,45 @@ also cover a completed search child returned by DBOS before a new creation, usin
 retained Core confirmation. Program-returned completion cannot authorize creation; a later
 incomplete search revokes earlier confirmation. RPC timeout tests cover root and child
 Programs, repeated cancellation, and draining both successful and failed Core replies. Query/walk pagination still rejects
-continuation after a write. Redis tests verify on-demand replacement and cache reconstruction;
+continuation after a write. Batch search tests cover separate query completeness and creation reviews, exact/indexed unions, batched embeddings, deterministic ranking and Jev failure fallback. Jev protocol tests validate Noul IDs/probabilities and the two-request concurrency ceiling; they do not establish model recall.
+Redis tests verify on-demand replacement and cache reconstruction;
 no graph commit starts index I/O.
 
-`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, the 20-result search ceiling and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_program_agents` checks the shared native-tool bridge's role restrictions, schema validation and call limits. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including tool repair, child calls, replay and an IPC concurrency barrier.
+`test_search_filters` checks the optional `kinds` array shared by a search batch: validated,
+normalized kinds form an OR filter, applied before each channel's candidate quota. Omission
+searches every kind; an empty array, scalar string or unknown kind is an error. Exact matches
+respect the same filter. Filtered searches cannot authorize identity creation or replace a
+broad search's confirmation; incomplete broad repeats revoke that confirmation. Tests cover
+this isolation after restoring memory and through KnowledgeIntegration's automatic broad
+creation review. Search `limit` is checked through the actual wrappers. The execution-order
+suite admits only the paired BM25/vector reads for the same normalized queries and kinds;
+the Redis and DBOS suites check filter placement and replay at their real boundaries.
+
+`test_graph_sources` covers graph-history bindings to exact retained source references,
+fragment and context addresses, missing-source statuses, token-bounded continuation and
+read-only behavior. Its integration counterpart checks the source APIs through worker IPC
+and DBOS replay. `test_source_fragments` checks that prepared text ranges and structured
+selections have resolvable exact references, retain parent context, survive replay without
+duplicate events, and cannot authorize another task or integration operation.
+`test_graph_source_routes` constructs a graph with enough ranked distractors
+to exclude the relevant facts from search's top ten. It then follows an exact anchor through
+two different predicates, and a taxonomy subtree through instances and qualified facts,
+to the retained source text. Wrong roles and conditions must not match. These controlled
+routes demonstrate that graph navigation can bypass ranked truncation; they do not measure
+a model's ability to acquire or discover those routes. `test_graph_route_evaluation` checks
+the evaluation bookkeeping and separates source access from graph-fact coverage.
+
+`test_multi_hop_search` separates adaptive retrieval from a single batch of independent
+queries. Its component tests exercise real Core reads, discovered identifiers, evidence
+references and budgets across successive hops; scripted choices do not establish model
+judgment. The opt-in live test starts with one named anchor and requires the native model
+to discover two opaque intermediate identifiers through actual tool results before answering.
+It retains the dialogue and reads in `multi-hop.json`. Corpus evaluation in
+`artifacts/search-recall/adaptive.py` separately records first-search, cumulative retrieval
+and cited-source coverage. Gold sources never enter the model dialogue or stopping rule;
+source coverage alone does not establish answer accuracy.
+
+`test_semantic_interface` covers normalized exact lookup, ambiguity, atomic names, parallel index retrieval, ranked merging, the ten-per-query search ceiling and deduplicated batch union and temporal property discovery. `test_provider` covers real schema registration at the SDK continuation boundary, idempotent loading, reset on the next invocation and model-mode permission checks using a fake transport. `test_program_agents` checks the shared native-tool bridge's role restrictions, schema validation and call limits. `test_semantic_programs` runs the actual semantic Programs in a DBOS worker, including tool repair, child calls, replay and an IPC concurrency barrier.
 
 Program tool tests should call the declared `tool_handler` through the provider interface.
 Recovery checks must verify that durable tool exchanges replay callback computations and
@@ -172,6 +207,8 @@ in isolated evaluation. Normal model completion with no writes is valid. Each su
 operation must already be visible with permanent IDs and source-backed history; a later
 failed call must leave those writes intact.
 
+Corpus-level evaluation must compare local gold lists to the pinned original before interpreting retrieval recall. `test_corpus_integrity` reproduces category filtering that drops gold evidence while leaving the question intact, and checks unchanged source metadata, fingerprints and source joins. `test_integrated_corpus_evaluation` checks serialized acquisition provenance and separates domain assertions from automatic hierarchy/identity links. The opt-in runner and complete audit are in [the corpus audit report](../artifacts/search-recall/CORPUS-AUDIT.md); its paid model stages must receive explicit authorization for their actual article/label payloads.
+
 A separate Redis integration test uses a real Redis 8.4+ Search server and deterministic embeddings (no model charges):
 
 ```sh
@@ -180,13 +217,27 @@ EVERTREE_TEST_REDIS_URL=redis://127.0.0.1:6379 uv run pytest tests/integration/t
 
 It uses private random index namespaces and deletes those test indexes afterward. SDK/Luna tool-set continuation and actual OpenAI embeddings each have opt-in live smoke tests in `tests/live`; embeddings additionally require `EVERTREE_EMBEDDINGS_INTEGRATION=1` and `OPENAI_API_KEY`.
 
-The Redis suite separately tests names and descriptions for concepts, prototypes, Instances, Facets, relation types and facts; KNN uses known vectors to verify ranking and `kind` independently of embedding quality. Exact-name tests assert zero model/index calls.
+The Redis suite separately tests names and descriptions for concepts, prototypes, Instances, Facets, relation types and facts; KNN uses known vectors to verify ranking and the `kinds` union independently of embedding quality. A distractor case proves that both channels filter before their candidate quotas. Exact-name tests assert zero model/index calls.
 
 The separate opt-in `tests/live/test_embeddings.py` checks real OpenAI embeddings with `OPENAI_API_KEY`. Live tests may incur usage charges.
 
 ## Conscious steps and integration policy
 
 Step-contract and coordinator tests distinguish intermediate analytical Notes from user messages, enforce finite local budgets and retain working state between iterations. Integration failures must not block continuation or final delivery, and failed packets must not retry at every boundary. Semantic component tests exercise shared direct writes (including Claims without automatic belief assignment), updates and deletes, per-operation history and sources, idempotent recovery, source-specific retention and the checked write gateway. Model-mode calls remain read-only even when tools are loaded. These tests supply native tool calls to check mechanical contracts; they do not prove autonomous semantic judgment.
+
+`test_source_sections` checks lossless text/list/dictionary partitioning, original source
+locations, nearby identity and table-header context, and adaptive subdivision at actual
+source boundaries. KnowledgeIntegration component tests check sequential sections, fresh
+creation review for each model invocation, distinct durable write keys, and explicit failed
+or pending units when a tool allowance or provider error prevents completion. Recovery tests
+must keep completed sections separate from remaining work, retain unfinished source material
+when a task stops, and exclude integration's own technical events from the final drain.
+The `processed` status records execution coverage; it does not certify that the model retained
+every assertion. Real worker/restart tests in `test_conscious_recovery` cover the durable
+boundary separately from the component coordinator checks. `test_integration_retention`
+checks event-level protection when separately addressed sibling sources share one event,
+stable progress identity across resumed and ordinary calls, and original source indexes when
+one input produces several prepared fragments while another input remains pending.
 
 `tests/live/test_knowledge_integration.py` evaluates the actual installed KnowledgeIntegration Program with a real Codex model and real in-process semantic stores. Source-backed cases in `knowledge_integration_cases.json` cover a conditional hypothesis whose uncertainty must survive preservation, a routine series that must not explode into per-reading states, and an intermediate experiment plan that must not become a fabricated final result. A fourth case uses the production consciousness instructions and result schema to check that one experiment-planning step returns a bounded continuation rather than pretending to finish the investigation. Hard assertions check actual write results, retained source access, bounded graph growth and absence of unsupported belief targets. The semantic rubric checks whether important meaning expressed in the source text was usefully retained; no structured preservation flag imposes a runtime obligation. Separate model invocations evaluate meaning and step granularity against explicit criteria, with no generator session history; these are fallible semantic evaluations, not deterministic proofs.
 

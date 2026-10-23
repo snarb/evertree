@@ -68,12 +68,13 @@ async def test_only_current_program_can_read_or_start_a_sibling(tmp_path):
 
 
 async def test_parallel_index_reads_exclude_writes_until_both_finish(tmp_path):
-    started, release = asyncio.Event(), asyncio.Event()
+    entered, started, release = asyncio.Event(), asyncio.Event(), asyncio.Event()
     calls = []
     spec = ProgramSpec(1, "search.py", "0" * 40, role="model")
 
     async def gateway(method, payload):
         calls.append(method)
+        entered.set()
         if len(calls) == 2:
             started.set()
         await release.wait()
@@ -92,15 +93,17 @@ async def test_parallel_index_reads_exclude_writes_until_both_finish(tmp_path):
         "requests": {},
     }
 
-    async def dispatch(method):
+    async def dispatch(method, kinds=None):
         return await runtime._dispatch(
-            {"run_id": "search", "method": method, "payload": {"query": "pump", "kind": None}}
+            {"run_id": "search", "method": method, "payload": {"queries": ["pump"], "kinds": kinds}}
         )
 
-    pending = [
-        asyncio.create_task(dispatch(method)) for method in ("semantic.bm25", "semantic.vector")
-    ]
+    pending = [asyncio.create_task(dispatch("semantic.bm25", ["claim", "note"]))]
     try:
+        await asyncio.wait_for(entered.wait(), 1)
+        with pytest.raises(RuntimeBusy, match="paired search"):
+            await dispatch("semantic.vector", ["concept"])
+        pending.append(asyncio.create_task(dispatch("semantic.vector", ["NOTE", "claim", "note"])))
         await asyncio.wait_for(started.wait(), 1)
         with pytest.raises(RuntimeBusy, match="paired search"):
             await dispatch("semantic.write")

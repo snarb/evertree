@@ -1,0 +1,344 @@
+{
+  "purpose": "Source-only diagnostic audit after explicit interrupted-state continuation, not uniform-prompt acquisition or answer benefit.",
+  "snapshot": "tmp/knowledge-graph-routes-v9/acquisition/7-continued/snapshot.json",
+  "snapshot_sha256": "085715cd5736c581f554d664be0e8c93a3b154741efdd9fbcfb7e56c85c1e85c",
+  "checklist_sha256": "ba9dd4932d99ba0d0a2457fc81a5b5012d96d2ceac0a3df68cfe0de0cbeeb233",
+  "counts": {
+    "grouped_assertions": 34,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 33,
+      "missing": 1
+    },
+    "historical_award_rows_matching_all_four_columns": 14,
+    "new_schemas_with_all_role_descriptions": 18,
+    "new_schemas": 18,
+    "continuation_invocations": 9,
+    "continuation_canonical_name_errors": 5
+  },
+  "continuation_seconds": 525.3157655420364,
+  "preserved_interrupted_history": true,
+  "original_source_event_reused": 4106,
+  "positive_checks": [
+    "All fourteen award rows preserve year, player, team and position together.",
+    "Damian Lillard ID1133 is shared by Henderson successor fact1143 and 2013 award fact1265.",
+    "Reported heights/wingspan have numeric values with correct metre conversions.",
+    "No numeric odds are fabricated for the empty odds heading.",
+    "Promotion populations and procedural source text remain attributed rather than actual user transactions."
+  ],
+  "remaining_limits": [
+    "Wilt Chamberlain Trophy association omitted.",
+    "Overlapping offshore warnings remain.",
+    "Five canonical-name errors occurred despite the tool documentation; they were recoverable.",
+    "A successful completion protocol and explicit role descriptions do not establish general extraction reliability."
+  ],
+  "assertions": [
+    {
+      "assertion_id": "roty-01",
+      "supporting_object_ids": [
+        1122
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-02",
+      "supporting_object_ids": [
+        1123,
+        1124
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-03",
+      "supporting_object_ids": [
+        1148,
+        1149
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-04",
+      "supporting_object_ids": [
+        1146
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-05",
+      "supporting_object_ids": [
+        1143,
+        1154
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-06",
+      "supporting_object_ids": [
+        1145,
+        1155
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-07",
+      "supporting_object_ids": [
+        1157,
+        1159
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-08",
+      "supporting_object_ids": [
+        1158
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-09",
+      "supporting_object_ids": [
+        1160,
+        1162
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-10",
+      "supporting_object_ids": [
+        1160
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-11",
+      "supporting_object_ids": [
+        1171,
+        1174
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "The old scalar warning1171 and new category-linked warning1174 overlap; the latter also preserves advertising reach."
+      ]
+    },
+    {
+      "assertion_id": "roty-12",
+      "supporting_object_ids": [
+        1169,
+        1170
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-13",
+      "supporting_object_ids": [
+        1183,
+        1184,
+        1185,
+        1186,
+        1187,
+        1188
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-14",
+      "supporting_object_ids": [
+        1198,
+        1199,
+        1201,
+        1202,
+        1205
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-15",
+      "supporting_object_ids": [
+        1200,
+        1203,
+        1204,
+        1206,
+        1207
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-16",
+      "supporting_object_ids": [
+        1210,
+        1212,
+        1214,
+        1215
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "General timing/return claims are retained as attributed article claims, not verified financial predictions."
+      ]
+    },
+    {
+      "assertion_id": "roty-17",
+      "supporting_object_ids": [
+        1211,
+        1212
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-18",
+      "supporting_object_ids": [],
+      "meaning_status": "missing",
+      "representation_gaps": [
+        "Wilt Chamberlain Trophy association is absent."
+      ]
+    },
+    {
+      "assertion_id": "roty-19",
+      "supporting_object_ids": [
+        1296
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-20",
+      "supporting_object_ids": [
+        1295
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-21",
+      "supporting_object_ids": [
+        1223
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-22",
+      "supporting_object_ids": [
+        1228
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-23",
+      "supporting_object_ids": [
+        1233
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-24",
+      "supporting_object_ids": [
+        1238
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-25",
+      "supporting_object_ids": [
+        1243
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-26",
+      "supporting_object_ids": [
+        1248
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-27",
+      "supporting_object_ids": [
+        1253
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-28",
+      "supporting_object_ids": [
+        1258
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-29",
+      "supporting_object_ids": [
+        1261
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-30",
+      "supporting_object_ids": [
+        1264
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-31",
+      "supporting_object_ids": [
+        1265
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-32",
+      "supporting_object_ids": [
+        1270
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-33",
+      "supporting_object_ids": [
+        1275
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "roty-34",
+      "supporting_object_ids": [
+        1280
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    }
+  ],
+  "controlled_route": {
+    "path": "tmp/knowledge-graph-routes-v9/acquisition/7-continued/deterministic-route-check.json",
+    "status": "passed",
+    "tool_calls": 5,
+    "tool_tokens": 1571,
+    "qualification": "Deterministic route through actual model-created facts; not autonomous reader success or measured comparative benefit."
+  }
+}

@@ -1,0 +1,318 @@
+{
+  "purpose": "Source-only diagnostic checklist before this article acquisition; temporal claims and reported counts kept separately, no answer labels consulted.",
+  "source": {
+    "title": "Taylor Swift-Travis Kelce timeline: Everything to know about rumored romance between pop star, Chiefs TE",
+    "author": "Shanna McCarriston",
+    "source": "CBSSports.com",
+    "published_at": "2023-10-12T23:21:52+00:00",
+    "category": "sports",
+    "url": "https://www.cbssports.com/nfl/news/taylor-swift-travis-kelce-timeline-everything-to-know-about-rumored-romance-between-pop-star-chiefs-te/"
+  },
+  "source_record_sha256": "2c22b72a76e726448fcb177ce8200af8f557f40f07227f31125df305a506852f",
+  "assertions": [
+    {
+      "id": "timeline-01",
+      "subject": "report overview",
+      "assertion": "Swift reportedly attended five Chiefs games this season including Chargers game; keep reported count even if timeline enumerates fewer distinct games"
+    },
+    {
+      "id": "timeline-02",
+      "subject": "Travis Kelce",
+      "assertion": "Chiefs tight end; jersey 87; Donna Kelce his mother; Jason his brother and Philadelphia Eagles center"
+    },
+    {
+      "id": "timeline-03",
+      "subject": "Swift first attended game",
+      "assertion": "sat with Donna and cheered Kelce touchdown; source describes earlier appearance as last month"
+    },
+    {
+      "id": "timeline-04",
+      "subject": "Chiefs Week 6",
+      "assertion": "defeated Denver Broncos on Thursday Night Football; Swift attended"
+    },
+    {
+      "id": "timeline-05",
+      "subject": "October 22 current game",
+      "assertion": "Chiefs versus Los Angeles Chargers, another AFC West opponent, at Arrowhead"
+    },
+    {
+      "id": "timeline-06",
+      "subject": "June 29",
+      "assertion": "Kelce made friendship bracelets for newcomers at NFL tight-end camp, citing Swift inspiration; camp name not supplied"
+    },
+    {
+      "id": "timeline-07",
+      "subject": "July 26 podcast",
+      "assertion": "Kelce said he attended a Swift concert but could not meet her"
+    },
+    {
+      "id": "timeline-08",
+      "subject": "July 26 Swift description",
+      "assertion": "12-time Grammy winner; Kelce attributed lack of meetings to saving her voice for 44 songs, alternatively joked she did not want to meet him"
+    },
+    {
+      "id": "timeline-09",
+      "subject": "New Heights",
+      "assertion": "podcast Kelce does with Jason; July 26 account of concert and bracelet"
+    },
+    {
+      "id": "timeline-10",
+      "subject": "July 26 bracelet",
+      "assertion": "Kelce made one with his number for Swift; exchange implies phone versus jersey number but retain the reported dialogue qualification"
+    },
+    {
+      "id": "timeline-11",
+      "subject": "Swift concert tradition",
+      "assertion": "fans exchange friendship bracelets; Kelce said he had received several"
+    },
+    {
+      "id": "timeline-12",
+      "subject": "August 5",
+      "assertion": "Kelce was asked celebrity crush and an answer was given before he could answer; supplied text omits actual answer, do not invent it"
+    },
+    {
+      "id": "timeline-13",
+      "subject": "September 14",
+      "assertion": "Jason neither confirmed nor denied reports of Travis and Swift spending time together"
+    },
+    {
+      "id": "timeline-14",
+      "subject": "September 17",
+      "assertion": "Kelce caught touchdown pass from Patrick Mahomes; CBS Sports commentator Ian Eagle made a Swift-song reference"
+    },
+    {
+      "id": "timeline-15",
+      "subject": "September 21 Pat McAfee show",
+      "assertion": "Kelce discussed dating rumors and the attention they received, including Jason’s comments"
+    },
+    {
+      "id": "timeline-16",
+      "subject": "September 21 invitation",
+      "assertion": "Kelce said he invited Swift to a Chiefs game at Arrowhead and compared their shows there; invitation, not attendance yet"
+    },
+    {
+      "id": "timeline-17",
+      "subject": "Arrowhead Stadium",
+      "assertion": "Chiefs home; venue where Swift performed and Kelce played"
+    },
+    {
+      "id": "timeline-18",
+      "subject": "September 22",
+      "assertion": "Kelce wore bracelet bearing title Vigilante Sh-- at his nonprofit charity event; no event organization name supplied"
+    },
+    {
+      "id": "timeline-19",
+      "subject": "September 24 game",
+      "assertion": "Swift attended Chiefs Week 3 game against Chicago Bears"
+    },
+    {
+      "id": "timeline-20",
+      "subject": "September 24 touchdown",
+      "assertion": "Kelce caught three-yard touchdown that made score 41-0"
+    },
+    {
+      "id": "timeline-21",
+      "subject": "September 24 result",
+      "assertion": "Chiefs beat Bears 41-10 and improved to 2-1"
+    },
+    {
+      "id": "timeline-22",
+      "subject": "September 24 Donna",
+      "assertion": "Swift sat with Donna in box; they talked and laughed"
+    },
+    {
+      "id": "timeline-23",
+      "subject": "September 24 postgame Mahomes",
+      "assertion": "said Kelce had mentioned expected Swift attendance on Friday; did not know how certain it was"
+    },
+    {
+      "id": "timeline-24",
+      "subject": "Andy Reid",
+      "assertion": "Chiefs head coach; joked he set them up, not independently established matchmaking"
+    },
+    {
+      "id": "timeline-25",
+      "subject": "September 24 stadium departure",
+      "assertion": "Swift and Kelce photographed walking out together; reported first photograph of pair together"
+    },
+    {
+      "id": "timeline-26",
+      "subject": "September 24 outfits",
+      "assertion": "Kelce outfit had 1989 in title; Swift wore Chiefs zip-up; no causal or album relationship implied by matching title alone"
+    },
+    {
+      "id": "timeline-27",
+      "subject": "September 24 convertible",
+      "assertion": "Kelce drove convertible with Swift after win; body contains duplicate Swift wording, do not create another Swift entity"
+    },
+    {
+      "id": "timeline-28",
+      "subject": "September 24 private party",
+      "assertion": "Kelce reportedly rented restaurant for party with Swift and teammates; restaurant not named"
+    },
+    {
+      "id": "timeline-29",
+      "subject": "Entertainment Tonight unnamed source",
+      "assertion": "said Swift liked Kelce’s pursuit and pair enjoyed getting acquainted; attributed anonymous report"
+    },
+    {
+      "id": "timeline-30",
+      "subject": "Entertainment Tonight unnamed source",
+      "assertion": "described Swift wanting career-focused, independent, supportive partner and said Kelce matched; opinion, not direct Swift quote"
+    },
+    {
+      "id": "timeline-31",
+      "subject": "September 25 Front Office Sports",
+      "assertion": "reported 400-percent increase in Kelce jersey sales after Swift attended"
+    },
+    {
+      "id": "timeline-32",
+      "subject": "September 25 podcast ranking",
+      "assertion": "Kelce podcast No. 1 overall on Apple as reported; temporal rank, not permanent"
+    },
+    {
+      "id": "timeline-33",
+      "subject": "September 25 follower gain",
+      "assertion": "over 380000 Instagram followers gained by Kelce"
+    },
+    {
+      "id": "timeline-34",
+      "subject": "September 25 audience report",
+      "assertion": "24.3 million watched game; No. 1 game of prior week, according to Front Office Sports"
+    },
+    {
+      "id": "timeline-35",
+      "subject": "September 25 searches",
+      "assertion": "Chiefs web searches tripled"
+    },
+    {
+      "id": "timeline-36",
+      "subject": "September 25 ticket sales",
+      "assertion": "Chiefs ticket sales on StubHub tripled; keep platform and metric distinct"
+    },
+    {
+      "id": "timeline-37",
+      "subject": "September 25 Belichick",
+      "assertion": "New England Patriots head coach compared relationship to Kelce’s largest catch; metaphor, not sports statistic"
+    },
+    {
+      "id": "timeline-38",
+      "subject": "September 26 Jets ticket report",
+      "assertion": "StubHub representative told Town & Country that post-appearance single-day tickets for Jets-Chiefs more than doubled a since-season-start comparison; baseline wording imprecise"
+    },
+    {
+      "id": "timeline-39",
+      "subject": "September 27 Mahomes",
+      "assertion": "confirmed meeting Swift at afterparty although had not met her when asked at postgame conference; chronology, not contradiction"
+    },
+    {
+      "id": "timeline-40",
+      "subject": "September 27 Mahomes assessment",
+      "assertion": "called Swift cool/good people and intended to respect couple’s privacy; reported via KSHB 41 Kansas City"
+    },
+    {
+      "id": "timeline-41",
+      "subject": "September 27 Travis podcast",
+      "assertion": "described Swift’s chest bumps, interactions with Donna and Chiefs fans as memorable and amusing"
+    },
+    {
+      "id": "timeline-42",
+      "subject": "September 27 Travis privacy",
+      "assertion": "said he would limit further discussion to respect both lives; acknowledged creating attention himself"
+    },
+    {
+      "id": "timeline-43",
+      "subject": "September 27 Jerry Jones",
+      "assertion": "commented on large attention impact on 105.3FM The Fan in Dallas; do not infer an unnamed employer from background knowledge"
+    },
+    {
+      "id": "timeline-44",
+      "subject": "October 1",
+      "assertion": "Swift attended second consecutive Chiefs game, against Jets in New Jersey"
+    },
+    {
+      "id": "timeline-45",
+      "subject": "October 1 companions",
+      "assertion": "Blake Lively, Ryan Reynolds and Hugh Jackman attended with Swift"
+    },
+    {
+      "id": "timeline-46",
+      "subject": "October 1 result",
+      "assertion": "Chiefs defeated Jets 23-20"
+    },
+    {
+      "id": "timeline-47",
+      "subject": "October 5 NFL bios",
+      "assertion": "NFL changed X and Instagram bios to Swift-related wording; Instagram celebrated Chiefs 2-0 as Swifties"
+    },
+    {
+      "id": "timeline-48",
+      "subject": "X",
+      "assertion": "formerly Twitter"
+    },
+    {
+      "id": "timeline-49",
+      "subject": "October 5 NFL statement",
+      "assertion": "said it frequently changes bios/imagery around games and culture and embraced intersection of sports and entertainment"
+    },
+    {
+      "id": "timeline-50",
+      "subject": "October 5 reactions",
+      "assertion": "some objected to Swift-focused changes; NFL reported positive attention, not universal approval"
+    },
+    {
+      "id": "timeline-51",
+      "subject": "October 6 Travis",
+      "assertion": "said celebrity attendance adds atmosphere but NFL coverage of Swift was excessive"
+    },
+    {
+      "id": "timeline-52",
+      "subject": "October 6 Jason",
+      "assertion": "said NFL less used to celebrity spectators than basketball; suggested brief coverage then returning to game"
+    },
+    {
+      "id": "timeline-53",
+      "subject": "October 12",
+      "assertion": "Swift attended Chiefs-Broncos divisional Thursday Night Football at Arrowhead, one day after her movie premiere"
+    },
+    {
+      "id": "timeline-54",
+      "subject": "October 12 Al Michaels",
+      "assertion": "said coverage of Swift would be minimal; prediction/report of intent, not final airtime measurement"
+    },
+    {
+      "id": "timeline-55",
+      "subject": "October 15 SNL",
+      "assertion": "source dates surprise cameos to October 15 after pair were seen in New York; preserve reported date rather than external correction"
+    },
+    {
+      "id": "timeline-56",
+      "subject": "Travis SNL cameo",
+      "assertion": "appeared in skit about extensive Swift NFL coverage"
+    },
+    {
+      "id": "timeline-57",
+      "subject": "Swift SNL cameo",
+      "assertion": "introduced musical guest Ice Spice"
+    },
+    {
+      "id": "timeline-58",
+      "subject": "October 22 networks",
+      "assertion": "article reports Swift-attended games across CBS,NBC,Fox,ESPN,Amazon; current Chargers game on CBS"
+    },
+    {
+      "id": "timeline-59",
+      "subject": "October 22 seat",
+      "assertion": "Swift wore Chiefs sweatshirt and sat beside Brittany, Patrick Mahomes’ wife"
+    }
+  ],
+  "negative_checks": [
+    "Lyrics are editorial decoration; do not turn them into events or reproduce them in the checklist.",
+    "Do not invent omitted August 5 answer, restaurant/camp name, missing fifth game, or unnamed-source identity.",
+    "Distinguish reported first meeting times, speculation, invitation, attendance and anonymous commentary.",
+    "Keep separate stock/date-free game metrics, follower gains, jersey sales, ticket platform and comparisons; broader NFL-sales claim in another source is not the same population as Kelce jersey sales."
+  ],
+  "checklist_counts": {
+    "grouped_domain_assertions": 59
+  }
+}

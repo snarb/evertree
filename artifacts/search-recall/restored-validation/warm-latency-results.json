@@ -1,0 +1,206 @@
+[
+  {
+    "jev": false,
+    "batch": false,
+    "repeat": 0,
+    "seconds": 1.4348972500301898,
+    "calls": [
+      {
+        "queries": 1,
+        "seconds": 0.3417243749718182,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 0.327640249975957,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 0.35362695797812194,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 0.4118996250326745,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      }
+    ]
+  },
+  {
+    "jev": false,
+    "batch": true,
+    "repeat": 0,
+    "seconds": 0.48255762504413724,
+    "calls": [
+      {
+        "queries": 4,
+        "seconds": 0.48255604202859104,
+        "status": "complete",
+        "warnings": [],
+        "returned": 40
+      }
+    ]
+  },
+  {
+    "jev": false,
+    "batch": true,
+    "repeat": 1,
+    "seconds": 0.49674633296672255,
+    "calls": [
+      {
+        "queries": 4,
+        "seconds": 0.4967452499549836,
+        "status": "complete",
+        "warnings": [],
+        "returned": 40
+      }
+    ]
+  },
+  {
+    "jev": false,
+    "batch": false,
+    "repeat": 1,
+    "seconds": 1.416929374972824,
+    "calls": [
+      {
+        "queries": 1,
+        "seconds": 0.37486204196466133,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 0.3362375420401804,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 0.37639779096934944,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 0.3294287080061622,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      }
+    ]
+  },
+  {
+    "jev": true,
+    "batch": false,
+    "repeat": 0,
+    "seconds": 15.576697832962964,
+    "calls": [
+      {
+        "queries": 1,
+        "seconds": 3.8698346670134924,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 3.9666533329873346,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 4.0420136250322685,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 3.6981816249899566,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      }
+    ]
+  },
+  {
+    "jev": true,
+    "batch": true,
+    "repeat": 0,
+    "seconds": 7.841304083995055,
+    "calls": [
+      {
+        "queries": 4,
+        "seconds": 7.841301792010199,
+        "status": "complete",
+        "warnings": [],
+        "returned": 40
+      }
+    ]
+  },
+  {
+    "jev": true,
+    "batch": true,
+    "repeat": 1,
+    "seconds": 8.375078874989413,
+    "calls": [
+      {
+        "queries": 4,
+        "seconds": 8.375073792005423,
+        "status": "complete",
+        "warnings": [],
+        "returned": 40
+      }
+    ]
+  },
+  {
+    "jev": true,
+    "batch": false,
+    "repeat": 1,
+    "seconds": 15.642520041961689,
+    "calls": [
+      {
+        "queries": 1,
+        "seconds": 3.744054624985438,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 3.9549938330310397,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 4.086610957980156,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      },
+      {
+        "queries": 1,
+        "seconds": 3.856847375049256,
+        "status": "complete",
+        "warnings": [],
+        "returned": 10
+      }
+    ]
+  }
+]

@@ -325,7 +325,12 @@ async def evaluate_pair(
                     metadata["program"]["role"],
                     meta=metadata["program"].get("meta", False),
                 )
-                if method.startswith("semantic.") or method in {"graph.query", "graph.walk"}:
+                if method.startswith("semantic.") or method in {
+                    "graph.query",
+                    "graph.walk",
+                    "graph.sources",
+                    "memory.read_source",
+                }:
                     admitted = registry.get("knowledge_integration")
                     metadata["knowledge_integration_authorized"] = bool(
                         admitted is not None

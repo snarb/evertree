@@ -1,0 +1,123 @@
+{
+  "purpose": "Separate semantic-review cost, including the unused repeat attempt, not graph construction or answering.",
+  "usage_method": "Last cumulative usage per provider request; byte-identical trace copies deduplicated.",
+  "parts": [
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/0/trace.json",
+      "sha256": "5cef999fa5457eb62a2995cf05a587a8510e9ef75af20083d6f0615ec02ee00d",
+      "usage": {
+        "total_tokens": 124348,
+        "input_tokens": 121952,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2396,
+        "reasoning_output_tokens": 1550
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/1/trace.json",
+      "sha256": "f6391817ca337841d8c7a11bac9dc3a4de6e6fc17eacc1c2538b843124616a30",
+      "usage": {
+        "total_tokens": 118768,
+        "input_tokens": 116455,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2313,
+        "reasoning_output_tokens": 1474
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/1-attempt-1-invalid-read-coverage/trace.json",
+      "sha256": "cf91b8e4ae9f11fa6891a4f91ef4f8a2345cf5754d3cae6bad8f373623f23e59",
+      "usage": {
+        "total_tokens": 118939,
+        "input_tokens": 116455,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2484,
+        "reasoning_output_tokens": 1630
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/2/trace.json",
+      "sha256": "d06c8892e90bb5d17cfd5fbf32d9db6509f05892d0278d19d381d2d986eace47",
+      "usage": {
+        "total_tokens": 113480,
+        "input_tokens": 111548,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1932,
+        "reasoning_output_tokens": 939
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/3/trace.json",
+      "sha256": "aad3c83184aa0eb8cf5761ef8ef9192fad91acd84b84da438f80deb3f145580d",
+      "usage": {
+        "total_tokens": 88695,
+        "input_tokens": 87085,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1610,
+        "reasoning_output_tokens": 779
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/4/trace.json",
+      "sha256": "a80830181caa87dceb4cd616e89ae4fbad4bef8e7f418e94605c2c3901a2f9a7",
+      "usage": {
+        "total_tokens": 103847,
+        "input_tokens": 100792,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3055,
+        "reasoning_output_tokens": 1945
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/5/trace.json",
+      "sha256": "3303744022491e304c3070be6301a64bc96e44a77e7c02fc61198b9ad183c11b",
+      "usage": {
+        "total_tokens": 69705,
+        "input_tokens": 68009,
+        "cached_input_tokens": 3840,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1696,
+        "reasoning_output_tokens": 1034
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/6/trace.json",
+      "sha256": "ec6e112bba1e11883bf3aee116b659e938b837669ac1e76071f12ad528a22556",
+      "usage": {
+        "total_tokens": 156389,
+        "input_tokens": 154906,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1483,
+        "reasoning_output_tokens": 606
+      }
+    },
+    {
+      "trace": "tmp/knowledge-graph-routes-v11/route-answer-review/7/trace.json",
+      "sha256": "fae85b482a2c1c50c4eb753e2858dde3319150399d290e070144d385e8471ba1",
+      "usage": {
+        "total_tokens": 149333,
+        "input_tokens": 147776,
+        "cached_input_tokens": 3840,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1557,
+        "reasoning_output_tokens": 435
+      }
+    }
+  ],
+  "total_usage": {
+    "total_tokens": 1043504,
+    "input_tokens": 1024978,
+    "cached_input_tokens": 7680,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 18526,
+    "reasoning_output_tokens": 10392
+  },
+  "uncached_input_tokens": 1017298
+}

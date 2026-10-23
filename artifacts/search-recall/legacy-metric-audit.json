@@ -1,0 +1,93 @@
+{
+  "warning": "Previous results used locally shortened evidence lists and are not acceptance measurements for original complete questions. Missing non-sports articles were absent from the evaluated corpus. Counts below restore original gold denominators without rerunning retrieval.",
+  "runs": [
+    {
+      "artifact": "focused-v1.json",
+      "run": "diagnostic_off",
+      "group": "development",
+      "questions": 20,
+      "affected_questions": 4,
+      "original_gold": 41,
+      "locally_omitted_gold": 4,
+      "returned_gold": 37,
+      "recall_with_original_denominator": 0.9024390243902439
+    },
+    {
+      "artifact": "focused-v1.json",
+      "run": "diagnostic_off",
+      "group": "diagnostic",
+      "questions": 40,
+      "affected_questions": 3,
+      "original_gold": 89,
+      "locally_omitted_gold": 3,
+      "returned_gold": 81,
+      "recall_with_original_denominator": 0.9101123595505618
+    },
+    {
+      "artifact": "focused-v1.json",
+      "run": "validation_off",
+      "group": "validation",
+      "questions": 40,
+      "affected_questions": 4,
+      "original_gold": 91,
+      "locally_omitted_gold": 4,
+      "returned_gold": 84,
+      "recall_with_original_denominator": 0.9230769230769231
+    },
+    {
+      "artifact": "focused-v1.json",
+      "run": "validation_jev",
+      "group": "validation",
+      "questions": 40,
+      "affected_questions": 4,
+      "original_gold": 91,
+      "locally_omitted_gold": 4,
+      "returned_gold": 84,
+      "recall_with_original_denominator": 0.9230769230769231
+    },
+    {
+      "artifact": "focused-v3.json",
+      "run": "diagnostic_off",
+      "group": "development",
+      "questions": 20,
+      "affected_questions": 4,
+      "original_gold": 41,
+      "locally_omitted_gold": 4,
+      "returned_gold": 37,
+      "recall_with_original_denominator": 0.9024390243902439
+    },
+    {
+      "artifact": "focused-v3.json",
+      "run": "diagnostic_off",
+      "group": "diagnostic",
+      "questions": 40,
+      "affected_questions": 3,
+      "original_gold": 89,
+      "locally_omitted_gold": 3,
+      "returned_gold": 83,
+      "recall_with_original_denominator": 0.9325842696629213
+    },
+    {
+      "artifact": "focused-v3.json",
+      "run": "fresh_off",
+      "group": "fresh_validation",
+      "questions": 40,
+      "affected_questions": 8,
+      "original_gold": 90,
+      "locally_omitted_gold": 8,
+      "returned_gold": 78,
+      "recall_with_original_denominator": 0.8666666666666667
+    },
+    {
+      "artifact": "focused-v3.json",
+      "run": "fresh_jev",
+      "group": "fresh_validation",
+      "questions": 40,
+      "affected_questions": 8,
+      "original_gold": 90,
+      "locally_omitted_gold": 8,
+      "returned_gold": 79,
+      "recall_with_original_denominator": 0.8777777777777778
+    }
+  ]
+}

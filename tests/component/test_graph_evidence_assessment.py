@@ -99,10 +99,10 @@ class FixedIndex:
         self.ids = []
 
     async def lexical(self, *args):
-        return list(self.ids)
+        return [{"ids": list(self.ids)} for _ in args[1]]
 
     async def vector(self, *args):
-        return list(self.ids)
+        return [{"ids": list(self.ids)} for _ in args[1]]
 
     async def close(self):
         pass

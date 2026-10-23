@@ -1,0 +1,195 @@
+{
+  "article_objects": 1006,
+  "article_urls": 211,
+  "category_objects": 363,
+  "missing_count": 17,
+  "misses": [
+    {
+      "question_index": 209,
+      "query": "Between the Sporting News report on NBA Rookie of the Year odds published on October 4, 2023, and the Sporting News report on line shopping in sports betting published on November 6, 2023, was there a change in how Sportsbooks adjust and tighten betting lines based on gathered information?",
+      "url": "https://www.sportingnews.com/us/betting/news/mlb-betting-sites/90537abdc639ffc5d57a8c1b",
+      "title": "MLB Betting Sites & Apps - The Best Baseball Sportsbooks 2023",
+      "gold_fact": "These delays may lead to bets being refunded depending on the circumstances and the specific rules of your sportsbook.",
+      "placements": 2,
+      "summary": "Title:'MLB Betting Sites & Apps - The Best Baseball Sportsbooks 2023' Summary:'The article provides a comprehensive guide on the best MLB betting sites and apps for 2023, detailing how to sign up, the types of bets available, and tips for maximizing betting success.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 560,
+      "query": "Did the Sporting News article imply that Michigan's football team could easily shrug off a single defeat without any impact on their season, and does it describe Jets QB Zach Wilson's turnover as an insignificant factor in the game's outcome?",
+      "url": "https://www.sportingnews.com/us/ncaa-football/news/michigan-scandal-winners-losers-jim-harbaugh-tony-petitti/52ad1c9ec667b556323fa41c",
+      "title": "Michigan sign-stealing scandal winners and losers, from Jim Harbaugh to Tony Petitti",
+      "gold_fact": "One loss, and all this could unravel, and the Terps and Buckeyes still remain on the schedule.",
+      "placements": 4,
+      "summary": "Title:'Michigan sign-stealing scandal winners and losers, from Jim Harbaugh to Tony Petitti' Summary:'The Michigan sign-stealing scandal involves coach Jim Harbaugh's sideline coaching ban, the resignation of staffer Connor Stallions, and its impact on the Big Ten, with Tony Petitti's decisive actions and the potential for further NCAA penalties.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 100,
+      "query": "Did the Sporting News article report a higher batting average for Jung Hoo Lee in 2022 than Yardbarker reported for Juan Soto in the year referenced?",
+      "url": "https://www.yardbarker.com/mlb/articles/top_25_mlb_offseason_trade_candidates/s1_13237_39530247",
+      "title": "Top 25 MLB offseason trade candidates",
+      "gold_fact": "Soto overcame a relatively slow start (by his standards) to hit .275/.410/.519 with 35 home runs this year.",
+      "placements": 2,
+      "summary": "Title:'Top 25 MLB offseason trade candidates' Summary:'The article discusses potential MLB offseason trade candidates, highlighting players from various teams such as the Padres, Brewers, Guardians, Rays, White Sox, and others, along with their projected salaries and trade value.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 237,
+      "query": "Does the article from Essentially Sports discussing NFL controversies mention a narrower range of issues compared to the Essentially Sports article on Denny Hamlin, which focuses on the controversies and criticism surrounding a single NASCAR driver?",
+      "url": "https://www.essentiallysports.com/nfl-active-perspective-news-is-the-coverage-on-taylor-swift-and-travis-kelces-romance-nothing-but-hype-or-a-pivotal-shift-in-nfls-century-old-game-plan-towards-global-recognition/",
+      "title": "Is the Coverage on Taylor Swift and Travis Kelce’s Romance Nothing but Hype or a Pivotal Shift in NFL’s Century-Old Game Plan Towards Global Recognition?",
+      "gold_fact": "From Colin Kaepernick taking a knee during the national anthem to protest against racism, to domestic violence by players, to the Deflategate and Bountygate scandals.",
+      "placements": 6,
+      "summary": "Title:'Is the Coverage on Taylor Swift and Travis Kelce’s Romance Nothing but Hype or a Pivotal Shift in NFL’s Century-Old Game Plan Towards Global Recognition?' Summary:'The article discusses the impact of Taylor Swift and Travis Kelce's relationship on NFL's global recognition strategy, fan reactions, and the league's efforts towards safety and international expansion.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 532,
+      "query": "Does the Sporting News article doubt Jordan Love's performance in the upcoming home game, while the CBSSports.com article reflects on Kirk Cousins' performance in last week's game with only 13 Fantasy points?",
+      "url": "https://www.sportingnews.com/us/nfl/news/fanduel-picks-week-15-nfl-dfs-lineup-advice-daily-fantasy/ec0ab2947586908f262c7bcd",
+      "title": "FanDuel Picks Week 15: Best NFL DFS lineup advice for daily fantasy football tournaments",
+      "gold_fact": "Jordan Love appears to have turned a corner, meaning we should expect him to put on a show back at home.",
+      "placements": 2,
+      "summary": "Title:'FanDuel Picks Week 15: Best NFL DFS lineup advice for daily fantasy football tournaments' Summary:'The article provides Week 15 FanDuel and SuperDraft NFL DFS lineup advice, highlighting top picks and strategies for fantasy football tournaments.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 532,
+      "query": "Does the Sporting News article doubt Jordan Love's performance in the upcoming home game, while the CBSSports.com article reflects on Kirk Cousins' performance in last week's game with only 13 Fantasy points?",
+      "url": "https://www.cbssports.com/fantasy/football/news/nfl-fantasy-football-week-5-lineup-decisions-starts-sits-sleepers-busts-to-know-for-every-game/",
+      "title": "NFL Fantasy Football Week 5 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game",
+      "gold_fact": "That includes Kirk Cousins last week, who only threw 19 times in a win (and had two touchdowns but just 13 Fantasy points).",
+      "placements": 2,
+      "summary": "Title:'NFL Fantasy Football Week 5 Lineup Decisions: Starts, Sits, Sleepers, Busts to know for every game' Summary:'NFL Fantasy Football Week 5 offers insights on lineup decisions such as starts, sits, sleepers, and busts, focusing on player matchups, projections, and performance analysis.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 603,
+      "query": "Does the 'Sporting News' article on the USA squad fail to mention Johnny Cardoso's inclusion after an injury similar to how 'Sporting News' reports on Lucas Cavallini's withdrawal due to injury from the Canada squad?",
+      "url": "https://www.sportingnews.com/us/soccer/news/canada-vs-jamaica-live-score-result-highlights-second-leg/b49d5b0e0e9384800d431fe2",
+      "title": "Canada vs Jamaica live score, updates, highlights, result from CONCACAF Nations League quarterfinal second leg",
+      "gold_fact": "The only injury absence for Canada at the moment is striker Lucas Cavallini, who withdrew from the squad prior to the two matches, replaced by Jacen Russell-Rowe.",
+      "placements": 9,
+      "summary": "Title:'Canada vs Jamaica live score, updates, highlights, result from CONCACAF Nations League quarterfinal second leg' Summary:'Jamaica achieved their first-ever victory on Canadian soil, defeating Canada 3-2 in the CONCACAF Nations League quarterfinal second leg, advancing to the semifinal and qualifying for Copa America 2024 on away goals after a 4-4 aggregate tie.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 443,
+      "query": "Did the 'Sporting News' report on the U.S. men's national team's friendly match against Ghana before 'The Roar | Sports Writers Blog' reported on Tasmania's second win over Sydney this season?",
+      "url": "https://www.theroar.com.au/2023/10/20/nbl-round-4/",
+      "title": "NBL Round 4: Creek pours in points as Phoenix swamp Sixers, CJ claims Kings didn’t look after DJ",
+      "gold_fact": "Fellow import Milton Doyle and Majok Deng each scored 17 for Tasmania, who recorded their second win over Sydney in as many attempts this season.",
+      "placements": 3,
+      "summary": "Title:'NBL Round 4: Creek pours in points as Phoenix swamp Sixers, CJ claims Kings didn’t look after DJ' Summary:'Jordon Crawford leads Tasmania JackJumpers to victory over Sydney Kings, Chris Goulding shines for Melbourne United against New Zealand, and Adelaide 36ers and South East Melbourne Phoenix secure wins in the NBL.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 70,
+      "query": "Does the 'Sporting News' article about Manchester United's defeat by Bayern indicate the same outcome for Manchester United's European competitions as the 'Sporting News' article about Alvaro Barreal's goal implies for Inter Miami's postseason running?",
+      "url": "https://www.sportingnews.com/us/soccer/news/champions-league-permutations-scenarios-teams-groups-round-16/6a97ebef38a68bc175d441c5",
+      "title": "Champions League permutations, scenarios: What teams need to qualify from groups for 2023/24 Round of 16 stage",
+      "gold_fact": "Manchester United are out of Europe altogether after a limp display against Bayern at Old Trafford, where Kingsley Coman sealed a 1-0 win for Thomas Tuchel's side.",
+      "placements": 5,
+      "summary": "Title:'Champions League permutations, scenarios: What teams need to qualify from groups for 2023/24 Round of 16 stage' Summary:'The UEFA Champions League group stage concludes with teams like Manchester City, Bayern Munich, Real Madrid, and Barcelona qualifying for the 2023/24 Round of 16, while Manchester United and Newcastle United are eliminated.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 70,
+      "query": "Does the 'Sporting News' article about Manchester United's defeat by Bayern indicate the same outcome for Manchester United's European competitions as the 'Sporting News' article about Alvaro Barreal's goal implies for Inter Miami's postseason running?",
+      "url": "https://www.sportingnews.com/us/soccer/news/inter-miami-vs-fc-cincinnati-live-score-result-highlights-mls/6288f57a14a413f02512e266",
+      "title": "Inter Miami vs FC Cincinnati live score, result, updates, highlights with Lionel Messi's MLS playoffs on line",
+      "gold_fact": "Eventually, Alvaro Barreal’s 78th-minute goal ended any hope that Inter Miami had to complete a stunning playoff charge, and the defeat coupled with CF Montreal’s big 4-1 victory over Portland means Inter Miami are officially out of the postseason running.",
+      "placements": 5,
+      "summary": "Title:'Inter Miami vs FC Cincinnati live score, result, updates, highlights with Lionel Messi's MLS playoffs on line' Summary:'Inter Miami was eliminated from the MLS playoff race after a 1-0 defeat to FC Cincinnati, despite Lionel Messi's return and a dominant performance that included hitting the woodwork four times.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 358,
+      "query": "Is the promotional offer for new users of sportsbooks reported by Sporting News consistent between the article published on November 29, 2023, stating that new users can claim over $5,000 in bonuses from various sportsbooks, and the article from December 15, 2023, mentioning that new customers of sportsbooks receive a welcome bonus when they register for an account?",
+      "url": "https://www.sportingnews.com/us/betting/news/ncaaf-bowl-odds/275d2598457399b19a65202d",
+      "title": "College Bowl Odds, Spreads, Money Lines and Totals - NCAAF 2023 Bowl Season",
+      "gold_fact": "Collect your welcome bonus: As a new customer, you’ll receive a welcome bonus.",
+      "placements": 4,
+      "summary": "Title:'College Bowl Odds, Spreads, Money Lines and Totals - NCAAF 2023 Bowl Season' Summary:'The article provides detailed information on College Bowl odds, spreads, money lines, and totals for the NCAAF 2023 Bowl Season, including specific games and betting options available at college football betting sites.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 536,
+      "query": "Does the 'Sporting News' article report a different type of athletic performance for Jung Hoo Lee than the 'Zee Business' article reports for Ravindra Jadeja, with one discussing batting statistics and the other discussing bowling statistics?",
+      "url": "https://www.sportingnews.com/us/mlb/news/mlb-winter-meetings-news-signings-trades-2023-free-agency/b6561c0450fe40cdfd39860e",
+      "title": "MLB Winter Meetings tracker: Live updates on news, rumors, signings and trades for 2023 free agency",
+      "gold_fact": "Lee was hampered by injury in 2023 but slashed .349/.421/.575 in 2022 with 36 doubles, 10 triples and a career-best 23 home runs.",
+      "placements": 4,
+      "summary": "Title:'MLB Winter Meetings tracker: Live updates on news, rumors, signings and trades for 2023 free agency' Summary:'The 2023 MLB Winter Meetings feature significant player movements including potential signings of Shohei Ohtani and trades involving stars like Juan Soto, alongside updates on other key free agency and trade market activities.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 495,
+      "query": "Does the article from Sporting News claim that John \"The Best\" Mugabi had a perfect boxing record, while the article from Essentially Sports reports Dillon Danis as having his first-ever boxing debut, indicating a difference in their professional boxing experience?",
+      "url": "https://www.sportingnews.com/us/boxing/news/showtime-boxing-top-5-greatest-fights/b946bec3fd1ea869856c32ff",
+      "title": "Showtime Boxing to take final 10-count: Top 5 greatest fights revisited",
+      "gold_fact": "The Uganda-born power-puncher had a perfect record – 26 fights, 26 wins, 26 knockouts, with 10 of those stoppages coming in the first round.",
+      "placements": 3,
+      "summary": "Title:'Showtime Boxing to take final 10-count: Top 5 greatest fights revisited' Summary:'Showtime Boxing, an iconic series since 1986 featuring legends like Marvin Hagler and Mike Tyson, will end its run in December 2023, marking the close of an era with memorable fights such as Hagler vs. Mugabi and Corrales vs. Castillo.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 48,
+      "query": "Between the report from 'The Guardian' on October 6th featuring Thomas Ramos and the article from 'Sport Grill' on October 31st highlighting Tessa Wullaert, which news source detailed a successful penalty in a European football match?",
+      "url": "https://www.theguardian.com/sport/2023/oct/06/rugby-world-cup-damien-penaud-leads-rout-of-italy-as-france-confirm-progress-in-style",
+      "title": "Damien Penaud leads historic rout of Italy as France confirm progress in style",
+      "gold_fact": "Thomas Ramos belted over a penalty and the pressure on Italy continued unabated, Penaud fluffing a grubber kick with another big overlap created.",
+      "placements": 2,
+      "summary": "Title:'Damien Penaud leads historic rout of Italy as France confirm progress in style' Summary:'France secures a quarter-final spot in a rugby tournament with a historic win over Italy, highlighted by Damien Penaud's performance and the team's overall progress.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 180,
+      "query": "After the Sporting News report on Caesars Sportsbook's expected offer for new sign-ups in Vermont published on September 26, 2023, and the Sporting News report on Caesars Sportsbook's range of bets for the PGA Tour and other major events published on October 13, 2023, was the coverage of Caesars Sportsbook's betting options consistent?",
+      "url": "https://www.sportingnews.com/us/betting/news/golf-betting-sites/7735c28b8c223b35fb013517",
+      "title": "Best Golf Betting Sites and Apps - Top Sportsbooks for Golf 2023",
+      "gold_fact": "It has a wide range of bets for the PGA Tour and other major events, such as winning margin, top finishes, and live betting props.",
+      "placements": 4,
+      "summary": "Title:'Best Golf Betting Sites and Apps - Top Sportsbooks for Golf 2023' Summary:'The article provides a comprehensive guide on golf betting, including the best betting sites and apps for 2023, how to download and use them, different betting options, and insights on major golf tournaments and events.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 580,
+      "query": "Do the articles from CBSSports.com and both articles from Sporting News agree on the amount of the welcome bonus offered by Caesars Sportsbook to new sign-ups, with all mentioning up to $1000?",
+      "url": "https://www.sportingnews.com/us/betting/news/vermont-sportsbook-promos/b4779ea9b7172cc57a201b0f",
+      "title": "Vermont Sportsbook Promos and Sports Betting Launch News",
+      "gold_fact": "We expect Caesars to offer the same offer in VT is has elsewhere, with new sign-ups eligible to receive up to a $1,000 Bonus Bet if their first bet loses.",
+      "placements": 4,
+      "summary": "Title:'Vermont Sportsbook Promos and Sports Betting Launch News' Summary:'Vermont is set to launch legal online sports betting in January 2024, with sportsbooks offering various bonuses and promotions to attract new users.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    },
+    {
+      "question_index": 72,
+      "query": "Between the Sporting News report on the Minnesota Vikings' offensive performance published on November 13, 2023, and the Sporting News report on the Minnesota Vikings' performance against the Chicago Bears published on November 27, 2023, was there a change in the effectiveness of the Vikings' offense as reported?",
+      "url": "https://www.sportingnews.com/us/nfl/news/nfl-power-rankings-lions-49ers-texans-jets-patriots/7b7ee6be935efc3c735d72ac",
+      "title": "NFL power rankings: Lions, 49ers level up; Texans jump Bengals, Bills; Jets, Patriots sink to bottom for Week 11",
+      "gold_fact": "The new man on the Vikings, Josh Dobbs, keeps producing the same results they were enjoying offensively with Kirk Cousins, thanks to more help from the running game for Kevin O'Connell and the defense overall under Brian Flores.",
+      "placements": 7,
+      "summary": "Title:'NFL power rankings: Lions, 49ers level up; Texans jump Bengals, Bills; Jets, Patriots sink to bottom for Week 11' Summary:'The NFL power rankings for Week 11 feature the Lions and 49ers moving up, the Texans surpassing the Bengals and Bills, and the Jets and Patriots dropping to the bottom, with detailed analysis on team performances and future prospects.'",
+      "fact_verbatim_in_summary": false,
+      "fact_verbatim_in_body": true
+    }
+  ]
+}

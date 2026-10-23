@@ -7,6 +7,7 @@ import hashlib
 import json
 from uuid import uuid4
 
+from ..common.source_sections import section_context, section_value, source_sections
 from ..core.cognition.steps import trace_reference
 from ..core.values import json_value
 
@@ -211,21 +212,23 @@ class KnowledgeIntegrationMixin:
                 "ExperienceFragments", self._program_revision(), {"task_id": state.id}
             )
             parts = []
-            if analytical:
-                encoded = value["text"]
-            for offset in range(0, len(encoded), 12000):
+            content = value["text"] if analytical else value
+            for section in source_sections(content):
+                selected = section_value(content, section)
                 event = self.memory.record(
                     run,
                     "experience_fragment",
                     output={
                         "source_ref": json_value(ref),
-                        "encoding": "analytical_text" if analytical else "json",
+                        "encoding": "analytical_text" if analytical else "structured",
                         "note_metadata": {k: v for k, v in value.items() if k != "text"}
                         if analytical
                         else None,
-                        "offset": offset,
-                        "total_characters": len(encoded),
-                        "text": encoded[offset : offset + 12000],
+                        "location": section,
+                        "context": section_context(content, section),
+                        **(
+                            {"text": selected} if isinstance(selected, str) else {"value": selected}
+                        ),
                     },
                     dependencies=(ref,),
                 )
@@ -234,6 +237,99 @@ class KnowledgeIntegrationMixin:
             fragments[key] = parts
             result.extend(parts)
         return result
+
+    async def _run_integration(self, task_id, arguments, *, retry=True):
+        """Resume saved source sections; execution progress stays outside conscious context."""
+        state = self.tasks.get(task_id)
+        base_arguments = {
+            "experience_refs": arguments["experience_refs"],
+            "focus": arguments.get("focus"),
+        }
+        identity = hashlib.sha256(
+            json.dumps(
+                {"revision": state.specification.revision, "arguments": base_arguments},
+                sort_keys=True,
+            ).encode()
+        ).hexdigest()
+        attempts = state.step_state.setdefault("integration_attempts", {})
+        attempt_sources = state.step_state.setdefault("integration_attempt_sources", {})
+        attempt_sources[identity] = arguments["experience_refs"]
+        saved = attempts.get(identity)
+        payload = dict(arguments)
+        pending = self._pending_programs.get(task_id)
+        if pending and pending["identity"] == "knowledge_integration":
+            recorded = self._run_map.get(pending["run_id"])
+            if recorded is not None and self.memory.get_run(recorded).status == "failed":
+                self._pending_programs.pop(task_id)
+                pending = None
+        if pending and pending["identity"] == "knowledge_integration":
+            payload = pending["arguments"]
+            if payload["experience_refs"] != arguments["experience_refs"] or payload.get(
+                "focus"
+            ) != arguments.get("focus"):
+                raise RuntimeError("Resume the pending integration before changing its sources")
+        elif saved:
+            progress = json.loads(json.dumps(saved))
+            if retry:
+                progress["pending"] = [entry["unit"] for entry in progress["failed"]] + progress[
+                    "pending"
+                ]
+                progress["failed"] = []
+            payload["processing"] = progress
+        try:
+            output = await self._run_program(task_id, "knowledge_integration", payload)
+        except BaseException:
+            interrupted = self._pending_programs.get(task_id)
+            run = self._run_map.get(interrupted["run_id"]) if interrupted else None
+            if run is not None:
+                for event in reversed(self.memory.events):
+                    if event.program_run == run and event.operator == "integration_processing":
+                        attempts[identity] = json_value(event.output)
+                        break
+            raise
+        progress = output["result"].get("processing")
+        if progress is not None:
+            attempts[identity] = progress
+            if retry:
+                unfinished = {
+                    part["source"]
+                    for unit in [
+                        *progress["pending"],
+                        *(entry["unit"] for entry in progress["failed"]),
+                    ]
+                    for part in unit["parts"]
+                }
+                completed = [
+                    ref for i, ref in enumerate(arguments["experience_refs"]) if i not in unfinished
+                ]
+                self._mark_integrated(state, state.specification.revision, completed)
+                failed = state.step_state.setdefault("integration_failed", {}).setdefault(
+                    str(state.specification.revision), []
+                )
+                failed[:] = [ref for ref in failed if ref not in completed]
+                residual_events = {
+                    trace_reference(attempt_sources[key][part["source"]]).event_ref
+                    for key, progress in attempts.items()
+                    for unit in [
+                        *progress["pending"],
+                        *(entry["unit"] for entry in progress["failed"]),
+                    ]
+                    for part in unit["parts"]
+                }
+                covered = state.step_state["integrated"][str(state.specification.revision)]
+                for ref in self._experience_refs(state):
+                    pieces = state.step_state.get("fragments", {}).get(
+                        json.dumps(json_value(ref), sort_keys=True), [json_value(ref)]
+                    )
+                    residual_events.update(
+                        trace_reference(piece).event_ref for piece in pieces if piece not in covered
+                    )
+                for ref in completed:
+                    event_ref = trace_reference(ref).event_ref
+                    if event_ref not in residual_events:
+                        self.memory.release(event_ref, "integration_pending:" + state.id)
+            await self.backup()
+        return output
 
     def _integration_diagnostic(self, state, checkpoint, error):
         run = self.memory.start_run(
@@ -255,6 +351,10 @@ class KnowledgeIntegrationMixin:
             revision = state.specification.revision
             coverage = work.setdefault("integrated", {}).setdefault(str(revision), [])
             covered = {json.dumps(ref, sort_keys=True) for ref in coverage}
+            covered.update(
+                json.dumps(ref, sort_keys=True)
+                for ref in work.setdefault("integration_failed", {}).get(str(revision), [])
+            )
             unreviewed = [
                 ref
                 for ref in self._experience_refs(state)
@@ -263,7 +363,7 @@ class KnowledgeIntegrationMixin:
             refs = self._bounded_experience(state, unreviewed)
             remaining = [ref for ref in refs if json.dumps(ref, sort_keys=True) not in covered]
             if not remaining:
-                return
+                return False
             batch, size = [], 0
             for ref in remaining:
                 cost = len(
@@ -287,29 +387,97 @@ class KnowledgeIntegrationMixin:
                 self.memory.retain(trace_reference(reference), "task:" + state.id)
             await self.backup()
         if state.hard_limit_reached or state.budget_exhausted:
-            return
+            return False
+        progress = None
         try:
             checkpoint["status"] = "running"
             arguments = {"experience_refs": checkpoint["experience_refs"]}
             if "pending_program" in checkpoint:
                 self._pending_programs[state.id] = checkpoint.pop("pending_program")
                 arguments = self._pending_programs[state.id]["arguments"]
-            output = await self._run_program(state.id, "knowledge_integration", arguments)
+            output = await self._run_integration(state.id, arguments, retry=False)
+            progress = output["result"].get("processing")
             if output["result"].get("error"):
-                self._integration_diagnostic(state, checkpoint, output["result"]["error"])
+                raise RuntimeError(output["result"]["error"])
         except asyncio.CancelledError:
             checkpoint["status"] = "interrupted"
             raise
         except Exception as exc:  # noqa: BLE001 -- integration cannot block conscious work
             self._integration_diagnostic(state, checkpoint, exc)
+            if state.hard_limit_reached or state.budget_exhausted:
+                checkpoint["status"] = "interrupted"
+                await self.backup()
+                return False
             if self._pending_programs.get(state.id, {}).get("identity") == "knowledge_integration":
                 self._pending_programs.pop(state.id, None)
-        self._mark_integrated(
-            state, checkpoint["specification_revision"], checkpoint["experience_refs"]
+            failed = list(checkpoint["experience_refs"])
+            completed = []
+        else:
+            if progress and progress["pending"]:
+                checkpoint["status"] = "pending"
+                await self.backup()
+                return True
+            failed_indexes = {
+                part["source"]
+                for entry in (progress or {}).get("failed", [])
+                for part in entry["unit"]["parts"]
+            }
+            failed = [
+                ref for i, ref in enumerate(checkpoint["experience_refs"]) if i in failed_indexes
+            ]
+            completed = [
+                ref
+                for i, ref in enumerate(checkpoint["experience_refs"])
+                if i not in failed_indexes
+            ]
+            if failed:
+                self._integration_diagnostic(
+                    state, checkpoint, "; ".join(entry["error"] for entry in progress["failed"])
+                )
+        self._mark_integrated(state, checkpoint["specification_revision"], completed)
+        failed_refs = work.setdefault("integration_failed", {}).setdefault(
+            str(checkpoint["specification_revision"]), []
         )
+        failed_refs.extend(ref for ref in failed if ref not in failed_refs)
         work.pop("integration")
         await self.backup()
         await self._assess_evidence(state, checkpoint["experience_refs"])
+        return True
+
+    async def _drain_integration(self, state):
+        """Consider remaining sections serially without exceeding the existing task allowance."""
+        while not state.hard_limit_reached and not state.budget_exhausted:
+            if not await self._integrate_step(state):
+                break
+
+    def _integration_status(self, state):
+        """Report processed source pieces and real residuals, without claiming fact completeness."""
+        revision = str(state.specification.revision)
+        covered = {
+            json.dumps(ref, sort_keys=True)
+            for ref in state.step_state.get("integrated", {}).get(revision, [])
+        }
+        failed = {
+            json.dumps(ref, sort_keys=True)
+            for ref in state.step_state.get("integration_failed", {}).get(revision, [])
+        }
+        roots = self._experience_refs(state)
+        root_keys = {json.dumps(json_value(ref), sort_keys=True) for ref in roots}
+        remaining = [
+            ref for ref in roots if json.dumps(json_value(ref), sort_keys=True) not in covered
+        ]
+        units = {
+            json.dumps(ref, sort_keys=True) for ref in self._bounded_experience(state, remaining)
+        }
+        processed = len(root_keys & covered) + len(units & covered)
+        failed_count = len(units & failed)
+        pending = len(units - covered - failed)
+        return {
+            "status": "incomplete" if pending or failed_count else "processed",
+            "processed_sources": processed,
+            "pending_sources": pending,
+            "failed_sources": failed_count,
+        }
 
     async def _assess_evidence(self, state, experience_refs):
         """Assess integrated experience as evidence; failures stay diagnostics, not step errors.

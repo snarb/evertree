@@ -114,10 +114,11 @@ class EverTree(
         search_index=None,
     ):
         self.directory = Path(directory).resolve()
-        from .core.semantics.config import SemanticConfig
+        from .core.semantics.config import SemanticConfig, load_search_environment
         from .core.semantics.index import RedisSearchIndex
 
         self.semantic_config = semantic_config or SemanticConfig.load(self.directory)
+        load_search_environment(self.directory, self.semantic_config)
         self.search_index = search_index or RedisSearchIndex(self.semantic_config, self.directory)
         self._semantic_service = None
         self._execution = ExecutionOwner()

@@ -17,6 +17,36 @@ def card(node):
     return result
 
 
+def search_card(graph, node):
+    """Expose stored meaning for retrieval without provenance or computed beliefs."""
+    result = card(node)
+    if node.properties:
+        result["properties"] = json_value(node.properties)
+    if isinstance(node, RelationType):
+        result["signature"] = json_value(node.signature)
+    if isinstance(node, RelationInstance):
+        relation = graph.get(node.relation_type)
+        result["relation"] = relation.name
+        if relation.description:
+            result["relation_description"] = relation.description
+        result["signature"] = json_value(relation.signature)
+        result["args"] = json_value(node.args)
+
+        def reference(identity):
+            participant = graph.get(identity)
+            return {"id": participant.id, "name": participant.name, "kind": participant.kind}
+
+        for slot in relation.signature:
+            if slot.value_type not in {"node", "concept", "prototype", "instance", "facet"}:
+                continue
+            value = node.args.get(slot.label)
+            if isinstance(value, (list, tuple)):
+                result["args"][slot.label] = [reference(identity) for identity in value]
+            elif value is not None:
+                result["args"][slot.label] = reference(value)
+    return result
+
+
 def belief_summary(graph, node):
     """Read an element's current belief compactly, or None when it has not been assessed."""
     if graph.belief_reader is None:

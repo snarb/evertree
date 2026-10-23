@@ -63,5 +63,5 @@ def task_outcome_context(task_id: str) -> dict:
 # because candidates cannot change the protected wrappers.
 CALLED_PROGRAMS: dict[str, tuple[str, ...]] = {
     "credit_assignment": ("target", "observation_ids", "context"),
-    "semantic_search": ("query",),
+    "semantic_search": ("queries",),
 }

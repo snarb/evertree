@@ -1,0 +1,400 @@
+{
+  "purpose": "Source-only diagnostic audit of15 film groups and4 additional lists. Groups contain multiple assertions, not an atomic recall denominator.",
+  "snapshot": "tmp/knowledge-graph-routes-v11/acquisition/11-0fae0c1b/snapshot.json",
+  "snapshot_sha256": "858bc8872a95f915beda7d3f470b0d5d0576a142aa267acae875ae8dd5a9b102",
+  "checklist_sha256": "1ef59f3cf512a0f1c4fc38a8d2e4c7a890ad892dd1598d2ec358d3fd59d64eee",
+  "counts": {
+    "primary_film_groups": 15,
+    "meaning_status": {
+      "preserved_in_card_or_fields": 13,
+      "partial_missing_platform": 1,
+      "partial_missing_director_link": 1
+    },
+    "additional_lists": 4,
+    "source_availability_options": 68,
+    "retained_availability_options_including_four_scalar_names": 67,
+    "individual_node_valued_availability_facts": 63,
+    "casting_pairs_checked_for_human_vs_fictional_membership": 18,
+    "incompatible_cast_memberships": 0,
+    "invocations": 35,
+    "declared_incomplete_invocations": 4
+  },
+  "acquisition_seconds": 2272.1948607500526,
+  "positive_checks": [
+    "Actor and fictional character remain separate across all18 inspectable cast-role pairs.",
+    "Unknown fictional names use scoped descriptions rather than externally supplied canonical character names.",
+    "Hammett1930work preserves the source crime-movie wording without silently replacing it with a novel.",
+    "Numeric runtimes66/81min share property2330; MurderByContract2402 influences TaxiDriver2423 in the reported direction2429.",
+    "Streaming, rental, ad-supported and library-card terms largely remain separate per service.",
+    "Twilight1998 remains distinct from vampire title references; NightmareAlley1947/2021 have separate identities2447/2645.",
+    "Viewer-prank violence remains a hypothetical reviewer joke, not a film-plot fact.",
+    "Editorial recommendation groups remain reported categories, not automatically ontological subclasses."
+  ],
+  "remaining_limits": [
+    "Brick director assertion is missing and one Detour platform is omitted despite technical completion.",
+    "Some family/setting/unnamed-party relationships remain prose.",
+    "The first supplementary list has no addressable film members; other lists do.",
+    "Access-mode strings vary across Rent/Rental/Rentable and FreeViewing/FreeStreaming; conditions appear in different fields. Retained meaning alone does not ensure a single exact literal filter retrieves every option.",
+    "Actor/Director classes were created during ingestion; earlier objects often remain Person, so class-only selection is not a complete professional population.",
+    "Overlapping review and comparative facts remain; count/connectedness cannot establish retrieval usefulness."
+  ],
+  "general_assertions": {
+    "noirvember_explicit_negatives": [
+      2126
+    ],
+    "november_challenges_and_possible_reasons": [
+      2114
+    ],
+    "editorial_sections_and_genre_commentary": [
+      2119,
+      2482
+    ]
+  },
+  "assertions": [
+    {
+      "assertion_id": "noir-film-01",
+      "film": 2122,
+      "supporting_object_ids": [
+        2127,
+        2129,
+        2140,
+        2141,
+        2142
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Four rental platforms are strings in grouped fact2129 rather than node-valued per-platform relations."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-02",
+      "film": 2143,
+      "supporting_object_ids": [
+        2165,
+        2166,
+        2167,
+        2168,
+        2169,
+        2170,
+        2171,
+        2172,
+        2174,
+        2176
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "noir-film-03",
+      "film": 2177,
+      "supporting_object_ids": [
+        2188,
+        2189,
+        2190,
+        2191,
+        2192,
+        2193,
+        2194,
+        2195,
+        2197
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Unnamed murder victim remains a relationship string; the instigator and accomplice are addressable."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-04",
+      "film": 2198,
+      "supporting_object_ids": [
+        2208,
+        2209,
+        2210,
+        2211,
+        2212,
+        2213,
+        2214,
+        2215,
+        2237,
+        2238,
+        2239
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "noir-film-05",
+      "film": 2218,
+      "supporting_object_ids": [
+        2240,
+        2241,
+        2242,
+        2243,
+        2257,
+        2258,
+        2261,
+        2262,
+        2266,
+        2267,
+        2285,
+        2286
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Some institutional participants remain prose; handler and love interest is an unnamed scoped character, without an invented canonical name."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-06",
+      "film": 2287,
+      "supporting_object_ids": [
+        2295,
+        2296,
+        2297,
+        2298,
+        2299,
+        2316,
+        2334,
+        2335
+      ],
+      "meaning_status": "partial_missing_platform",
+      "representation_gaps": [
+        "Plex is omitted from Detour availability. Source lists both PlutoTV and Plex with ads; only PlutoTV2298 is recorded.",
+        "Ulmer family relationship involving CarlLaemmle/nephew/spouse remains nested prose2317, preventing a precise family traversal.",
+        "NewYork/LosAngeles remain scalar location names."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-07",
+      "film": 2318,
+      "supporting_object_ids": [
+        2337,
+        2338,
+        2339,
+        2340,
+        2341,
+        2342,
+        2352,
+        2353,
+        2354,
+        2355,
+        2356
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "noir-film-08",
+      "film": 2357,
+      "supporting_object_ids": [
+        2361,
+        2362,
+        2375,
+        2376,
+        2377,
+        2378,
+        2379,
+        2380,
+        2401
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "noir-film-09",
+      "film": 2381,
+      "supporting_object_ids": [
+        2391,
+        2392,
+        2393,
+        2394,
+        2395,
+        2396,
+        2397,
+        2398,
+        2399,
+        2408,
+        2411,
+        2412
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Three-way tonal comparison uses two pairwise comparison facts2411/2412 with direction encoded in basis text rather than one jointly typed comparison tuple."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-10",
+      "film": 2402,
+      "supporting_object_ids": [
+        2406,
+        2407,
+        2428,
+        2430,
+        2431,
+        2432,
+        2434,
+        2449,
+        2450
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "noir-film-11",
+      "film": 2451,
+      "supporting_object_ids": [
+        2464,
+        2465,
+        2466,
+        2467,
+        2468,
+        2471,
+        2472,
+        2473,
+        2474,
+        2475,
+        2476,
+        2477,
+        2478,
+        2479
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": []
+    },
+    {
+      "assertion_id": "noir-film-12",
+      "film": 2484,
+      "supporting_object_ids": [
+        2488,
+        2489,
+        2490,
+        2491,
+        2492,
+        2493,
+        2508,
+        2509,
+        2510,
+        2511,
+        2512,
+        2513,
+        2514,
+        2515
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Some plot details remain narrative values; named performer/character/director identities still link the film."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-13",
+      "film": 2516,
+      "supporting_object_ids": [
+        2521,
+        2522,
+        2523,
+        2524,
+        2525,
+        2527,
+        2529,
+        2555,
+        2556,
+        2557,
+        2558,
+        2559,
+        2560,
+        2561
+      ],
+      "meaning_status": "partial_missing_director_link",
+      "representation_gaps": [
+        "RianJohnson is stored as writer, but no film-director link for Brick exists.",
+        "The year2005 survives in the film name, without its numeric release_year entry."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-14",
+      "film": 2542,
+      "supporting_object_ids": [
+        2550,
+        2551,
+        2552,
+        2553,
+        2554,
+        2568,
+        2569,
+        2570,
+        2584,
+        2585,
+        2586,
+        2587,
+        2589
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Unnamed guests and motel are narrative values, not independent linked identities."
+      ]
+    },
+    {
+      "assertion_id": "noir-film-15",
+      "film": 2562,
+      "supporting_object_ids": [
+        2571,
+        2572,
+        2573,
+        2574,
+        2575,
+        2616,
+        2617,
+        2618,
+        2619,
+        2623,
+        2624,
+        2626,
+        2647
+      ],
+      "meaning_status": "preserved_in_card_or_fields",
+      "representation_gaps": [
+        "Overlapping hypothetical screening/comparison records remain."
+      ]
+    }
+  ],
+  "additional_recommendation_groups": [
+    {
+      "source_list": "More in this category: Le Samouraï, Rififi, Laura, The Third Man, Touch of Evil, The Big Sleep, In a Lonely Place, Chinatown, Night of the Hunter",
+      "supporting_object_ids": [
+        2197
+      ],
+      "addressable_list_members": 0,
+      "source_list_members": 9,
+      "meaning_status": "preserved_as_strings"
+    },
+    {
+      "source_list": "More in this category: Strangers on a Train, Ace in the Hole, Murder My Sweet, The Asphalt Jungle, The Killing, The Set-Up, Scarlet Street",
+      "supporting_object_ids": [
+        2267,
+        2285
+      ],
+      "addressable_list_members": 7,
+      "source_list_members": 7,
+      "meaning_status": "preserved_with_node_links"
+    },
+    {
+      "source_list": "More in this category: Force of Evil, Nocturne (1946), Female Jungle, Killer’s Kiss, Abandoned (1949), No Man of Her Own, Nightmare Alley (1947)",
+      "supporting_object_ids": [
+        2449
+      ],
+      "addressable_list_members": 7,
+      "source_list_members": 7,
+      "meaning_status": "preserved_with_node_links"
+    },
+    {
+      "source_list": "More in this category: Bound, Fargo, Lost Highway, U-Turn, Body Heat, The Drowning Pool, Memento, Shutter Island, Blade Runner, Nightmare Alley (2021)",
+      "supporting_object_ids": [
+        2619,
+        2647
+      ],
+      "addressable_list_members": 10,
+      "source_list_members": 10,
+      "meaning_status": "preserved_with_node_links"
+    }
+  ]
+}

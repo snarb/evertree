@@ -2,13 +2,18 @@
 
 import hashlib
 import json
+import math
 
 from ..graph.types import RelationInstance, node_from_dict
 from ..memory.types import TraceOutputRef, _references
 from ..values import ContractError, json_value
 from .compile import compile_action
+from .fragments import authorized_fragment, prepare_sections
+from .jev import JevFilter
 from .queries import GraphQueries
-from .reading import card
+from .reading import card, search_card
+from .searching import query_key, search_kinds, search_limit, search_queries
+from .sources import SourceReads
 from .tools import CREATE_ACTIONS, validate_action
 
 
@@ -17,32 +22,54 @@ class SemanticService:
         self.graph, self.memory, self.attribution = graph, memory, attribution
         self.config, self.index, self.operations = config, index, operations
         self._index_reads = {}
+        self.jev = JevFilter(config.jev)
         self.queries = GraphQueries(graph, attribution, config.read)
+        self.source_reads = SourceReads(graph, memory, config.read)
 
     def release(self, task_id):
         """Discard a task's transient query continuations and index-read state."""
         self.queries.release(task_id)
+        self.source_reads.release(task_id)
         self._index_reads.pop(task_id, None)
 
-    def lookup(self, query, kind=None, limit=20, *, task_id, scope):
-        """Serve exact graph matches, returning None when text needs non-exact search."""
-        kind = kind.strip().casefold() if kind is not None else None
-        if type(limit) is not int or not 1 <= limit <= 20:
-            raise ContractError("limit must be between 1 and 20")
-        matches = self.graph.lookup(query, kind=kind)
-        if matches or isinstance(query, int):
-            return self.results(
-                query, kind, [card(n) for n in matches], [], limit, task_id, scope=scope, exact=True
+    def _exact(self, query, kinds):
+        matches = (
+            self.graph.lookup(query)
+            if kinds is None
+            else sorted(
+                (node for kind in kinds for node in self.graph.lookup(query, kind=kind)),
+                key=lambda node: node.id,
             )
-        if not query.strip():
-            raise ContractError("Search query cannot be empty")
-        return None
+        )
+        return (
+            [search_card(self.graph, node) for node in matches]
+            if matches or type(query) is int
+            else None
+        )
 
-    def results(self, query, kind, items, errors, limit, task_id, *, scope, exact=False):
-        """Record invocation-scoped search results for candidate review and report channel completeness."""
-        if type(limit) is not int or not 1 <= limit <= 20:
-            raise ContractError("limit must be between 1 and 20")
-        key = [task_id, scope, str(query).strip().casefold()]
+    def lookup(self, queries, kinds=None, limit=10, *, task_id, scope):
+        """Return a merged batch only when every query resolves without external retrieval."""
+        queries = search_queries(queries)
+        search_limit(limit)
+        kinds = search_kinds(kinds)
+        matches = [self._exact(query, kinds) for query in queries]
+        if any(items is None for items in matches):
+            return None
+        rows = [
+            self.results(query, kinds, items, [], limit, task_id, scope=scope, exact=True)
+            for query, items in zip(queries, matches, strict=True)
+        ]
+        return self._merge(queries, rows, total_ids={n["id"] for row in matches for n in row})
+
+    def results(self, query, kinds, items, errors, limit, task_id, *, scope, exact=False):
+        """Record Core's invocation-scoped completeness confirmation for one query."""
+        search_limit(limit)
+        key = [
+            task_id,
+            scope,
+            query if type(query) is int else query_key(query),
+            search_kinds(kinds),
+        ]
         complete = not errors
         if self._search_confirmation(key) != complete:
             with self.memory.transaction():
@@ -57,6 +84,132 @@ class SemanticService:
             "total": len(items),
             "exact": exact,
         }
+
+    @staticmethod
+    def _merge(queries, rows, *, scores=None, total_ids=None, warnings=()):
+        scores = scores or {}
+        items, exact_ids, summaries, errors = {}, set(), [], []
+        for position, (query, row) in enumerate(zip(queries, rows, strict=True)):
+            summaries.append(
+                {
+                    "query": query,
+                    **{k: row[k] for k in ("status", "exact", "total")},
+                    "ids": [n["id"] for n in row["items"]],
+                }
+            )
+            errors.extend({**error, "query_index": position} for error in row["errors"])
+            for node in row["items"]:
+                identity = node["id"]
+                if row["exact"]:
+                    exact_ids.add(identity)
+                if identity not in items:
+                    items[identity] = {**node, "query_indices": []}
+                items[identity]["query_indices"].append(position)
+                channels = set(items[identity].get("channels", [])) | set(node.get("channels", []))
+                if channels:
+                    items[identity]["channels"] = sorted(channels)
+        ordered = sorted(items, key=lambda i: (i not in exact_ids, -scores.get(i, 0), i))
+        return {
+            "status": "incomplete" if errors else "complete",
+            "queries": summaries,
+            "items": [items[i] for i in ordered],
+            "errors": errors,
+            "warnings": list(warnings),
+            "total": len(total_ids if total_ids is not None else items),
+            "exact": all(row["exact"] for row in rows),
+        }
+
+    def failed_search(self, queries, errors, *, kinds=None, limit=10, task_id, scope):
+        """Revoke unresolved queries after runtime failure while preserving exact matches."""
+        queries = search_queries(queries)
+        search_limit(limit)
+        kinds = search_kinds(kinds)
+        rows = []
+        for query in queries:
+            exact = self._exact(query, kinds)
+            rows.append(
+                self.results(
+                    query,
+                    kinds,
+                    exact or [],
+                    errors if exact is None else [],
+                    limit,
+                    task_id,
+                    scope=scope,
+                    exact=exact is not None,
+                )
+            )
+        return self._merge(queries, rows)
+
+    async def _search_results(self, payload, metadata):
+        queries = search_queries(payload["queries"])
+        kinds = search_kinds(payload.get("kinds"))
+        limit = search_limit(payload["limit"])
+        rankings = payload["rankings"]
+        if len(rankings) != len(queries):
+            raise ContractError("Search ranking count mismatch")
+        completed = self._index_reads.get(metadata["task_id"], {}).pop(metadata["run_id"], {})
+        candidates, rows, scores, exact_ids = {}, [], {}, set()
+        for position, (query, ranking) in enumerate(zip(queries, rankings, strict=True)):
+            exact = self._exact(query, kinds)
+            if exact is not None:
+                exact_ids.update(node["id"] for node in exact)
+                rows.append((exact, [], True))
+                continue
+            errors = list(ranking["errors"])
+            for method in ("semantic.bm25", "semantic.vector"):
+                read = completed.get(method)
+                if read is None or read[0] != (queries, kinds):
+                    error = "Search needs completed index reads"
+                else:
+                    error = read[1][position].get("error")
+                if error and not any(e["channel"] == method.split(".")[1] for e in errors):
+                    errors.append({"channel": method.split(".")[1], "error": error})
+            checked, seen = [], set()
+            for item in ranking["items"]:
+                node = self.graph.get(item["id"])
+                if kinds is not None and node.kind not in kinds:
+                    raise ContractError("Search result violates kinds filter")
+                channels = list(item.get("channels", []))
+                if not channels or set(channels) - {"bm25", "vector"}:
+                    raise ContractError("Search result has an unknown index channel")
+                score = item["score"]
+                if type(score) not in {int, float} or not math.isfinite(score) or score < 0:
+                    raise ContractError("Invalid fused search score")
+                if node.id in seen:
+                    continue
+                seen.add(node.id)
+                rendered = {
+                    **search_card(self.graph, node),
+                    "channels": channels,
+                    "source_facts": [],
+                }
+                checked.append(rendered)
+                candidates[node.id] = search_card(self.graph, node)
+                scores[node.id] = scores.get(node.id, 0) + score
+            rows.append((checked, errors, False))
+        kept, warnings = await self.jev.filter(
+            queries, [node for identity, node in candidates.items() if identity not in exact_ids]
+        )
+        kept.update(exact_ids)
+        rendered, total_ids = [], set()
+        for query, (items, errors, exact) in zip(queries, rows, strict=True):
+            if not exact:
+                items = [node for node in items if node["id"] in kept]
+            total_ids.update(node["id"] for node in items)
+            rendered.append(
+                self.results(
+                    query,
+                    kinds,
+                    items,
+                    errors,
+                    limit,
+                    metadata["task_id"],
+                    scope=metadata["semantic_scope"],
+                    exact=exact,
+                )
+            )
+        return self._merge(queries, rendered, scores=scores, total_ids=total_ids, warnings=warnings)
 
     @staticmethod
     def _authorize(metadata):
@@ -128,6 +281,11 @@ class SemanticService:
             and child.output_path[: len(parent.output_path)] == parent.output_path
         )
 
+    def prepare_sources(self, experience_refs, sections, focus=None, *, metadata):
+        """Retain exact sections while preserving the original integration authority."""
+        material = self.sources(experience_refs, focus, metadata=metadata)
+        return prepare_sections(self.memory, material, sections, metadata)
+
     def _search_confirmation(self, key):
         # Core records both complete and incomplete results so replay cannot revive
         # an earlier approval after a failed explicit search.
@@ -135,15 +293,19 @@ class SemanticService:
             if event.operator != "search_review":
                 continue
             run = self.memory.get_run(event.program_run)
-            if run.program == "SemanticSearchReview" and list(run.arguments.get("key", ())) == key:
+            if (
+                run.program == "SemanticSearchReview"
+                and json_value(run.arguments.get("key", ())) == key
+            ):
                 return event.output["complete"]
         return None
 
     def _check_search(self, action, metadata):
         if action["action"] not in CREATE_ACTIONS:
             return
-        query = action["name"].strip().casefold()
-        key = [metadata["task_id"], metadata["semantic_scope"], query]
+        query = query_key(action["name"])
+        # A scoped search cannot establish that an identity is absent from the whole graph.
+        key = [metadata["task_id"], metadata["semantic_scope"], query, None]
         if self._search_confirmation(key) is not True:
             raise ContractError("Creating an identity requires a complete search for " + query)
 
@@ -178,6 +340,7 @@ class SemanticService:
                             )
                         return json_value(event.output)
                 inputs = tuple(self._reference(ref) for ref in payload["experience_refs"])
+                producers = tuple(self.memory.producer_of(ref) for ref in inputs)
                 refs = list(action.get("sources", []))
                 if action["action"] == "save_note" and action["source"] not in refs:
                     refs.append(action["source"])
@@ -185,7 +348,11 @@ class SemanticService:
                 if not sources:
                     raise ContractError("Graph writes require sources")
                 for ref in sources:
-                    if not any(self._contains(parent, ref) for parent in inputs):
+                    resolved = self.memory.producer_of(ref)
+                    declared = any(self._contains(parent, ref) for parent in (*inputs, *producers))
+                    retained = any(self._contains(parent, resolved) for parent in producers)
+                    fragment = authorized_fragment(self.memory, ref, producers, metadata)
+                    if not (declared and retained or fragment):
                         raise ContractError(
                             "Write source is outside supplied experience. Choose a supplied "
                             "experience reference or its actual nested part and retry; a supplied "
@@ -261,51 +428,43 @@ class SemanticService:
     async def execute(self, method, payload, metadata):
         """Dispatch task-scoped graph reads, index queries and checked semantic writes."""
         task_id = metadata["task_id"]
+        if method in {"graph.sources", "memory.read_source"}:
+            return self.source_reads.read(method, payload, task_id=task_id)
         if method in {"graph.query", "graph.walk"}:
             return self.queries.read(method.removeprefix("graph."), payload, task_id=task_id)
         if method == "semantic.lookup":
             self._index_reads.setdefault(task_id, {}).pop(metadata["run_id"], None)
             return self.lookup(**payload, task_id=task_id, scope=metadata["semantic_scope"])
         if method in {"semantic.bm25", "semantic.vector"}:
-            nodes = [card(n) for n in self.graph.nodes()]
+            queries = search_queries(payload["queries"])
+            kinds = search_kinds(payload.get("kinds"))
+            unresolved = [
+                position
+                for position, query in enumerate(queries)
+                if self._exact(query, kinds) is None
+            ]
             operation = self.index.lexical if method == "semantic.bm25" else self.index.vector
-            result = await operation(nodes, payload["query"], payload.get("kind"))
-            key = metadata["run_id"]
-            self._index_reads.setdefault(task_id, {}).setdefault(key, {})[method] = (
-                payload["query"],
-                payload.get("kind"),
+            ranked = await operation(
+                [search_card(self.graph, n) for n in self.graph.nodes()],
+                [queries[i] for i in unresolved],
+                kinds,
+            )
+            if len(ranked) != len(unresolved):
+                raise ContractError("Search channel response count mismatch")
+            result = [{"ids": []} for _ in queries]
+            for position, row in zip(unresolved, ranked, strict=True):
+                result[position] = row
+            self._index_reads.setdefault(task_id, {}).setdefault(metadata["run_id"], {})[method] = (
+                (queries, kinds),
+                result,
             )
             return result
         if method == "semantic.results":
-            errors = list(payload["errors"])
-            key = metadata["run_id"]
-            completed = self._index_reads.get(task_id, {}).pop(key, {})
-            if not errors and completed != {
-                method: (payload["query"], payload.get("kind"))
-                for method in ("semantic.bm25", "semantic.vector")
-            }:
-                errors.append({"channel": "search", "error": "Search needs completed index reads"})
-            items = payload["items"]
-            checked = []
-            for item in items:
-                node = self.graph.get(item["id"])
-                if payload.get("kind") is not None and node.kind != payload["kind"]:
-                    raise ContractError("Search result violates kind filter")
-                channels = list(item.get("channels", []))
-                if not channels or set(channels) - {"bm25", "vector"}:
-                    raise ContractError("Search result has an unknown index channel")
-                checked.append({**card(node), "channels": channels, "source_facts": []})
-            return self.results(
-                payload["query"],
-                payload.get("kind"),
-                checked,
-                errors,
-                payload["limit"],
-                task_id,
-                scope=metadata["semantic_scope"],
-            )
+            return await self._search_results(payload, metadata)
         if method == "semantic.sources":
             return self.sources(**payload, metadata=metadata)
+        if method == "semantic.prepare_sources":
+            return self.prepare_sources(**payload, metadata=metadata)
         if method == "semantic.write":
             return self.write(payload, metadata)
         raise ValueError("Unknown semantic operation")

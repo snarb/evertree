@@ -1,0 +1,48 @@
+{
+  "status": "Superseded by final source-only audit",
+  "observations": [
+    {
+      "ids": [
+        1638
+      ],
+      "issue": "Prelive $100 fact includes minimum deposit $10 and qualifying bet $5, which belong to separate $200 welcome offer in adjacent source prose. Check final graph for repair; separate qualification scope matters.",
+      "rows": [
+        "vermont-04",
+        "vermont-05"
+      ]
+    },
+    {
+      "ids": [
+        1682,
+        1683
+      ],
+      "issue": "Both facts cite fragment6387/text (body6813:first half); detailed20%/25x and eight25/7day clauses are only in boundary context and next fragment6413/text. Original full-source dependency remains accessible, but the exact cited fragment alone does not support all terms.",
+      "rows": [
+        "vermont-11",
+        "vermont-12",
+        "vermont-13"
+      ]
+    },
+    {
+      "ids": [
+        1694
+      ],
+      "issue": "Model first inserted relation-schema IDs1644/1642 as sportsbook offerings, then explicitly updated1694 to remove wrong IDs. Referral bonus and BetMGM Rewards remain prose in breadth_assessment instead of participant links; final relation no longer has wrong schema IDs.",
+      "rows": [
+        "vermont-16"
+      ]
+    },
+    {
+      "ids": [
+        1717,
+        1607
+      ],
+      "issue": "Statements repeatedly anchor current/awaiting status to publication2023-09-26, although body includes later November2023 events. The metadata date is preserved, but treating it as reliable date of all body assertions is an unsupported chronology assumption; inspect for explicit uncertainty in final graph.",
+      "rows": [
+        "vermont-02",
+        "vermont-20"
+      ]
+    }
+  ],
+  "final_audit": "case-9-v9-audit.json"
+}

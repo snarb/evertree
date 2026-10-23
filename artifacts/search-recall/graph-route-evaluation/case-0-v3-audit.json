@@ -1,0 +1,42 @@
+{
+  "purpose": "Partial diagnostic audit documenting a decisive acquisition failure, not a complete row-level success assessment.",
+  "acquired_snapshot": "tmp/knowledge-graph-routes-v3/acquired.json",
+  "acquired_sha256": "8eaf3a1bb12711895dddf0360036b5b61e3e5e5584db0215b92d08bb7ed92f1d",
+  "checklist_sha256": "0470cbc0478840737e44385ad859e4f26745fec3a06bda301dbce5517960f9ee",
+  "production_revision": "0aa4c0b3e06e1c3f636f043c81d8103236fb4b785a5b52822e151800eec4c420",
+  "technical_processing": "all five sections completed",
+  "missing_assertions": [
+    "audible-01",
+    "audible-02",
+    "audible-03",
+    "audible-04",
+    "audible-05",
+    "audible-06",
+    "mgm-01",
+    "mgm-02",
+    "mgm-03",
+    "mgm-04"
+  ],
+  "improved_examples": {
+    "numeric_duration": [
+      73
+    ],
+    "numeric_screen": [
+      95
+    ],
+    "comparison_participant_ids": [
+      101,
+      102
+    ],
+    "uncertain_exact_price": [
+      114
+    ],
+    "credit_issuer_code": [
+      157
+    ],
+    "numeric_battery": [
+      163
+    ]
+  },
+  "verdict": "Rejected: ten source assertions absent despite successful execution. Remaining assertions not certified complete by this partial audit."
+}

@@ -3,6 +3,7 @@
 from evertree.common.structured import validate
 from evertree.core.graph.types import ARITIES, VALUE_TYPES
 from evertree.core.provider import ToolDefinition
+from evertree.core.semantics.searching import SEARCH_KINDS
 from evertree.core.values import ContractError
 
 
@@ -139,26 +140,93 @@ _QUERY_COMMON = {
 }
 
 
+MULTIHOP_SEARCH_INSTRUCTIONS = (
+    "For a question requiring several linked facts, first find an anchor and inspect what "
+    "the returned facts actually establish. Use discovered names, identifiers and relations "
+    "to choose the next search or read; batch only the needs that are independent at that "
+    "step. Follow evidence until every required part is supported or a specific gap remains. "
+    "Once an anchor is known, prefer exact query reads of its relevant predicates and named "
+    "roles to another broad text search. Different predicates require successive reads. "
+    "Use walk for repeated transitions of one predicate. For a class-based question, walk "
+    "SUBTYPE_OF from supertype to type, include the starting class, then query IDENTITY_TYPE "
+    "with args.type in the discovered class IDs and select instance. Inspect the instances' "
+    "required predicates; taxonomy membership alone does not establish their other properties. "
+    "Follow has_more when completeness matters. Use sources on selected facts and read_source "
+    "to verify their exact retained material when those tools are available; source references "
+    "describe provenance, not independent verification of truth. "
+    "Track participant roles through every hop and check that the same unknown object fills "
+    "the required roles. Connected participants are not interchangeable; reject answers that "
+    "contradict a required condition. A complete search reports completed retrieval channels, "
+    "not exhaustive knowledge or "
+    "proof that an object or fact is absent. Report unresolved parts instead of guessing."
+)
+
+SEARCH_KIND_FILTER = {
+    "type": ["array", "null"],
+    "minItems": 1,
+    "items": {"type": "string", "enum": sorted(SEARCH_KINDS)},
+    "description": (
+        "Optional OR filter before retrieval quotas. Use relation_type for schemas, prototype "
+        "for classes, instance/facet for participants or states, relation_instance/claim/note "
+        "for assertions. Omit for all kinds when representation is unknown; widen if needed. "
+        "A filtered search cannot confirm global absence or authorize creation."
+    ),
+}
+
+
+SEARCH_QUERIES = {
+    "type": "array",
+    "minItems": 1,
+    "items": {"anyOf": [_TEXT, _ID]},
+    "description": (
+        "Names, integer IDs or focused phrases, one retrieval need per entry. Batch independent "
+        "needs together, e.g. ['Н-1', 'pump operating state']. Cover each independently checkable "
+        "clause with a separate query, including conditions in who/which questions about a "
+        "single unknown object. For 'which device measures temperature, records pressure and "
+        "transmits wirelessly', use ['device measures temperature', 'device records pressure', "
+        "'device wireless transmission']. Preserve useful names, source and date constraints. Do not add a topic "
+        "merely because the question says a source does not discuss it. Each entry has its own "
+        "top-ten budget. Graph type and field names "
+        "inside text are keywords, not filters."
+    ),
+}
+
+
 READ_TOOLS = (
     ToolDefinition(
         "search",
         (
-            "Find one object or reusable meaning by name or description. Exact names resolve "
-            "first; otherwise lexical and semantic similarity return up to 20 candidates, not proven matches. Refine the query if none fits; no pagination."
+            "Find objects or reusable meanings for one or more queries. Exact matches resolve "
+            "first. Returns a merged list without duplicate objects, up to 10 per unique query. "
+            "Similarity candidates are not proven matches. For linked questions, read candidates "
+            "and use discovered names or relations in follow-up searches. No pagination."
         ),
-        _object(
+        _read_object(
             {
-                "query": {
-                    **_TEXT,
-                    "description": (
-                        "One name or focused phrase, e.g. 'Н-1' or 'pump operating state'. "
-                        "Search different subjects separately. Do not append graph types or "
-                        "field names such as prototype, facet or valid_from as search keywords: "
-                        "they are not filters."
-                    ),
-                },
+                "queries": SEARCH_QUERIES,
+                "kinds": SEARCH_KIND_FILTER,
+                "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+            },
+            ("queries",),
+        ),
+        read_only=True,
+    ),
+    ToolDefinition(
+        "sources",
+        "Find exact retained sources of selected graph objects or facts, with change history and upstream dependencies. Pass fact IDs to obtain their grounds; an entity's sources do not include every neighboring fact. References to older changes are not automatically evidence for the current assertion. Continue with next_page=true when has_more.",
+        _read_object(
+            {
+                "subjects": {"type": "array", "items": _ID, "minItems": 1},
+                "max_items": {"type": "integer", "minimum": 1},
+                "next_page": {"type": "boolean"},
             }
         ),
+        read_only=True,
+    ),
+    ToolDefinition(
+        "read_source",
+        "Read one exact retained source reference without search or ranking. Cite its original reference; offsets identify pages, not new output_path components. Continue with next_page=true to read remaining content. A context reference opens surrounding material separately from the cited fragment.",
+        _read_object({"reference": _REFERENCE, "next_page": {"type": "boolean"}}),
         read_only=True,
     ),
     ToolDefinition(
@@ -544,8 +612,20 @@ WRITE_TOOLS = (
     ),
     ToolDefinition(
         "create_instance",
-        "Save one identifiable object and its class membership.",
-        _object({**_NAMED, "prototype": _ID}),
+        "Save one identifiable object as a member of a class whose definition it satisfies.",
+        _object(
+            {
+                **_NAMED,
+                "prototype": {
+                    **_ID,
+                    "description": (
+                        "Existing Prototype ID whose category includes this object. Check the "
+                        "class name and definition; search for or create a fitting class when "
+                        "none is known."
+                    ),
+                },
+            }
+        ),
         read_only=False,
     ),
     ToolDefinition(
@@ -571,6 +651,7 @@ WRITE_TOOLS = (
         _object(
             {
                 **_NAMED,
+                "name": {**_TEXT, "description": "Unique canonical predicate name, 1–3 words."},
                 "roles": {
                     "type": "array",
                     "minItems": 1,
@@ -600,7 +681,15 @@ WRITE_TOOLS = (
                                     "list0: an array, possibly empty; list1: a nonempty array."
                                 ),
                             },
-                        }
+                            "description": {
+                                **_TEXT,
+                                "description": (
+                                    "Meaning of values in this role, including direction and scope "
+                                    "when its label alone is ambiguous."
+                                ),
+                            },
+                        },
+                        optional=("description",),
                     ),
                 },
             }
@@ -624,7 +713,8 @@ WRITE_TOOLS = (
                     "description": (
                         "One entry per supplied role, using its exact declared label. Only optional "
                         "roles may be omitted. Node values are returned integer IDs; list roles use "
-                        "one array value, not repeated entries."
+                        "one array value, not repeated entries. Each value must fit the role's "
+                        "defined meaning as well as its value type."
                     ),
                     "items": _object({"role": _TEXT, "value": _VALUE}),
                 },
@@ -654,12 +744,18 @@ WRITE_TOOLS = (
     ToolDefinition(
         "create_claim",
         (
-            "Save one independently revisable prose assertion with its conditions and grounds. "
+            "Save an assertion whose argument or meaning cannot be adequately expressed by "
+            "native relations, properties or states. Ordinary reported events, offers, roles, "
+            "comparisons and values must use those native forms with shared participant IDs; "
+            "a missing schema is created with define_relation. Do not use Claims as a shorter "
+            "way to store ordinary facts, or because a source is partial or unverified. "
+            "Retain the assertion's conditions and grounds. "
             "Assertions that evidence could confirm, reject or correct separately need separate "
             "representations, including alternative explanations. Keep a hypothesis's necessary "
             "conditions and supporting argument together; it remains provisional. Do not bundle a source's "
             "objects, state intervals or simple relationships into a summary Claim. "
             "A missing relation schema can be defined with define_relation. "
+            "Reported or unverified relationships can still use native relations with sources and conditions. "
             "Saving a Claim does not assess evidence or assign confidence."
         ),
         _object(

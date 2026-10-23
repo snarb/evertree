@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from copy import deepcopy
 from functools import partial
@@ -41,7 +42,9 @@ class SaveExplanationProvider(IntegrationScriptedProvider):
         calls = [
             ("save_note", {"name": "Recovered explanation", "source": explanation, "sources": []}),
         ]
-        async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
+        async for event in tool_events(
+            request_id, request, kwargs["tool_handler"], calls, finish=not self.pause_after_write
+        ):
             if event.kind == "completed" and self.pause_after_write:
                 self.wrote.set()
                 await asyncio.Event().wait()
@@ -127,7 +130,7 @@ async def test_restored_search_child_authorizes_creation_only_in_resumed_invocat
 
         async def lexical(self, nodes, query, kind):
             self.reads.append(query)
-            return []
+            return [{"ids": []} for _ in query]
 
     class Provider(IntegrationScriptedProvider):
         def __init__(self, scripts, *, pause):
@@ -144,7 +147,7 @@ async def test_restored_search_child_authorizes_creation_only_in_resumed_invocat
             material = json.loads(request.prompt.split("\n\nExecution resumed", 1)[0])["material"]
             source = material["experience"][0]["reference"]
             calls = (
-                [("search", {"query": "Recovered pump category"})]
+                [("search", {"queries": ["Recovered pump category"]})]
                 if self.pause
                 else [
                     (
@@ -157,7 +160,9 @@ async def test_restored_search_child_authorizes_creation_only_in_resumed_invocat
                     )
                 ]
             )
-            async for event in tool_events(request_id, request, kwargs["tool_handler"], calls):
+            async for event in tool_events(
+                request_id, request, kwargs["tool_handler"], calls, finish=not self.pause
+            ):
                 if event.kind == "tool_result":
                     assert "error" not in event.data["result"], event.data["result"]
                 if event.kind == "completed" and self.pause:
@@ -177,7 +182,7 @@ async def test_restored_search_child_authorizes_creation_only_in_resumed_invocat
         first._pump.cancel()
         await asyncio.wait_for(first._pump, 60)
         identity = task.id
-        assert first_index.reads == ["Recovered pump category"]
+        assert first_index.reads == [["Recovered pump category"]]
         assert first.backups.list()
 
     second_index = Index()
@@ -192,3 +197,82 @@ async def test_restored_search_child_authorizes_creation_only_in_resumed_invocat
         assert "Recovered pump category" not in second_index.reads
         await restored.acknowledge_delivery(answer.data["delivery_id"])
         await wait_for_event(restored, "task_completed")
+
+
+async def test_restart_skips_completed_sections_and_replays_interrupted_section_writes(tmp_path):
+    """A real DBOS run retains the completed prefix and resumes only the interrupted model call."""
+
+    class SectionProvider(IntegrationScriptedProvider):
+        def __init__(self, *, pause):
+            super().__init__([])
+            self.pause = pause
+            self.wrote = asyncio.Event()
+            self.names = []
+
+        async def run(self, request_id, request, **kwargs):
+            assert is_integration_request(request)
+            self.requests.append(request)
+            if "Execution resumed after interruption" in request.prompt:
+                async for event in tool_events(request_id, request, kwargs["tool_handler"], []):
+                    yield event
+                return
+            material = json.loads(request.prompt)["material"]
+            name = "Retained section " + hashlib.sha256(request.prompt.encode()).hexdigest()[:12]
+            self.names.append(name)
+            source = material["experience"][0]["reference"]
+            calls = [("save_note", {"name": name, "source": source, "sources": []})]
+            async for event in tool_events(
+                request_id,
+                request,
+                kwargs["tool_handler"],
+                calls,
+                finish=not (self.pause and len(self.requests) == 2),
+            ):
+                if event.kind == "tool_result":
+                    assert "error" not in event.data["result"], event.data["result"]
+                if event.kind == "completed" and self.pause and len(self.requests) == 2:
+                    self.wrote.set()
+                    await asyncio.Event().wait()
+                yield event
+
+    home = tmp_path / "agent"
+    runtime = partial(Runtime, process_factory=TestProcess)
+    first_provider = SectionProvider(pause=True)
+    async with EverTree(home, provider=first_provider, runtime_factory=runtime) as first:
+        task = first.tasks.create_task("Retain every source section")
+        first.tasks.assign_budget(task.id, {"active_time_minutes": 5}, 0, reason="Review")
+        first._inputs[task.id] = [{"role": "user", "content": task.objective}]
+        source = first._record_analysis(
+            task.id, {"text": "A separately grounded observation applies.\n\n" * 150}
+        )
+        args = {"experience_refs": [source]}
+        running = asyncio.create_task(first._run_integration(task.id, args))
+        await asyncio.wait_for(first_provider.wrote.wait(), 60)
+        running.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await running
+        progress = next(iter(task.step_state["integration_attempts"].values()))
+        assert len(progress["completed"]) == 1
+        assert len(progress["pending"]) >= 2
+        original_run = first._pending_programs[task.id]["run_id"]
+        initial_names = list(first_provider.names)
+        original_prefix = first_provider.requests[0].prompt
+        identity = task.id
+        await first.backup()
+
+    second_provider = SectionProvider(pause=False)
+    async with EverTree(home, provider=second_provider, runtime_factory=runtime) as restored:
+        result = await restored._run_integration(identity, args)
+        progress = result["result"]["processing"]
+        assert progress["status"] == "processed"
+        assert not progress["pending"] and not progress["failed"]
+        assert len(progress["completed"]) >= 3
+        assert all(request.prompt != original_prefix for request in second_provider.requests)
+        assert "Execution resumed after interruption" in second_provider.requests[0].prompt
+        assert restored.memory.get_run(restored._run_map[original_run]).status == "completed"
+        names = initial_names + second_provider.names
+        assert len(names) == len(progress["completed"])
+        for name in names:
+            matches = [node for node in restored.graph.nodes() if node.name == name]
+            assert len(matches) == 1
+            assert len(restored.graph.changes_of(matches[0].id)) == 1

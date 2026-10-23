@@ -154,6 +154,49 @@ parameters and non-obvious side effects. Keep them concise.
 - Test the constructed input and its consumers together: necessary meaning survives,
   audit noise stays out, references resolve, and the response can be applied. Use live
   evaluations for model judgment; scripted tests only establish mechanical contracts.
+- Generalize from evaluation failures into reusable rules about representation and behavior.
+  Keep corpus-specific identities, expected classes, answers and routes out of production
+  instructions. Examples may illustrate a general rule with synthetic subjects. Treat a
+  revised-prompt rerun as a regression check, not independent evidence of generalization.
+
+KnowledgeIntegration is instructed to preserve nearly every distinct source assertion: shared participants,
+named predicate roles, values, exceptions and source qualifications. `focus` sets priority
+without excluding the remaining assertions. Native relations support directed reads through
+their roles; co-occurrence, inverse duplicates and invented transitive facts are not useful
+substitutes. Claims and Notes remain available when their meanings require them. Integration
+processes source sections sequentially; failures and budget exhaustion preserve an explicit
+unprocessed remainder. A completed section means processing finished, not proven semantic coverage.
+Neighboring text windows extend to nearby paragraph boundaries within 1,000 characters per
+side, so a short paragraph's subject is not lost to a fixed character cut. Longer context
+remains available through the retained original; the window cannot guarantee every antecedent.
+Text sections and adaptive splits prefer whole paragraphs. Sentences, lines and words are
+fallback boundaries when a paragraph cannot fit or needs further splitting.
+
+KnowledgeIntegration ends each model section through `finish_section(complete, remaining)`.
+An ordinary final message is not a completion receipt. A declared remainder or missing receipt
+preserves writes and splits the unfinished section; an indivisible remainder is recorded as a
+failed gap. Unresolved work and repairs accompany child sections and explicit retries as
+unverified model reports, not source evidence. Only an explicit completion decision advances
+the processed checkpoint. This is
+execution bookkeeping, not an independent proof of semantic coverage.
+Completion concerns the current section: work belonging to other sections and information
+the source does not supply cannot make that section incomplete. Each entry in `define_relation`'s
+`roles` array can include a `description` defining its meaning. Values must match that meaning,
+including direction and scope, as well as the declared data type.
+
+Use `graph.search(queries, kinds=[...])` to separate entities, schemas and assertions. After
+finding an anchor, use exact `query` and `walk` reads, including taxonomy descendants and their
+instances. `graph.sources(subjects=[fact_id])` returns the fact's recorded sources and change
+context; `read_source(reference)` reads a chosen fragment directly, with pages for long text.
+This route does not depend on ranking the source article in a second text search. The
+[corpus audit and integration pilot](artifacts/search-recall/CORPUS-AUDIT.md) records measured
+results and limitations; relation counts alone do not establish answer quality or completeness.
+The [matched graph-reader diagnostic](artifacts/search-recall/graph-route-evaluation/RESULTS.md)
+found less displayed material with transitions, increased answer time and no demonstrated
+answer-quality improvement. It does not establish full-corpus acceptance.
+Answer composition and verification preserve the requested proposition's participants,
+attribution and conditions, and check that the opening conclusion agrees with its caveats.
+Finding the right facts does not by itself establish a correct final answer.
 
 ## Semantic search configuration
 
@@ -167,6 +210,19 @@ export EVERTREE_REDIS_URL=redis://127.0.0.1:6379
 
 On Windows, or for a managed service, set `EVERTREE_REDIS_URL` to the provider's `rediss://` connection URL (TLS, including its credentials). These secrets belong to the trusted core process, never Program arguments or LLM context. Embeddings use OpenAI API billing. Queries use `TIMEOUT 0`; if the managed server enforces a ceiling, configure its timeout policy to fail instead of returning partial results ([Redis configuration](https://redis.io/docs/latest/develop/ai/search-and-query/administration/configuration/)). Index outages produce an explicitly incomplete non-exact search. GraphStore and backups remain authoritative. Indexes are prepared on demand; writes do not start background indexing. The first indexed search after a graph change may take longer while the current index is prepared.
 
+The trusted Core loads Redis, OpenAI and Typesafe settings from `<agent-home>/.env`, without
+overriding existing environment variables. Keep `TYPESAFE_API_KEY` there when using Jev.
+Secrets never enter Program arguments or model context.
+
+Search accepts `queries`, a nonempty array of names, focused phrases or integer IDs. Independent
+queries share index preparation, an embedding request and Redis pipelines. Duplicate queries
+are normalized away. Results contain one card per ID, up to 10 per unique query, with query
+associations and separate completeness statuses.
+Optional `kinds` is a nonempty OR filter shared by the batch and applied before both channel
+quotas. Omit it for all kinds; an empty list or unknown kind is an error. Narrow searches cannot
+authorize object creation: the name still requires a complete unfiltered search in the current
+model invocation. Filtering types does not change RRF or fix ranking among articles of one type.
+
 Optional `<agent-home>/evertree.toml`:
 
 ```toml
@@ -175,6 +231,18 @@ redis_url_env = "EVERTREE_REDIS_URL"
 openai_key_env = "OPENAI_API_KEY"
 embedding_model = "text-embedding-3-large"
 embedding_dimensions = 3072
+
+[semantics.search]
+bm25_candidates = 64
+vector_candidates = 64
+chunk_tokens = 768
+chunk_overlap = 128
+
+[semantics.jev]
+enabled = false
+model = "jev-1.13.0"
+threshold = 0.05
+api_key_env = "TYPESAFE_API_KEY"
 
 [semantics.remember]
 model = "gpt-6-luna"
@@ -187,7 +255,33 @@ max_items = 600
 token_encoding = "o200k_base"
 ```
 
-Graph commits schedule index reconciliation; query-time generation checks repair missing indexes and prevent reads from a newer restored state. Redis contents are disposable and excluded from state backups. Graph reading, paging and token budgets are described in [Semantics Plane](docs/architecture/Semantics%20Plane.md#exact-slot-reads-and-walks).
+Search indexes overlapping passages of retained names and descriptions. Each channel
+collapses passage hits to object IDs before its candidate limit, so a long object's
+passages cannot fill the quota. Candidate limits are separate from the final ten-per-query
+limit. Small indexes use exact vector search; larger indexes use HNSW with an expanded
+search window. For comparisons involving several subjects, send a focused query for each
+subject in the same array; each then receives its own result budget.
+For multi-hop questions, search an initial anchor, read the returned evidence, then use
+discovered names, IDs or relations for subsequent searches or graph reads. Batch independent
+needs within each step. A completed search reports channel completion; it does not establish
+that every requested fact is known or that an unreturned object is absent. Continue until
+each part has supporting evidence, or explicitly retain the unresolved parts.
+Lexical and vector records are separate within each graph generation, so preparing
+embeddings cannot change text scores while the two channels run.
+
+Jev optionally filters deduplicated non-exact candidates before the per-query limit. Lower
+`threshold` preserves more candidates; `0` bypasses filtering. Exact matches always bypass Jev.
+The initial `0.05` comes from the saved experiment in commit `0abaa54`; its full-corpus
+calibration does not establish recall for a new graph or retrieval pipeline. Verify at least
+99% relevant-candidate retention on independent labels before relying on filtering. Failed
+Jev batches retain their original candidates and return a warning; failed search channels
+still make the affected queries incomplete. Jev uses Typesafe API billing, batches up to
+128 candidates, also bounded by estimated context size, two requests concurrently and a
+10-second timeout. Context packing leaves room below Jev's default per-question limit
+([Typesafe context limits](https://docs.typesafe.ai/models#context-length)); oversized
+individual cards still retain the usual fail-open behavior.
+
+Graph commits do not start index I/O; query-time generation checks repair missing indexes and prevent reads from a newer restored state. Redis contents are disposable and excluded from state backups. Graph reading, paging and token budgets are described in [Semantics Plane](docs/architecture/Semantics%20Plane.md#exact-slot-reads-and-walks).
 
 ## Documentation
 

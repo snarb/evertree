@@ -134,7 +134,6 @@ PRESUMED_RELIABILITY = 0.5
 # Reliability at which an origin discriminates nothing, such as a sensor reported faulty.
 DISCREDITED_RELIABILITY = 0.25
 REASSESSMENT_ROUNDS = 3
-SEARCH_LIMIT = 10
 QUERY_CHARACTERS = 400
 
 INSTRUCTIONS = """You assess evidence for elements of an agent's knowledge graph.
@@ -834,15 +833,18 @@ async def run(ctx, experience_refs: list | None = None):
     experience_refs = experience_refs or []
     batch = await pending_evidence(ctx, experience_refs=experience_refs)
     candidates, search_errors = [], []
-    for source in batch["sources"]:
-        if not source["new"]:
-            continue
+    new_sources = [source for source in batch["sources"] if source["new"]]
+    if new_sources:
         try:
-            found = await call_semantic_search(ctx, source["text"][:QUERY_CHARACTERS])
+            found = await call_semantic_search(
+                ctx, [source["text"][:QUERY_CHARACTERS] for source in new_sources]
+            )
         except Exception as error:  # noqa: BLE001 -- search only widens candidates
-            search_errors.append({"source": source["key"], "error": str(error)})
+            search_errors.extend(
+                {"source": source["key"], "error": str(error)} for source in new_sources
+            )
         else:
-            candidates.extend(item["id"] for item in found.get("items", [])[:SEARCH_LIMIT])
+            candidates.extend(item["id"] for item in found.get("items", []))
     if candidates:
         batch = await pending_evidence(
             ctx, experience_refs=experience_refs, candidates=list(dict.fromkeys(candidates))

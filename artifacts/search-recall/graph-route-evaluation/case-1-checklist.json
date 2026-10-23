@@ -1,0 +1,596 @@
+{
+  "purpose": "Source-only manual coverage checklist frozen before reading the generated graph. Diagnostic review, not an independent benchmark or question-derived gold set.",
+  "input": "tmp/knowledge-graph-routes-case-0-v1/input/articles.json, element 1 only",
+  "source": {
+    "title": "ASX set to drop as Wall Street’s September slump deepens",
+    "publisher": "The Sydney Morning Herald",
+    "url": "https://www.smh.com.au/business/markets/asx-set-to-drop-as-wall-street-s-september-slump-deepens-20230927-p5e7v7.html?ref=rss&utm_medium=rss&utm_source=rss_business",
+    "author": "Stan Choe",
+    "published_at": "2023-09-26T19:11:30+00:00",
+    "category": "business"
+  },
+  "review_rules": [
+    "Derived only from this supplied article record; no questions, answers, evidence labels or generated graph were consulted.",
+    "Count distinct supported meanings, not edge quantity. A qualified fact may satisfy several rows; a combined row requires all stated participants, values and qualifications.",
+    "Graph-fact coverage requires addressable participants joined to the asserted predicate, value and conditions. Finding the wording only through the retained article counts as source-access coverage separately.",
+    "Preserve reported observations, allegations, opinions, predictions and uncertainty as distinct meanings with source attribution; retention does not independently establish truth.",
+    "Keep source dates, relative dates, currency notation and approximation as given. Do not repair conflicting chronology or fill omitted fields from outside knowledge.",
+    "Publication metadata, navigation and collection artifacts are audited separately and must not inflate domain-assertion coverage."
+  ],
+  "assertions": [
+    {
+      "id": "betashares-01",
+      "subject": "Betashares",
+      "predicate": "business type",
+      "value": "ETF provider"
+    },
+    {
+      "id": "betashares-02",
+      "subject": "Betashares",
+      "predicate": "funds managed",
+      "value": 30,
+      "unit": "billion",
+      "currency_symbol": "$",
+      "qualification": "Currency is the source dollar symbol; do not silently substitute USD."
+    },
+    {
+      "id": "betashares-03",
+      "subject": "Betashares",
+      "predicate": "agreed to acquire",
+      "value": "Bendigo and Adelaide Bank superannuation business",
+      "qualification": "An acquisition agreement, not a completed acquisition; preserve seller and acquired business as distinct participants."
+    },
+    {
+      "id": "betashares-04",
+      "subject": "Betashares proposed superannuation acquisition",
+      "predicate": "reported significance",
+      "value": "first venture into superannuation"
+    },
+    {
+      "id": "betashares-05",
+      "subject": "Betashares",
+      "predicate": "stated strategic intention",
+      "value": "expand into the broader financial sector",
+      "qualification": "The proposed acquisition is part of a longer-term strategy, according to Betashares."
+    },
+    {
+      "id": "betashares-06",
+      "subject": "Bendigo shares",
+      "predicate": "session change",
+      "value": 0.6,
+      "unit": "percent",
+      "qualification": "Reported on the acquisition news; chronology does not independently prove causation."
+    },
+    {
+      "id": "asx-01",
+      "subject": "REITS sector",
+      "predicate": "session change",
+      "value": 0.4,
+      "unit": "percent",
+      "qualification": "Reported strongest sector on the local index."
+    },
+    {
+      "id": "asx-02",
+      "subject": "Goodman shares",
+      "predicate": "session change",
+      "value": 0.5,
+      "unit": "percent"
+    },
+    {
+      "id": "asx-03",
+      "subject": "Dexus shares",
+      "predicate": "session change",
+      "value": 2.8,
+      "unit": "percent"
+    },
+    {
+      "id": "star-01",
+      "subject": "Star Entertainment Group",
+      "predicate": "business type",
+      "value": "casino operator"
+    },
+    {
+      "id": "star-02",
+      "subject": "Star Entertainment Group shares",
+      "predicate": "reported all-time-low traded price",
+      "value": 60,
+      "unit": "cents",
+      "qualification": "Low reached after the reported $565 million raise; distinct from session close."
+    },
+    {
+      "id": "star-03",
+      "subject": "Star Entertainment Group",
+      "predicate": "reported capital raised",
+      "value": 565,
+      "unit": "million",
+      "currency_symbol": "$",
+      "qualification": "The article does not explain its overlap with the separate $750 million target."
+    },
+    {
+      "id": "star-04",
+      "subject": "Star Entertainment Group shares",
+      "predicate": "session close",
+      "value": 63,
+      "unit": "cents",
+      "change_percent": -16,
+      "qualification": "Closed 16 percent weaker; retain both the closing price and its session change."
+    },
+    {
+      "id": "star-05",
+      "subject": "Star Entertainment Group",
+      "predicate": "earlier capital raised",
+      "value": 800,
+      "unit": "million",
+      "currency_symbol": "$",
+      "source_time": "February",
+      "qualification": "Reported as in February; no exact day is supplied."
+    },
+    {
+      "id": "star-06",
+      "subject": "Star Entertainment Group",
+      "predicate": "fresh-funding target",
+      "value": 750,
+      "unit": "million",
+      "currency_symbol": "$",
+      "proposed_share_price_cents": 60,
+      "qualification": "Hoping to raise this amount at 60 cents per share; target is not completed funding."
+    },
+    {
+      "id": "asx-04",
+      "subject": "CSL shares",
+      "predicate": "session change",
+      "value": -1.4,
+      "unit": "percent",
+      "qualification": "Healthcare company; the article describes this fall as weighing on the healthcare sector."
+    },
+    {
+      "id": "asx-05",
+      "subject": "IAG shares",
+      "predicate": "session change",
+      "value": -2.6,
+      "unit": "percent",
+      "qualification": "Insurance company; gave back some of its Tuesday gains, not necessarily all."
+    },
+    {
+      "id": "asx-06",
+      "subject": "Suncorp shares",
+      "predicate": "session change",
+      "value": -2.0,
+      "unit": "percent",
+      "qualification": "Insurance company; gave back some of its Tuesday gains, not necessarily all."
+    },
+    {
+      "id": "asx-07",
+      "subject": "Newcrest shares",
+      "predicate": "session change",
+      "value": -2.1,
+      "unit": "percent",
+      "qualification": "Gold miner; one of the biggest large-cap decliners after the overnight spot-gold fall."
+    },
+    {
+      "id": "asx-08",
+      "subject": "Evolution shares",
+      "predicate": "session change",
+      "value": -3.5,
+      "unit": "percent",
+      "qualification": "Gold miner; one of the biggest large-cap decliners after the overnight spot-gold fall."
+    },
+    {
+      "id": "asx-09",
+      "subject": "Spot gold price",
+      "predicate": "overnight change",
+      "value": -0.9,
+      "unit": "percent"
+    },
+    {
+      "id": "asx-10",
+      "subject": "Information technology sector",
+      "predicate": "session change",
+      "value": -1.1,
+      "unit": "percent",
+      "qualification": "Reported weakest sector on the local bourse."
+    },
+    {
+      "id": "asx-11",
+      "subject": "WiseTech shares",
+      "predicate": "session change",
+      "value": -1.4,
+      "unit": "percent"
+    },
+    {
+      "id": "glover-01",
+      "subject": "Gary Glover",
+      "predicate": "professional role",
+      "value": "senior client adviser at Novus Capital",
+      "qualification": "Preserve person, employer and role as a navigable join."
+    },
+    {
+      "id": "glover-02",
+      "subject": "Gary Glover",
+      "predicate": "assessment of Australian market",
+      "value": "surprisingly resilient despite negative US lead and latest inflation data",
+      "qualification": "His assessment; he had expected a larger broad decline."
+    },
+    {
+      "id": "glover-03",
+      "subject": "Gary Glover",
+      "predicate": "assessment of market regime",
+      "value": "volatile but range-bound",
+      "qualification": "He compares it with high-inflation periods in the 1940s and 1970s; this is an analogy, not a measured equivalence."
+    },
+    {
+      "id": "glover-04",
+      "subject": "Gary Glover",
+      "predicate": "assessment of rate expectations",
+      "value": "markets beginning to recognize that rates could stay higher for longer",
+      "qualification": "Conditional expectation, not an announced rate decision."
+    },
+    {
+      "id": "us-01",
+      "subject": "US stocks",
+      "predicate": "reported Tuesday level",
+      "value": "back to June levels after the sharp decline",
+      "qualification": "Broad source characterization; no numerical index level is supplied."
+    },
+    {
+      "id": "us-02",
+      "subject": "S&P 500",
+      "predicate": "Tuesday change",
+      "value": -1.5,
+      "unit": "percent",
+      "losses_in_last_six_days": 5,
+      "qualification": "Fifth losing session in the last six days."
+    },
+    {
+      "id": "us-03",
+      "subject": "Dow Jones",
+      "predicate": "Tuesday change",
+      "value": -1.1,
+      "unit": "percent"
+    },
+    {
+      "id": "us-04",
+      "subject": "Nasdaq composite",
+      "predicate": "Tuesday change",
+      "value": -1.6,
+      "unit": "percent"
+    },
+    {
+      "id": "us-05",
+      "subject": "S&P 500",
+      "predicate": "September change to reporting time",
+      "value": -5.2,
+      "unit": "percent",
+      "qualification": "On track for the worst month of that year; not a completed full-month return."
+    },
+    {
+      "id": "rates-01",
+      "subject": "Expected prolonged high Federal Reserve interest rates",
+      "predicate": "reported market effect",
+      "value": "higher bond yields and lower stock and other investment prices",
+      "qualification": "Article causal interpretation; bond yields described as highest in more than a decade, without claiming every maturity has the same yield."
+    },
+    {
+      "id": "rates-02",
+      "subject": "10-year US Treasury yield",
+      "predicate": "Tuesday quoted yield",
+      "value": 4.55,
+      "unit": "percent",
+      "prior_monday_percent": 4.54,
+      "qualification": "Up from 4.54 percent late Monday; near its highest since 2007."
+    },
+    {
+      "id": "rates-03",
+      "subject": "10-year US Treasury yield",
+      "predicate": "earlier comparison yield",
+      "value": 3.5,
+      "unit": "percent",
+      "source_time": "May",
+      "approximate": true,
+      "qualification": "Approximately this level in May."
+    },
+    {
+      "id": "rates-04",
+      "subject": "10-year US Treasury yield",
+      "predicate": "earlier comparison yield",
+      "value": 0.5,
+      "unit": "percent",
+      "source_time": "about three years earlier",
+      "qualification": "Approximately three years before the report; do not invent an exact day."
+    },
+    {
+      "id": "economy-01",
+      "subject": "Tuesday US consumer-confidence report",
+      "predicate": "comparison with economists expectations",
+      "value": "weaker than expected",
+      "qualification": "No numerical confidence reading or forecast is supplied."
+    },
+    {
+      "id": "economy-02",
+      "subject": "US household spending",
+      "predicate": "reported economic role",
+      "value": "strong spending helped keep the economy out of a long-predicted recession",
+      "qualification": "Source interpretation, not proof that a recession could not occur."
+    },
+    {
+      "id": "shutdown-01",
+      "subject": "Possible US government shutdown",
+      "predicate": "reported trigger and risk",
+      "value": "Capitol Hill stalemate could shut off federal services nationwide",
+      "qualification": "Threat at reporting time, not an established shutdown."
+    },
+    {
+      "id": "shutdown-02",
+      "subject": "Lori Calvasina",
+      "predicate": "professional role",
+      "value": "strategist at RBC Capital Markets"
+    },
+    {
+      "id": "shutdown-03",
+      "subject": "Lori Calvasina shutdown comparison",
+      "predicate": "sample selection",
+      "value": "seven shutdowns lasting at least ten days since the 1970s",
+      "sample_size": 7,
+      "minimum_duration_days": 10,
+      "qualification": "All associated historical return statistics must stay joined to this same sample and analyst."
+    },
+    {
+      "id": "shutdown-04",
+      "subject": "S&P 500 in the selected shutdown sample",
+      "predicate": "mean return in three months before shutdown",
+      "value": -10,
+      "unit": "percent",
+      "approximate": true,
+      "window": "three months before",
+      "qualification": "Roughly this decline across the seven selected episodes; not a forecast for the threatened shutdown."
+    },
+    {
+      "id": "shutdown-05",
+      "subject": "S&P 500 in the selected shutdown sample",
+      "predicate": "mean return during shutdown",
+      "value": -0.3,
+      "unit": "percent",
+      "window": "during shutdown",
+      "qualification": "Average during the selected shutdowns, distinct from the preceding three-month window."
+    },
+    {
+      "id": "shutdown-06",
+      "subject": "Stocks in the selected shutdown comparison",
+      "predicate": "reported subsequent behavior",
+      "value": "meaningful rebound afterward",
+      "qualification": "No rebound percentage or exact subsequent window is supplied."
+    },
+    {
+      "id": "risks-01",
+      "subject": "Wall Street at reporting time",
+      "predicate": "listed concern",
+      "value": "higher oil prices"
+    },
+    {
+      "id": "risks-02",
+      "subject": "Wall Street at reporting time",
+      "predicate": "listed concern",
+      "value": "shaky economies around the world",
+      "qualification": "Broad assessment, not a claim that every economy was in recession."
+    },
+    {
+      "id": "risks-03",
+      "subject": "US autoworker strike",
+      "predicate": "possible effect",
+      "value": "additional upward pressure on inflation",
+      "qualification": "Conditional concern, not a measured realized effect."
+    },
+    {
+      "id": "risks-04",
+      "subject": "Resumption of US student-loan repayments",
+      "predicate": "possible effect",
+      "value": "reduced household spending",
+      "qualification": "Conditional concern, not a measured realized reduction."
+    },
+    {
+      "id": "us-06",
+      "subject": "S&P 500 constituent stocks",
+      "predicate": "share declining in the session",
+      "value": 90,
+      "unit": "percent"
+    },
+    {
+      "id": "us-07",
+      "subject": "Big Tech stocks",
+      "predicate": "reported index contribution",
+      "value": "heaviest weights on the declining S&P 500",
+      "qualification": "The article links their tendency to be hurt by high rates to this pressure; not an exact contribution estimate."
+    },
+    {
+      "id": "us-08",
+      "subject": "Apple shares",
+      "predicate": "session change",
+      "value": -2.3,
+      "unit": "percent"
+    },
+    {
+      "id": "us-09",
+      "subject": "Microsoft shares",
+      "predicate": "session change",
+      "value": -1.7,
+      "unit": "percent"
+    },
+    {
+      "id": "us-10",
+      "subject": "Amazon shares",
+      "predicate": "session change",
+      "value": -4.0,
+      "unit": "percent",
+      "qualification": "Reported after the antitrust suit; sequence does not independently prove a single cause."
+    },
+    {
+      "id": "amazon-01",
+      "subject": "Federal Trade Commission and seventeen state attorneys general",
+      "predicate": "filed antitrust lawsuit against",
+      "value": "Amazon",
+      "state_attorneys_general": 17,
+      "qualification": "Preserve both plaintiff groups and defendant; the count concerns state attorneys general."
+    },
+    {
+      "id": "amazon-02",
+      "subject": "Plaintiffs in the Amazon antitrust suit",
+      "predicate": "allegation",
+      "value": "Amazon uses dominance to inflate prices on other platforms",
+      "qualification": "Allegation, not an adjudicated finding."
+    },
+    {
+      "id": "amazon-03",
+      "subject": "Plaintiffs in the Amazon antitrust suit",
+      "predicate": "allegation",
+      "value": "Amazon overcharges sellers",
+      "qualification": "Allegation, not an adjudicated finding."
+    },
+    {
+      "id": "amazon-04",
+      "subject": "Plaintiffs in the Amazon antitrust suit",
+      "predicate": "allegation",
+      "value": "Amazon stifles competition",
+      "qualification": "Allegation, not an adjudicated finding."
+    },
+    {
+      "id": "china-01",
+      "subject": "Evergrande",
+      "predicate": "reported condition and industry",
+      "value": "heavily indebted Chinese real estate developer under continuing concern"
+    },
+    {
+      "id": "china-02",
+      "subject": "Chinese property-market crisis",
+      "predicate": "reported effect",
+      "value": "drag on Chinese economic growth",
+      "qualification": "Article assessment; no numerical effect is given."
+    },
+    {
+      "id": "china-03",
+      "subject": "Chinese property-market crisis",
+      "predicate": "reported concern",
+      "value": "financial instability",
+      "qualification": "Risk concern, not proof of a realized system-wide financial failure."
+    },
+    {
+      "id": "europe-01",
+      "subject": "France CAC 40",
+      "predicate": "session change",
+      "value": -0.7,
+      "unit": "percent"
+    },
+    {
+      "id": "europe-02",
+      "subject": "Germany DAX",
+      "predicate": "session change",
+      "value": -1.0,
+      "unit": "percent"
+    },
+    {
+      "id": "oil-01",
+      "subject": "Benchmark US crude",
+      "predicate": "quoted price and increase",
+      "value": 90.39,
+      "currency": "USD",
+      "unit": "per barrel",
+      "increase_usd": 0.71,
+      "qualification": "Rose by 71 US cents per barrel; do not infer a specific futures contract or delivery date."
+    },
+    {
+      "id": "oil-02",
+      "subject": "Brent crude",
+      "predicate": "quoted price and increase",
+      "value": 93.96,
+      "currency": "USD",
+      "unit": "per barrel",
+      "increase_usd": 0.67,
+      "qualification": "International benchmark; rose by 67 US cents per barrel."
+    },
+    {
+      "id": "oil-03",
+      "subject": "Rising crude prices",
+      "predicate": "reported concern",
+      "value": "additional inflation worries",
+      "qualification": "Concern rather than a quantified inflation outcome."
+    },
+    {
+      "id": "senate-01",
+      "subject": "Bridget McKenzie",
+      "predicate": "public role",
+      "value": "Senator"
+    },
+    {
+      "id": "senate-02",
+      "subject": "Bridget McKenzie",
+      "predicate": "statement about Senate committee powers",
+      "value": "can summon witnesses within Australia but lack enforceable powers for overseas witnesses",
+      "qualification": "Preserve attribution; this checklist does not independently establish the legal rule or the location of a particular witness."
+    },
+    {
+      "id": "senate-03",
+      "subject": "Alan Joyce",
+      "predicate": "reported former role",
+      "value": "Qantas boss"
+    },
+    {
+      "id": "senate-04",
+      "subject": "Alan Joyce",
+      "predicate": "declined appearance before",
+      "value": "Senate select committee on the government rejection of extra Qatar Airways flights",
+      "qualification": "Reported reason: personal commitments; do not infer contempt, overseas residence or an enforced summons."
+    },
+    {
+      "id": "senate-05",
+      "subject": "Australian federal government decision",
+      "predicate": "rejected",
+      "value": "extra flights from Qatar Airways",
+      "qualification": "This decision is the stated subject of the Senate select committee inquiry, not a ban on all Qatar Airways flights."
+    }
+  ],
+  "editorial_and_publication_meanings": [
+    {
+      "id": "meta-01",
+      "meaning": "Stan Choe is the supplied author; The Sydney Morning Herald is the publisher. Preserve the exact title, URL, business category and supplied publication timestamp as source metadata, not event timestamps."
+    },
+    {
+      "id": "meta-02",
+      "meaning": "The headline forecasts an ASX drop while the retained body includes Australian session results. Do not silently reconcile the headline and body into one confirmed index result or invent a missing overall ASX return."
+    },
+    {
+      "id": "meta-03",
+      "meaning": "The body uses Tuesday, Monday, February, May and about three years ago. These labels must retain their source context without replacing them with guessed exact dates."
+    },
+    {
+      "id": "meta-04",
+      "meaning": "Loading, Tweet of the day and layout labels do not assert market events; no tweet content is present."
+    }
+  ],
+  "section_coverage": {
+    "meaning": "Section labels organize this source; they are not independent domain facts or taxonomic is-a links.",
+    "sections": {
+      "Opening acquisition and sector reports": [],
+      "The laggards": [],
+      "The lowdown": [],
+      "Quote of the day": []
+    }
+  },
+  "negative_checks": [
+    "Do not mark the Betashares acquisition or Star funding target as completed.",
+    "Do not add together Star's $565 million, earlier $800 million and targeted $750 million as independent completed raises; overlap and timing are not fully explained.",
+    "Do not swap Star's 60-cent low/offer price with its 63-cent session close, or lose the 16-percent decline.",
+    "Keep each company/index percentage attached to the correct entity and reporting window; distinguish session, overnight and September-to-date changes.",
+    "Do not assign USD to unqualified Australian-market dollar figures; crude quotes explicitly use USD.",
+    "Do not turn analysts' assessments, recession/inflation concerns or a threatened shutdown into established future outcomes.",
+    "Keep shutdown sample size, minimum duration, analyst and before/during/after windows joined; do not interpret historical averages as this episode's prediction.",
+    "Keep FTC allegations distinct from an adjudicated antitrust violation and preserve the seventeen-state plaintiff count.",
+    "Do not infer exact chronology or an overall ASX percentage absent from this retained article.",
+    "Keep the quoted committee-powers statement attributed to McKenzie; do not infer Joyce's location or legal status.",
+    "Generic related-to links or isolated summary Claims do not substitute for the company-to-price, person-to-employer, sample-to-statistic or plaintiff-to-allegation joins."
+  ],
+  "source_record_sha256": "cbd320a257e7934ac8fccb6f35dbfbe46931ea0c23628f82b3a6d03ff1ea7327",
+  "checklist_counts": {
+    "domain_assertions": 70,
+    "editorial_publication_meanings": 4,
+    "section_groups": 4
+  }
+}

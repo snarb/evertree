@@ -1,0 +1,61 @@
+{
+  "notice": "All rows use 253 complete articles and complete original gold. Independent forty groups were frozen before outcomes. Focused cases were already observed; their saved model plans are unchanged. Gold URL precision is an incomplete-label proxy, not exhaustive relevance precision. Off/on runs use separately built indexes; final-count differences cannot isolate filter effects.",
+  "runs": {
+    "independent-off": {
+      "questions": 40,
+      "gold_source_pairs": 99,
+      "raw_gold": 99,
+      "retained_gold": 99,
+      "returned_gold": 89,
+      "candidate_recall": 1.0,
+      "relevant_candidate_retention": 1.0,
+      "final_source_recall": 0.898989898989899,
+      "gold_url_precision": 0.2225,
+      "returned_source_pairs": 400,
+      "warnings": 0,
+      "all_complete": true
+    },
+    "independent-jev": {
+      "questions": 40,
+      "gold_source_pairs": 99,
+      "raw_gold": 99,
+      "retained_gold": 99,
+      "returned_gold": 88,
+      "candidate_recall": 1.0,
+      "relevant_candidate_retention": 1.0,
+      "final_source_recall": 0.8888888888888888,
+      "gold_url_precision": 0.22,
+      "returned_source_pairs": 400,
+      "warnings": 0,
+      "all_complete": true
+    },
+    "focused-off": {
+      "questions": 40,
+      "gold_source_pairs": 90,
+      "raw_gold": 90,
+      "retained_gold": 90,
+      "returned_gold": 87,
+      "candidate_recall": 1.0,
+      "relevant_candidate_retention": 1.0,
+      "final_source_recall": 0.9666666666666667,
+      "gold_url_precision": 0.13446676970633695,
+      "returned_source_pairs": 647,
+      "warnings": 0,
+      "all_complete": true
+    },
+    "focused-jev": {
+      "questions": 40,
+      "gold_source_pairs": 90,
+      "raw_gold": 90,
+      "retained_gold": 90,
+      "returned_gold": 87,
+      "candidate_recall": 1.0,
+      "relevant_candidate_retention": 1.0,
+      "final_source_recall": 0.9666666666666667,
+      "gold_url_precision": 0.1332312404287902,
+      "returned_source_pairs": 653,
+      "warnings": 0,
+      "all_complete": true
+    }
+  }
+}

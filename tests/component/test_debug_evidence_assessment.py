@@ -44,7 +44,7 @@ class Provider:
             if item["source_kind"] == "user_input" and "09:00" in item["content"]
         ]
         calls = [
-            ("search", {"query": "Pump off"}),
+            ("search", {"queries": ["Pump off"]}),
             (
                 "create_claim",
                 {

@@ -1,0 +1,528 @@
+{
+  "purpose": "Source-only manual coverage checklist frozen before reading the generated graph. Diagnostic review, not an independent benchmark or question-derived gold set.",
+  "input": "tmp/knowledge-graph-routes-case-0-v1/input/articles.json, element 2 only",
+  "source": {
+    "title": "Amazon sellers sound off on the FTC's 'long-overdue' antitrust case",
+    "publisher": "Cnbc | World Business News Leader",
+    "url": "https://www.cnbc.com/2023/10/06/amazon-sellers-sound-off-on-the-ftcs-long-overdue-antitrust-case.html",
+    "author": null,
+    "published_at": "2023-10-06T21:31:00+00:00",
+    "category": "business"
+  },
+  "review_rules": [
+    "Derived only from this supplied article record; no questions, answers, evidence labels or generated graph were consulted.",
+    "Count distinct supported meanings, not edge quantity. A qualified fact may satisfy several rows; a combined row requires all stated participants, values and qualifications.",
+    "Graph-fact coverage requires addressable participants joined to the asserted predicate, value and conditions. Finding the wording only through the retained article counts as source-access coverage separately.",
+    "Preserve reported observations, allegations, opinions, predictions and uncertainty as distinct meanings with source attribution; retention does not independently establish truth.",
+    "Keep source dates, relative dates, currency notation and approximation as given. Do not repair conflicting chronology or fill omitted fields from outside knowledge.",
+    "Publication metadata, navigation and collection artifacts are audited separately and must not inflate domain-assertion coverage."
+  ],
+  "assertions": [
+    {
+      "id": "ruckel-01",
+      "subject": "Fred Ruckel",
+      "predicate": "associated company",
+      "value": "Snuggly Cat",
+      "qualification": "The source calls it his company; do not infer a specific executive title."
+    },
+    {
+      "id": "ruckel-02",
+      "subject": "Snuggly Cat",
+      "predicate": "makes",
+      "value": "Ripple Rug",
+      "qualification": "Ripple Rug is an interactive play mat/cat toy; keep company and product distinct."
+    },
+    {
+      "id": "ruckel-03",
+      "subject": "Fred Ruckel",
+      "predicate": "Amazon selling position for Ripple Rug",
+      "value": "sole seller on Amazon at the reported incident"
+    },
+    {
+      "id": "ruckel-04",
+      "subject": "Amazon automated email to Fred Ruckel",
+      "predicate": "reported receipt time",
+      "value": "late in the day on October 27, 2021",
+      "qualification": "No exact time or timezone is supplied."
+    },
+    {
+      "id": "ruckel-05",
+      "subject": "Amazon price-detection software",
+      "predicate": "flagged Ripple Rug offer",
+      "value": "lower advertised price at another retailer",
+      "qualification": "The reported comparison detected Chewy's item price; the delivered Chewy total was higher."
+    },
+    {
+      "id": "ruckel-06",
+      "subject": "Ripple Rug Amazon listing",
+      "predicate": "reported eligibility consequence",
+      "value": "loss of buy-box / Featured Offer eligibility",
+      "qualification": "The buy box is the listing area with Add to Cart; not a proven deletion of the underlying product page."
+    },
+    {
+      "id": "ruckel-07",
+      "subject": "Ripple Rug buy-box exclusion",
+      "predicate": "reported business risk for Ruckel",
+      "value": "near disappearance from shopping exposure and thousands of dollars lost per day",
+      "qualification": "Source characterization of the consequence; no exact daily amount or audited realized loss is supplied."
+    },
+    {
+      "id": "ruckel-08",
+      "subject": "Chewy Ripple Rug promotion",
+      "predicate": "advertised item price",
+      "value": 39.99,
+      "currency_symbol": "$",
+      "qualification": "A discount promotion unknown to Ruckel at the time; exclude shipping and taxes from this quoted item price."
+    },
+    {
+      "id": "ruckel-09",
+      "subject": "Amazon Ripple Rug offer in the same incident",
+      "predicate": "item price",
+      "value": 43,
+      "currency_symbol": "$"
+    },
+    {
+      "id": "ruckel-10",
+      "subject": "Chewy Ripple Rug purchase in the same incident",
+      "predicate": "total including shipping and taxes",
+      "value": 48.54,
+      "currency_symbol": "$",
+      "qualification": "Keep this delivered total distinct from the $39.99 advertised item price and $43 Amazon offer."
+    },
+    {
+      "id": "ruckel-11",
+      "subject": "Fred Ruckel",
+      "predicate": "chosen response to buy-box exclusion",
+      "value": "ask Chewy to raise its Ripple Rug price",
+      "qualification": "He chose this rather than lowering the Amazon price; the supplied article does not report that Chewy complied or state the restored buy-box outcome."
+    },
+    {
+      "id": "ftc-01",
+      "subject": "Federal Trade Commission",
+      "predicate": "filed antitrust suit against",
+      "value": "Amazon",
+      "complaint_pages": 172,
+      "qualification": "Filed last week relative to this report; the source gives a 172-page complaint, not an exact filing date here."
+    },
+    {
+      "id": "ftc-02",
+      "subject": "FTC complaint",
+      "predicate": "allegation",
+      "value": "Amazon uses monopoly power to squeeze merchants and thwart rivals",
+      "qualification": "Preserve defendant, accusing agency and allegation status."
+    },
+    {
+      "id": "ftc-03",
+      "subject": "FTC complaint",
+      "predicate": "alleged consumer effects",
+      "value": "artificially inflated prices and degraded shopping experience",
+      "qualification": "Alleged effects, not adjudicated findings."
+    },
+    {
+      "id": "ftc-04",
+      "subject": "FTC complaint",
+      "predicate": "alleged anti-discounting mechanism",
+      "value": "a large web-crawling apparatus constantly tracks online prices"
+    },
+    {
+      "id": "ftc-05",
+      "subject": "FTC complaint",
+      "predicate": "alleged seller penalty",
+      "value": "threat of buy-box disqualification when cheaper prices are detected elsewhere",
+      "qualification": "Join external price comparison to the penalty and third-party sellers, without treating every lower offer as proven in every case."
+    },
+    {
+      "id": "ftc-06",
+      "subject": "FTC complaint",
+      "predicate": "characterization of buy-box loss",
+      "value": "existential threat to seller businesses",
+      "qualification": "Agency characterization, not a universal quantified failure rate."
+    },
+    {
+      "id": "ftc-07",
+      "subject": "FTC complaint",
+      "predicate": "alleged fee policy",
+      "value": "steadily rising fees charged to sellers"
+    },
+    {
+      "id": "ftc-08",
+      "subject": "FTC complaint",
+      "predicate": "alleged cross-market price effect",
+      "value": "restrictions on outside discounting and fees induce higher off-Amazon prices, creating an artificial price floor",
+      "qualification": "Preserve the agency's proposed mechanism and scope; not independent causal verification."
+    },
+    {
+      "id": "ftc-09",
+      "subject": "FTC in this case",
+      "predicate": "requested legal outcome at reporting time",
+      "value": "hold Amazon liable for alleged anti-monopoly violations",
+      "qualification": "Specific requested remedies had not yet been outlined; liability had not been established."
+    },
+    {
+      "id": "amazon-01",
+      "subject": "David Zapolsky",
+      "predicate": "professional role",
+      "value": "Amazon general counsel"
+    },
+    {
+      "id": "amazon-02",
+      "subject": "David Zapolsky",
+      "predicate": "Amazon response about seller prices",
+      "value": "third-party marketplace sellers set their own prices",
+      "qualification": "Company position in a blog post; retain separately from FTC allegations."
+    },
+    {
+      "id": "amazon-03",
+      "subject": "David Zapolsky",
+      "predicate": "Amazon response about pricing tools",
+      "value": "Amazon invests in tools helping sellers offer competitive prices"
+    },
+    {
+      "id": "amazon-04",
+      "subject": "David Zapolsky",
+      "predicate": "justification for offer promotion policy",
+      "value": "Amazon does not highlight or promote offers it considers uncompetitive",
+      "qualification": "He compares this with a store owner avoiding a bad deal; not proof of the policy's legal or competitive effects."
+    },
+    {
+      "id": "amazon-05",
+      "subject": "David Zapolsky",
+      "predicate": "predicted risk of FTC suit",
+      "value": "could force Amazon to stop highlighting low prices, contrary to antitrust goals",
+      "qualification": "Conditional argument from Amazon, not a remedy actually ordered."
+    },
+    {
+      "id": "forum-01",
+      "subject": "Seller Central",
+      "predicate": "function and operator",
+      "value": "Amazon forum for merchants"
+    },
+    {
+      "id": "forum-02",
+      "subject": "Seller Central posting",
+      "predicate": "access and identity conditions",
+      "value": "anonymous forum users must have a seller account to post",
+      "qualification": "Anonymous does not mean open posting without an account; Amazon made the forum anonymous in recent years."
+    },
+    {
+      "id": "forum-03",
+      "subject": "Some Seller Central commenters",
+      "predicate": "response to FTC suit",
+      "value": "support and hope for changed Amazon business practices",
+      "qualification": "Do not generalize anonymous comments to all sellers or count them as a representative survey."
+    },
+    {
+      "id": "forum-04",
+      "subject": "Reported seller grievances about Amazon",
+      "predicate": "topics",
+      "value": "rising fees, opaque suspensions and increased competition including from Amazon",
+      "qualification": "Distinct issues, not a claim that every commenter personally experienced each one."
+    },
+    {
+      "id": "forum-05",
+      "subject": "Amazon message to sellers",
+      "predicate": "stated immediate effect of lawsuit",
+      "value": "no change to seller relationship or current operation",
+      "qualification": "Reported screenshot of a message sent the day after the complaint; source assertion, not an independently checked future commitment."
+    },
+    {
+      "id": "forum-06",
+      "subject": "An anonymous Seller Central commenter",
+      "predicate": "criticism of Amazon message",
+      "value": "rejects its wording and says sellers are customers receiving poor customer service",
+      "qualification": "Retain as one commenter's opinion without inventing identity."
+    },
+    {
+      "id": "forum-07",
+      "subject": "Another anonymous Seller Central commenter",
+      "predicate": "description of previous twelve months selling",
+      "value": "financially stressful gambling-like experience and race to the bottom",
+      "qualification": "Subjective analogy; do not infer actual gambling, drug use or verified debt from the metaphor."
+    },
+    {
+      "id": "forum-08",
+      "subject": "Another anonymous Seller Central commenter",
+      "predicate": "assessment of lawsuit timing",
+      "value": "long overdue",
+      "qualification": "The hypothetical FTC job application after account closure does not establish an actual closure or application."
+    },
+    {
+      "id": "forum-09",
+      "subject": "An opposing anonymous Seller Central commenter",
+      "predicate": "assessment of selling on Amazon",
+      "value": "life-changing opportunity and complaint is misguided",
+      "qualification": "Keep dissent distinct from the supportive comments."
+    },
+    {
+      "id": "needham-01",
+      "subject": "Scott Needham",
+      "predicate": "business roles",
+      "value": "Amazon seller and operator of a product-finder tool for Amazon sellers",
+      "qualification": "Both seller and service-provider roles explain his stated interest; no business name is supplied."
+    },
+    {
+      "id": "needham-02",
+      "subject": "Scott Needham",
+      "predicate": "view of FTC issue selection",
+      "value": "surprised because selected issues have not caused him much pain despite prior criticism of Amazon",
+      "qualification": "Personal experience and evaluation; not a statement that the practices harmed nobody."
+    },
+    {
+      "id": "needham-03",
+      "subject": "Scott Needham",
+      "predicate": "response to coercion allegation",
+      "value": "puzzled by claim that Amazon coercively encourages Fulfillment by Amazon",
+      "qualification": "The coercion claim is the FTC's; his response is distinct."
+    },
+    {
+      "id": "fba-01",
+      "subject": "Fulfillment by Amazon",
+      "predicate": "abbreviation and operator",
+      "value": "FBA, Amazon fulfillment service"
+    },
+    {
+      "id": "needham-04",
+      "subject": "Scott Needham",
+      "predicate": "reported reasons many sellers like FBA",
+      "value": "price/value and promise of two-day shipping",
+      "qualification": "His characterization of many sellers; not an unconditional delivery guarantee for every item."
+    },
+    {
+      "id": "needham-05",
+      "subject": "Scott Needham",
+      "predicate": "reported seller motivation for FBA use",
+      "value": "easier and more effective business rather than feeling required to use it",
+      "qualification": "Attributed view, not disproof of every coercion allegation."
+    },
+    {
+      "id": "needham-06",
+      "subject": "Scott Needham",
+      "predicate": "assessment of Amazon seller power",
+      "value": "considerable and worth examining, but uncertain this lawsuit changes it"
+    },
+    {
+      "id": "moller-01",
+      "subject": "Scott Moller",
+      "predicate": "business roles",
+      "value": "Amazon seller and co-founder of an agency helping merchants run storefronts",
+      "qualification": "Agency is unnamed; preserve both roles."
+    },
+    {
+      "id": "moller-02",
+      "subject": "Scott Moller",
+      "predicate": "sells on Amazon under brand",
+      "value": "Grill Sergeant",
+      "qualification": "Product category: grilling accessories; brand is not the unnamed agency."
+    },
+    {
+      "id": "moller-03",
+      "subject": "Scott Moller",
+      "predicate": "reported FBA-associated shipping cost",
+      "value": 7.49,
+      "currency_symbol": "$",
+      "unit": "per package",
+      "qualification": "Per package to an Amazon warehouse in his example; do not generalize to every seller or silently reinterpret as universal last-mile delivery."
+    },
+    {
+      "id": "moller-04",
+      "subject": "Scott Moller",
+      "predicate": "reported traditional-carrier comparison cost",
+      "value": 12,
+      "currency_symbol": "$",
+      "unit": "per package",
+      "approximate": true,
+      "qualification": "About this cost for shipping himself in the same example; keep joined to the $7.49 comparison."
+    },
+    {
+      "id": "moller-05",
+      "subject": "Scott Moller",
+      "predicate": "stated FBA operating benefits",
+      "value": "can use Amazon staff and storage without his own warehouse",
+      "qualification": "Personal account, not a claim that no seller needs warehousing."
+    },
+    {
+      "id": "moller-06",
+      "subject": "Scott Moller",
+      "predicate": "stated marketplace advertising benefit",
+      "value": "access to advertising data for targeting intended consumers"
+    },
+    {
+      "id": "moller-07",
+      "subject": "FTC complaint as described in the article",
+      "predicate": "allegation about search results",
+      "value": "advertising causes shoppers to sift through potentially less relevant, lower-quality products",
+      "qualification": "Potential relevance/quality harm is alleged; preserve ads and search-result context."
+    },
+    {
+      "id": "moller-08",
+      "subject": "Scott Moller",
+      "predicate": "response to FTC advertising criticism",
+      "value": "disputes it and argues ads can precisely reach desired consumers",
+      "qualification": "Positive assessment, distinct from the FTC allegation; not an objective proof of ad relevance."
+    },
+    {
+      "id": "needham-07",
+      "subject": "Scott Needham",
+      "predicate": "comparison of competitive conditions",
+      "value": "would have been more supportive before the pandemic; sees major e-commerce changes after Covid into 2023 versus 2019",
+      "qualification": "His historical assessment, not a legal finding that monopoly existed in 2019 or ended later."
+    },
+    {
+      "id": "needham-08",
+      "subject": "Scott Needham",
+      "predicate": "identified increasingly viable alternatives",
+      "value": "Shopify and Walmart for many seller categories",
+      "qualification": "Not a claim of equal suitability for all sellers or identical business models."
+    },
+    {
+      "id": "needham-09",
+      "subject": "Scott Needham",
+      "predicate": "identified growing competitive example",
+      "value": "Temu among rapidly growing Chinese e-commerce companies"
+    },
+    {
+      "id": "needham-10",
+      "subject": "Scott Needham",
+      "predicate": "reported Amazon change",
+      "value": "greater ability for sellers to communicate with buyers and offer promotions to selected customers",
+      "qualification": "He associates changes with competition; no independently established causal effect or universal unrestricted messaging."
+    },
+    {
+      "id": "needham-11",
+      "subject": "Scott Needham",
+      "predicate": "comparison of seller communication control",
+      "value": "Shopify gives more control than Amazon, although Amazon now allows some communication and still controls its process"
+    },
+    {
+      "id": "needham-12",
+      "subject": "Scott Needham",
+      "predicate": "assessment of suit for sellers",
+      "value": "does not make the marketplace better for sellers",
+      "qualification": "His view, qualified by vested interest as both seller and service provider."
+    },
+    {
+      "id": "pricing-01",
+      "subject": "Many sellers described in this report",
+      "predicate": "areas of FTC concern they consider justified",
+      "value": "Amazon pricing policies and rising fees",
+      "qualification": "Unquantified group characterization, not a poll result."
+    },
+    {
+      "id": "hart-01",
+      "subject": "Molson Hart",
+      "predicate": "professional role",
+      "value": "CEO of Viahart",
+      "qualification": "Caption identifies him as CEO; Viahart is an educational-toy company selling on Amazon."
+    },
+    {
+      "id": "hart-02",
+      "subject": "Molson Hart",
+      "predicate": "history of pricing-policy criticism",
+      "value": "criticized seller-fee effects on pricing in a 2019 Medium post"
+    },
+    {
+      "id": "hart-03",
+      "subject": "Molson Hart",
+      "predicate": "testified about seller experience",
+      "value": "before a House committee later in 2019",
+      "qualification": "Committee is not named; do not invent a hearing date or committee title."
+    },
+    {
+      "id": "hart-04",
+      "subject": "Molson Hart business",
+      "predicate": "reported Amazon dependence",
+      "value": 90,
+      "unit": "percent",
+      "approximate": true,
+      "qualification": "About 90 percent of his business comprises Amazon sales; source does not specify a precise revenue/accounting denominator."
+    },
+    {
+      "id": "hart-05",
+      "subject": "Molson Hart",
+      "predicate": "described sensitivity to Amazon disruption",
+      "value": "a hit to Amazon sales has considerable impact on his business",
+      "qualification": "His assessment linked to reported sales dependence."
+    },
+    {
+      "id": "hart-06",
+      "subject": "Brain Flakes",
+      "predicate": "product identity and association",
+      "value": "popular construction toy sold by Hart's business"
+    },
+    {
+      "id": "hart-07",
+      "subject": "Third-party Brain Flakes seller in September 2022",
+      "predicate": "listed lower price on",
+      "value": "Target than on Amazon",
+      "qualification": "Seller is unnamed; neither numerical price is supplied."
+    },
+    {
+      "id": "hart-08",
+      "subject": "Molson Hart",
+      "predicate": "reported reaction to September 2022 pricing incident",
+      "value": "twenty-four anxious hours",
+      "duration_hours": 24,
+      "qualification": "The retained text stops without the incident's resolution; do not import Ruckel's Chewy outcome into Hart's Target incident."
+    }
+  ],
+  "editorial_and_publication_meanings": [
+    {
+      "id": "meta-01",
+      "meaning": "CNBC is the supplied publisher label and the author field is null. Preserve the exact title, URL, business category and 2023-10-06 publication timestamp without inventing an author."
+    },
+    {
+      "id": "meta-02",
+      "meaning": "CNBC says it viewed the Amazon eligibility email to Ruckel; keep this evidential basis distinct from anonymous forum comments and FTC allegations."
+    },
+    {
+      "id": "meta-03",
+      "meaning": "The article says Nearly three years later after an October 27, 2021 incident, despite the supplied October 2023 publication date. Retain this source inconsistency without revising dates or deriving a three-year interval as verified."
+    },
+    {
+      "id": "meta-04",
+      "meaning": "The opening photo caption shows a worker sorting parcels at the outbound dock of Amazon's Eastvale, California fulfillment center on August 31, 2021. It is image context, not the date or location of the seller incidents."
+    },
+    {
+      "id": "meta-05",
+      "meaning": "The source states that antitrust remedies are often decided after a liability finding. This is explanatory background, not a case-specific ruling or an independently verified legal rule."
+    },
+    {
+      "id": "meta-06",
+      "meaning": "Photo credits identify the opening photograph source, a Fred Ruckel credit for the Snuggly Cat/Ripple Rug image, and a courtesy Molson Hart caption. They do not identify the article author or establish independent corroboration of every claim."
+    },
+    {
+      "id": "meta-07",
+      "meaning": "watch now is an embedded-media/navigation label. No video transcript or additional video evidence is supplied; the final Hart passage has no reported incident resolution."
+    }
+  ],
+  "section_coverage": {
+    "meaning": "Section labels organize this source; they are not independent domain facts or taxonomic is-a links.",
+    "sections": {
+      "Opening Ruckel incident and lawsuit": [],
+      "Long overdue lawsuit": [],
+      "Seller skepticism": [],
+      "Concerns over Amazon pricing policies, fees": []
+    }
+  },
+  "negative_checks": [
+    "Keep Ruckel/Snuggly Cat/Ripple Rug/Chewy/October 2021 separate from Hart/Viahart/Brain Flakes/Target/September 2022.",
+    "Do not equate buy-box loss with deletion of the product listing or assert verified realized daily losses without a supplied amount.",
+    "Do not compare Chewy's $39.99 item price with its $48.54 delivered total as if they were the same measure; preserve the $43 Amazon comparison.",
+    "Ruckel chose to ask Chewy for a price increase; no actual price increase, restored eligibility or final resolution is supplied.",
+    "Do not repair the Nearly three years later chronology or substitute publication time for incident time.",
+    "FTC allegations, Amazon defenses and individual seller experiences must remain attributed and may conflict; none alone is an adjudicated finding.",
+    "No specific court remedy, completed liability judgment, universal FBA requirement or guaranteed two-day delivery may be invented.",
+    "Keep Moller's $7.49-versus-about-$12 costs tied to his own shipping example and do not treat them as marketplace-wide tariffs.",
+    "Do not give anonymous commenters invented identities, universal seller consensus or literal gambling/drug/debt facts from their metaphors.",
+    "Keep Needham's seller/service-provider roles, Moller's brand/unnamed agency, and Hart's company distinct.",
+    "Do not convert about 90 percent of Hart's business into a precise audited revenue or profit share.",
+    "Do not fill the unreported outcome or numerical prices of Hart's Target incident from another seller's story.",
+    "Generic related-to edges or prose-only summaries do not satisfy the person-company-product-platform, allegation-speaker-policy, price-basis and comparison joins."
+  ],
+  "source_record_sha256": "7bb08a41d9e07314d739cee0eab857e31806b595775af252b318d0ea9a0744f6",
+  "checklist_counts": {
+    "domain_assertions": 64,
+    "editorial_publication_meanings": 7,
+    "section_groups": 4
+  }
+}

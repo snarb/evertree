@@ -1,0 +1,37 @@
+{
+  "purpose": "One inspected regression of paragraph-first source partition; not independent extraction evidence or a matched retrieval benefit.",
+  "cause": "A short timestamped paragraph was split between its opening and continuing sentence. Model assigned continued stats to the next header despite correct preceding context.",
+  "change": "Prefer paragraph boundaries in initial text sections and adaptive bisection; retain sentence/line fallback for oversized paragraphs. Production prompt unchanged.",
+  "new_section": {
+    "source": 0,
+    "path": [
+      "article",
+      "body"
+    ],
+    "start": 3862,
+    "end": 4645
+  },
+  "comparison_limit": "Source range deliberately changed with the partitioner. This is not a same-text comparison.",
+  "seed_projection_manifest": "tmp/knowledge-graph-paragraph-seed-v11-manifest.json",
+  "native_output": "tmp/knowledge-graph-paragraph-v11",
+  "snapshot_sha256": "498ea205b124f371e47480e81eb314ff9644f7a0a137e5d4fc25eb3df56e9ad1",
+  "result": {
+    "invocations": 1,
+    "tool_calls": 20,
+    "seconds": 39.03679191600531,
+    "passing_yards_242_at_1038_fact": 1945,
+    "three_touchdowns_at_1038_fact": 1946,
+    "later_four_touchdown_fact_preserved": 1853
+  },
+  "limits": [
+    "One adaptively selected source-only regression, not a holdout or causal population estimate.",
+    "Graph projection retains original memory for source access; it is not full historical DBOS replay.",
+    "The completed eleven-article graph was not retroactively changed or human-corrected."
+  ],
+  "verification": {
+    "affected": 96,
+    "fast": 962,
+    "native_and_related_integration": 10,
+    "lint_format_layout": "passed"
+  }
+}
