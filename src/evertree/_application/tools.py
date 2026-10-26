@@ -195,6 +195,7 @@ class ToolsMixin:
                         )
                     },
                     "belief": belief_summary(self.graph, node),
+                    "operators": self._operators(node.id),
                 }
                 for node in self.graph.nodes(kind="program")
             ]

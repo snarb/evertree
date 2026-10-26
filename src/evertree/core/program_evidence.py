@@ -308,6 +308,8 @@ class ProgramEvidence:
             node = self.graph.find(name)
             if node is None or node.kind != "operator":
                 raise ContractError("Operator evidence needs an anchored operator")
+            if revision not in node.properties.get("revisions", ()):
+                raise ContractError("The operator is not anchored in that Program revision")
         else:
             raise ContractError("Program evidence targets a Program or an anchored operator")
 

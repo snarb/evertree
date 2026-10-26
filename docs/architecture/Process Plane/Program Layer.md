@@ -1238,26 +1238,46 @@ Code Anchor format:
 
 ```python
 # et:op=<op_id>
+# <short description of what the step computes or decides>
+<anchored statement>
 ```
+
+The anchor comment and its description (at most 120 characters) are each alone on their line, and the anchored statement starts on the next line. Anchors belong only in the Program's entry module (its `git_path`). Core refuses a malformed or duplicate anchor, a missing description, an anchor on a statement without a result of its own (`pass`, `break`, `continue`, `global`, `nonlocal`, imports) and anchors in other files when it validates a candidate for evaluation.
 
 Example:
 
 ```python
-def engine_start(ctx):  # et:op=engine_start_program
+# et:op=engine_start_program
+# Starts the engine when its start conditions hold.
+def engine_start(ctx):
     start_conditions = ctx.fuel_present and ctx.battery_works
 
-    if start_conditions:  # et:op=start_gate
-        outcome = start_engine(ctx.engine)  # et:op=start_engine_transition
+    # et:op=start_gate
+    # Decides whether the start conditions hold.
+    if start_conditions:
+        # et:op=start_engine_transition
+        # Engine state after the start attempt.
+        outcome = start_engine(ctx.engine)
         return ProgramResult(result=outcome)
 
-    outcome = engine_not_running(ctx.engine)  # et:op=engine_not_running_outcome
+    # et:op=engine_not_running_outcome
+    # Engine state when it cannot start.
+    outcome = engine_not_running(ctx.engine)
     return ProgramResult(result=outcome)
 ```
 
 Notes:
 
 - A subexpression with independent semantic meaning is moved to its own line with a separate variable and Code Anchor.
-- A Core operation is attributed to the nearest line of the Program file on its call stack, so an anchor above a Core API call or a helper call covers the operations performed inside it.
+- Every execution of an anchored statement records one operator use: the assigned value of an assignment, the value of a `return` or expression statement, the test of an `if` or `while` (once per evaluation), the return value of a `def`, and a use without value when a `for`, `with` or `try` completes. A simple statement that raises records a failed use. The worker compiles the entry module with these hooks; line numbers stay those of the committed file, and unit tests that import the module see ordinary code.
+- A Core operation is attributed to the innermost anchored statement whose lines contain the nearest Program-file line on its call stack, so an anchor on a Core API call or a helper call covers the operations performed inside it. Those operations stay their own trace events; the statement's use is the operator use.
+
+Lifecycle:
+
+- The coding agent places, changes and removes anchors in `develop_candidate`. Its payload lists the Program's current operators with their beliefs; an id that keeps its meaning is kept when its code moves or changes, a changed meaning gets a new id, and an anchor that is no longer needed is removed while its code stays.
+- Activation (`activate_program` or `merge_branch`) synchronizes the graph with the anchors of the activated revision: a new id creates an operator node, a kept id updates its description, path and line and appends the revision to `revisions`, and an id no longer present deletes its node. A renamed id is a deletion and a creation. Seed Programs are synchronized at bootstrap. Rejection, archiving and displacement do not change a Program's operators: they describe its last active revision.
+- A change that edits only comments of the active Program, such as adding, describing or removing anchors, parses to the same syntax tree and runs exactly as its base. It needs no holdout evaluation and no improvement: `evaluate_candidate` reports `behaviour_preserved` without spending the holdout, and `merge_branch` merges it after the source gates.
+- Runs do not create operators. A use of an anchor without an operator node (a candidate or evaluation run) is recorded under the name `op:<program>:<op_id>`. Past trace events keep their operator ids when a node is deleted; a deleted operator takes no new evidence, and evidence for `op:<id>:<op_id>@<revision>` requires that revision in the operator's `revisions`.
 - Objects such as `ctx.fuel_present` are not strings. They are runtime objects containing all fields (such as `belief_data`) of the corresponding concepts from which they were created. At runtime, the agent can use these fields and navigate concept relations through standard LLM tool-calling.
 
 `op_id` is the local ID of an operator within a `CodeNode`.
@@ -1278,7 +1298,7 @@ op:EngineStartCode:start_gate
 
 #topic_details
 
-`AnchorResolver` returns the operator concept.
+`AnchorResolver` returns the operator concept and synchronizes a Program's operators with the anchors of an activated revision (`sync`).
 
 ```python
 resolve_operator(

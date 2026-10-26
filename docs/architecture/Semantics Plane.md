@@ -530,7 +530,9 @@ An anchored operator may create a `Facet` as a local semantic result of a specif
 Example:
 
 ```python
-health_status = diagnose(igor)  # et:op=igor_health_status
+# et:op=igor_health_status
+# Igor's diagnosed health status.
+health_status = diagnose(igor)
 ```
 
 `SemanticTrace` records not just a technical distribution:

@@ -61,7 +61,7 @@ class PersistenceMixin:
         revision = git(self.repository, "rev-parse", "main")
         self._bootstrap_state(revision)
         self._validate_program_layout(None, revision)
-        self._install_seed_learning()
+        self._install_seed_state()
 
     def _bootstrap_state(self, revision):
         """Populate stores from the trusted seed using an already resolved revision."""

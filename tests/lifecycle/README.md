@@ -8,7 +8,9 @@ the common paths through [Program Lifecycle](../../docs/architecture/Process%20P
 most real requests are PLC-01, 02, 03, 06 and 08; the rest cover the structural variants.
 PLC-12 to PLC-16 cover model Programs as the agent's world model: the forecasts and
 learnable estimators a Program declares in `LEARNING`, an exec Program acting on its model's
-forecast, and the outcomes that train exactly the estimator a forecast used.
+forecast, and the outcomes that train exactly the estimator a forecast used. PLC-17 to
+PLC-19 cover the lifecycle of semantic operators: Code Anchors the coding agent places,
+keeps, renames and removes, and the operator nodes and uses that follow from them.
 
 Each case in `cases.json` has:
 
@@ -43,6 +45,9 @@ Each case in `cases.json` has:
 | PLC-14 | Alternative model with a rate per carrier | Brier improves; slot moves; the displaced model's binding is released, its trained state kept |
 | PLC-15 | Forecast contract for a distribution | Contract declared and met, merged; mirror: unnormalized forecasts and a metric unfit for the form fail `contracts` |
 | PLC-16 | Revise a trained model | Derived and sealed model outcomes; merged revision keeps the trained state; mirror: a changed prior would start a new state |
+| PLC-17 | New exec Program with Code Anchors | The coding agent anchors the semantic steps; activation installs a described operator per anchor; probes record a use per step with its value; mirror: anchors outside the entry module and an anchor without description are refused before the holdout is spent |
+| PLC-18 | Improve an anchored Program | Merged; a kept anchor keeps its operator node and gains the revision, the new step gets a new operator, uses go to the current operators; mirror: a renamed anchor deletes the old operator |
+| PLC-19 | Remove an unneeded anchor | Comment-only revision reports `behaviour_preserved` and merges without a holdout; the operator is deleted, the code and the other operators stay |
 
 ```sh
 # Mirror: real Git, native workers and protected evaluation; scripted coding (CI, macOS/Windows)

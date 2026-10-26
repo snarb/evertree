@@ -208,7 +208,7 @@ class EvidenceSession(DebugSession):
         return identity
 
     def record_program_run(self, step, caller=None):
-        """Record a live run as the application does: anchors, anchored uses, calls, result."""
+        """Record a live run as the application does: anchored uses, calls, result."""
         identity = self.program(step)
         caller_event = None
         if caller is not None:
@@ -225,12 +225,23 @@ class EvidenceSession(DebugSession):
         )
         uses = step.get("anchors", [])
         if uses:
+            # Activation installs a revision's anchors; runs only record their uses.
+            resolver = AnchorResolver(self.graph)
+            known = [node.properties["local_id"] for node in resolver.operators(identity)]
             anchors = tuple(
-                CodeAnchor(identity, op_id, "src/evertree/processes/debug/_exec.py", "0" * 40, line)
-                for line, op_id in enumerate(dict.fromkeys(use[0] for use in uses), start=1)
+                CodeAnchor(
+                    identity, op_id, "src/evertree/processes/debug/_exec.py", "0" * 40, line, op_id
+                )
+                for line, op_id in enumerate(
+                    dict.fromkeys([*known, *(use[0] for use in uses)]), start=1
+                )
             )
-            event = self.memory.record(run, "code_anchors", output=json_value(anchors))
-            AnchorResolver(self.graph).install(anchors, provenance=self.memory.output_ref(event))
+            resolver.sync(
+                identity,
+                anchors,
+                self.graph.get(identity).properties["revision"],
+                provenance="debug-lifecycle",
+            )
             for op_id, arguments, output in uses:
                 operator = self.graph.find(f"op:{identity}:{op_id}")
                 self.memory.record(run, operator.id, arguments=arguments, output=output)

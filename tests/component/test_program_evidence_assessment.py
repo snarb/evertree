@@ -1,7 +1,7 @@
 """Program evidence assessment scenarios over real graph, trace and belief stores.
 
 Runs are recorded the way the application records them (ProgramRun with the Program's
-own revision and task, anchors installed from a code_anchors event, anchored trace
+own revision and task, anchors installed as activation installs them, anchored trace
 events, run_finished). Only the model judgement is scripted. The PEA scenarios cover
 the common paths of a Program's life after activation; the catalog is in
 tests/evidence/README.md.
@@ -145,14 +145,20 @@ class Run:
         )
 
     def anchored(self, *uses):
-        """Install the run's anchors and record each (op_id, arguments, output) use."""
+        """Install the anchors as activation does and record each (op_id, arguments, output) use."""
+        resolver = AnchorResolver(self.world.graph)
+        known = [node.properties["local_id"] for node in resolver.operators(self.identity)]
         anchors = tuple(
-            CodeAnchor(self.identity, op_id, "src/evertree/processes/x/_exec.py", HEAD, line)
-            for line, op_id in enumerate(dict.fromkeys(op for op, _, _ in uses), start=1)
+            CodeAnchor(self.identity, op_id, "src/evertree/processes/x/_exec.py", HEAD, line, op_id)
+            for line, op_id in enumerate(
+                dict.fromkeys([*known, *(op for op, _, _ in uses)]), start=1
+            )
         )
-        event = self.world.memory.record(self.run, "code_anchors", output=json_value(anchors))
-        AnchorResolver(self.world.graph).install(
-            anchors, provenance=self.world.memory.output_ref(event)
+        resolver.sync(
+            self.identity,
+            anchors,
+            self.world.graph.get(self.identity).properties["revision"],
+            provenance="lifecycle",
         )
         for op_id, arguments, output in uses:
             operator = self.world.graph.find(f"op:{self.identity}:{op_id}")
@@ -465,6 +471,52 @@ async def test_record_rejects_unknown_targets_before_any_change():
         )
     assert not world.beliefs.known(program_target(scheduler, REVISION_A))
     assert world.beliefs.cursor("programs") == 0
+
+
+async def test_pea_12_removed_anchor_keeps_old_beliefs_and_takes_no_new_evidence():
+    """PEA-12: reflection removes an anchor; its node leaves the graph, its history stays."""
+    world, scheduler = scheduler_world()
+    Run(world, scheduler, {"pump": "N-1"}).anchored(
+        ("load_schedule", {"pump": "N-1"}, {"idle": ["Mon 02:00"]}),
+        ("choose_window", {"idle": ["Mon 02:00"]}, {"window": "Mon 02:00"}),
+    ).finish({"window": "Mon 02:00"})
+    text = "The duty schedule you loaded for N-1 is outdated."
+    message(world, text)
+    await assess(world, Judge({("PumpScheduler", "load_schedule"): [(text, "opposes")]}))
+    old = strength(world, operator_target(scheduler, "load_schedule", REVISION_A))
+
+    # Revision B keeps choose_window and drops the load_schedule anchor.
+    activate(world, scheduler, REVISION_B)
+    kept = world.graph.find(f"op:{scheduler}:choose_window")
+    AnchorResolver(world.graph).sync(
+        scheduler,
+        (CodeAnchor(scheduler, "choose_window", "src/evertree/processes/x/_exec.py", HEAD, 1),),
+        REVISION_B,
+        provenance="lifecycle",
+    )
+    assert world.graph.find(f"op:{scheduler}:load_schedule") is None
+    assert world.graph.find(f"op:{scheduler}:choose_window").id == kept.id
+    assert strength(world, operator_target(scheduler, "load_schedule", REVISION_A)) == old
+    evidence = ProgramEvidence(world.graph, world.memory, world.beliefs)
+    with pytest.raises(ContractError, match="anchored operator"):
+        evidence.record(
+            1, [{"target": operator_target(scheduler, "load_schedule", REVISION_B), "assign": []}]
+        )
+    with pytest.raises(ContractError, match="not anchored in that Program revision"):
+        evidence.record(
+            1, [{"target": operator_target(scheduler, "choose_window", HEAD), "assign": []}]
+        )
+    # The old run's uses of the removed anchor no longer appear on a card.
+    Run(world, scheduler, {"pump": "N-2"}, task="next").anchored(
+        ("choose_window", {"idle": []}, {"window": None}),
+    ).finish({"window": None})
+    complaint = "No window for N-2 is wrong."
+    message(world, complaint, task="next")
+    judge = Judge({("PumpScheduler", "choose_window"): [(complaint, "opposes")]})
+    await assess(world, judge)
+    [card] = judge.batches[0]["runs"]
+    assert [item["op_id"] for item in card["operators"]] == ["choose_window"]
+    assert strength(world, operator_target(scheduler, "choose_window", REVISION_B)) < 0.5
 
 
 async def test_pea_11_application_records_runs_and_assesses_them_end_to_end(tmp_path):

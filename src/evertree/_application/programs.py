@@ -82,6 +82,32 @@ class ProgramsMixin:
             )
             if branch is not None:
                 self._validate_design(branch, revision, sources)
+                self._validate_anchors(branch, revision, sources)
+
+    def _validate_anchors(self, branch, revision, sources):
+        """Refuse malformed Code Anchors and anchors outside the candidate's entry module."""
+        node = self.graph.get(int(branch.program_id))
+        path = node.properties["git_path"]
+        parse_anchors(
+            sources.read(path).decode("utf-8"),
+            code_node_id=node.id,
+            git_path=path,
+            commit_sha=revision,
+        )
+        changed = git(
+            Path(branch.workspace), "diff", "--name-only", branch.base_revision, revision
+        ).splitlines()
+        for item in changed:
+            if item == path or not (item.startswith("src/") and item.endswith(".py")):
+                continue
+            try:
+                source = git(Path(branch.workspace), "show", f"{revision}:{item}")
+            except LifecycleError:
+                continue  # A deleted file holds no anchors.
+            if parse_anchors(source, code_node_id=node.id, git_path=item, commit_sha=revision):
+                raise LifecycleError(
+                    f"Code Anchors belong in the Program's entry module {path}, not {item}"
+                )
 
     def _validate_design(self, branch, revision, sources):
         """Require the design profile of a policy or meta Program whose entry module changed."""
@@ -105,13 +131,50 @@ class ProgramsMixin:
         if profile is not None and changed:
             check_design(sources.read(path).decode("utf-8"), path, profile)
 
-    def _install_seed_learning(self):
-        """Bind the declared estimators of the seed's active Programs."""
+    def _install_seed_state(self):
+        """Bind the declared estimators and install the operators of the seed's active Programs."""
         for node in self.graph.nodes(kind="program"):
             if program_active(node):
-                self._install_learning(
-                    node, self._program_source(dict(node.properties)), node.properties["revision"]
-                )
+                source = self._program_source(dict(node.properties))
+                self._install_learning(node, source, node.properties["revision"])
+                self._sync_operators(node, source, node.properties["revision"])
+
+    def _sync_operators(self, node, source, revision, *, provenance=None):
+        """Make the Program's operator nodes match the Code Anchors of its active revision.
+
+        An anchor removed from the code is removed from the graph; the statement it
+        marked stays an ordinary implementation detail.
+        """
+        anchors = parse_anchors(
+            source,
+            code_node_id=node.id,
+            git_path=node.properties["git_path"],
+            commit_sha=revision,
+        )
+        resolver = AnchorResolver(self.graph)
+        if not anchors and not resolver.operators(node.id):
+            return
+        if provenance is None:
+            provenance = self._lifecycle_event(
+                "install_operators", {"program": node.id, "revision": revision}
+            )
+        resolver.sync(node.id, anchors, revision, provenance=provenance)
+        self.memory.retain(provenance, "graph:" + str(node.id))
+
+    def _operators(self, program_id):
+        """Describe a Program's installed operators with the belief of its active revision."""
+        return [
+            {
+                "op_id": item.properties["local_id"],
+                "description": item.description,
+                "line": item.properties["line"],
+                "belief": belief_summary(self.graph, item),
+            }
+            for item in sorted(
+                AnchorResolver(self.graph).operators(program_id),
+                key=lambda item: item.properties["line"],
+            )
+        ]
 
     def _install_learning(self, node, source, revision):
         """Bind an active Program's declared estimators and create its declared targets."""
@@ -203,7 +266,11 @@ class ProgramsMixin:
     def programs(self):
         """List graph-registered Programs as serializable records."""
         return [
-            {**json_value(node), "belief": belief_summary(self.graph, node)}
+            {
+                **json_value(node),
+                "belief": belief_summary(self.graph, node),
+                "operators": self._operators(node.id),
+            }
             for node in self.graph.nodes(kind="program")
         ]
 
@@ -409,30 +476,32 @@ class ProgramsMixin:
                 self._run_map[identity] = run.id
                 state = self.tasks.get(event["task_id"])
                 state.program_run_ids.append(identity)
-                source = self._program_source(spec)
-                anchors = parse_anchors(
-                    source,
-                    code_node_id=spec["program_id"],
-                    git_path=spec["git_path"],
-                    commit_sha=spec["revision"],
+        elif kind == "operator":
+            run = (
+                self.memory.get_run(self._run_map[identity]) if identity in self._run_map else None
+            )
+            # Recovery replays a workflow's statements; each use is recorded once.
+            seen = self.__dict__.setdefault("_operator_uses", {})
+            if (
+                run is not None
+                and run.status == "running"
+                and event["seq"] not in seen.get(run.id, ())
+            ):
+                seen.setdefault(run.id, set()).add(event["seq"])
+                name = f"op:{run.program}:{event['anchor']}"
+                node = self.graph.find(name)
+                self.memory.record(
+                    run,
+                    node.id if node is not None and node.kind == "operator" else name,
+                    output=event.get("output"),
+                    status=event["status"],
                 )
-                if anchors:
-                    anchor_event = self.memory.record(
-                        run, "code_anchors", output=json_value(anchors)
-                    )
-                    ref = self.memory.output_ref(anchor_event)
-                    AnchorResolver(self.graph).install(anchors, provenance=ref)
-                    self.memory.retain(
-                        ref, "code_anchors:" + str(spec["program_id"]) + ":" + spec["revision"]
-                    )
         elif identity in self._run_map:
             run = self.memory.get_run(self._run_map[identity])
             if run.status == "running":
-                operator = event.get("operator", kind)
-                anchored = self.graph.find(f"op:{run.program}:{event.get('anchor', operator)}")
                 self.memory.record(
                     run,
-                    anchored.id if anchored else operator,
+                    event.get("operator", kind),
                     arguments=event.get("arguments", {}),
                     output=event.get("output", event),
                     status=event.get("status", "completed"),
@@ -441,6 +510,7 @@ class ProgramsMixin:
                     self.memory.finish_run(
                         run, status="completed" if kind == "run_finished" else "failed"
                     )
+                    self.__dict__.get("_operator_uses", {}).pop(run.id, None)
                 if kind == "run_finished":
                     product = event.get("result", {}).get("result")
                     slug = self.graph.get(run.program).properties.get("slug")
@@ -513,9 +583,9 @@ class ProgramsMixin:
         self.memory.finish_run(run)
         if displaced is not None and displaced != node.id:
             self.learning.release(str(displaced))
-        self._install_learning(
-            node, self._program_source({**node.properties, "revision": revision}), revision
-        )
+        source = self._program_source({**node.properties, "revision": revision})
+        self._install_learning(node, source, revision)
+        self._sync_operators(node, source, revision, provenance=self.memory.output_ref(event))
 
     def bind_evaluation(
         self,
@@ -615,6 +685,7 @@ class ProgramsMixin:
                         "instruction": instruction,
                         "candidate": dataclasses.asdict(candidate),
                         "program": json_value(node),
+                        "operators": self._operators(node.id),
                         "evaluation": evaluation,
                     },
                     ensure_ascii=False,
@@ -653,12 +724,24 @@ class ProgramsMixin:
         from ..core.programs.experiments import evaluate_pair
 
         candidate = self.lifecycle.candidate(candidate_id)
+        if program_active(self.graph.get(int(candidate.program_id))) and (
+            self.lifecycle.preserves_behaviour(candidate_id)
+        ):
+            # Comments do not run, so the holdout is not spent on a change it cannot see.
+            return {
+                "status": "behaviour_preserved",
+                "revision": self.lifecycle.validated_revision(candidate_id),
+                "reason": "Only comments such as Code Anchors changed; merge_branch merges it "
+                "without a holdout evaluation",
+            }
         binding = self._binding(candidate.program_id)
         if binding is None:
             return {
                 "status": "unresolved",
                 "reason": "No independent evaluation dataset is bound to this Program",
             }
+        # A candidate the source gates refuse runs no case, so its holdout stays unseen.
+        self.lifecycle.validated_revision(candidate_id)
         datasets = [self._holdout(candidate_id, binding["dataset_revision"])]
         if self._is_meta(candidate.program_id):
             datasets.append(self._holdout(candidate_id, binding["history_dataset_revision"]))

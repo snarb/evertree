@@ -182,6 +182,20 @@ CANDIDATE_INSTRUCTIONS = (
     "evaluation separately. Do not activate or claim acceptance of the candidate."
 )
 
+ANCHOR_INSTRUCTIONS = (
+    "Mark the Program's semantic operators with Code Anchors in its entry module (git_path) "
+    "only: the line # et:op=<snake_case_id>, then a line # <short description, at most 120 "
+    "characters, of what the step computes or decides>, then the anchored statement on the very "
+    "next line. Anchor steps whose result has its own meaning and can be checked on its own, such "
+    "as an intermediate value, a choice, a guard, or a call to a model, Program or Core API; not "
+    "every line. Core records every execution of an anchored statement with its value "
+    "(assignment or return value, branch test, function result) and later assigns evidence to it. "
+    "The payload lists the Program's current operators: keep an id while its meaning stays the "
+    "same, even when its code moves or changes; give a new id when the meaning changes; when an "
+    "anchor is no longer needed, delete its two comment lines and keep the code. Core refuses "
+    "malformed or duplicate anchors and anchors in other files."
+)
+
 DESIGN_INSTRUCTIONS = (
     "Declare a module-level literal DESIGN = {{...}} in the entry module answering {profile}: "
     "applicability, adaptation, learning{exploration}. Each answer names a local mechanism, a "
@@ -223,7 +237,7 @@ DUAL_MODEL_INSTRUCTIONS = (
 def candidate_instructions(program: dict, evaluation: dict | None) -> str:
     """Tell the coding provider the contract its role, meta authority and evaluation impose."""
     roles = program.get("roles", (program["role"],))
-    parts = [CANDIDATE_INSTRUCTIONS]
+    parts = [CANDIDATE_INSTRUCTIONS, ANCHOR_INSTRUCTIONS]
     if program["role"] == "model":
         parts.append(
             "This is a model Program: it describes or predicts a process. It must not take "
@@ -266,7 +280,7 @@ def candidate_instructions(program: dict, evaluation: dict | None) -> str:
 
 # High-volume provider bookkeeping that embeds earlier prompts; never evidence for a decision.
 TELEMETRY_OPERATORS = frozenset(
-    {"provider_request", "provider_event", "run_started", "step_started", "code_anchors"}
+    {"provider_request", "provider_event", "run_started", "step_started"}
 )
 # One recorded result or recalled event never exceeds this many characters in a prompt; the
 # rest stays in the trace and is reachable through its reference.
@@ -321,7 +335,11 @@ def _all_tools():
     string = {"type": "string"}
     integer = {"type": "integer"}
     return (
-        tool("list_programs", "List active reusable Programs and their graph identities.", {}),
+        tool(
+            "list_programs",
+            "List reusable Programs with their graph identities, beliefs and semantic operators: the Code Anchors of the active revision, each with its description and belief.",
+            {},
+        ),
         tool(
             "run_program",
             "Invoke an active Program through durable runtime.",
@@ -363,13 +381,13 @@ def _all_tools():
         ),
         tool(
             "develop_candidate",
-            "Use the coding provider inside the candidate checkout, then commit its changes for evaluation.",
+            "Use the coding provider inside the candidate checkout, then commit its changes for evaluation. The coding agent places Code Anchors on the Program's semantic steps; the instruction may ask it to add, change or remove anchors. Removing an unneeded or misplaced anchor keeps the code and deletes its operator when the revision is activated.",
             {"candidate": string, "instruction": string},
             ("candidate", "instruction"),
         ),
         tool(
             "evaluate_candidate",
-            "Evaluate a committed candidate against its slot's independently registered held-out dataset. A holdout scores a candidate lineage once: a candidate developed after it was evaluated on the holdout, or opened after another candidate was, fails further evaluation on that holdout with 'sources overlap'. To change a candidate after an evaluation, open a new candidate (create_candidate) or extend the holdout with derive_holdout; do not develop and re-evaluate the same one.",
+            "Evaluate a committed candidate against its slot's independently registered held-out dataset. A holdout scores a candidate lineage once: a candidate developed after it was evaluated on the holdout, or opened after another candidate was, fails further evaluation on that holdout with 'sources overlap'. To change a candidate after an evaluation, open a new candidate (create_candidate) or extend the holdout with derive_holdout; do not develop and re-evaluate the same one. A change of the active Program that edits only comments, such as Code Anchors, runs exactly as before: it reports behaviour_preserved without spending the holdout, and merge_branch merges it.",
             {"candidate": string},
             ("candidate",),
         ),

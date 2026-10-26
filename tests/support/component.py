@@ -148,7 +148,7 @@ async def component_app(
         return (Path(__file__).resolve().parents[2] / path).read_text(encoding="utf-8")
 
     app._program_source = source
-    app._install_seed_learning()
+    app._install_seed_state()
     app.backup = AsyncMock(return_value=None)
     app._make_lifecycle()
     app._started = True

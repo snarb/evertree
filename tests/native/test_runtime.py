@@ -137,6 +137,7 @@ async def test_nested_programs_and_durable_steps(tmp_path, process_factory):
             "src/evertree/processes/calculation/parent/_exec.py": """
 async def run(ctx, child):
     # et:op=first_counter
+    # Counts the first value.
     first = await ctx.step('counter', {'value': 1})
     result = await ctx.call(child, {'value': first})
     return {'result': result.result, 'feedback': 'nested complete'}

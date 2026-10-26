@@ -5,7 +5,7 @@ Run this file in PyCharm with the project interpreter and sign in to Codex, or r
 provider are real Codex; Programs run in native workers. The session installs the
 scenario's Programs through the real lifecycle gates, binds the developer holdouts,
 gives the agent the scenario task, then probes the active Programs. It writes
-state.json (graph Programs, branches, receipts, choices, bindings) and result.json
+state.json (graph Programs, operators, branches, receipts, choices, bindings) and result.json
 under tmp/debug-lifecycle/<run>/, also on failure.
 
 Useful breakpoints:
@@ -68,6 +68,7 @@ class LifecycleSession:
         self.names: dict[str, object] = {}
         self.setup_revisions: dict[str, str | None] = {}
         self.seed_candidates: list[str] = []
+        self.setup_operators: dict[str, dict[str, int]] = {}
         self.steps: list[dict] = []
         self.task: dict | None = None
         self.probes: list[dict] = []
@@ -163,6 +164,11 @@ class LifecycleSession:
             task_id, candidate["id"], "activate_program", "Scenario seed passed its gates"
         )
         self.setup_revisions[key] = agent.graph.get(program["id"]).properties["revision"]
+        self.setup_operators[key] = {
+            node.properties["local_id"]: node.id
+            for node in agent.graph.nodes(kind="operator")
+            if node.properties["code_node"] == program["id"]
+        }
 
     async def setup(self):
         """Install Programs, bind scenario holdouts and replay prior live experience."""
@@ -280,7 +286,14 @@ class LifecycleSession:
                 result = await self.agent._run_program(
                     self.task_id(), self.fill(expectation["program"]), arguments
                 )
-                self.probes.append({"arguments": arguments, "result": result["result"]})
+                self.probes.append(
+                    {
+                        "program": self.fill(expectation["program"]),
+                        "arguments": arguments,
+                        "result": result["result"],
+                        "run": self.agent._run_map.get(result["run_id"]),
+                    }
+                )
             except Exception as error:  # noqa: BLE001 -- a failing probe is checked, not raised
                 self.probes.append({"arguments": arguments, "error": str(error)})
         for index, item in enumerate(self.case.get("outcomes", ())):
@@ -336,8 +349,33 @@ class LifecycleSession:
                 "probes": self.probes,
                 "outcomes": self.outcomes,
                 "learning": self._learning_state(),
+                "setup_operators": self.setup_operators,
+                "operators": self._operator_state(),
             }
         )
+
+    def _operator_state(self) -> list[dict]:
+        """Installed operator nodes with every recorded use of each."""
+        agent = self.agent
+        uses: dict[int, list] = {}
+        for event in agent.memory.events:
+            if type(event.operator) is int:
+                uses.setdefault(event.operator, []).append(
+                    {"run": event.program_run, "status": event.status, "output": event.output}
+                )
+        return [
+            {
+                "id": node.id,
+                "name": node.name,
+                "program": node.properties["code_node"],
+                "op_id": node.properties["local_id"],
+                "description": node.description,
+                "line": node.properties["line"],
+                "revisions": list(node.properties["revisions"]),
+                "uses": uses.get(node.id, []),
+            }
+            for node in agent.graph.nodes(kind="operator")
+        ]
 
     def _learning_state(self) -> dict:
         """Declared targets, bindings, estimator states and indexed forecasts."""

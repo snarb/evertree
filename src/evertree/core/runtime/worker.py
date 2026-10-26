@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import dataclasses
+import functools
 import importlib.util
 import inspect
 import json
@@ -20,6 +21,7 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
+from evertree.core.anchors import FAILURE_HOOK, FUNCTION_HOOK, USE_HOOK, instrument, parse_anchors
 from evertree.core.contracts import ProgramResult
 
 _wire = sys.stdout
@@ -30,6 +32,8 @@ _loop: asyncio.AbstractEventLoop | None = None
 _configuration: dict = {}
 _current = contextvars.ContextVar("evertree_program")
 _programs: dict[tuple[str, str], object] = {}
+# An operator use carries at most this much serialized output.
+OPERATOR_OUTPUT_LIMIT = 4000
 
 
 def json_value(value):
@@ -126,6 +130,8 @@ class Context:
         self._owner = None
         self._depth = 0
         self._index_calls = set()
+        # Replay re-executes the same statements in order, so Core can drop repeated uses.
+        self._operator_seq = 0
 
     @contextmanager
     def _operation(self, method):
@@ -229,6 +235,75 @@ class Context:
         return await self.step("checkpoint", {}, journal=False)
 
 
+def _operator_output(value):
+    try:
+        value = json_value(value)
+        text = json.dumps(value, ensure_ascii=True, allow_nan=False)
+    except (TypeError, ValueError):
+        value = text = repr(value)
+    return (
+        value if len(text) <= OPERATOR_OUTPUT_LIMIT else {"truncated": text[:OPERATOR_OUTPUT_LIMIT]}
+    )
+
+
+def _operator_hooks(git_path):
+    """Hooks an instrumented module calls; uses are reported only for the Program that owns it."""
+
+    def report(op_id, **fields):
+        context = _current.get(None)
+        if context is None or context.program["git_path"] != git_path:
+            return
+        context._operator_seq += 1
+        send(
+            {
+                "type": "operator",
+                "run_id": context.run_id,
+                "op_id": op_id,
+                "seq": context._operator_seq,
+                **fields,
+            }
+        )
+
+    def use(op_id, value):
+        report(op_id, output=_operator_output(value))
+        return value
+
+    def failed(op_id, error):
+        # Cancellation and interpreter exits are not results of the operator.
+        if isinstance(error, Exception):
+            report(op_id, error=f"{type(error).__name__}: {error}")
+
+    def function(op_id):
+        def decorate(target):
+            if inspect.iscoroutinefunction(target):
+
+                @functools.wraps(target)
+                async def wrapper(*args, **kwargs):
+                    try:
+                        result = await target(*args, **kwargs)
+                    except BaseException as error:
+                        failed(op_id, error)
+                        raise
+                    return use(op_id, result)
+
+            else:
+
+                @functools.wraps(target)
+                def wrapper(*args, **kwargs):
+                    try:
+                        result = target(*args, **kwargs)
+                    except BaseException as error:
+                        failed(op_id, error)
+                        raise
+                    return use(op_id, result)
+
+            return wrapper
+
+        return decorate
+
+    return {USE_HOOK: use, FAILURE_HOOK: failed, FUNCTION_HOOK: function}
+
+
 def load_program(spec):
     """Load a Program module only from its pinned committed checkout."""
     root = Path(_configuration["checkout"]).resolve()
@@ -252,7 +327,18 @@ def load_program(spec):
             raise ImportError(str(path))
         module = importlib.util.module_from_spec(module_spec)
         sys.modules[module_name] = module
-        module_spec.loader.exec_module(module)
+        source = path.read_text(encoding="utf-8")
+        anchors = parse_anchors(
+            source,
+            code_node_id=spec["program_id"],
+            git_path=spec["git_path"],
+            commit_sha=spec["revision"],
+        )
+        if anchors:
+            module.__dict__.update(_operator_hooks(spec["git_path"]))
+            exec(instrument(source, anchors, str(path)), module.__dict__)  # noqa: S102 -- committed Program code
+        else:
+            module_spec.loader.exec_module(module)
         function = getattr(module, entrypoint)
         if not callable(function):
             raise TypeError("Program entrypoint is not callable")

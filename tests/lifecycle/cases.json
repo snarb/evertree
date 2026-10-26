@@ -4273,5 +4273,628 @@
         ]
       }
     ]
+  },
+  {
+    "id": "PLC-17",
+    "covers": [
+      "new exec Program",
+      "Code Anchors placed by the coding agent",
+      "operator install on activation",
+      "operator uses"
+    ],
+    "title": "New exec Program whose semantic steps the coding agent marks with Code Anchors",
+    "setup": {
+      "proposals": {
+        "invoice": {
+          "name": "InvoiceTotal",
+          "role": "exec",
+          "claim": "Invoice totals can be computed by one reusable deterministic Program",
+          "description": "Total cost of invoice items after a percentage discount, rounded to cents.",
+          "candidate_name": "invoice total",
+          "holdout": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "items": [
+                    {
+                      "price": 1.25,
+                      "quantity": 4
+                    }
+                  ],
+                  "discount_percent": 0
+                },
+                5.0
+              ],
+              [
+                {
+                  "items": [
+                    {
+                      "price": 19.99,
+                      "quantity": 2
+                    },
+                    {
+                      "price": 5,
+                      "quantity": 3
+                    }
+                  ],
+                  "discount_percent": 10
+                },
+                49.48
+              ],
+              [
+                {
+                  "items": [],
+                  "discount_percent": 25
+                },
+                0.0
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "task": "Program {invoice} (InvoiceTotal) is a new reusable Program with open candidate {invoice.candidate} and an independently bound holdout. Implement it: run(items, discount_percent=0) receives items with price and quantity and returns the subtotal sum(price * quantity) reduced by discount_percent percent, rounded to 2 decimals. Compute the subtotal, the discount amount and the final total as separate steps and have each marked as a semantic operator with a Code Anchor, so later evidence can reach each step. Develop the candidate, evaluate it with the protected checks and activate the Program only if acceptance passes. Then run it on items [{\"price\": 3, \"quantity\": 2}] with discount_percent 50, report the result and list the Program's operators.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{invoice.candidate}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Total cost of order items after a percentage discount.\"\"\"\n\n\ndef run(items: list, discount_percent: float = 0):\n    subtotal = sum(item[\"price\"] * item[\"quantity\"] for item in items)\n    discount = subtotal * discount_percent / 100\n    total = round(subtotal - discount, 2)\n    return {\"result\": total, \"feedback\": None}\n",
+            "src/evertree/common/order_arithmetic.py": "\"\"\"Shared arithmetic for order Programs.\"\"\"\n\n\ndef line_total(item):\n    # et:op=line_total\n    # Price times quantity of one order item.\n    return item[\"price\"] * item[\"quantity\"]\n",
+            "tests/test_invoice_total.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/invoice_total/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"invoice_total_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass InvoiceTotalTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'items': [{'price': 2.5, 'quantity': 4}]}, 10.0), ({'items': [{'price': 10, 'quantity': 1}], 'discount_percent': 10}, 9.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{invoice.candidate}"
+          },
+          "error": "Code Anchors belong in the Program's entry module"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{invoice.candidate}",
+            "instruction": "Anchor the steps"
+          },
+          "files": {
+            "$program": "\"\"\"Total cost of order items after a percentage discount.\"\"\"\n\n\ndef run(items: list, discount_percent: float = 0):\n    # et:op=subtotal\n    subtotal = sum(item[\"price\"] * item[\"quantity\"] for item in items)\n    # et:op=discount\n    # Amount the percentage discount takes off the subtotal.\n    discount = subtotal * discount_percent / 100\n    # et:op=total\n    # Discounted subtotal rounded to cents.\n    total = round(subtotal - discount, 2)\n    return {\"result\": total, \"feedback\": None}\n",
+            "src/evertree/common/order_arithmetic.py": "\"\"\"Shared arithmetic for order Programs.\"\"\"\n\n\ndef line_total(item):\n    return item[\"price\"] * item[\"quantity\"]\n",
+            "tests/test_invoice_total.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/invoice_total/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"invoice_total_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass InvoiceTotalTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'items': [{'price': 2.5, 'quantity': 4}]}, 10.0), ({'items': [{'price': 10, 'quantity': 1}], 'discount_percent': 10}, 9.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{invoice.candidate}"
+          },
+          "error": "Invalid Code Anchor"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{invoice.candidate}",
+            "instruction": "Describe each anchor"
+          },
+          "files": {
+            "$program": "\"\"\"Total cost of order items after a percentage discount.\"\"\"\n\n\ndef run(items: list, discount_percent: float = 0):\n    # et:op=subtotal\n    # Sums price times quantity over the order items.\n    subtotal = sum(item[\"price\"] * item[\"quantity\"] for item in items)\n    # et:op=discount\n    # Amount the percentage discount takes off the subtotal.\n    discount = subtotal * discount_percent / 100\n    # et:op=total\n    # Discounted subtotal rounded to cents.\n    total = round(subtotal - discount, 2)\n    return {\"result\": total, \"feedback\": None}\n",
+            "src/evertree/common/order_arithmetic.py": "\"\"\"Shared arithmetic for order Programs.\"\"\"\n\n\ndef line_total(item):\n    return item[\"price\"] * item[\"quantity\"]\n",
+            "tests/test_invoice_total.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/invoice_total/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"invoice_total_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass InvoiceTotalTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'items': [{'price': 2.5, 'quantity': 4}]}, 10.0), ({'items': [{'price': 10, 'quantity': 1}], 'discount_percent': 10}, 9.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{invoice.candidate}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{invoice.candidate}",
+            "decision": "activate_program",
+            "reason": "Protected evaluation decided"
+          }
+        },
+        {
+          "op": "list_programs",
+          "args": {}
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "slot",
+        "program": "invoice"
+      },
+      {
+        "kind": "status",
+        "program": "invoice",
+        "lifecycle_status": "active"
+      },
+      {
+        "kind": "choices",
+        "program": "invoice",
+        "decisions": [
+          "activate_program"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{invoice}",
+        "arguments": {
+          "items": [
+            {
+              "price": 3,
+              "quantity": 2
+            }
+          ],
+          "discount_percent": 50
+        },
+        "result": 3.0
+      },
+      {
+        "kind": "operators",
+        "program": "invoice",
+        "count": [
+          3,
+          null
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "operator_uses",
+        "program": "invoice",
+        "count": [
+          1,
+          null
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "operators",
+        "program": "invoice",
+        "ops": [
+          "subtotal",
+          "discount",
+          "total"
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "operator_uses",
+        "program": "invoice",
+        "op": "subtotal",
+        "outputs": [
+          6
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "operator_uses",
+        "program": "invoice",
+        "op": "discount",
+        "outputs": [
+          3.0
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "operator_uses",
+        "program": "invoice",
+        "op": "total",
+        "outputs": [
+          3.0
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "step_error",
+        "op": "evaluate_candidate",
+        "match": "Code Anchors belong in the Program's entry module",
+        "mode": "mirror"
+      },
+      {
+        "kind": "step_error",
+        "op": "evaluate_candidate",
+        "match": "Invalid Code Anchor",
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-18",
+    "covers": [
+      "improve active exec Program",
+      "merge_branch",
+      "operator kept, added, renamed"
+    ],
+    "title": "Improve an anchored Program: kept operators keep their identity, new steps get new operators",
+    "setup": {
+      "programs": {
+        "ship": {
+          "name": "ShippingQuote",
+          "role": "exec",
+          "description": "Shipping cost of an order total.",
+          "source": "\"\"\"Shipping cost of an order total.\"\"\"\n\n\ndef run(total: float):\n    # et:op=base_fee\n    # Flat shipping fee before any rule applies.\n    fee = 5.0\n    # et:op=rounded_fee\n    # Fee rounded to cents.\n    fee = round(fee, 2)\n    return {\"result\": fee, \"feedback\": None}\n",
+          "files": {
+            "tests/test_shipping_quote.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/shipping_quote/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"shipping_quote_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass ShippingQuoteTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'total': 20.0}, 5.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "total": 20.0
+                },
+                5.0
+              ],
+              [
+                {
+                  "total": 10.0
+                },
+                5.0
+              ]
+            ]
+          }
+        }
+      },
+      "bindings": {
+        "ship": {
+          "rule": "exact",
+          "metrics": [
+            "accuracy"
+          ],
+          "cases": [
+            [
+              {
+                "total": 20.0
+              },
+              5.0
+            ],
+            [
+              {
+                "total": 49.99
+              },
+              5.0
+            ],
+            [
+              {
+                "total": 50.0
+              },
+              0.0
+            ],
+            [
+              {
+                "total": 120.0
+              },
+              0.0
+            ]
+          ]
+        }
+      }
+    },
+    "task": "Customers report that ShippingQuote (Program {ship}) charges 5.0 for an order total of 80.0, but orders of 50.0 or more ship free; smaller orders still cost 5.0. Improve the Program through a candidate. Its operator base_fee keeps its meaning and must keep its id; mark the new free-shipping decision as the operator free_shipping. Evaluate the candidate and merge it only if protected acceptance passes. Then run it for total 80.0 and for total 10.0 and report both costs.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{ship}",
+            "claim": "Orders of 50.0 or more ship free",
+            "candidate_name": "free threshold"
+          },
+          "as": "c1"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "instruction": "Implement the claim"
+          },
+          "files": {
+            "$program": "\"\"\"Shipping cost of an order total: orders of 50.0 or more ship free.\"\"\"\n\n\ndef run(total: float):\n    # et:op=base_fee\n    # Flat shipping fee before any rule applies.\n    fee = 5.0\n    # et:op=free_shipping\n    # Decides whether the order total reaches the free-shipping threshold.\n    if total >= 50:\n        fee = 0.0\n    # et:op=charged_fee\n    # Fee the customer pays after the free-shipping rule, rounded to cents.\n    fee = round(fee, 2)\n    return {\"result\": fee, \"feedback\": None}\n",
+            "tests/test_shipping_quote.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/shipping_quote/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"shipping_quote_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass ShippingQuoteTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'total': 80.0}, 0.0), ({'total': 20.0}, 5.0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{c1}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "decision": "merge_branch",
+            "reason": "Protected evaluation decided"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "ship",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "ship",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "improved",
+        "program": "ship",
+        "metric": "accuracy",
+        "direction": "maximize"
+      },
+      {
+        "kind": "probe",
+        "program": "{ship}",
+        "arguments": {
+          "total": 80.0
+        },
+        "result": 0.0
+      },
+      {
+        "kind": "probe",
+        "program": "{ship}",
+        "arguments": {
+          "total": 10.0
+        },
+        "result": 5.0
+      },
+      {
+        "kind": "operators",
+        "program": "ship",
+        "kept": [
+          "base_fee"
+        ],
+        "new": [
+          "free_shipping"
+        ]
+      },
+      {
+        "kind": "operator_uses",
+        "program": "ship",
+        "op": "base_fee",
+        "outputs": [
+          5.0,
+          5.0
+        ]
+      },
+      {
+        "kind": "operator_uses",
+        "program": "ship",
+        "op": "free_shipping",
+        "count": [
+          2,
+          2
+        ]
+      },
+      {
+        "kind": "operators",
+        "program": "ship",
+        "ops": [
+          "base_fee",
+          "free_shipping",
+          "charged_fee"
+        ],
+        "absent": [
+          "rounded_fee"
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "operator_uses",
+        "program": "ship",
+        "op": "free_shipping",
+        "outputs": [
+          true,
+          false
+        ],
+        "mode": "mirror"
+      },
+      {
+        "kind": "operator_uses",
+        "program": "ship",
+        "op": "charged_fee",
+        "outputs": [
+          0.0,
+          5.0
+        ],
+        "mode": "mirror"
+      }
+    ]
+  },
+  {
+    "id": "PLC-19",
+    "covers": [
+      "remove a Code Anchor",
+      "comment-only revision",
+      "operator deletion"
+    ],
+    "title": "Reflection removes an unneeded Code Anchor; the code and its behaviour stay",
+    "setup": {
+      "programs": {
+        "parcel": {
+          "name": "ParcelWeight",
+          "role": "exec",
+          "description": "Total weight of a parcel in kilograms, rounded to grams.",
+          "source": "\"\"\"Total weight of a parcel in kilograms.\"\"\"\n\n\ndef run(weights: list):\n    # et:op=item_count\n    # Number of items packed into the parcel.\n    count = len(weights)\n    # et:op=total_weight\n    # Sum of the item weights in kilograms.\n    total = sum(weights)\n    # et:op=rounded_weight\n    # Total weight rounded to grams.\n    rounded = round(total, 3)\n    return {\"result\": rounded, \"feedback\": None}\n",
+          "files": {
+            "tests/test_parcel_weight.py": "import importlib.util\nimport pathlib\nimport unittest\n\nPATH = pathlib.Path(__file__).parents[1] / 'src/evertree/processes/parcel_weight/_exec.py'\nSPEC = importlib.util.spec_from_file_location(\"parcel_weight_under_test\", PATH)\nprogram = importlib.util.module_from_spec(SPEC)\nSPEC.loader.exec_module(program)\n\n\nclass ParcelWeightTest(unittest.TestCase):\n    def test_examples(self):\n        for arguments, expected in [({'weights': [0.5, 1.25]}, 1.75), ({'weights': []}, 0)]:\n            with self.subTest(arguments=arguments):\n                self.assertEqual(program.run(**arguments)[\"result\"], expected)\n"
+          },
+          "seed": {
+            "rule": "exact",
+            "metrics": [
+              "accuracy"
+            ],
+            "cases": [
+              [
+                {
+                  "weights": [
+                    0.5,
+                    1.25
+                  ]
+                },
+                1.75
+              ],
+              [
+                {
+                  "weights": [
+                    2.0
+                  ]
+                },
+                2.0
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "task": "Reflection on ParcelWeight (Program {parcel}) found that its operator item_count marks a value the result never uses, so a semantic anchor is not needed at that point. Remove that Code Anchor through a candidate, keep the code and every other anchor as they are, and merge the change. Then run the Program for weights [0.5, 1.25] and report the result and its remaining operators.",
+    "mirror": {
+      "steps": [
+        {
+          "op": "create_candidate",
+          "args": {
+            "program": "{parcel}",
+            "claim": "item_count needs no semantic anchor",
+            "candidate_name": "drop item count"
+          },
+          "as": "c1"
+        },
+        {
+          "op": "develop_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "instruction": "Remove the item_count anchor"
+          },
+          "files": {
+            "$program": "\"\"\"Total weight of a parcel in kilograms.\"\"\"\n\n\ndef run(weights: list):\n    count = len(weights)\n    # et:op=total_weight\n    # Sum of the item weights in kilograms.\n    total = sum(weights)\n    # et:op=rounded_weight\n    # Total weight rounded to grams.\n    rounded = round(total, 3)\n    return {\"result\": rounded, \"feedback\": None}\n"
+          }
+        },
+        {
+          "op": "evaluate_candidate",
+          "args": {
+            "candidate": "{c1}"
+          }
+        },
+        {
+          "op": "choose_candidate",
+          "args": {
+            "candidate": "{c1}",
+            "decision": "merge_branch",
+            "reason": "Only an anchor changed"
+          }
+        }
+      ]
+    },
+    "expect": [
+      {
+        "kind": "task",
+        "statuses": [
+          "succeeded",
+          "completed"
+        ],
+        "mode": "live"
+      },
+      {
+        "kind": "revision",
+        "program": "parcel",
+        "changed": true
+      },
+      {
+        "kind": "choices",
+        "program": "parcel",
+        "decisions": [
+          "merge_branch"
+        ],
+        "count": [
+          1,
+          1
+        ]
+      },
+      {
+        "kind": "probe",
+        "program": "{parcel}",
+        "arguments": {
+          "weights": [
+            0.5,
+            1.25
+          ]
+        },
+        "result": 1.75
+      },
+      {
+        "kind": "operators",
+        "program": "parcel",
+        "ops": [
+          "total_weight",
+          "rounded_weight"
+        ],
+        "kept": [
+          "total_weight",
+          "rounded_weight"
+        ],
+        "absent": [
+          "item_count"
+        ]
+      },
+      {
+        "kind": "operator_uses",
+        "program": "parcel",
+        "op": "total_weight",
+        "outputs": [
+          1.75
+        ]
+      },
+      {
+        "kind": "step_result",
+        "op": "evaluate_candidate",
+        "match": "behaviour_preserved",
+        "mode": "mirror"
+      }
+    ]
   }
 ]

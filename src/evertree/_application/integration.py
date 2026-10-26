@@ -166,7 +166,6 @@ class KnowledgeIntegrationMixin:
                 continue
             if event.operator in {
                 "provider_request",
-                "code_anchors",
                 "call_program",
                 "conscious_step_started",
                 "semantic_write",

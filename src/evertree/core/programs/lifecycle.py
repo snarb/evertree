@@ -463,6 +463,39 @@ class ProgramLifecycleRuntime:
         raw = git(workspace, "diff", "--raw", "--no-abbrev", candidate.base_revision, revision)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
+    def preserves_behaviour(self, candidate_id: str) -> bool:
+        """Whether the committed change edits only comments, such as Code Anchors, of Python files.
+
+        Each changed file must parse to the same syntax tree before and after, so the
+        candidate executes exactly as its base and a holdout could not tell them apart.
+        """
+        candidate = self.candidate(candidate_id)
+        workspace = Path(candidate.workspace)
+        revision = git(workspace, "rev-parse", "HEAD")
+        changes = git(
+            workspace, "diff", "--name-status", "--no-renames", candidate.base_revision, revision
+        ).splitlines()
+        if not changes:
+            return False
+        for change in changes:
+            status, path = change.split("\t", 1)
+            if status != "M" or not path.endswith(".py"):
+                return False
+            try:
+                before, after = (
+                    ast.dump(ast.parse(git(workspace, "show", f"{commit}:{path}")))
+                    for commit in (candidate.base_revision, revision)
+                )
+            except SyntaxError:
+                return False
+            if before != after:
+                return False
+        return True
+
+    def validated_revision(self, candidate_id: str) -> str:
+        """Check the committed candidate against the source gates without evaluating it."""
+        return self._validate_candidate(self.candidate(candidate_id))
+
     def receipt(self, candidate_id: str) -> dict | None:
         """Return the stored evaluation report, verification and criteria for a candidate."""
         receipt = self._data["evaluations"].get(candidate_id)
@@ -597,35 +630,11 @@ class ProgramLifecycleRuntime:
                     self.discard_candidates([candidate_id])
                 return None
             revision = self._validate_candidate(candidate)
-            receipt = self._data["evaluations"].get(candidate_id)
-            if not receipt or receipt["report"]["subject_revision"] != revision:
-                raise LifecycleError("No evaluation exists for this exact revision")
-            # Recheck the current fixed policy rather than trusting a saved boolean.
-            report = EvaluationReport(**receipt["report"])
-            criteria = self.criteria(candidate) if callable(self.criteria) else self.criteria
-            if json.dumps(receipt["criteria"], sort_keys=True) != json.dumps(
-                asdict(criteria), sort_keys=True
-            ):
-                raise LifecycleError(
-                    "Acceptance criteria changed; independently reevaluate candidate"
-                )
-            if (
-                expected_dataset_revision is not None
-                and report.dataset_revision != expected_dataset_revision
-            ):
-                raise LifecycleError(
-                    "Evaluation dataset changed; independently reevaluate candidate"
-                )
-            verification = assess_candidate(
-                criteria=criteria,
-                checks=report.checks,
-                candidate_metrics=report.metrics,
-                baseline_metrics=report.baseline_metrics,
-                independent=report.independent,
-                uncertainty=report.uncertainty,
-            )
-            if not verification.verified:
-                raise LifecycleError("Acceptance checks failed: " + "; ".join(verification.reasons))
+            # A comment-only revision of the active code runs exactly as its base; the
+            # base's acceptance still describes it and no metric can improve.
+            preserved = decision == "merge_branch" and self.preserves_behaviour(candidate_id)
+            if not preserved:
+                self._check_receipt(candidate, revision, expected_dataset_revision)
             previous = git(self.repository, "rev-parse", "main")
             if previous != candidate.base_revision:
                 raise LifecycleError(
@@ -660,11 +669,40 @@ class ProgramLifecycleRuntime:
                     "decision": decision,
                     "reason": reason,
                     "revision": revision,
+                    "behaviour_preserved": preserved,
                 }
             )
             self._persist()
             self.discard_candidates([candidate_id])
             return revision
+
+    def _check_receipt(self, candidate, revision, expected_dataset_revision):
+        """Require a verified evaluation of this exact revision under the current fixed policy."""
+        receipt = self._data["evaluations"].get(candidate.id)
+        if not receipt or receipt["report"]["subject_revision"] != revision:
+            raise LifecycleError("No evaluation exists for this exact revision")
+        # Recheck the current fixed policy rather than trusting a saved boolean.
+        report = EvaluationReport(**receipt["report"])
+        criteria = self.criteria(candidate) if callable(self.criteria) else self.criteria
+        if json.dumps(receipt["criteria"], sort_keys=True) != json.dumps(
+            asdict(criteria), sort_keys=True
+        ):
+            raise LifecycleError("Acceptance criteria changed; independently reevaluate candidate")
+        if (
+            expected_dataset_revision is not None
+            and report.dataset_revision != expected_dataset_revision
+        ):
+            raise LifecycleError("Evaluation dataset changed; independently reevaluate candidate")
+        verification = assess_candidate(
+            criteria=criteria,
+            checks=report.checks,
+            candidate_metrics=report.metrics,
+            baseline_metrics=report.baseline_metrics,
+            independent=report.independent,
+            uncertainty=report.uncertainty,
+        )
+        if not verification.verified:
+            raise LifecycleError("Acceptance checks failed: " + "; ".join(verification.reasons))
 
     def snapshot(self):
         """Capture candidate branches, evaluation reports and explicit lifecycle choices."""

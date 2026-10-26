@@ -294,9 +294,15 @@ async def evaluate_pair(
                     run_map[identity] = run.id
                 elif identity in run_map:
                     run = run_map[identity]
+                    # A candidate's anchors have no graph operators; its trace names them.
+                    operator = (
+                        f"op:{event['program']['program_id']}:{event['anchor']}"
+                        if kind == "operator"
+                        else event.get("operator", kind)
+                    )
                     context.memory.record(
                         run,
-                        event.get("operator", kind),
+                        operator,
                         event.get("arguments"),
                         event.get("output", event.get("result", event.get("error"))),
                         status=event.get("status", "completed"),

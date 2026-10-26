@@ -1,7 +1,7 @@
 """Lifecycle scenario support: structural checks and the native mirror's scripted provider.
 
-Checks read only the session state (graph Programs, branches, receipts, choices,
-bindings, probes). Live model work varies, so checks bound counts and compare
+Checks read only the session state (graph Programs and operators, branches, receipts,
+choices, bindings, probes). Live model work varies, so checks bound counts and compare
 metrics with baselines instead of fixing exact identities or values.
 """
 
@@ -197,6 +197,13 @@ def check(state, expectation) -> str | None:
         ]
         if not errors:
             return f"No {expectation['op']} step failed with {expectation['match']!r}"
+    elif kind == "step_result":
+        if not any(
+            step["op"] == expectation["op"]
+            and expectation["match"] in json.dumps(step.get("result"))
+            for step in state["steps"]
+        ):
+            return f"No {expectation['op']} step returned {expectation['match']!r}"
     elif kind == "bindings":
         owners = {str(identity) for identity in programs(state, expectation["program"])}
         bound = [
@@ -255,6 +262,54 @@ def check(state, expectation) -> str | None:
             return f"{evaluated} evaluated forecasts of {expectation['target']}"
         if not _within(applied, expectation["applied"]):
             return f"{applied} applied updates: {[item['receipts'] for item in records]}"
+    elif kind == "operators":
+        identity = state["names"][expectation["program"]]
+        current = {
+            item["op_id"]: item for item in state["operators"] if item["program"] == identity
+        }
+        revision = state["programs"][str(identity)].get("revision")
+        setup = state["setup_operators"].get(expectation["program"], {})
+        if "ops" in expectation and sorted(current) != sorted(expectation["ops"]):
+            return f"Operators are {sorted(current)}"
+        if "count" in expectation and not _within(len(current), expectation["count"]):
+            return f"{len(current)} operators: {sorted(current)}"
+        for op_id, item in current.items():
+            if not item["description"]:
+                return f"Operator {op_id} has no description"
+            if item["revisions"][-1] != revision:
+                return f"Operator {op_id} was not installed for revision {revision}"
+        for op_id in expectation.get("absent", ()):
+            if op_id in current:
+                return f"Removed anchor {op_id} still has an operator"
+        for op_id in expectation.get("kept", ()):
+            if op_id not in current or current[op_id]["id"] != setup.get(op_id):
+                return f"Operator {op_id} did not keep its identity {setup.get(op_id)}"
+            if len(current[op_id]["revisions"]) < 2:
+                return f"Operator {op_id} lists only {current[op_id]['revisions']}"
+        for op_id in expectation.get("new", ()):
+            if op_id not in current or current[op_id]["id"] in setup.values():
+                return f"Operator {op_id} is not a new operator"
+    elif kind == "operator_uses":
+        identity = state["names"][expectation["program"]]
+        runs = {probe["run"] for probe in state["probes"] if probe.get("run") is not None}
+        current = {
+            item["op_id"]: item for item in state["operators"] if item["program"] == identity
+        }
+        selected = [expectation["op"]] if "op" in expectation else sorted(current)
+        if not selected:
+            return "The Program has no operators"
+        for op_id in selected:
+            if op_id not in current:
+                return f"No operator {op_id}"
+            outputs = [
+                use["output"]
+                for use in current[op_id]["uses"]
+                if use["run"] in runs and use["status"] == "completed"
+            ]
+            if "outputs" in expectation and outputs != expectation["outputs"]:
+                return f"Operator {op_id} recorded {outputs}"
+            if not _within(len(outputs), expectation.get("count", [1, None])):
+                return f"Operator {op_id} recorded {len(outputs)} probe uses"
     elif kind == "task":
         if state["task"] is None or state["task"]["status"] not in expectation["statuses"]:
             return f"Task ended as {state['task']}"

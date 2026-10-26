@@ -36,6 +36,7 @@ async def count(ctx, value):
             "src/evertree/processes/calculation/parent/_exec.py": """
 async def run(ctx, child):
     # et:op=first_counter
+    # Counts the first value.
     first = await ctx.step('counter', {'value': 1})
     result = await ctx.call(child, {'value': first})
     return {'result': result.result, 'feedback': 'nested complete'}
@@ -44,6 +45,7 @@ async def run(ctx, child):
 from .helpers import bump, count
 async def run(ctx, value):
     # et:op=child_counter
+    # Counts the bumped value.
     result = await count(ctx, bump(value))
     return {'result': result}
 """,
@@ -86,6 +88,61 @@ async def run(ctx, value):
     await runtime.close()
 
 
+async def test_anchored_statements_report_each_use_with_its_value(tmp_path):
+    """A real worker instruments anchored plain-Python statements; Core traces each use once."""
+    repo = tmp_path / "repository"
+    source = """
+def run(items):
+    # et:op=subtotal
+    # Sums price times quantity.
+    subtotal = sum(
+        price * quantity for price, quantity in items
+    )
+    for price, _ in items:
+        # et:op=check_price
+        # Requires a positive price.
+        if price <= 0:
+            raise ValueError('price')
+    # et:op=answer
+    # Returns the subtotal.
+    return {'result': subtotal}
+"""
+    revision = commit_programs(repo, {"run.py": source})
+    traces = []
+
+    async def gateway(method, payload):
+        return None
+
+    async def trace(event):
+        traces.append(event)
+
+    runtime = Runtime(tmp_path / "runtime", repo, gateway, trace, process_factory=TestProcess)
+    spec = ProgramSpec(1, "run.py", revision)
+    result = await runtime.execute("task", spec, {"items": [[2, 3], [1, 4]]}, run_id="ok")
+    assert result.result == 10
+    uses = [
+        (event["anchor"], event["status"], event["output"])
+        for event in traces
+        if event["type"] == "operator"
+    ]
+    assert uses == [
+        ("subtotal", "completed", 10),
+        ("check_price", "completed", False),
+        ("check_price", "completed", False),
+        ("answer", "completed", {"result": 10}),
+    ]
+    first = next(event for event in traces if event["type"] == "operator")
+    assert first["run_id"] == "ok" and first["source_line"] == 3 and first["seq"] == 1
+    traces.clear()
+    with pytest.raises(Exception, match="price"):
+        await runtime.execute("task", spec, {"items": [[0, 1]]}, run_id="bad")
+    assert [(e["anchor"], e["status"]) for e in traces if e["type"] == "operator"] == [
+        ("subtotal", "completed"),
+        ("check_price", "completed"),
+    ]
+    await runtime.close()
+
+
 async def test_cancel_stops_gateway_before_releasing_admission(tmp_path):
     """Use a real worker and DBOS journal to verify execution, cancellation, or recovery across process boundaries."""
     repo = tmp_path / "repository"
@@ -120,6 +177,7 @@ async def run(ctx):
         'program': {'program_id': 'forged'}, 'run_mode': 'forged', 'type': 'run_failed'})
     try:
         # et:op=rejected_call
+        # Calls an operation Core rejects.
         await ctx.step('reject', {'input': 1})
     except RuntimeError:
         pass

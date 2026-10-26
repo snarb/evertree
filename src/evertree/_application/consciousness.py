@@ -578,7 +578,6 @@ class ConsciousnessMixin:
             if event["program_run"] in excluded or event["operator"] in {
                 "conscious_step_result",
                 "analytical_note",
-                "code_anchors",
                 "run_started",
                 "step_started",
             }:
@@ -665,7 +664,6 @@ class ConsciousnessMixin:
                 "provider_event",
                 "run_started",
                 "step_started",
-                "code_anchors",
                 "conscious_step_result",
             }
         ]

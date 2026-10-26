@@ -332,6 +332,9 @@ class Runtime:
                             ):
                                 self._paused.set()
                         continue
+                    if kind == "operator":
+                        await self._operator_use(message)
+                        continue
                     if kind == "result":
                         return message
                     if kind == "error":
@@ -417,6 +420,51 @@ class Runtime:
         finally:
             pending.pop(method, None)
 
+    @staticmethod
+    def _anchors(active, spec):
+        """Parse the Code Anchors of a run's Program file once per execution."""
+        from ..anchors import parse_anchors
+
+        cache = active.setdefault("anchors", {})
+        if spec.git_path not in cache:
+            source = (active["source_dir"] / spec.git_path).read_text(encoding="utf-8")
+            cache[spec.git_path] = parse_anchors(
+                source,
+                code_node_id=spec.program_id,
+                git_path=spec.git_path,
+                commit_sha=spec.revision,
+            )
+        return cache[spec.git_path]
+
+    async def _operator_use(self, message):
+        """Trace one execution of an anchored statement reported by the worker."""
+        active = self._active
+        run_id, op_id, seq = message.get("run_id"), message.get("op_id"), message.get("seq")
+        if active is None or run_id not in active["known_runs"]:
+            raise ProgramExecutionError("Operator use from a workflow Core did not admit")
+        spec = ProgramSpec(**active["known_runs"][run_id])
+        if not isinstance(seq, int) or isinstance(seq, bool):
+            raise ProgramExecutionError("Operator use has no sequence")
+        anchor = next((item for item in self._anchors(active, spec) if item.op_id == op_id), None)
+        if anchor is None:
+            raise ProgramExecutionError("Operator use names no Code Anchor of its Program")
+        failed = "error" in message
+        await self._trace(
+            {
+                "type": "operator",
+                "task_id": active["task_id"],
+                "run_id": run_id,
+                "run_mode": active["run_mode"],
+                "program": asdict(spec),
+                "semantic_scope": active["execution_scopes"][run_id][-1],
+                "anchor": op_id,
+                "source_line": anchor.line,
+                "seq": seq,
+                "status": "failed" if failed else "completed",
+                "output": {"error": message["error"]} if failed else message.get("output"),
+            }
+        )
+
     async def _dispatch_operation(self, request):
         """Authorize and service worker requests against Core, tracing durable results and child runs."""
         if self._pause_requested:
@@ -469,25 +517,9 @@ class Runtime:
         }
         source_line = request.get("source_line")
         if isinstance(source_line, int) and not isinstance(source_line, bool):
-            from ..anchors import parse_anchors
+            from ..anchors import anchor_at
 
-            cache = active.setdefault("anchors", {})
-            if spec.git_path not in cache:
-                source = (active["source_dir"] / spec.git_path).read_text(encoding="utf-8")
-                cache[spec.git_path] = parse_anchors(
-                    source,
-                    code_node_id=spec.program_id,
-                    git_path=spec.git_path,
-                    commit_sha=spec.revision,
-                )
-            anchor = next(
-                (
-                    item
-                    for item in cache[spec.git_path]
-                    if item.line in {source_line, source_line - 1}
-                ),
-                None,
-            )
+            anchor = anchor_at(self._anchors(active, spec), source_line)
             if anchor:
                 metadata["anchor"] = anchor.op_id
                 metadata["source_line"] = anchor.line

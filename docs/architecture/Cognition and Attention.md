@@ -841,9 +841,15 @@ If a suitable `Program` does not yet exist, `Consciousness` solves the `Task` th
 Source code:
 
 ```python
-state = prepare_state(ctx)       # et:op=prepare_state
-decision = choose(state)         # et:op=choose
-result = execute(decision)        # et:op=execute
+# et:op=prepare_state
+# State the decision is made from.
+state = prepare_state(ctx)
+# et:op=choose
+# Chooses the next decision from the state.
+decision = choose(state)
+# et:op=execute
+# Result of executing the decision.
+result = execute(decision)
 ```
 
 When a `Program` is loaded, the runtime instruments it so that a control hook exists before every anchored block:
@@ -864,6 +870,8 @@ TraceEvent
 ```
 
 #topic_core
+
+The worker compiles the Program's entry module with a hook around each anchored statement. After the statement it sends a fire-and-forget `operator` message `{run_id, op_id, seq, output | error}`; Core checks that the run is admitted and the op id is an anchor of its Program, and traces one operator use. `seq` counts uses per run, so uses replayed after recovery are recorded once. The pause hook before an anchored block is not implemented yet.
 
 During ordinary execution, hooks pass without stopping. Pausing a background `ProgramRun` does not itself take `Focus`: a request for a conscious step goes through the shared attention mechanism. If the Task is already in Focus, control continues in its current conscious cycle.
 

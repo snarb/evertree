@@ -282,7 +282,9 @@ The [[#^def-OperatorOutput|`OperatorOutput`]] type defines the semantic contract
 For example, for an anchored operator that is not itself a separate `Program`:
 
 ```python
-health: HealthState = diagnose(igor)  # et:op=diagnose_health
+# et:op=diagnose_health
+# Health state diagnosed for Igor.
+health: HealthState = diagnose(igor)
 ```
 
 ```python
