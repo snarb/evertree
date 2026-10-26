@@ -452,9 +452,10 @@ class ConsciousnessMixin:
     def _learn_task_outcome(self, task_id, verified, reason):
         """Score TaskVerified forecasts against a stopped task and train their declared estimator.
 
-        Core observes the outcome itself; Programs cannot report it.
+        Core observes the outcome itself; Programs cannot report it. Without a bound
+        estimator nothing declares how to score or learn it, so the task just stops.
         """
-        if self.graph.find("TaskVerified") is not None:
+        if self.learning.bindings("TaskVerified"):
             self.learn_outcome(
                 "TaskVerified",
                 {"verified": verified, "reason": reason},
@@ -529,7 +530,7 @@ class ConsciousnessMixin:
         if run.run_mode != "live":
             result["run_mode"] = run.run_mode
         if event["arguments"]:
-            result["arguments"] = event["arguments"]
+            result["arguments"] = bounded(event["arguments"], EVENT_PROMPT_CHARS)
         return result
 
     def _prompt_excluded_runs(self):
@@ -659,19 +660,16 @@ class ConsciousnessMixin:
             and group.events[-1].output is not None
             and group.events[-1].program_run not in excluded
             and group.events[-1].operator
-            not in {
-                "provider_request",
-                "provider_event",
-                "run_started",
-                "step_started",
-                "conscious_step_result",
-            }
+            not in {"run_started", "step_started", "conscious_step_result"}
         ]
         if work.get("recovered_program_ref"):
             result["recovered_program_result"] = {
                 "reference": work["recovered_program_ref"],
-                "result": json_value(
-                    self.memory.resolve(TraceOutputRef(**work["recovered_program_ref"]))
+                "result": bounded(
+                    json_value(
+                        self.memory.resolve(TraceOutputRef(**work["recovered_program_ref"]))
+                    ),
+                    EVENT_PROMPT_CHARS,
                 ),
             }
         # Working Notes remain available regardless of graph materialization.

@@ -480,10 +480,14 @@ async def evaluate_pair(
                 }
             )
         # The sides share nothing mutable, so their worker startups and cases overlap.
-        outcomes = await asyncio.gather(*(run_side(*side) for side in sides))
-        for (label, _, _), (side_metrics, side_valid, recorded) in zip(
-            sides, outcomes, strict=True
-        ):
+        # A failing side cancels the other before its tree is removed below.
+        try:
+            async with asyncio.TaskGroup() as group:
+                running = [group.create_task(run_side(*side)) for side in sides]
+        except ExceptionGroup as failure:
+            raise failure.exceptions[0] from None
+        for (label, _, _), task in zip(sides, running, strict=True):
+            side_metrics, side_valid, recorded = task.result()
             metrics[label] = side_metrics
             valid[label] = side_valid
             traces.extend(recorded)

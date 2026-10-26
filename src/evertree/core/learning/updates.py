@@ -127,8 +127,12 @@ class UpdatePlanner:
                 "weight": credit.attribution_weight,
                 "logical_key": key,
             }
-            if "features" in context:
-                sample["features"] = context["features"]
+            # A forecast run records the inputs of each estimator it read.
+            features = context.get("estimator_features", {}).get(
+                binding.state, context.get("features")
+            )
+            if features is not None:
+                sample["features"] = features
             samples.append(sample)
         data = {"samples": samples, "example_id": example}
         state = self.store.state(binding.state)

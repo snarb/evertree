@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from ..core.cognition.steps import AnalyticalNote
 from ..core.provider import ToolDefinition
 from ..core.semantics.tools import MULTIHOP_SEARCH_INSTRUCTIONS
+from ..core.values import bounded
 
 
 class AnswerVerification(BaseModel):
@@ -278,10 +279,6 @@ def candidate_instructions(program: dict, evaluation: dict | None) -> str:
     return "\n\n".join(parts)
 
 
-# High-volume provider bookkeeping that embeds earlier prompts; never evidence for a decision.
-TELEMETRY_OPERATORS = frozenset(
-    {"provider_request", "provider_event", "run_started", "step_started"}
-)
 # One recorded result or recalled event never exceeds this many characters in a prompt; the
 # rest stays in the trace and is reachable through its reference.
 EVENT_PROMPT_CHARS = 12_000
@@ -290,10 +287,12 @@ RESULTS_PROMPT_CHARS = 120_000
 
 
 def bounded_event(event: dict) -> dict:
-    """Replace an oversized event output with a preview that keeps its reference."""
-    from ..core.values import bounded
-
-    return {**event, "output": bounded(event.get("output"), EVENT_PROMPT_CHARS)}
+    """Replace an oversized event output or arguments with a preview that keeps its reference."""
+    return {
+        **event,
+        "output": bounded(event.get("output"), EVENT_PROMPT_CHARS),
+        "arguments": bounded(event.get("arguments"), EVENT_PROMPT_CHARS),
+    }
 
 
 LIFECYCLE_TOOLS = (
@@ -387,7 +386,7 @@ def _all_tools():
         ),
         tool(
             "evaluate_candidate",
-            "Evaluate a committed candidate against its slot's independently registered held-out dataset. A holdout scores a candidate lineage once: a candidate developed after it was evaluated on the holdout, or opened after another candidate was, fails further evaluation on that holdout with 'sources overlap'. To change a candidate after an evaluation, open a new candidate (create_candidate) or extend the holdout with derive_holdout; do not develop and re-evaluate the same one. A change of the active Program that edits only comments, such as Code Anchors, runs exactly as before: it reports behaviour_preserved without spending the holdout, and merge_branch merges it.",
+            "Evaluate a committed candidate against its slot's independently registered held-out dataset. A holdout scores a candidate lineage once: evaluating the same candidate again, one developed after its evaluation, or one opened after another candidate of the slot was evaluated fails with 'sources overlap'; only refresh_candidate of an unchanged change may meet the holdout again. To change a candidate after an evaluation, open a new candidate (create_candidate) or extend the holdout with derive_holdout. A change of the active Program that edits only comments, such as Code Anchors, runs exactly as before: it reports behaviour_preserved without spending the holdout, and merge_branch merges it.",
             {"candidate": string},
             ("candidate",),
         ),

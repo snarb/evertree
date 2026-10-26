@@ -21,11 +21,26 @@ if TYPE_CHECKING:
     from .declaration import EstimatorDeclaration, LearningDeclaration
 
 
+SETTINGS = {
+    "beta_bernoulli": {"alpha", "beta"},
+    "categorical": {"categories", "prior"},
+    "mean": {"prior"},
+    "linear_regression": {"dimension", "learning_rate"},
+}
+
+
 def initial_state(kind: str, settings: Mapping[str, Any]) -> tuple[dict, dict]:
-    """Validate kind-specific settings and return them with the initial parameters."""
+    """Validate kind-specific settings and return them normalized with the initial parameters."""
+    if kind not in SETTINGS:
+        raise ValueError("Unsupported estimator kind")
+    if unknown := set(settings) - SETTINGS[kind]:
+        raise ValueError(f"Unknown {kind} settings: {sorted(unknown)}")
     if kind == "beta_bernoulli":
-        settings = {"alpha": settings.get("alpha", 1.0), "beta": settings.get("beta", 1.0)}
-        if any(_number(value) <= 0 for value in settings.values()):
+        settings = {
+            "alpha": _number(settings.get("alpha", 1.0)),
+            "beta": _number(settings.get("beta", 1.0)),
+        }
+        if any(value <= 0 for value in settings.values()):
             raise ValueError("Beta prior parameters must be positive")
         return settings, {"positive": 0.0, "negative": 0.0, "observed_count": 0}
     if kind == "categorical":
@@ -44,10 +59,10 @@ def initial_state(kind: str, settings: Mapping[str, Any]) -> tuple[dict, dict]:
             {"counts": {category: 0.0 for category in categories}, "observed_count": 0},
         )
     if kind == "mean":
-        prior = settings.get("prior")
-        if prior is not None:
-            prior = _number(prior)
-        return {"prior": prior}, {
+        # The prior is the forecast before any outcome, so it must be a number.
+        if "prior" not in settings:
+            raise ValueError("A mean estimator needs a numeric prior")
+        return {"prior": _number(settings["prior"])}, {
             "sum": 0.0,
             "sum_squares": 0.0,
             "weight": 0.0,
@@ -64,12 +79,14 @@ def initial_state(kind: str, settings: Mapping[str, Any]) -> tuple[dict, dict]:
             {"dimension": dimension, "learning_rate": learning_rate},
             {"weights": [0.0] * dimension, "bias": 0.0, "observed_count": 0},
         )
-    raise ValueError("Unsupported estimator kind")
 
 
 def program_state_id(owner: str | int, name: str, estimator: EstimatorDeclaration) -> str:
-    """Address a Program's estimator state by its declaration, not by revision."""
-    fingerprint = content_revision(estimator.model_dump(mode="json"))[:12]
+    """Address a Program's estimator state by its normalized declaration, not by revision."""
+    settings, _ = initial_state(estimator.kind, estimator.settings)
+    fingerprint = content_revision(
+        {"kind": estimator.kind, "target": estimator.target, "settings": settings}
+    )[:12]
     return f"program:{owner}:{name}:{fingerprint}"
 
 
@@ -108,11 +125,8 @@ class LearningStore:
         """
         states = {}
         with self._lock:
-            for name, estimator in declaration.estimators.items():
-                identity = program_state_id(owner, name, estimator)
-                if identity not in self._states:
-                    self.create_state(estimator.kind, state_id=identity, **estimator.settings)
-                states[name] = identity
+            for name in declaration.estimators:
+                states[name] = self.program_state(owner, declaration, name)
             self._bindings = [binding for binding in self._bindings if binding.owner != str(owner)]
             for name, estimator in declaration.estimators.items():
                 target = declaration.targets[estimator.target]
@@ -140,16 +154,26 @@ class LearningStore:
                 if target is None or binding.target == target
             ]
 
+    def program_state(self, owner: str, declaration: LearningDeclaration, name: str) -> str:
+        """Return a declared estimator's state, created from its prior when first read.
+
+        Reading never changes bindings; those follow activation and displacement.
+        """
+        if name not in declaration.estimators:
+            raise ValueError(f"Program declares no estimator {name!r}")
+        estimator = declaration.estimators[name]
+        identity = program_state_id(owner, name, estimator)
+        with self._lock:
+            if identity not in self._states:
+                self.create_state(estimator.kind, state_id=identity, **estimator.settings)
+        return identity
+
     def estimate(
         self, owner: str, declaration: LearningDeclaration, name: str, inputs: Any = None
     ) -> dict[str, Any]:
         """Predict with a Program's declared estimator, reporting the state version used."""
-        if name not in declaration.estimators:
-            raise ValueError(f"Program declares no estimator {name!r}")
-        identity = program_state_id(owner, name, declaration.estimators[name])
+        identity = self.program_state(owner, declaration, name)
         with self._lock:
-            if identity not in self._states:
-                self.install(owner, declaration)
             state = self._states[identity]
             return {
                 "value": self.predict(identity, inputs),

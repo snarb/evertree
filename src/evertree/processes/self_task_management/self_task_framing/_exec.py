@@ -41,7 +41,8 @@ Choose a task-specific amount. Do not assume a standard duration or improvement 
 Outcome forecast
 - outcome_forecast is TaskOutcome's probability that a task like this passes
   independent completion verification ("verified") and how many past task outcomes it rests on
-  ("observed"). With few observations it is only a base rate: rely on the request.
+  ("observed"). With few observations it is only a base rate: rely on the request. It is null
+  when no forecast was available.
 - When the probability is low and well supported, prefer a first step that resolves ambiguity
   or plans the work, and allow enough budget for checking the result. Do not lower the
   quality bar or drop requirements because of the forecast.
@@ -74,12 +75,16 @@ async def run(ctx, request: str, context: dict | None = None):
     if inputs and inputs[-1] == {"role": "user", "content": request}:
         prepared["inputs"] = inputs[:-1]
     # Core scores each forecast against the task outcome; the estimator learns it once.
-    forecast = await predict(
-        ctx,
-        "task_outcome",
-        {"request": request, "context": prepared},
-        context=task_outcome_context(ctx.task_id),
-    )
+    # The forecast only advises the budget, so a failing model never blocks a task.
+    try:
+        forecast = await predict(
+            ctx,
+            "task_outcome",
+            {"request": request, "context": prepared},
+            context=task_outcome_context(ctx.task_id),
+        )
+    except RuntimeError:
+        forecast = None
     output = await ask(
         ctx,
         instructions=INSTRUCTIONS,

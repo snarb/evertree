@@ -403,7 +403,8 @@ class ProgramLifecycleRuntime:
 
         The candidate keeps its identity and holdout lineage. Its evaluation receipt
         is dropped because the evaluated tree no longer matches. A change that no
-        longer applies leaves the candidate paused.
+        longer applies leaves the candidate as it was, its stale base still blocking
+        activation.
         """
         candidate = self.candidate(candidate_id)
         if candidate.status not in {"active", "paused"}:

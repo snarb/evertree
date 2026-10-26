@@ -224,18 +224,28 @@ class PredictionEvaluator:
             raise ValueError("The called Program declares no LEARNING targets")
         declaration = LearningDeclaration.model_validate(child["learning"])
         caller = next(
-            event
-            for event in self.memory.events
-            if event.operator == "call_program"
-            and isinstance(event.output, Mapping)
-            and event.output.get("run_id") == child["run_id"]
+            (
+                event
+                for event in self.memory.events
+                if event.operator == "call_program"
+                and isinstance(event.output, Mapping)
+                and event.output.get("run_id") == child["run_id"]
+            ),
+            None,
         )
-        run = next(run for run in self.memory.runs if run.caller_event == caller.id)
-        finished = next(
-            event
-            for event in self.memory.events
-            if event.program_run == run.id and event.operator == "run_finished"
+        run = caller and next(
+            (run for run in self.memory.runs if run.caller_event == caller.id), None
         )
+        finished = run and next(
+            (
+                event
+                for event in self.memory.events
+                if event.program_run == run.id and event.operator == "run_finished"
+            ),
+            None,
+        )
+        if finished is None:
+            raise ValueError("The model run's result is not in the trace")
         # Live traces keep the whole runtime event; evaluation keeps its result.
         base = ("result", "result") if "type" in finished.output else ("result",)
         process = self.graph.get(int(child["program_id"])).properties["process"]
@@ -252,10 +262,17 @@ class PredictionEvaluator:
         return indexed
 
     def _names(self, program_id, program) -> bool:
-        if str(program_id) == str(program):
-            return True
+        """Whether program names this child as ctx.call resolves it: Program or its process."""
         node = self.graph.get(int(program_id))
-        return program in {node.name, node.properties.get("slug")}
+        process = self.graph.get(int(node.properties["process"]))
+        return str(program) in {
+            str(node.id),
+            node.name,
+            node.properties.get("slug"),
+            str(process.id),
+            process.name,
+            process.properties.get("slug"),
+        }
 
     def _assignment(self, fact):
         """Resolve the immutable assignment; the semantic graph is only its index."""

@@ -225,14 +225,9 @@ class ProgramsMixin:
         return git(self.repository, "rev-parse", "main")
 
     def _program_source(self, spec):
-        # A revision names immutable content, so one Git read per file serves every later run.
-        cache = self.__dict__.setdefault("_source_cache", {})
-        key = (spec["revision"], spec["git_path"])
-        if key not in cache:
-            cache[key] = _git(
-                self.repository, "show", f"{spec['revision']}:{spec['git_path']}"
-            ).decode("utf-8")
-        return cache[key]
+        return _git(self.repository, "show", f"{spec['revision']}:{spec['git_path']}").decode(
+            "utf-8"
+        )
 
     def _program(self, identity: int | str, *, allow_inactive=False) -> ProgramSpec:
         """Resolve a Program or active process role into a spec pinned to the current repository revision."""
@@ -407,8 +402,6 @@ class ProgramsMixin:
             program.id, claim, candidate_name=candidate_name
         )
         self.datasets.inherit_exposure(self._slot(program.id), candidate.id)
-        if self._current_task:
-            self._candidate_owners[candidate.id] = self._current_task
         return {"program": json_value(program), "candidate": dataclasses.asdict(candidate)}
 
     async def _run_program(self, *args, **kwargs):
@@ -783,8 +776,9 @@ class ProgramsMixin:
                 tool_handler=payload.get("_tool_handler"),
             )
 
-        # A candidate that returned no result on any case learned nothing about the labels.
-        unrevealed = set()
+        # Only a dataset whose cases ran can have shown labels; a candidate that returned
+        # no result on any case learned nothing about them.
+        revealed = set()
 
         async def evaluate(branch, revision):
             reports, traces = [], []
@@ -818,8 +812,8 @@ class ProgramsMixin:
                     for trace in experiment.traces
                     if trace.get("kind") == "case" and trace.get("side") == "candidate"
                 ]
-                if cases and all("error" in trace for trace in cases):
-                    unrevealed.add(dataset.revision)
+                if not cases or not all("error" in trace for trace in cases):
+                    revealed.add(dataset.revision)
             trace_run = self.memory.start_run(
                 "CandidateEvaluation", revision, {"candidate": branch.id}
             )
@@ -854,7 +848,9 @@ class ProgramsMixin:
             return dataclasses.replace(report, trace_ids=(str(event.id),))
 
         try:
-            result = await self.lifecycle.evaluate(candidate_id, evaluate)
+            # Both sides run concurrently and call models; one execution chain owns them.
+            with self._execution.enter():
+                result = await self.lifecycle.evaluate(candidate_id, evaluate)
             receipt = self.lifecycle.receipt(candidate_id)
             return {
                 "status": "evaluated",
@@ -863,7 +859,7 @@ class ProgramsMixin:
             }
         finally:
             for dataset in datasets:
-                if dataset.revision in unrevealed:
+                if dataset.revision not in revealed:
                     continue
                 self.datasets.mark_exposed(candidate_id, dataset.revision)
                 self.datasets.mark_exposed(self._slot(candidate.program_id), dataset.revision)
