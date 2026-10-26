@@ -168,7 +168,7 @@ def context(
         return world.operations.execute(method, payload, metadata=metadata)
 
     async def call(program, arguments):
-        from evertree.processes.semantic_processing.semantic_search._model import run
+        from evertree.processes.self_semantic_processing.self_semantic_search._model import run
 
         if program != "semantic_search":
             raise AssertionError("Unsupported semantic child: " + program)

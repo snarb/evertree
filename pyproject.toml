@@ -47,3 +47,6 @@ line-length = 100
 where = ["src"]
 include = ["evertree*"]
 namespaces = false
+
+[tool.setuptools.package-data]
+"evertree.core.graph" = ["templates/*.json", "templates/*.md", "templates/*.txt"]

@@ -34,7 +34,7 @@ from evertree.core.semantics.tools import READ_TOOLS, validate_action
 from evertree.core.tokens import current_read_context
 from evertree.core.values import json_value
 from evertree.debug_integration import load_debug_environment
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 from tests.support.live_semantics import (
     assert_no_individual_concept_assignments,
     load_completed_acquisition,

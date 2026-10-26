@@ -107,12 +107,43 @@ class RedisSearchIndex:
                 "relation_description",
                 "args",
                 "signature",
+                "semantic_signature",
+                "semantic_links",
                 "properties",
                 "valid_from",
                 "valid_until",
             )
             if key in node
         }
+
+        def named(reference):
+            return {
+                key: reference[key] for key in ("name", "kind", "description") if key in reference
+            }
+
+        if "semantic_signature" in fields:
+            fields["semantic_signature"] = [
+                {
+                    **slot,
+                    **{
+                        key: named(slot[key]) if slot.get(key) else None
+                        for key in ("value_concept", "role_concept")
+                    },
+                }
+                for slot in fields["semantic_signature"]
+            ]
+            fields["signature"] = [
+                {
+                    key: value
+                    for key, value in slot.items()
+                    if key not in {"value_concept", "role_concept"}
+                }
+                for slot in fields.get("signature", [])
+            ]
+        if "semantic_links" in fields:
+            fields["semantic_links"] = [
+                {**link, "target": named(link["target"])} for link in fields["semantic_links"]
+            ]
         if "args" in fields:
             fields["args"] = dict(fields["args"])
             for slot in node.get("signature", []):
@@ -120,10 +151,7 @@ class RedisSearchIndex:
                     continue
                 value = fields["args"].get(slot["label"])
 
-                def named(reference):
-                    # Reference IDs must not masquerade as measured numbers. Opaque data stays intact.
-                    return {key: reference[key] for key in ("name", "kind")}
-
+                # Reference IDs must not masquerade as measured numbers. Opaque data stays intact.
                 if isinstance(value, list):
                     fields["args"][slot["label"]] = [named(reference) for reference in value]
                 elif value is not None:

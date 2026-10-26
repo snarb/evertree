@@ -59,7 +59,7 @@ DESIGN = {
     "applicability": "Every new or revised user request. The LLM frames the task; when the "
     "request is ambiguous the first step resolves the ambiguity instead of assuming it away.",
     "adaptation": "Revisions reframe from the latest inputs. Failed or unverified tasks and "
-    "TaskOutcome's Brier loss are signals for ProgramImprovement to revise the framing policy.",
+    "SelfTaskOutcome's Brier loss are signals for SelfProgramImprovement to revise the framing policy.",
     "learning": "The framing policy is fixed code and instructions changed through the lifecycle. "
     "TaskOutcome learns the verification rate this policy uses from Core-observed task outcomes.",
     "exploration": "Not used: framing does not try budgets or steps to learn about them. New "

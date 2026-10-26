@@ -4,8 +4,10 @@ from copy import deepcopy
 
 import pytest
 
-from evertree.processes.learning.reflection._exec import run as reflect
-from evertree.processes.memory_processing.experience_consolidation._exec import run as consolidate
+from evertree.processes.self_learning.self_reflection._exec import run as reflect
+from evertree.processes.self_memory_processing.self_experience_consolidation._exec import (
+    run as consolidate,
+)
 
 
 class AnalyticalContext:

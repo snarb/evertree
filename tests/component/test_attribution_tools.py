@@ -11,7 +11,9 @@ from evertree.core.memory.types import TraceOutputRef
 from evertree.core.semantics.api import summarize_property
 from evertree.core.semantics.reading import describe
 from evertree.core.values import ContractError
-from evertree.processes.semantic_processing.knowledge_integration._exec import _describe_for_model
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+    _describe_for_model,
+)
 from tests.support.semantics import context, recorded_experience, semantic_world, write_action
 
 

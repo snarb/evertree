@@ -23,7 +23,7 @@ from evertree.core.provider import LLMRequest, ToolDefinition
 from evertree.core.runtime.llm import ProgramLLMInvocations, run_llm_dialogue
 from evertree.core.semantics.reading import fact_nodes
 from evertree.core.values import json_value
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 from tests.support.semantics import context, semantic_world
 
 pytestmark = pytest.mark.skipif(

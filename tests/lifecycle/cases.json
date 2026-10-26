@@ -1682,7 +1682,7 @@
     "title": "The ProgramImprovement meta Program improves another Program",
     "setup": {
       "existing": {
-        "plm": "ProgramImprovement.exec"
+        "plm": "SelfProgramImprovement.exec"
       },
       "programs": {
         "pct": {

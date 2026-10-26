@@ -175,7 +175,7 @@ async def test_restore_discards_candidate_ownership_from_later_work(agent):
     task = task_for(agent)
     saved = await agent.backup()
     candidate = agent.lifecycle.create_candidate(
-        agent._program("TaskFraming").program_id, "Disposable experiment"
+        agent._program("SelfTaskFraming").program_id, "Disposable experiment"
     )
     agent._candidate_owners[candidate.id] = task.id
     await agent.restore(saved)

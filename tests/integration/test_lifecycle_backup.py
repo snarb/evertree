@@ -47,11 +47,14 @@ def test_candidate_branch_names_use_graph_path_role_and_readable_unique_labels(t
         repo,
         tmp_path / "lifecycle",
         AcceptanceCriteria(("tests",)),
-        program_path=lambda _: "Self/Process/TaskManagement/Planning/exec",
+        program_path=lambda _: "Self/Process/SelfTaskManagement/SelfPlanning/exec",
     )
     first = lifecycle.create_candidate(42, "Reduce planning cost", candidate_name="Refine Budget")
     second = lifecycle.create_candidate(42, "Try another approach", candidate_name="refine-budget")
-    assert first.git_ref == "codex/program/Self/Process/TaskManagement/Planning/exec/refine-budget"
+    assert (
+        first.git_ref
+        == "codex/program/Self/Process/SelfTaskManagement/SelfPlanning/exec/refine-budget"
+    )
     assert second.git_ref == first.git_ref + "-2"
     assert first.id != second.id and first.program_id == second.program_id == 42
     for name in ("", "four words are invalid", "!!!"):

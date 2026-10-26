@@ -110,7 +110,7 @@ def test_prompt_results_keep_observations_ahead_of_integration_bookkeeping(agent
     run = agent.memory.start_run("Experiment", "commit", {"task_id": task.id})
     observation = agent.memory.record(run, "measurement", output={"temperature": 42})
     agent.memory.finish_run(run)
-    program = agent.graph.find("KnowledgeIntegration.exec")
+    program = agent.graph.find("SelfKnowledgeIntegration.exec")
     integration = agent.memory.start_run(program.id, "commit", {})
     task.program_run_ids.append("integration-run")
     agent._run_map["integration-run"] = integration.id
@@ -218,7 +218,7 @@ async def test_programs_cannot_rewrite_runtime_verification_estimator(agent, met
 async def test_process_prototype_cannot_be_deleted_by_semantic_edit(agent):
     """Apply a real semantic edit against a seeded graph and retain its protected prototype."""
     task = prepared_task(agent)
-    process = agent.graph.find("TaskFraming")
+    process = agent.graph.find("SelfTaskFraming")
     assert process.kind == "prototype"
     assert process.properties["process"] is True
     before = agent.graph.snapshot()
@@ -442,7 +442,7 @@ async def test_program_gateway_approval_wait_is_excluded_from_parent_run_meter(a
 
     agent.provider = TimedFramingProvider([])
     agent.approval_handler = approve
-    result = await agent._run_program(task.id, "TaskFraming", {"request": "Count r"})
+    result = await agent._run_program(task.id, "SelfTaskFraming", {"request": "Count r"})
     assert result["result"]["objective"] == "Count r in strawberry"
     assert task.spent["active_time_minutes"] * 60 == pytest.approx(5)
 
@@ -479,8 +479,8 @@ async def test_technical_timeout_during_approval_does_not_consume_task_budget(ag
 @pytest.mark.parametrize(
     ("name", "role", "parent"),
     [
-        ("Planning", "exec", None),
-        ("Planning", "model", "Learning"),
+        ("SelfPlanning", "exec", None),
+        ("SelfPlanning", "model", "SelfLearning"),
         ("NewProcess", "exec", "Process"),
         ("NewProcess", "exec", "Self"),
         ("NewProcess", "exec", "MissingParent"),
@@ -499,7 +499,7 @@ async def test_primary_skill_work_uses_primary_budget_and_extra_work_requires_al
 ):
     """Test real budget gates with branch creation supplied as an external boundary."""
     task = prepared_task(agent)
-    program = agent._program("TaskFraming")
+    program = agent._program("SelfTaskFraming")
     # Only budget accounting is under test; branch creation has real Git tests.
     create = Mock(
         return_value=ProgramBranch(

@@ -8,10 +8,10 @@ from evertree.core.actions import ActionGateway, ActionOption
 from evertree.core.memory.store import TraceStore
 from evertree.core.memory.types import MemoryQuery
 from evertree.core.values import ContractError, json_value
-from evertree.processes.memory_processing.experience_compaction._exec import (
+from evertree.processes.self_memory_processing.self_experience_compaction._exec import (
     run as propose_compaction,
 )
-from evertree.processes.memory_processing.replay_selection._exec import (
+from evertree.processes.self_memory_processing.self_replay_selection._exec import (
     run as select_replay,
 )
 

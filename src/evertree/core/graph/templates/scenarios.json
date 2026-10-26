@@ -1,0 +1,687 @@
+{
+  "evaluation_kind": "curated_structural_routes",
+  "limitations": "These authored scenarios check representation distinctions and traversable routes; they do not measure LLM navigation success or the prevalence of user tasks.",
+  "scenarios": [
+    {
+      "id": "language",
+      "intent": "Find the system of syntax and semantics in which source programs are expressed.",
+      "target": "local.programming_language",
+      "not_targets": [
+        "local.source_code",
+        "local.compiler",
+        "local.software_execution"
+      ],
+      "expected_ancestors": [
+        "local.formal_language"
+      ]
+    },
+    {
+      "id": "source-code",
+      "intent": "Find the program text edited in a repository, rather than its language or its execution.",
+      "target": "local.source_code",
+      "not_targets": [
+        "local.programming_language",
+        "local.compiler",
+        "local.software_execution"
+      ],
+      "expected_ancestors": [
+        "local.software_artifact"
+      ]
+    },
+    {
+      "id": "compiler",
+      "intent": "Find the software tool that translates a program representation.",
+      "target": "local.compiler",
+      "not_targets": [
+        "local.compilation",
+        "local.programming_language",
+        "local.source_code"
+      ],
+      "expected_ancestors": [
+        "local.software_tool"
+      ]
+    },
+    {
+      "id": "compilation",
+      "intent": "Find the translation process performed by a compiler during a build.",
+      "target": "local.compilation",
+      "not_targets": [
+        "local.compiler",
+        "local.machine_code"
+      ],
+      "expected_ancestors": [
+        "local.computational_process"
+      ]
+    },
+    {
+      "id": "algorithm",
+      "intent": "Find an abstract prescribed computation independently of one coded implementation.",
+      "target": "local.algorithm",
+      "not_targets": [
+        "local.algorithm_implementation",
+        "local.software_execution",
+        "local.computation_result"
+      ],
+      "expected_ancestors": [
+        "local.procedure"
+      ]
+    },
+    {
+      "id": "implementation",
+      "intent": "Find a software realization of an abstract algorithm.",
+      "target": "local.algorithm_implementation",
+      "not_targets": [
+        "local.algorithm",
+        "local.software_execution",
+        "local.computation_result"
+      ],
+      "expected_ancestors": [
+        "local.software_artifact"
+      ]
+    },
+    {
+      "id": "execution",
+      "intent": "Find the process of running an implementation in an environment.",
+      "target": "local.software_execution",
+      "not_targets": [
+        "local.algorithm_implementation",
+        "local.algorithm",
+        "local.computation_result"
+      ],
+      "expected_ancestors": [
+        "local.computational_process"
+      ]
+    },
+    {
+      "id": "result",
+      "intent": "Find information produced by a computation.",
+      "target": "local.computation_result",
+      "not_targets": [
+        "local.algorithm",
+        "local.algorithm_implementation",
+        "local.software_execution"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "learning",
+      "intent": "Find retained changes in knowledge, skill, or behavior produced through experience or data across biological and computational systems.",
+      "target": "local.learning_process",
+      "not_targets": [
+        "local.belief_update",
+        "local.parameter_optimization",
+        "local.model_inference"
+      ],
+      "expected_ancestors": [
+        "local.cognitive_process"
+      ]
+    },
+    {
+      "id": "belief-update",
+      "intent": "Find the process of revising a claim's assessed support after new information.",
+      "target": "local.belief_update",
+      "not_targets": [
+        "local.parameter_optimization",
+        "local.model_inference"
+      ],
+      "expected_ancestors": [
+        "local.cognitive_process"
+      ]
+    },
+    {
+      "id": "parameter-optimization",
+      "intent": "Find computation adjusting parameter values to improve an objective.",
+      "target": "local.parameter_optimization",
+      "not_targets": [
+        "local.belief_update",
+        "local.model_inference"
+      ],
+      "expected_ancestors": [
+        "local.computational_process"
+      ]
+    },
+    {
+      "id": "human-memory",
+      "intent": "Find the biological human ability to encode, retain, and retrieve information.",
+      "target": "local.human_memory",
+      "not_targets": [
+        "local.computer_memory",
+        "local.agent_memory"
+      ],
+      "expected_ancestors": [
+        "sumo.attribute"
+      ]
+    },
+    {
+      "id": "computer-memory",
+      "intent": "Find a device retaining encoded data for a computer.",
+      "target": "local.computer_memory",
+      "not_targets": [
+        "local.human_memory",
+        "local.agent_memory"
+      ],
+      "expected_ancestors": [
+        "sumo.device"
+      ]
+    },
+    {
+      "id": "agent-memory",
+      "intent": "Find the retained information artifact managed by a software agent.",
+      "target": "local.agent_memory",
+      "not_targets": [
+        "local.human_memory",
+        "local.computer_memory"
+      ],
+      "expected_ancestors": [
+        "local.software_artifact"
+      ]
+    },
+    {
+      "id": "causation",
+      "intent": "Find the relation asserting that a process contributes causally to another under a stated scope.",
+      "target": "rel.causes",
+      "not_targets": [
+        "rel.precedes",
+        "rel.evidence_depends_on"
+      ],
+      "expected_ancestors": [
+        "relation.causal"
+      ]
+    },
+    {
+      "id": "temporal-precedence",
+      "intent": "Find the relation saying one event occurred before another without asserting causation.",
+      "target": "rel.precedes",
+      "not_targets": [
+        "rel.causes",
+        "rel.evidence_depends_on"
+      ],
+      "expected_ancestors": [
+        "relation.temporal"
+      ]
+    },
+    {
+      "id": "evidence-dependence",
+      "intent": "Find the relation recording a dependent evidential basis rather than physical causation or chronology.",
+      "target": "rel.evidence_depends_on",
+      "not_targets": [
+        "rel.causes",
+        "rel.precedes"
+      ],
+      "expected_ancestors": [
+        "relation.epistemic"
+      ]
+    },
+    {
+      "id": "class-membership",
+      "intent": "Find the structural relation that types one concrete identity by its class.",
+      "target": "rel.identity_type",
+      "not_targets": [
+        "rel.plays_role",
+        "rel.state_identity"
+      ],
+      "expected_ancestors": [
+        "relation.structural"
+      ]
+    },
+    {
+      "id": "temporary-role",
+      "intent": "Find the contextual role of reviewing code without claiming every reviewer belongs to a distinct essential human kind.",
+      "target": "local.reviewer_role",
+      "not_targets": [
+        "local.software_development",
+        "local.execution_environment"
+      ],
+      "expected_ancestors": [
+        "local.role"
+      ]
+    },
+    {
+      "id": "execution-state",
+      "intent": "Find the configuration and available resources applicable during a particular execution.",
+      "target": "local.execution_environment",
+      "not_targets": [
+        "local.software_execution",
+        "local.runtime_environment"
+      ],
+      "expected_ancestors": [
+        "local.state"
+      ]
+    },
+    {
+      "id": "general-reflection",
+      "intent": "Find the general cognitive process examining previous reasoning and outcomes, independent of an agent's own program binding.",
+      "target": "local.reflection_process",
+      "not_targets": [
+        "local.agent_self_model",
+        "local.planning_process"
+      ],
+      "expected_ancestors": [
+        "local.cognitive_process"
+      ]
+    },
+    {
+      "id": "general-planning",
+      "intent": "Find the general process constructing a course of action rather than a plan artifact.",
+      "target": "local.planning_process",
+      "not_targets": [
+        "local.plan",
+        "local.reflection_process"
+      ],
+      "expected_ancestors": [
+        "local.cognitive_process"
+      ]
+    },
+    {
+      "id": "self-model",
+      "intent": "Find an agent's representation of its identity and capabilities rather than the agent itself.",
+      "target": "local.agent_self_model",
+      "not_targets": [
+        "local.software_agent",
+        "local.llm_agent"
+      ],
+      "expected_ancestors": [
+        "local.knowledge_representation"
+      ]
+    },
+    {
+      "id": "software-agent",
+      "intent": "Find the situated autonomous agent implemented through running software rather than the harness software artifact.",
+      "target": "local.software_agent",
+      "not_targets": [
+        "local.agent_harness",
+        "local.agent_run"
+      ],
+      "expected_ancestors": [
+        "sumo.agent"
+      ]
+    },
+    {
+      "id": "program-interface",
+      "intent": "Find the specification governing interactions between software components.",
+      "target": "local.api",
+      "not_targets": [
+        "local.software_execution",
+        "local.software_service"
+      ],
+      "expected_ancestors": [
+        "local.interface_definition"
+      ]
+    },
+    {
+      "id": "software-testing",
+      "intent": "Find controlled evaluation of software against expectations.",
+      "target": "local.software_testing",
+      "not_targets": [
+        "local.test_case",
+        "local.test_result"
+      ],
+      "expected_ancestors": [
+        "local.software_development"
+      ]
+    },
+    {
+      "id": "regression-testing",
+      "intent": "Find testing intended to detect loss of previously required behavior after a change.",
+      "target": "local.regression_testing",
+      "not_targets": [
+        "local.integration_testing",
+        "local.unit_testing"
+      ],
+      "expected_ancestors": [
+        "local.software_testing"
+      ]
+    },
+    {
+      "id": "test-result",
+      "intent": "Find the recorded outcome of one test execution.",
+      "target": "local.test_result",
+      "not_targets": [
+        "local.test_case",
+        "local.test_suite"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "static-analysis",
+      "intent": "Find the development activity deriving properties from code without ordinary target execution.",
+      "target": "local.static_analysis",
+      "not_targets": [
+        "local.static_analyzer",
+        "local.software_execution"
+      ],
+      "expected_ancestors": [
+        "local.software_development"
+      ]
+    },
+    {
+      "id": "authentication",
+      "intent": "Find computation evaluating who an actor claims to be.",
+      "target": "local.authentication",
+      "not_targets": [
+        "local.authorization",
+        "local.access_policy"
+      ],
+      "expected_ancestors": [
+        "local.computational_process"
+      ]
+    },
+    {
+      "id": "authorization",
+      "intent": "Find computation deciding whether an action is permitted.",
+      "target": "local.authorization",
+      "not_targets": [
+        "local.authentication",
+        "local.access_policy"
+      ],
+      "expected_ancestors": [
+        "local.computational_process"
+      ]
+    },
+    {
+      "id": "rl",
+      "intent": "Find learning behavior using an interaction reward objective.",
+      "target": "local.reinforcement_learning",
+      "not_targets": [
+        "local.supervised_learning",
+        "local.reward_signal"
+      ],
+      "expected_ancestors": [
+        "local.machine_learning"
+      ]
+    },
+    {
+      "id": "model-inference",
+      "intent": "Find applying an already specified model to produce outputs without implying parameter updates.",
+      "target": "local.model_inference",
+      "not_targets": [
+        "local.model_training",
+        "local.parameter_optimization"
+      ],
+      "expected_ancestors": [
+        "local.computational_process"
+      ]
+    },
+    {
+      "id": "harness",
+      "intent": "Find the software coordinating model calls, tools, memory, and execution boundaries.",
+      "target": "local.agent_harness",
+      "not_targets": [
+        "local.large_language_model",
+        "local.agent_run"
+      ],
+      "expected_ancestors": [
+        "local.software_system"
+      ]
+    },
+    {
+      "id": "tool-invocation",
+      "intent": "Find the process of executing an agent tool under its interface contract.",
+      "target": "local.tool_call",
+      "not_targets": [
+        "local.agent_tool",
+        "local.tool_schema",
+        "local.tool_result"
+      ],
+      "expected_ancestors": [
+        "local.computational_process"
+      ]
+    },
+    {
+      "id": "context-window",
+      "intent": "Find information made available within one bounded model invocation.",
+      "target": "local.context_window",
+      "not_targets": [
+        "local.agent_memory",
+        "local.computer_memory"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "reflection-error-analysis",
+      "intent": "Find reflection examining why reasoning or performance was incorrect.",
+      "target": "local.error_analysis",
+      "not_targets": [
+        "local.debugging",
+        "local.parameter_optimization"
+      ],
+      "expected_ancestors": [
+        "local.reflection_process"
+      ]
+    },
+    {
+      "id": "confidence-interval",
+      "intent": "Find an interval procedure interpreted through repeated-sampling coverage.",
+      "target": "local.confidence_interval",
+      "not_targets": [
+        "local.credible_interval",
+        "local.prediction_interval"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "credible-interval",
+      "intent": "Find an interval carrying specified posterior probability under a Bayesian model.",
+      "target": "local.credible_interval",
+      "not_targets": [
+        "local.confidence_interval",
+        "local.prediction_interval"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "p-value",
+      "intent": "Find the null-model probability of results at least as incompatible as observed under a test ordering.",
+      "target": "local.p_value",
+      "not_targets": [
+        "local.posterior_distribution",
+        "local.statistical_power"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "likelihood",
+      "intent": "Find a function of parameters for fixed observed data under a model.",
+      "target": "local.likelihood_function",
+      "not_targets": [
+        "local.posterior_distribution",
+        "local.prior_distribution"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "source-dependence",
+      "intent": "Find an assessment that two reports share an underlying observation and cannot count as independent confirmations.",
+      "target": "local.source_dependence",
+      "not_targets": [
+        "local.independent_support",
+        "local.evidence_weight"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "paired-design",
+      "intent": "Find a design comparing matched units or repeated observations of the same units.",
+      "target": "local.paired_design",
+      "not_targets": [
+        "local.randomized_design",
+        "local.factorial_design"
+      ],
+      "expected_ancestors": [
+        "local.experiment_design"
+      ]
+    },
+    {
+      "id": "generalization",
+      "intent": "Find learning a pattern intended to apply beyond its observed cases.",
+      "target": "local.generalization",
+      "not_targets": [
+        "local.memory_retrieval",
+        "local.abstraction"
+      ],
+      "expected_ancestors": [
+        "local.learning_process"
+      ]
+    },
+    {
+      "id": "observed-event",
+      "intent": "Find the process of directly obtaining an observation rather than a report representing it.",
+      "target": "local.direct_observation",
+      "not_targets": [
+        "local.reported_observation",
+        "local.source_record"
+      ],
+      "expected_ancestors": [
+        "local.observation"
+      ]
+    },
+    {
+      "id": "reported-observation",
+      "intent": "Find information representing an observation attributed to someone else.",
+      "target": "local.reported_observation",
+      "not_targets": [
+        "local.direct_observation",
+        "local.statistical_experiment"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "outlier",
+      "intent": "Find the contextual status of an observation unusual relative to a specified reference pattern.",
+      "target": "local.outlier",
+      "not_targets": [
+        "local.measurement_bias",
+        "local.missing_data"
+      ],
+      "expected_ancestors": [
+        "local.role"
+      ]
+    },
+    {
+      "id": "calibration",
+      "intent": "Find comparing stated confidence with appropriate outcomes and revising confidence practices.",
+      "target": "local.calibration_process",
+      "not_targets": [
+        "local.confidence_score",
+        "local.calibration_curve"
+      ],
+      "expected_ancestors": [
+        "local.reflection_process"
+      ]
+    },
+    {
+      "id": "loop-construct",
+      "intent": "Find a source-language statement specifying repeated execution rather than one running loop.",
+      "target": "local.loop_statement",
+      "not_targets": [
+        "local.software_execution",
+        "local.recursive_execution"
+      ],
+      "expected_ancestors": [
+        "local.programming_statement"
+      ]
+    },
+    {
+      "id": "variable-reference",
+      "intent": "Find a program expression referring to a binding under scope rules rather than a mathematical variable.",
+      "target": "local.variable_reference",
+      "not_targets": [
+        "local.mathematical_variable",
+        "local.variable_binding"
+      ],
+      "expected_ancestors": [
+        "local.programming_expression"
+      ]
+    },
+    {
+      "id": "closure",
+      "intent": "Find a callable software value retaining an associated environment rather than a function invocation.",
+      "target": "local.closure",
+      "not_targets": [
+        "local.call_expression",
+        "local.software_execution"
+      ],
+      "expected_ancestors": [
+        "local.software_artifact"
+      ]
+    },
+    {
+      "id": "type-system",
+      "intent": "Find rules assigning and checking types rather than one execution of type checking.",
+      "target": "local.programming_type_system",
+      "not_targets": [
+        "local.type_checking",
+        "local.type_definition"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "recursive-algorithm",
+      "intent": "Find an algorithm defined through applications to related subproblems rather than a running recursion episode.",
+      "target": "local.recursive_algorithm",
+      "not_targets": [
+        "local.recursive_execution",
+        "local.function_definition"
+      ],
+      "expected_ancestors": [
+        "local.algorithm"
+      ]
+    },
+    {
+      "id": "exception-handler",
+      "intent": "Find the language construct declaring a response to exceptions rather than execution of exception handling.",
+      "target": "local.exception_handler_construct",
+      "not_targets": [
+        "local.exception_handling",
+        "local.exception_value"
+      ],
+      "expected_ancestors": [
+        "local.programming_construct"
+      ]
+    },
+    {
+      "id": "breadth-first-search",
+      "intent": "Find a graph search that explores reachable vertices by nondecreasing edge distance.",
+      "target": "local.breadth_first_search",
+      "not_targets": [
+        "local.depth_first_search",
+        "local.dijkstra_algorithm"
+      ],
+      "expected_ancestors": [
+        "local.search_algorithm"
+      ]
+    },
+    {
+      "id": "synchronization-protocol",
+      "intent": "Find a procedure permitting at most one owner inside a critical region.",
+      "target": "local.mutex_protocol",
+      "not_targets": [
+        "local.semaphore_protocol",
+        "local.race_condition"
+      ],
+      "expected_ancestors": [
+        "local.synchronization_protocol"
+      ]
+    }
+  ]
+}

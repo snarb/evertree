@@ -18,7 +18,7 @@ def test_managed_git_reads_revision_paths_under_long_temporary_root(tmp_path):
     git(root, "init", "-b", "main")
     git(root, "config", "user.name", "Test")
     git(root, "config", "user.email", "test@localhost")
-    relative = "src/evertree/processes/task_management/example_process_with_long_name/_exec.py"
+    relative = "src/evertree/processes/self_task_management/example_process_with_long_name/_exec.py"
     target = _extended(root / relative)
     target.parent.mkdir(parents=True)
     target.write_text("value = 3\n")

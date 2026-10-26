@@ -52,7 +52,7 @@ async def test_application_feedback_value_scoring_and_real_evaluator_child_workf
         )
         result = await app._run_program(
             task.id,
-            "PredictionEvaluator",
+            "SelfPredictionEvaluator",
             {
                 "observations": [feedback.event_ref],
                 "context": context,
@@ -81,9 +81,9 @@ async def test_application_feedback_value_scoring_and_real_evaluator_child_workf
             "metrics": ["squared_error"],
             "selected_targets": [target.id],
         }
-        result = await app._run_program(task.id, "PredictionEvaluator", args)
+        result = await app._run_program(task.id, "SelfPredictionEvaluator", args)
         assert result["result"] == []
-        await app._run_program(task.id, "PredictionEvaluator", args)
+        await app._run_program(task.id, "SelfPredictionEvaluator", args)
         unresolved = app.learning.snapshot()["unresolved"]
         assert len(unresolved) == 1
         assert unresolved[0]["signal"] is None
@@ -92,7 +92,7 @@ async def test_application_feedback_value_scoring_and_real_evaluator_child_workf
             len([event for event in app.memory.events if event.operator == "prediction_review"])
             == 1
         )
-        credit_id = app.graph.find("CreditAssignment.exec").id
+        credit_id = app.graph.find("SelfCreditAssignment.exec").id
         assert any(run.program == credit_id for run in app.memory.runs)
         assert app.learning_statistics("TaskVerified")["observed_count"] == 0
         forged = record(

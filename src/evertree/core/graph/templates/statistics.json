@@ -1,0 +1,3834 @@
+{
+  "nodes": [
+    {
+      "key": "local.statistical_method",
+      "name": "StatisticalMethod",
+      "kind": "prototype",
+      "definition": "A procedure for describing data or making inferences under explicit assumptions about variation, sampling, and a target of interpretation.",
+      "aliases": {
+        "en": [
+          "statistical method"
+        ],
+        "ru": [
+          "статистический метод"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_method",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.probability_distribution",
+      "name": "ProbabilityDistribution",
+      "kind": "prototype",
+      "definition": "A mathematical specification assigning probabilities to measurable outcomes under a stated sample space and event structure.",
+      "aliases": {
+        "en": [
+          "probability distribution"
+        ],
+        "ru": [
+          "распределение вероятностей"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.probability_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.probability",
+      "name": "ProbabilityValue",
+      "kind": "prototype",
+      "definition": "A numerical measure of an event's uncertainty or frequency under a specified probability model, constrained to the unit interval.",
+      "aliases": {
+        "en": [
+          "probability value"
+        ],
+        "ru": [
+          "вероятность"
+        ]
+      },
+      "parent": "sumo.quantity",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.probability",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.random_variable",
+      "name": "RandomVariable",
+      "kind": "prototype",
+      "definition": "A measurable mapping from a probability space's outcomes to a specified value space.",
+      "aliases": {
+        "en": [
+          "random variable"
+        ],
+        "ru": [
+          "случайная величина"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.random_variable",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.sample_space",
+      "name": "SampleSpace",
+      "kind": "prototype",
+      "definition": "The set of possible elementary outcomes represented by a specified probability model.",
+      "aliases": {
+        "en": [
+          "sample space"
+        ],
+        "ru": [
+          "пространство элементарных исходов"
+        ]
+      },
+      "parent": "sumo.set_or_class",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.sample_space",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.probability_event",
+      "name": "ProbabilityEvent",
+      "kind": "prototype",
+      "definition": "A measurable subset of a probability model's sample space to which a probability can be assigned.",
+      "aliases": {
+        "en": [
+          "probability event"
+        ],
+        "ru": [
+          "событие теории вероятностей"
+        ]
+      },
+      "parent": "sumo.set_or_class",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.probability_event",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "The set of die outcomes greater than four"
+      ],
+      "counterexamples": [
+        "The physical act of rolling a die"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.probability_model",
+      "name": "ProbabilityModel",
+      "kind": "prototype",
+      "definition": "A mathematical specification of possible outcomes and probabilities used to represent uncertainty for a stated purpose.",
+      "aliases": {
+        "en": [
+          "probability model"
+        ],
+        "ru": [
+          "вероятностная модель"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.probability_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.conditional_probability",
+      "name": "ConditionalProbability",
+      "kind": "prototype",
+      "definition": "A probability assigned to an event conditional on specified information or another event under a probability model.",
+      "aliases": {
+        "en": [
+          "conditional probability"
+        ],
+        "ru": [
+          "условная вероятность"
+        ]
+      },
+      "parent": "local.probability",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.conditional_probability",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.joint_distribution",
+      "name": "JointDistribution",
+      "kind": "prototype",
+      "definition": "A probability distribution over a collection of jointly modeled random variables.",
+      "aliases": {
+        "en": [
+          "joint distribution"
+        ],
+        "ru": [
+          "совместное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.joint_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.marginal_distribution",
+      "name": "MarginalDistribution",
+      "kind": "prototype",
+      "definition": "A probability distribution of a subset of jointly modeled variables obtained without conditioning on the remaining variables.",
+      "aliases": {
+        "en": [
+          "marginal distribution"
+        ],
+        "ru": [
+          "маргинальное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.marginal_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.conditional_distribution",
+      "name": "ConditionalDistribution",
+      "kind": "prototype",
+      "definition": "A probability distribution of variables conditional on specified values or information about other variables.",
+      "aliases": {
+        "en": [
+          "conditional distribution"
+        ],
+        "ru": [
+          "условное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.conditional_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.discrete_distribution",
+      "name": "DiscreteDistribution",
+      "kind": "prototype",
+      "definition": "A probability distribution concentrated on a finite or countably infinite set of possible values.",
+      "aliases": {
+        "en": [
+          "discrete distribution"
+        ],
+        "ru": [
+          "дискретное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.discrete_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.continuous_distribution",
+      "name": "AbsolutelyContinuousDistribution",
+      "kind": "prototype",
+      "definition": "A probability distribution representable by a density with respect to the specified continuous reference measure.",
+      "aliases": {
+        "en": [
+          "absolutely continuous distribution"
+        ],
+        "ru": [
+          "абсолютно непрерывное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.continuous_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.bernoulli_distribution",
+      "name": "BernoulliDistribution",
+      "kind": "prototype",
+      "definition": "A distribution over two outcomes parameterized by the probability of one designated outcome.",
+      "aliases": {
+        "en": [
+          "bernoulli distribution"
+        ],
+        "ru": [
+          "распределение Бернулли"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.bernoulli_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.binomial_distribution",
+      "name": "BinomialDistribution",
+      "kind": "prototype",
+      "definition": "The distribution of a count of designated outcomes in a fixed number of independent Bernoulli trials with a common success probability.",
+      "aliases": {
+        "en": [
+          "binomial distribution"
+        ],
+        "ru": [
+          "биномиальное распределение"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.binomial_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.categorical_distribution",
+      "name": "CategoricalDistribution",
+      "kind": "prototype",
+      "definition": "A distribution assigning probabilities to one outcome from a finite set of categories.",
+      "aliases": {
+        "en": [
+          "categorical distribution"
+        ],
+        "ru": [
+          "категориальное распределение"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.categorical_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.multinomial_distribution",
+      "name": "MultinomialDistribution",
+      "kind": "prototype",
+      "definition": "The distribution of category counts from a fixed number of independent categorical trials sharing category probabilities.",
+      "aliases": {
+        "en": [
+          "multinomial distribution"
+        ],
+        "ru": [
+          "мультиномиальное распределение"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.multinomial_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.poisson_distribution",
+      "name": "PoissonDistribution",
+      "kind": "prototype",
+      "definition": "A count distribution whose probability mass at a nonnegative integer is determined by a positive rate parameter through the Poisson mass function.",
+      "aliases": {
+        "en": [
+          "poisson distribution"
+        ],
+        "ru": [
+          "распределение Пуассона"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.poisson_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.geometric_distribution",
+      "name": "GeometricDistribution",
+      "kind": "prototype",
+      "definition": "A distribution of trials or failures until the first designated outcome in independent Bernoulli trials, with the counting convention stated explicitly.",
+      "aliases": {
+        "en": [
+          "geometric distribution"
+        ],
+        "ru": [
+          "геометрическое распределение"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.geometric_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.negative_binomial_distribution",
+      "name": "NegativeBinomialDistribution",
+      "kind": "prototype",
+      "definition": "A distribution of failures or trials before a specified number of designated Bernoulli outcomes, with parameterization and counting convention stated explicitly.",
+      "aliases": {
+        "en": [
+          "negative binomial distribution"
+        ],
+        "ru": [
+          "отрицательное биномиальное распределение"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.negative_binomial_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.discrete_uniform_distribution",
+      "name": "DiscreteUniformDistribution",
+      "kind": "prototype",
+      "definition": "A distribution assigning equal probability to each member of a specified finite outcome set.",
+      "aliases": {
+        "en": [
+          "discrete uniform distribution"
+        ],
+        "ru": [
+          "дискретное равномерное распределение"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.discrete_uniform_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.normal_distribution",
+      "name": "NormalDistribution",
+      "kind": "prototype",
+      "definition": "An absolutely continuous distribution on the real line with density proportional to the exponential of a negative squared standardized deviation, parameterized by mean and positive variance.",
+      "aliases": {
+        "en": [
+          "normal distribution"
+        ],
+        "ru": [
+          "нормальное распределение"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.normal_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.lognormal_distribution",
+      "name": "LogNormalDistribution",
+      "kind": "prototype",
+      "definition": "A distribution of a positive random variable whose logarithm follows a specified normal distribution.",
+      "aliases": {
+        "en": [
+          "log normal distribution"
+        ],
+        "ru": [
+          "логнормальное распределение"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.lognormal_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.continuous_uniform_distribution",
+      "name": "ContinuousUniformDistribution",
+      "kind": "prototype",
+      "definition": "A distribution with constant probability density over a specified bounded interval and zero density outside it.",
+      "aliases": {
+        "en": [
+          "continuous uniform distribution"
+        ],
+        "ru": [
+          "непрерывное равномерное распределение"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.continuous_uniform_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.exponential_distribution",
+      "name": "ExponentialDistribution",
+      "kind": "prototype",
+      "definition": "A nonnegative continuous distribution with constant hazard under its standard positive rate parameterization.",
+      "aliases": {
+        "en": [
+          "exponential distribution"
+        ],
+        "ru": [
+          "экспоненциальное распределение"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.exponential_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.gamma_distribution",
+      "name": "GammaDistribution",
+      "kind": "prototype",
+      "definition": "A positive continuous distribution in the gamma family, with shape and rate or scale parameterization explicitly identified.",
+      "aliases": {
+        "en": [
+          "gamma distribution"
+        ],
+        "ru": [
+          "гамма-распределение"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.gamma_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.beta_distribution",
+      "name": "BetaDistribution",
+      "kind": "prototype",
+      "definition": "A continuous distribution on the unit interval whose density is determined by two positive shape parameters.",
+      "aliases": {
+        "en": [
+          "beta distribution"
+        ],
+        "ru": [
+          "бета-распределение"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.beta_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.student_distribution",
+      "name": "StudentTDistribution",
+      "kind": "prototype",
+      "definition": "A continuous distribution defined by a standard normal variable divided by the square root of an independent scaled chi-squared variable.",
+      "aliases": {
+        "en": [
+          "student tdistribution"
+        ],
+        "ru": [
+          "распределение Стьюдента"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.student_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.chi_squared_distribution",
+      "name": "ChiSquaredDistribution",
+      "kind": "prototype",
+      "definition": "A distribution of the sum of squares of a specified number of independent standard normal variables.",
+      "aliases": {
+        "en": [
+          "chi squared distribution"
+        ],
+        "ru": [
+          "распределение хи-квадрат"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.chi_squared_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.f_distribution",
+      "name": "FDistribution",
+      "kind": "prototype",
+      "definition": "A distribution of the ratio of two independent chi-squared variables each divided by its degrees of freedom.",
+      "aliases": {
+        "en": [
+          "fdistribution"
+        ],
+        "ru": [
+          "F-распределение"
+        ]
+      },
+      "parent": "local.continuous_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.f_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.mixture_distribution",
+      "name": "MixtureDistribution",
+      "kind": "prototype",
+      "definition": "A probability distribution formed by weighting component distributions according to a mixing distribution.",
+      "aliases": {
+        "en": [
+          "mixture distribution"
+        ],
+        "ru": [
+          "смесь распределений"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.mixture_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.empirical_distribution",
+      "name": "EmpiricalDistribution",
+      "kind": "prototype",
+      "definition": "A distribution assigning probability mass to observed sample values according to a specified empirical weighting rule.",
+      "aliases": {
+        "en": [
+          "empirical distribution"
+        ],
+        "ru": [
+          "эмпирическое распределение"
+        ]
+      },
+      "parent": "local.discrete_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.empirical_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.statistical_population",
+      "name": "StatisticalPopulation",
+      "kind": "prototype",
+      "definition": "The collection of units or outcomes about which a statistical description or inference is intended.",
+      "aliases": {
+        "en": [
+          "statistical population"
+        ],
+        "ru": [
+          "статистическая популяция",
+          "генеральная совокупность"
+        ]
+      },
+      "parent": "sumo.set_or_class",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_population",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.statistical_sample",
+      "name": "StatisticalSample",
+      "kind": "prototype",
+      "definition": "An information representation of observations selected from a target population under a stated sampling procedure; repeated observations remain distinguishable.",
+      "aliases": {
+        "en": [
+          "statistical sample"
+        ],
+        "ru": [
+          "статистическая выборка"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_sample",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Recorded measurements of the selected study participants"
+      ],
+      "counterexamples": [
+        "The physical group of participants independently of its recorded observations"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.dataset",
+      "name": "Dataset",
+      "kind": "prototype",
+      "definition": "An organized collection of recorded values with a stated structure, observation unit, and interpretation.",
+      "aliases": {
+        "en": [
+          "dataset"
+        ],
+        "ru": [
+          "набор данных",
+          "датасет"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.dataset",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.data_record",
+      "name": "DataRecord",
+      "kind": "prototype",
+      "definition": "A structured information unit recording values associated with an identified observation, entity, or event.",
+      "aliases": {
+        "en": [
+          "data record"
+        ],
+        "ru": [
+          "запись данных"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.data_record",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.statistical_variable",
+      "name": "StatisticalVariable",
+      "kind": "prototype",
+      "definition": "A defined characteristic whose values are recorded or modeled for observational units.",
+      "aliases": {
+        "en": [
+          "statistical variable"
+        ],
+        "ru": [
+          "статистическая переменная"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_variable",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.categorical_variable",
+      "name": "CategoricalVariable",
+      "kind": "prototype",
+      "definition": "A statistical variable whose values identify categories under a specified category scheme.",
+      "aliases": {
+        "en": [
+          "categorical variable"
+        ],
+        "ru": [
+          "категориальная переменная"
+        ]
+      },
+      "parent": "local.statistical_variable",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.categorical_variable",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.ordinal_variable",
+      "name": "OrdinalVariable",
+      "kind": "prototype",
+      "definition": "A categorical variable whose categories carry an ordering without requiring meaningful numerical distances.",
+      "aliases": {
+        "en": [
+          "ordinal variable"
+        ],
+        "ru": [
+          "порядковая переменная"
+        ]
+      },
+      "parent": "local.categorical_variable",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.ordinal_variable",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.quantitative_variable",
+      "name": "QuantitativeVariable",
+      "kind": "prototype",
+      "definition": "A statistical variable with numerical values interpreted through a defined quantitative scale.",
+      "aliases": {
+        "en": [
+          "quantitative variable"
+        ],
+        "ru": [
+          "количественная переменная"
+        ]
+      },
+      "parent": "local.statistical_variable",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.quantitative_variable",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.measurement_scale",
+      "name": "MeasurementScale",
+      "kind": "prototype",
+      "definition": "A specification of how observed values represent a characteristic and which comparisons or transformations preserve its meaning.",
+      "aliases": {
+        "en": [
+          "measurement scale"
+        ],
+        "ru": [
+          "шкала измерения"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.measurement_scale",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.statistic",
+      "name": "Statistic",
+      "kind": "prototype",
+      "definition": "A quantity or structured value calculated from a sample according to a specified rule, distinguished from an unknown population parameter.",
+      "aliases": {
+        "en": [
+          "statistic"
+        ],
+        "ru": [
+          "статистика выборки"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistic",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.statistical_parameter",
+      "name": "StatisticalParameter",
+      "kind": "prototype",
+      "definition": "A quantity or structured value specifying a property of a probability model or target population.",
+      "aliases": {
+        "en": [
+          "statistical parameter"
+        ],
+        "ru": [
+          "статистический параметр"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_parameter",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.estimator",
+      "name": "Estimator",
+      "kind": "prototype",
+      "definition": "A rule mapping possible samples to estimates of a specified population or model quantity.",
+      "aliases": {
+        "en": [
+          "estimator"
+        ],
+        "ru": [
+          "статистическая оценочная функция",
+          "оцениватель"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.estimator",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.estimate",
+      "name": "StatisticalEstimate",
+      "kind": "prototype",
+      "definition": "The value obtained by applying an estimator to observed data under a specified analysis.",
+      "aliases": {
+        "en": [
+          "statistical estimate"
+        ],
+        "ru": [
+          "статистическая оценка"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.estimate",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.sample_mean",
+      "name": "SampleMean",
+      "kind": "prototype",
+      "definition": "The arithmetic average of sample values under an explicitly stated weighting convention.",
+      "aliases": {
+        "en": [
+          "sample mean"
+        ],
+        "ru": [
+          "выборочное среднее"
+        ]
+      },
+      "parent": "local.statistic",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.sample_mean",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.sample_median",
+      "name": "SampleMedian",
+      "kind": "prototype",
+      "definition": "A sample location statistic dividing ordered observations into lower and upper portions under a stated convention for ties and even sample size.",
+      "aliases": {
+        "en": [
+          "sample median"
+        ],
+        "ru": [
+          "выборочная медиана"
+        ]
+      },
+      "parent": "local.statistic",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.sample_median",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.sample_variance",
+      "name": "SampleVariance",
+      "kind": "prototype",
+      "definition": "A statistic measuring average squared deviations from a sample location, with denominator and weighting convention stated explicitly.",
+      "aliases": {
+        "en": [
+          "sample variance"
+        ],
+        "ru": [
+          "выборочная дисперсия"
+        ]
+      },
+      "parent": "local.statistic",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.sample_variance",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.standard_deviation",
+      "name": "StandardDeviation",
+      "kind": "prototype",
+      "definition": "The nonnegative square root of a specified variance, expressed in the original value units.",
+      "aliases": {
+        "en": [
+          "standard deviation"
+        ],
+        "ru": [
+          "стандартное отклонение"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.standard_deviation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.quantile",
+      "name": "Quantile",
+      "kind": "prototype",
+      "definition": "A threshold associated with a specified cumulative probability or sample fraction, with the quantile convention identified.",
+      "aliases": {
+        "en": [
+          "quantile"
+        ],
+        "ru": [
+          "квантиль"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.quantile",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.expectation",
+      "name": "Expectation",
+      "kind": "prototype",
+      "definition": "The probability-weighted mean of a random variable under a specified distribution when the expectation is defined.",
+      "aliases": {
+        "en": [
+          "expectation"
+        ],
+        "ru": [
+          "математическое ожидание"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.expectation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.covariance",
+      "name": "Covariance",
+      "kind": "prototype",
+      "definition": "The expected product of centered values of two variables under a specified joint distribution when defined.",
+      "aliases": {
+        "en": [
+          "covariance"
+        ],
+        "ru": [
+          "ковариация"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.covariance",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.correlation_coefficient",
+      "name": "CorrelationCoefficient",
+      "kind": "prototype",
+      "definition": "A numerical measure of association between variables under a specified correlation definition.",
+      "aliases": {
+        "en": [
+          "correlation coefficient"
+        ],
+        "ru": [
+          "коэффициент корреляции"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.correlation_coefficient",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "A Pearson correlation coefficient"
+      ],
+      "counterexamples": [
+        "A proof that changing one variable causes the other"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.entropy",
+      "name": "InformationEntropy",
+      "kind": "prototype",
+      "definition": "A functional of a probability distribution measuring uncertainty under a specified entropy definition, logarithm base, and reference measure.",
+      "aliases": {
+        "en": [
+          "information entropy"
+        ],
+        "ru": [
+          "информационная энтропия"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.entropy",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.mutual_information",
+      "name": "MutualInformation",
+      "kind": "prototype",
+      "definition": "A measure of statistical dependence defined by the divergence between a joint distribution and the product of its marginals.",
+      "aliases": {
+        "en": [
+          "mutual information"
+        ],
+        "ru": [
+          "взаимная информация"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.mutual_information",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.likelihood_function",
+      "name": "LikelihoodFunction",
+      "kind": "prototype",
+      "definition": "A function of model parameters proportional to the probability mass or density of the observed data under the model.",
+      "aliases": {
+        "en": [
+          "likelihood function"
+        ],
+        "ru": [
+          "функция правдоподобия"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.likelihood_function",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Likelihood of parameters for fixed observed data"
+      ],
+      "counterexamples": [
+        "Posterior probability of parameters without a prior"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.prior_distribution",
+      "name": "PriorDistribution",
+      "kind": "prototype",
+      "definition": "A distribution representing uncertainty about model quantities before incorporating a designated observation through the specified update.",
+      "aliases": {
+        "en": [
+          "prior distribution"
+        ],
+        "ru": [
+          "априорное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.prior_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.posterior_distribution",
+      "name": "PosteriorDistribution",
+      "kind": "prototype",
+      "definition": "A distribution representing uncertainty after conditioning a prior model on designated observations through a specified likelihood.",
+      "aliases": {
+        "en": [
+          "posterior distribution"
+        ],
+        "ru": [
+          "апостериорное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.posterior_distribution",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.posterior_predictive",
+      "name": "PosteriorPredictiveDistribution",
+      "kind": "prototype",
+      "definition": "A distribution of future or replicated observations obtained by integrating a sampling model over a posterior distribution.",
+      "aliases": {
+        "en": [
+          "posterior predictive distribution"
+        ],
+        "ru": [
+          "апостериорное предсказательное распределение"
+        ]
+      },
+      "parent": "local.probability_distribution",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.posterior_predictive",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.credible_interval",
+      "name": "CredibleInterval",
+      "kind": "prototype",
+      "definition": "An interval containing a specified posterior probability for a quantity under a Bayesian model and interval selection rule.",
+      "aliases": {
+        "en": [
+          "credible interval"
+        ],
+        "ru": [
+          "байесовский доверительный интервал",
+          "достоверный интервал"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.credible_interval",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "An interval with 95 percent posterior mass"
+      ],
+      "counterexamples": [
+        "A claim of repeated-sampling coverage without a separate argument"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.confidence_interval",
+      "name": "ConfidenceInterval",
+      "kind": "prototype",
+      "definition": "An interval produced by a procedure with a stated repeated-sampling coverage property under specified assumptions.",
+      "aliases": {
+        "en": [
+          "confidence interval"
+        ],
+        "ru": [
+          "доверительный интервал"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.confidence_interval",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "An interval from a procedure with nominal 95 percent coverage"
+      ],
+      "counterexamples": [
+        "A statement that a fixed parameter has 95 percent posterior probability without a Bayesian model"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.prediction_interval",
+      "name": "PredictionInterval",
+      "kind": "prototype",
+      "definition": "An interval intended to cover a future observation under a specified prediction model and coverage interpretation.",
+      "aliases": {
+        "en": [
+          "prediction interval"
+        ],
+        "ru": [
+          "предиктивный интервал"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.prediction_interval",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.standard_error",
+      "name": "StandardError",
+      "kind": "prototype",
+      "definition": "The standard deviation or estimated standard deviation of an estimator's sampling distribution under a specified design.",
+      "aliases": {
+        "en": [
+          "standard error"
+        ],
+        "ru": [
+          "стандартная ошибка"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.standard_error",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.sampling_method",
+      "name": "SamplingMethod",
+      "kind": "prototype",
+      "definition": "A statistical method selecting observational units from a target population under an explicit selection mechanism.",
+      "aliases": {
+        "en": [
+          "sampling method"
+        ],
+        "ru": [
+          "метод выборки"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.sampling_method",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.random_sampling",
+      "name": "ProbabilitySampling",
+      "kind": "prototype",
+      "definition": "A sampling method assigning units known or specified selection probabilities through a random mechanism.",
+      "aliases": {
+        "en": [
+          "probability sampling"
+        ],
+        "ru": [
+          "вероятностная выборка"
+        ]
+      },
+      "parent": "local.sampling_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.random_sampling",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.stratified_sampling",
+      "name": "StratifiedSampling",
+      "kind": "prototype",
+      "definition": "Probability sampling carried out separately within defined population strata and combined under a stated weighting design.",
+      "aliases": {
+        "en": [
+          "stratified sampling"
+        ],
+        "ru": [
+          "стратифицированная выборка"
+        ]
+      },
+      "parent": "local.random_sampling",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.stratified_sampling",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.cluster_sampling",
+      "name": "ClusterSampling",
+      "kind": "prototype",
+      "definition": "Probability sampling selecting groups of units as sampling units at one or more stages.",
+      "aliases": {
+        "en": [
+          "cluster sampling"
+        ],
+        "ru": [
+          "кластерная выборка"
+        ]
+      },
+      "parent": "local.random_sampling",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.cluster_sampling",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.convenience_sampling",
+      "name": "ConvenienceSampling",
+      "kind": "prototype",
+      "definition": "A sampling method selecting units based primarily on accessibility rather than a specified probability design.",
+      "aliases": {
+        "en": [
+          "convenience sampling"
+        ],
+        "ru": [
+          "выборка по доступности"
+        ]
+      },
+      "parent": "local.sampling_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.convenience_sampling",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.estimation_method",
+      "name": "EstimationMethod",
+      "kind": "prototype",
+      "definition": "A statistical method producing estimates of specified model or population quantities from observations.",
+      "aliases": {
+        "en": [
+          "estimation method"
+        ],
+        "ru": [
+          "метод оценивания"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.estimation_method",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.maximum_likelihood",
+      "name": "MaximumLikelihoodEstimation",
+      "kind": "prototype",
+      "definition": "An estimation method selecting parameter values that maximize the likelihood of observed data within a specified model.",
+      "aliases": {
+        "en": [
+          "maximum likelihood estimation"
+        ],
+        "ru": [
+          "метод максимального правдоподобия"
+        ]
+      },
+      "parent": "local.estimation_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.maximum_likelihood",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.bayesian_inference",
+      "name": "BayesianInference",
+      "kind": "prototype",
+      "definition": "A statistical method conditioning a probability model on observations to revise uncertainty over quantities of interest.",
+      "aliases": {
+        "en": [
+          "bayesian inference"
+        ],
+        "ru": [
+          "байесовский вывод"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.bayesian_inference",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.bootstrap_method",
+      "name": "BootstrapResampling",
+      "kind": "prototype",
+      "definition": "A statistical method approximating an estimator's behavior by repeatedly resampling observations or fitted-model realizations under a stated resampling design.",
+      "aliases": {
+        "en": [
+          "bootstrap resampling"
+        ],
+        "ru": [
+          "бутстрэп"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.bootstrap_method",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.permutation_method",
+      "name": "PermutationMethod",
+      "kind": "prototype",
+      "definition": "A statistical method evaluating a statistic under rearrangements justified by an exchangeability or randomization assumption.",
+      "aliases": {
+        "en": [
+          "permutation method"
+        ],
+        "ru": [
+          "пермутационный метод"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.permutation_method",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.monte_carlo",
+      "name": "MonteCarloMethod",
+      "kind": "prototype",
+      "definition": "A statistical method approximating a quantity through random simulation under a specified sampling model.",
+      "aliases": {
+        "en": [
+          "monte carlo method"
+        ],
+        "ru": [
+          "метод Монте-Карло"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.monte_carlo",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.markov_chain_monte_carlo",
+      "name": "MarkovChainMonteCarlo",
+      "kind": "prototype",
+      "definition": "A Monte Carlo method using a Markov chain designed to have a target distribution as a stationary distribution.",
+      "aliases": {
+        "en": [
+          "markov chain monte carlo"
+        ],
+        "ru": [
+          "марковский метод Монте-Карло",
+          "MCMC"
+        ]
+      },
+      "parent": "local.monte_carlo",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.markov_chain_monte_carlo",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.hypothesis_test",
+      "name": "HypothesisTest",
+      "kind": "prototype",
+      "definition": "A statistical method evaluating a null hypothesis through a statistic and a rejection or evidence rule with specified assumptions.",
+      "aliases": {
+        "en": [
+          "hypothesis test"
+        ],
+        "ru": [
+          "проверка гипотез"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.hypothesis_test",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.paired_test",
+      "name": "PairedStatisticalTest",
+      "kind": "prototype",
+      "definition": "A hypothesis test accounting for paired observations or matched experimental units in its comparison.",
+      "aliases": {
+        "en": [
+          "paired statistical test"
+        ],
+        "ru": [
+          "парный статистический тест"
+        ]
+      },
+      "parent": "local.hypothesis_test",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.paired_test",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.t_test",
+      "name": "TTest",
+      "kind": "prototype",
+      "definition": "A hypothesis test using a Student-t reference distribution under assumptions appropriate to its mean-comparison design.",
+      "aliases": {
+        "en": [
+          "ttest"
+        ],
+        "ru": [
+          "t-тест"
+        ]
+      },
+      "parent": "local.hypothesis_test",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.t_test",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.chi_squared_test",
+      "name": "ChiSquaredTest",
+      "kind": "prototype",
+      "definition": "A hypothesis test using a chi-squared reference distribution under the specified count or variance-model assumptions.",
+      "aliases": {
+        "en": [
+          "chi squared test"
+        ],
+        "ru": [
+          "тест хи-квадрат"
+        ]
+      },
+      "parent": "local.hypothesis_test",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.chi_squared_test",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.multiple_testing_method",
+      "name": "MultipleTestingMethod",
+      "kind": "prototype",
+      "definition": "A statistical method addressing an error criterion across a specified family of hypothesis tests.",
+      "aliases": {
+        "en": [
+          "multiple testing method"
+        ],
+        "ru": [
+          "метод множественных сравнений"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.multiple_testing_method",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.null_hypothesis",
+      "name": "NullHypothesis",
+      "kind": "prototype",
+      "definition": "A proposition designated as the reference claim for a specified statistical test.",
+      "aliases": {
+        "en": [
+          "null hypothesis"
+        ],
+        "ru": [
+          "нулевая гипотеза"
+        ]
+      },
+      "parent": "sumo.proposition",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.null_hypothesis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.alternative_hypothesis",
+      "name": "AlternativeHypothesis",
+      "kind": "prototype",
+      "definition": "A proposition or set of possibilities evaluated against the designated null in a statistical test.",
+      "aliases": {
+        "en": [
+          "alternative hypothesis"
+        ],
+        "ru": [
+          "альтернативная гипотеза"
+        ]
+      },
+      "parent": "sumo.proposition",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.alternative_hypothesis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.p_value",
+      "name": "PValue",
+      "kind": "prototype",
+      "definition": "A probability under a specified null model of results at least as incompatible with that model as the observed statistic according to the test's ordering.",
+      "aliases": {
+        "en": [
+          "pvalue"
+        ],
+        "ru": [
+          "p-значение"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.p_value",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "A tail probability under the null model"
+      ],
+      "counterexamples": [
+        "The probability that the null hypothesis is true"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.significance_level",
+      "name": "SignificanceLevel",
+      "kind": "prototype",
+      "definition": "A bound or target for a test procedure's type-I error probability under its null assumptions.",
+      "aliases": {
+        "en": [
+          "significance level"
+        ],
+        "ru": [
+          "уровень значимости"
+        ]
+      },
+      "parent": "local.probability",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.significance_level",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.statistical_power",
+      "name": "StatisticalPower",
+      "kind": "prototype",
+      "definition": "The probability that a test rejects its null under a specified alternative effect, design, and decision rule.",
+      "aliases": {
+        "en": [
+          "statistical power"
+        ],
+        "ru": [
+          "статистическая мощность"
+        ]
+      },
+      "parent": "local.probability",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_power",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.effect_size",
+      "name": "EffectSize",
+      "kind": "prototype",
+      "definition": "A quantity representing the magnitude of a specified difference, association, or intervention effect on a defined scale.",
+      "aliases": {
+        "en": [
+          "effect size"
+        ],
+        "ru": [
+          "размер эффекта"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.effect_size",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.practical_significance",
+      "name": "PracticalSignificance",
+      "kind": "prototype",
+      "definition": "A property of an estimated effect being consequential relative to specified decision costs, benefits, or domain thresholds.",
+      "aliases": {
+        "en": [
+          "practical significance"
+        ],
+        "ru": [
+          "практическая значимость"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.practical_significance",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.regression_analysis",
+      "name": "RegressionAnalysis",
+      "kind": "prototype",
+      "definition": "A statistical method relating a response to explanatory variables under a specified conditional model and interpretation.",
+      "aliases": {
+        "en": [
+          "regression analysis"
+        ],
+        "ru": [
+          "регрессионный анализ"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.regression_analysis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.linear_regression",
+      "name": "LinearRegressionAnalysis",
+      "kind": "prototype",
+      "definition": "Regression analysis using a response model linear in its specified coefficients, with error assumptions stated separately.",
+      "aliases": {
+        "en": [
+          "linear regression analysis"
+        ],
+        "ru": [
+          "линейный регрессионный анализ"
+        ]
+      },
+      "parent": "local.regression_analysis",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.linear_regression",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.logistic_regression",
+      "name": "LogisticRegressionAnalysis",
+      "kind": "prototype",
+      "definition": "Regression analysis using a logistic link for a modeled binary response probability or a stated extension.",
+      "aliases": {
+        "en": [
+          "logistic regression analysis"
+        ],
+        "ru": [
+          "логистический регрессионный анализ"
+        ]
+      },
+      "parent": "local.regression_analysis",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.logistic_regression",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.time_series_analysis",
+      "name": "TimeSeriesAnalysis",
+      "kind": "prototype",
+      "definition": "A statistical method for observations ordered in time that explicitly addresses their temporal structure.",
+      "aliases": {
+        "en": [
+          "time series analysis"
+        ],
+        "ru": [
+          "анализ временных рядов"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.time_series_analysis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.survival_analysis",
+      "name": "SurvivalAnalysis",
+      "kind": "prototype",
+      "definition": "A statistical method analyzing time to events while accounting for the stated censoring and observation process.",
+      "aliases": {
+        "en": [
+          "survival analysis"
+        ],
+        "ru": [
+          "анализ выживаемости"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.survival_analysis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.meta_analysis",
+      "name": "MetaAnalysis",
+      "kind": "prototype",
+      "definition": "A statistical method combining estimates or evidence across studies under an explicit model of comparability and dependence.",
+      "aliases": {
+        "en": [
+          "meta analysis"
+        ],
+        "ru": [
+          "метаанализ"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.meta_analysis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.sensitivity_analysis",
+      "name": "SensitivityAnalysis",
+      "kind": "prototype",
+      "definition": "A statistical method examining how conclusions vary under changes in assumptions, inputs, or analysis choices.",
+      "aliases": {
+        "en": [
+          "sensitivity analysis"
+        ],
+        "ru": [
+          "анализ чувствительности"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.sensitivity_analysis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.causal_inference",
+      "name": "CausalInference",
+      "kind": "prototype",
+      "definition": "A statistical method estimating or assessing intervention-related effects under an explicit causal model and identification assumptions.",
+      "aliases": {
+        "en": [
+          "causal inference"
+        ],
+        "ru": [
+          "причинный вывод"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.causal_inference",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.experiment_design",
+      "name": "ExperimentDesign",
+      "kind": "prototype",
+      "definition": "A specification of experimental units, interventions, assignment, measurements, and analysis intended to address a research question.",
+      "aliases": {
+        "en": [
+          "experiment design"
+        ],
+        "ru": [
+          "дизайн эксперимента"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.experiment_design",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.randomized_design",
+      "name": "RandomizedExperimentDesign",
+      "kind": "prototype",
+      "definition": "An experiment design assigning interventions through a specified random mechanism.",
+      "aliases": {
+        "en": [
+          "randomized experiment design"
+        ],
+        "ru": [
+          "рандомизированный дизайн"
+        ]
+      },
+      "parent": "local.experiment_design",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.randomized_design",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.controlled_design",
+      "name": "ControlledExperimentDesign",
+      "kind": "prototype",
+      "definition": "An experiment design comparing intervention conditions with one or more defined control conditions.",
+      "aliases": {
+        "en": [
+          "controlled experiment design"
+        ],
+        "ru": [
+          "контролируемый дизайн"
+        ]
+      },
+      "parent": "local.experiment_design",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.controlled_design",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.paired_design",
+      "name": "PairedExperimentDesign",
+      "kind": "prototype",
+      "definition": "An experiment design linking observations through the same unit or a declared matching rule for comparison.",
+      "aliases": {
+        "en": [
+          "paired experiment design"
+        ],
+        "ru": [
+          "парный дизайн эксперимента"
+        ]
+      },
+      "parent": "local.experiment_design",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.paired_design",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.factorial_design",
+      "name": "FactorialExperimentDesign",
+      "kind": "prototype",
+      "definition": "An experiment design varying combinations of levels of multiple factors to examine their effects and interactions.",
+      "aliases": {
+        "en": [
+          "factorial experiment design"
+        ],
+        "ru": [
+          "факторный дизайн"
+        ]
+      },
+      "parent": "local.experiment_design",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.factorial_design",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.observational_study",
+      "name": "ObservationalStudy",
+      "kind": "prototype",
+      "definition": "An intentional study observing variables without assigning the exposure or intervention whose effect is at issue.",
+      "aliases": {
+        "en": [
+          "observational study"
+        ],
+        "ru": [
+          "наблюдательное исследование"
+        ]
+      },
+      "parent": "sumo.intentional_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.observational_study",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.statistical_experiment",
+      "name": "StatisticalExperiment",
+      "kind": "prototype",
+      "definition": "An intentional study assigning or manipulating conditions according to a design and recording relevant outcomes.",
+      "aliases": {
+        "en": [
+          "statistical experiment"
+        ],
+        "ru": [
+          "статистический эксперимент"
+        ]
+      },
+      "parent": "sumo.intentional_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_experiment",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.confounding",
+      "name": "Confounding",
+      "kind": "prototype",
+      "definition": "A property of a causal comparison in which the observed association is mixed with effects of other causes under the assumed causal structure.",
+      "aliases": {
+        "en": [
+          "confounding"
+        ],
+        "ru": [
+          "конфаундинг",
+          "смешение факторов"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.confounding",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.selection_bias",
+      "name": "SelectionBias",
+      "kind": "prototype",
+      "definition": "A systematic distortion arising from how units or observations enter or remain in the analyzed sample relative to the target inference.",
+      "aliases": {
+        "en": [
+          "selection bias"
+        ],
+        "ru": [
+          "смещение отбора"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.selection_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.measurement_bias",
+      "name": "MeasurementBias",
+      "kind": "prototype",
+      "definition": "A systematic distortion introduced by a measurement process relative to the intended measured quantity.",
+      "aliases": {
+        "en": [
+          "measurement bias"
+        ],
+        "ru": [
+          "смещение измерения"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.measurement_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.publication_bias",
+      "name": "PublicationBias",
+      "kind": "prototype",
+      "definition": "A systematic distortion in available study evidence caused by selective dissemination related to results or other inference-relevant features.",
+      "aliases": {
+        "en": [
+          "publication bias"
+        ],
+        "ru": [
+          "публикационное смещение"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.publication_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.missing_data",
+      "name": "MissingDataState",
+      "kind": "prototype",
+      "definition": "A condition in which values intended for an observation or analysis are unavailable, with the missingness mechanism treated separately.",
+      "aliases": {
+        "en": [
+          "missing data state"
+        ],
+        "ru": [
+          "пропущенные данные"
+        ]
+      },
+      "parent": "local.state",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.missing_data",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.imputation_method",
+      "name": "ImputationMethod",
+      "kind": "prototype",
+      "definition": "A statistical method supplying modeled or selected substitute values for missing observations under explicit assumptions.",
+      "aliases": {
+        "en": [
+          "imputation method"
+        ],
+        "ru": [
+          "метод импутации"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.imputation_method",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.outlier",
+      "name": "StatisticalOutlierRole",
+      "kind": "prototype",
+      "definition": "A contextual role of an observation judged unusually distant from an identified reference pattern or model.",
+      "aliases": {
+        "en": [
+          "statistical outlier role"
+        ],
+        "ru": [
+          "роль статистического выброса"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.outlier",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "A measurement flagged relative to a specified distribution"
+      ],
+      "counterexamples": [
+        "An intrinsically erroneous datum merely because it is rare"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.statistical_independence",
+      "name": "StatisticalIndependenceCondition",
+      "kind": "prototype",
+      "definition": "A condition specifying factorization of a joint probability law into relevant marginal laws under a stated model.",
+      "aliases": {
+        "en": [
+          "statistical independence condition"
+        ],
+        "ru": [
+          "условие статистической независимости"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.statistical_independence",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Independent draws under a declared sampling model"
+      ],
+      "counterexamples": [
+        "Two reports that copied the same original source"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.exchangeability",
+      "name": "ExchangeabilityCondition",
+      "kind": "prototype",
+      "definition": "A condition that a specified joint distribution is invariant under the allowed permutations of observation indices.",
+      "aliases": {
+        "en": [
+          "exchangeability condition"
+        ],
+        "ru": [
+          "условие обменности"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.exchangeability",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.identifiability",
+      "name": "StatisticalIdentifiability",
+      "kind": "prototype",
+      "definition": "A property of a model or estimand being uniquely recoverable from the specified observable distribution and assumptions.",
+      "aliases": {
+        "en": [
+          "statistical identifiability"
+        ],
+        "ru": [
+          "статистическая идентифицируемость"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.identifiability",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.aleatoric_uncertainty",
+      "name": "AleatoricUncertainty",
+      "kind": "prototype",
+      "definition": "Uncertainty attributed to modeled outcome variability under a stated representation and information set.",
+      "aliases": {
+        "en": [
+          "aleatoric uncertainty"
+        ],
+        "ru": [
+          "алеаторная неопределённость"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.aleatoric_uncertainty",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.epistemic_uncertainty",
+      "name": "EpistemicUncertainty",
+      "kind": "prototype",
+      "definition": "Uncertainty attributed to limited knowledge about models, parameters, or relevant conditions under a stated representation.",
+      "aliases": {
+        "en": [
+          "epistemic uncertainty"
+        ],
+        "ru": [
+          "эпистемическая неопределённость"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.epistemic_uncertainty",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.source_record",
+      "name": "EvidenceSourceRecord",
+      "kind": "prototype",
+      "definition": "A record identifying the origin, content boundary, and relevant context of information used as evidence.",
+      "aliases": {
+        "en": [
+          "evidence source record"
+        ],
+        "ru": [
+          "запись источника доказательств"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.source_record",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.evidence_item",
+      "name": "EvidenceItem",
+      "kind": "prototype",
+      "definition": "An identifiable item of information considered as bearing on a proposition under an explicit relevance and source interpretation.",
+      "aliases": {
+        "en": [
+          "evidence item"
+        ],
+        "ru": [
+          "элемент доказательства"
+        ]
+      },
+      "parent": "local.evidence",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.evidence_item",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.direct_observation",
+      "name": "DirectObservation",
+      "kind": "prototype",
+      "definition": "An observation process acquiring information through stated perception or measurement rather than solely by repeating another report.",
+      "aliases": {
+        "en": [
+          "direct observation"
+        ],
+        "ru": [
+          "прямое наблюдение"
+        ]
+      },
+      "parent": "local.observation",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.direct_observation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.reported_observation",
+      "name": "ReportedObservation",
+      "kind": "prototype",
+      "definition": "An information representation of an observation attributed to a reporting source whose access and reliability require separate assessment.",
+      "aliases": {
+        "en": [
+          "reported observation"
+        ],
+        "ru": [
+          "сообщённое наблюдение"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.reported_observation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.derived_claim",
+      "name": "DerivedClaim",
+      "kind": "prototype",
+      "definition": "A proposition asserted on the basis of other claims or observations through an identified inference procedure.",
+      "aliases": {
+        "en": [
+          "derived claim"
+        ],
+        "ru": [
+          "выведенное утверждение"
+        ]
+      },
+      "parent": "sumo.proposition",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.derived_claim",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.contradiction",
+      "name": "ClaimContradiction",
+      "kind": "prototype",
+      "definition": "A specification that claims cannot jointly hold under the same meaning, scope, time, and background assumptions.",
+      "aliases": {
+        "en": [
+          "claim contradiction"
+        ],
+        "ru": [
+          "противоречие утверждений"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.contradiction",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.rebuttal",
+      "name": "EvidenceRebuttal",
+      "kind": "prototype",
+      "definition": "Information offered as a reason to reject or reduce support for a specified claim under an explicit interpretation.",
+      "aliases": {
+        "en": [
+          "evidence rebuttal"
+        ],
+        "ru": [
+          "опровергающее свидетельство"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.rebuttal",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.independent_support",
+      "name": "IndependentSupportAssessment",
+      "kind": "prototype",
+      "definition": "An assessment that specified evidential contributions provide nonduplicative support under a stated dependence model.",
+      "aliases": {
+        "en": [
+          "independent support assessment"
+        ],
+        "ru": [
+          "оценка независимой поддержки"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.independent_support",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.source_dependence",
+      "name": "SourceDependenceAssessment",
+      "kind": "prototype",
+      "definition": "An assessment of how evidential contributions share observations, sources, mechanisms, or derivation paths relevant to combining support.",
+      "aliases": {
+        "en": [
+          "source dependence assessment"
+        ],
+        "ru": [
+          "оценка зависимости источников"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.source_dependence",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.belief_assessment",
+      "name": "BeliefAssessment",
+      "kind": "prototype",
+      "definition": "A record of the assessed support or uncertainty of a specified proposition at a specified time, with evidence and method identified.",
+      "aliases": {
+        "en": [
+          "belief assessment"
+        ],
+        "ru": [
+          "оценка убеждения"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.belief_assessment",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.confidence_score",
+      "name": "ConfidenceScore",
+      "kind": "prototype",
+      "definition": "A numeric or ordered assessment of confidence whose target, scale, and calibration interpretation must be stated.",
+      "aliases": {
+        "en": [
+          "confidence score"
+        ],
+        "ru": [
+          "оценка уверенности"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.confidence_score",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "A calibrated probability for a defined proposition"
+      ],
+      "counterexamples": [
+        "An arbitrary score silently interpreted as a probability"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.evidence_weight",
+      "name": "EvidenceWeight",
+      "kind": "prototype",
+      "definition": "A method-dependent representation of an evidential contribution's influence on an assessment, distinguished from independent event counts.",
+      "aliases": {
+        "en": [
+          "evidence weight"
+        ],
+        "ru": [
+          "вес доказательства"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.evidence_weight",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.likelihood_ratio",
+      "name": "LikelihoodRatio",
+      "kind": "prototype",
+      "definition": "A ratio of likelihoods of the same observations under two specified models or hypotheses.",
+      "aliases": {
+        "en": [
+          "likelihood ratio"
+        ],
+        "ru": [
+          "отношение правдоподобий"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.likelihood_ratio",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.bayes_factor",
+      "name": "BayesFactor",
+      "kind": "prototype",
+      "definition": "A ratio of marginal likelihoods of observed data under two specified probabilistic models, with their parameter priors included.",
+      "aliases": {
+        "en": [
+          "bayes factor"
+        ],
+        "ru": [
+          "байесовский фактор"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.bayes_factor",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.proper_scoring_rule",
+      "name": "ProperScoringRule",
+      "kind": "prototype",
+      "definition": "A probabilistic forecast scoring rule for which the expected score is optimized by reporting the forecaster's true distribution under the rule's assumptions.",
+      "aliases": {
+        "en": [
+          "proper scoring rule"
+        ],
+        "ru": [
+          "правильное правило оценки"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.proper_scoring_rule",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.brier_score",
+      "name": "BrierScore",
+      "kind": "prototype",
+      "definition": "A mean squared discrepancy between stated event probabilities and realized event indicators under a specified aggregation convention.",
+      "aliases": {
+        "en": [
+          "brier score"
+        ],
+        "ru": [
+          "оценка Брайера"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.brier_score",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.logarithmic_score",
+      "name": "LogarithmicScore",
+      "kind": "prototype",
+      "definition": "A probabilistic forecast score based on the logarithm of probability or density assigned to the realized outcome, with sign and density conventions stated.",
+      "aliases": {
+        "en": [
+          "logarithmic score"
+        ],
+        "ru": [
+          "логарифмическая оценка"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.logarithmic_score",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.calibration_curve",
+      "name": "CalibrationCurve",
+      "kind": "prototype",
+      "definition": "A representation comparing predicted probabilities or confidence levels with observed outcome frequencies under a stated grouping and evaluation design.",
+      "aliases": {
+        "en": [
+          "calibration curve"
+        ],
+        "ru": [
+          "кривая калибровки"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.calibration_curve",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.independent_intent",
+      "name": "EvaluationIntent",
+      "kind": "prototype",
+      "definition": "A distinct information need or task objective used as an evaluation unit; paraphrases of the same need remain one intent for dependence-aware analysis.",
+      "aliases": {
+        "en": [
+          "evaluation intent"
+        ],
+        "ru": [
+          "намерение оценки"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.independent_intent",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Finding a compiler versus finding source code"
+      ],
+      "counterexamples": [
+        "Five paraphrases counted as five independent tasks"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.paired_route_result",
+      "name": "PairedRouteResult",
+      "kind": "prototype",
+      "definition": "A record of baseline and candidate navigation outcomes for the same evaluation intent under matched conditions.",
+      "aliases": {
+        "en": [
+          "paired route result"
+        ],
+        "ru": [
+          "парный результат маршрута"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.paired_route_result",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.navigation_evaluation",
+      "name": "NavigationEvaluation",
+      "kind": "prototype",
+      "definition": "A statistical method comparing retrieval or traversal outcomes over defined intents with controlled presentation, budget, and model conditions.",
+      "aliases": {
+        "en": [
+          "navigation evaluation"
+        ],
+        "ru": [
+          "оценка навигации"
+        ]
+      },
+      "parent": "local.statistical_method",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.navigation_evaluation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "stato",
+        "probonto"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    }
+  ]
+}

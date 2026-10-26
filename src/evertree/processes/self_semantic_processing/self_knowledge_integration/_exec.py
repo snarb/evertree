@@ -400,6 +400,8 @@ def _node(node):
             "relation_description",
             "args",
             "signature",
+            "semantic_signature",
+            "semantic_links",
         ),
     )
     # Unknown interval boundaries are meaningful, unlike empty optional metadata.
@@ -498,6 +500,7 @@ def _describe_for_model(result):
         "properties_total",
         "properties",
         "children_total",
+        "children_read",
         "children",
         "relations_total",
     )

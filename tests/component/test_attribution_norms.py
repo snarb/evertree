@@ -463,7 +463,7 @@ def test_source_references_share_the_norms_required_parameter_validation(conditi
 
 
 async def test_knowledge_integration_refreshes_a_stale_norm_even_when_it_adds_no_more_facts():
-    from evertree.processes.semantic_processing.knowledge_integration._exec import run
+    from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
     from tests.support.semantics import context, recorded_experience
 
     population = Population()

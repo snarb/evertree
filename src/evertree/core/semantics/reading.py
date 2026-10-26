@@ -2,7 +2,7 @@
 
 from ..attribution import validate_parameters
 from ..beliefs import element_target
-from ..graph.types import Facet, Prototype, RelationInstance, RelationType
+from ..graph.types import Facet, RelationInstance, RelationType
 from ..values import UNKNOWN, json_value, timestamp, utcnow
 
 
@@ -20,16 +20,43 @@ def card(node):
 def search_card(graph, node):
     """Expose stored meaning for retrieval without provenance or computed beliefs."""
     result = card(node)
-    if node.properties:
-        result["properties"] = json_value(node.properties)
-    if isinstance(node, RelationType):
-        result["signature"] = json_value(node.signature)
+    properties = {key: value for key, value in node.properties.items() if key != "template"}
+    if properties:
+        result["properties"] = json_value(properties)
+    relation = (
+        node
+        if isinstance(node, RelationType)
+        else graph.get(node.relation_type)
+        if isinstance(node, RelationInstance)
+        else None
+    )
+    if relation is not None:
+        result["signature"] = json_value(relation.signature)
+        result["semantic_signature"] = [
+            {
+                "label": slot.label,
+                "value_type": slot.value_type,
+                "value_concept": card(graph.get(slot.value_concept))
+                if slot.value_concept
+                else None,
+                "role_concept": card(graph.get(slot.role_concept)) if slot.role_concept else None,
+            }
+            for slot in relation.signature
+        ]
+    references = []
+    for relation_name in ("ABOUT", "RELATION_SUBJECT"):
+        references.extend(
+            {"relation": relation_name, "target": card(graph.get(fact.args["target"]))}
+            for fact in graph.facts(relation_name)
+            if fact.args["source"] == node.id
+        )
+    if references:
+        result["semantic_links"] = references
     if isinstance(node, RelationInstance):
         relation = graph.get(node.relation_type)
         result["relation"] = relation.name
         if relation.description:
             result["relation_description"] = relation.description
-        result["signature"] = json_value(relation.signature)
         result["args"] = json_value(node.args)
 
         def reference(identity):
@@ -246,6 +273,11 @@ def describe(graph, attribution, subject, focus=None, at=None):
     definitions = {
         key: json_value(node.properties[key])
         for key in (
+            "aliases",
+            "examples",
+            "counterexamples",
+            "template",
+            "specialization",
             "attribution",
             "numeric_reference",
             "qualitative_norm",
@@ -285,7 +317,7 @@ def describe(graph, attribution, subject, focus=None, at=None):
     if isinstance(node, Facet) and at is not None:
         result["subject"]["temporal_status"] = node.applicability(when)
     if focus != "properties":
-        if isinstance(node, Prototype):
+        if node.kind in {"prototype", "process", "relation_type", "property"}:
             # Many instances can fill the relation preview before a later parent link.
             result["parent"] = next(
                 (
@@ -300,7 +332,11 @@ def describe(graph, attribution, subject, focus=None, at=None):
                 for fact in graph.facts("SUBTYPE_OF")
                 if fact.args["supertype"] == node.id
             ]
-            _preview(result, "children", children, 7)
+            _preview(result, "children", children, None if focus == "children" else 7)
+            if len(children) > 7 and focus != "children":
+                result["children_read"] = (
+                    "Use describe with focus='children' for every child, or SUBTYPE_OF.get_subtypes."
+                )
         facts = []
         for fact in graph.facts():
             if node.id not in fact_nodes(graph, fact):

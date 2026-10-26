@@ -19,8 +19,8 @@ async def test_integration_repairs_action_calls_search_child_and_replays_once(tm
     """Only worker/DBOS replay can prove the child call is outside a durable step."""
     root = Path(__file__).resolve().parents[2]
     paths = [
-        "src/evertree/processes/semantic_processing/knowledge_integration/_exec.py",
-        "src/evertree/processes/semantic_processing/semantic_search/_model.py",
+        "src/evertree/processes/self_semantic_processing/self_knowledge_integration/_exec.py",
+        "src/evertree/processes/self_semantic_processing/self_semantic_search/_model.py",
         "src/evertree/common/semantic_search.py",
         "src/evertree/common/integration_actions.py",
         "src/evertree/common/structured.py",
@@ -138,7 +138,7 @@ async def test_ranked_search_parallel_reads_and_replay_across_worker_ipc(tmp_pat
 
     root = Path(__file__).resolve().parents[2]
     paths = [
-        "src/evertree/processes/semantic_processing/semantic_search/_model.py",
+        "src/evertree/processes/self_semantic_processing/self_semantic_search/_model.py",
         "src/evertree/common/semantic_search.py",
         "src/evertree/common/structured.py",
     ]
@@ -211,7 +211,7 @@ async def test_interrupted_integration_replays_completed_write_and_continues_sam
 
     root = Path(__file__).resolve().parents[2]
     paths = [
-        "src/evertree/processes/semantic_processing/knowledge_integration/_exec.py",
+        "src/evertree/processes/self_semantic_processing/self_knowledge_integration/_exec.py",
         "src/evertree/common/integration_actions.py",
         "src/evertree/common/structured.py",
     ]

@@ -59,7 +59,7 @@ The default suite runs unit and component tests with up to four workers. Integra
 
 Open [`src/evertree/debug_integration.py`](src/evertree/debug_integration.py), select the
 project's `.venv` interpreter, and choose **Debug**. The script calls the real Codex model from
-`KnowledgeIntegration.exec`; sign in to Codex first. Edit `USER_TASK`, `INPUT_TEXT` and
+`SelfKnowledgeIntegration.exec`; sign in to Codex first. Edit `USER_TASK`, `INPUT_TEXT` and
 `CONSCIOUS_ANALYSIS` at the top of the script.
 
 `EVERTREE_REDIS_URL` (or `EVERTREE_TEST_REDIS_URL`) and `OPENAI_API_KEY` are read from the
@@ -159,7 +159,7 @@ parameters and non-obvious side effects. Keep them concise.
   instructions. Examples may illustrate a general rule with synthetic subjects. Treat a
   revised-prompt rerun as a regression check, not independent evidence of generalization.
 
-KnowledgeIntegration is instructed to preserve nearly every distinct source assertion: shared participants,
+SelfKnowledgeIntegration is instructed to preserve nearly every distinct source assertion: shared participants,
 named predicate roles, values, exceptions and source qualifications. `focus` sets priority
 without excluding the remaining assertions. Native relations support directed reads through
 their roles; co-occurrence, inverse duplicates and invented transitive facts are not useful
@@ -172,7 +172,7 @@ remains available through the retained original; the window cannot guarantee eve
 Text sections and adaptive splits prefer whole paragraphs. Sentences, lines and words are
 fallback boundaries when a paragraph cannot fit or needs further splitting.
 
-KnowledgeIntegration ends each model section through `finish_section(complete, remaining)`.
+SelfKnowledgeIntegration ends each model section through `finish_section(complete, remaining)`.
 An ordinary final message is not a completion receipt. A declared remainder or missing receipt
 preserves writes and splits the unfinished section; an indivisible remainder is recorded as a
 failed gap. Unresolved work and repairs accompany child sections and explicit retries as

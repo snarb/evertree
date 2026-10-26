@@ -8,7 +8,7 @@ from evertree.core.graph.types import Facet, GraphDelta, Node, RelationType, Slo
 from evertree.core.semantics.config import ReadConfig, SemanticConfig
 from evertree.core.tokens import count_tokens, current_read_context
 from evertree.core.values import ContractError, timestamp
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 from tests.support.semantics import (
     context,
     populated_search_world,

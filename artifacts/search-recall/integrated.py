@@ -34,7 +34,7 @@ from evertree.core.semantics.service import SemanticService
 from evertree.core.semantics.tools import MULTIHOP_SEARCH_INSTRUCTIONS
 from evertree.core.values import json_value
 from evertree.debug_integration import load_debug_environment
-from evertree.processes.semantic_processing.knowledge_integration._exec import run as integrate
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run as integrate
 from tests.support.live_semantics import (
     native_semantic_context,
     production_revision,

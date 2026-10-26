@@ -9,11 +9,13 @@ import pytest
 
 from evertree.core.contracts import ProgramResult, task_outcome_context
 from evertree.core.programs.bootstrap import bootstrap_catalog
-from evertree.processes.memory_processing.experience_compaction._exec import run as compact
-from evertree.processes.task_management.episode_step_selection._exec import (
+from evertree.processes.self_memory_processing.self_experience_compaction._exec import (
+    run as compact,
+)
+from evertree.processes.self_task_management.self_episode_step_selection._exec import (
     run as episode_step,
 )
-from evertree.processes.task_management.task_framing._exec import run as frame
+from evertree.processes.self_task_management.self_task_framing._exec import run as frame
 
 
 class Context:
@@ -97,7 +99,7 @@ async def test_framing_rejects_nonfinite_or_missing_budget_instead_of_inserting_
 
 
 async def test_framing_requires_a_bounded_initial_step_and_resource_review_does_not():
-    from evertree.processes.cognitive_control.resource_control._exec import run as review
+    from evertree.processes.self_cognitive_control.self_resource_control._exec import run as review
 
     missing_step = framed()
     del missing_step["initial_step"]
@@ -116,7 +118,7 @@ async def test_framing_requires_a_bounded_initial_step_and_resource_review_does_
 
 
 async def test_task_prompts_keep_requirements_and_budget_evidence_without_runtime_bookkeeping():
-    from evertree.processes.cognitive_control.resource_control._exec import run as review
+    from evertree.processes.self_cognitive_control.self_resource_control._exec import run as review
 
     state = {
         "id": "runtime-task-id",

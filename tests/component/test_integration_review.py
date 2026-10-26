@@ -9,7 +9,7 @@ import pytest
 from evertree.core.graph.types import GraphDelta
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.values import ContractError, json_value
-from evertree.processes.semantic_processing.knowledge_integration._exec import (
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
     _material_for_model,
     run,
 )

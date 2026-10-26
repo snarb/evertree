@@ -1,0 +1,79 @@
+{
+  "format": 1,
+  "version": "1.0.0",
+  "root": "sumo.entity",
+  "modules": [
+    "foundation.json",
+    "world.json",
+    "software.json",
+    "intelligence.json",
+    "statistics.json",
+    "relations.json"
+  ],
+  "core_bindings": {
+    "sumo.process": "Process",
+    "rel.subtype_of": "SUBTYPE_OF",
+    "rel.identity_type": "IDENTITY_TYPE",
+    "rel.state_identity": "STATE_IDENTITY",
+    "rel.part_whole": "PART_WHOLE",
+    "rel.has_numeric_value": "HAS_NUMERIC_VALUE",
+    "rel.classified_as": "CLASSIFIED_AS",
+    "rel.program_for_process": "PROGRAM_FOR_PROCESS",
+    "rel.evidence_depends_on": "EVIDENCE_DEPENDS_ON"
+  },
+  "sources": {
+    "evertree": {
+      "title": "Evertree authored starter ontology",
+      "url": "urn:evertree:taxonomy:1.0.0",
+      "revision": "1.0.0",
+      "license": "Original Evertree-authored definitions; repository licensing applies. No third-party text is relicensed.",
+      "use": "Original definitions and relation contracts identified by the local release URN; no external equivalence is implied."
+    },
+    "sumo-core": {
+      "title": "SUMO Merge.kif, IEEE 2004",
+      "url": "https://github.com/ontologyportal/sumo/blob/070e44b746a8a87ca675a2051b2bd910016b2c2f/Merge.kif",
+      "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f",
+      "sha256": "7a94bb84410888d9760684d7315b0db3bbec88b17da12720b83d706030914b53",
+      "license": "IEEE 2004 permissive copyright notice; retain attribution. See SOURCES.md.",
+      "use": "Selected core names, definitions and parentage adapted to one-parent Evertree representation. No GPL domain modules are redistributed."
+    },
+    "cs2023": {
+      "title": "ACM/IEEE-CS/AAAI CS2023 curriculum",
+      "url": "https://csed.acm.org/knowledge-areas/",
+      "revision": "CS2023 final report, 2024",
+      "license": "Copyright ACM/IEEE-CS/AAAI; referenced for coverage only.",
+      "use": "Coverage checklist only; definitions authored independently; no report text or taxonomy copied."
+    },
+    "swebok": {
+      "title": "IEEE Computer Society SWEBOK",
+      "url": "https://www.computer.org/education/bodies-of-knowledge/software-engineering",
+      "revision": "Version 4.0a",
+      "license": "Copyright IEEE; referenced for coverage only.",
+      "use": "Coverage checklist only; definitions authored independently; no guide text redistributed."
+    },
+    "stato": {
+      "title": "STATO statistics ontology",
+      "url": "https://stato-ontology.org/",
+      "revision": "Website scope consulted 2026-10-23",
+      "license": "Website states Creative Commons Attribution; no ontology content imported.",
+      "use": "Scope guidance for original definitions, not an imported or equivalent STATO release."
+    },
+    "probonto": {
+      "title": "ProbOnto: ontology and knowledge base of probability distributions",
+      "url": "https://doi.org/10.1093/bioinformatics/btw170",
+      "revision": "Bioinformatics 2016, doi:10.1093/bioinformatics/btw170",
+      "license": "Paper referenced bibliographically; no paper text or ontology axioms copied.",
+      "use": "Distribution coverage guidance only; no external equivalence or software license inheritance asserted."
+    }
+  },
+  "policy": {
+    "parent_count": 1,
+    "predicate_specialization": "declaration_only",
+    "navigation_gate": {
+      "relative_failure_reduction": 0.2,
+      "absolute_failure_reduction": 0.03,
+      "paired_ci95_lower_positive": true
+    },
+    "coverage_claim": "Curated scenario coverage only; no measured 80 percent user-task claim."
+  }
+}

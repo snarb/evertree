@@ -320,8 +320,11 @@ class GraphStore:
                     raise ContractError("relation type names must be canonical and unique")
                 relation_names.add(node.name)
                 for slot in node.signature:
-                    if slot.concept is not None and slot.concept not in nodes:
-                        raise ContractError("slot concept is missing")
+                    for reference in (slot.value_concept, slot.role_concept):
+                        if reference is not None and not isinstance(
+                            nodes.get(reference), Prototype
+                        ):
+                            raise ContractError("slot semantic reference requires a Prototype")
                 self._validate_predicates(node, nodes)
             if not isinstance(node, RelationInstance):
                 continue
@@ -368,6 +371,27 @@ class GraphStore:
                 seen.add(current)
                 current = parents[current]
         for node in nodes.values():
+            if isinstance(node, RelationType) and "specialization" in node.properties:
+                declaration = node.properties["specialization"]
+                if (
+                    not isinstance(declaration, Mapping)
+                    or type(declaration.get("parent")) is not int
+                ):
+                    raise ContractError("invalid predicate specialization declaration")
+                parent = nodes.get(declaration.get("parent"))
+                roles = declaration.get("roles")
+                if (
+                    not isinstance(parent, RelationType)
+                    or parents.get(node.id) != parent.id
+                    or not isinstance(roles, Mapping)
+                    or set(roles) != {slot.label for slot in parent.signature}
+                    or any(not isinstance(label, str) for label in roles.values())
+                    or len(set(roles.values())) != len(roles)
+                    or not set(roles.values()) <= {slot.label for slot in node.signature}
+                ):
+                    raise ContractError(
+                        "predicate specialization must reference its concrete parent and roles"
+                    )
             if "qualitative_norm" in node.properties:
                 validate_norm(node, nodes, parents)
             if "attribution_result" in node.properties:
@@ -474,11 +498,16 @@ class GraphStore:
 
     def descendants(self, identity: int) -> tuple[Node, ...]:
         """Return nodes whose SUBTYPE_OF ancestry includes the given identity."""
-        return tuple(
-            node
-            for node in self._nodes.values()
-            if any(parent.id == identity for parent in self.ancestors(node.id))
-        )
+        children = {}
+        for fact in self.facts("SUBTYPE_OF"):
+            children.setdefault(fact.args["supertype"], []).append(fact.args["type"])
+        pending, found = list(children.get(identity, ())), set()
+        while pending:
+            child = pending.pop()
+            if child not in found:
+                found.add(child)
+                pending.extend(children.get(child, ()))
+        return tuple(node for node in self._nodes.values() if node.id in found)
 
     def common_ancestor(self, first: int, second: int) -> Node | None:
         """Find the nearest shared subtype ancestor, including either node itself."""

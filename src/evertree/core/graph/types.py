@@ -123,7 +123,8 @@ class Slot:
     label: str
     value_type: str = "node"
     arity: str = "one"
-    concept: int | None = None
+    value_concept: int | None = None
+    role_concept: int | None = None
     description: str | None = None
 
     def __post_init__(self) -> None:

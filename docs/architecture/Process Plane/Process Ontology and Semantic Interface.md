@@ -39,8 +39,8 @@ It defines:
 
 The distinction:
 
-- [[Semantics Plane#^def-RelationType|`RelationType`]] — a static relation: `PART_WHOLE(wheel, car)`;
-- `TransitionType` — a dynamic relation: `BREAKS(agent, object)`.
+- [[Semantics Plane#^def-RelationType|`RelationType`]] — a predicate that can describe a static or dynamic assertion, such as `PART_WHOLE(wheel, car)`;
+- `TransitionType` — a dynamic relation meaning, such as `BREAKS(agent, object)`, represented using the same concrete relation-schema mechanism.
 
 A process noun, such as **“Burning,”** is a `ProcessConcept`. The verbal transition **“burns / sets on fire”** is a `TransitionType`.
 
@@ -79,7 +79,13 @@ ProcessConcept: Concept {
 **`Process`** is the general root concept of the process taxonomy. All other process types are linked to it directly or through ancestors by [[Semantics Plane#^spec-SUBTYPE_OF|`SUBTYPE_OF`]]. It is a concrete graph concept; `ProcessConcept` denotes the type of objects being passed. The taxonomy links kinds of processes; composite process steps are described separately.
 ^def-ProcessRoot
 
-The agent's own processes form the `SelfProcess` subtree (the **Self/Process** representation). It is linked to the general `Process` through `SUBTYPE_OF` and to Self through `PART_WHOLE`. The general `Process` is not moved under Self: it also organizes processes in the external world. The initial subtypes in the agent's branch are `TaskManagement`, `CognitiveControl`, `MemoryProcessing`, and `Learning`; `src/evertree/processes/` represents exactly this branch.
+The agent's own processes form the `SelfProcess` subtree (the **Self/Process** representation). It is linked to the general `Process` through `SUBTYPE_OF` and to the `Self` identity through `PART_WHOLE`. The general `Process` is not moved under Self: it also organizes processes in the external world. The initial subtypes in the agent's branch are `SelfSemanticProcessing`, `SelfTaskManagement`, `SelfCognitiveControl`, `SelfMemoryProcessing`, and `SelfLearning`; `src/evertree/processes/` represents exactly this branch. Own process names are similarly scoped, including `SelfReflection` and `SelfPlanning`; their runtime dispatch slugs remain stable.
+
+The [taxonomy governance policy](../Taxonomy%20and%20Relation%20Governance.md#processes-and-self)
+requires one parent per process type. A general process, an own process, its Program and one
+execution are distinct meanings. Semantic subject references provide additional navigation
+without creating a second inheritance path. Changes to own process names and ancestry must
+keep source directories, Program bindings, active selections and call contracts coherent.
 
 ### Semantic Organization: Concept → ProcessConcept → Program
 
@@ -87,6 +93,8 @@ The primary semantic anchor is `Concept`. Processes concerning that subject are 
 ^semantic-program-organization
 
 #### PROCESS_SUBJECT
+
+This is a specialized design vocabulary. The current starter package uses the declared `ABOUT(source, target)` relation for explicit process subjects and non-inferential semantic references; it does not install `PROCESS_SUBJECT` or infer its assertions.
 
 ```text
 PROCESS_SUBJECT(process: ProcessConcept, subject: Concept)

@@ -49,8 +49,10 @@ from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.index import RedisSearchIndex
 from evertree.core.semantics.service import SemanticService
 from evertree.core.values import json_value
-from evertree.processes.semantic_processing.knowledge_integration._exec import run as integrate
-from evertree.processes.semantic_processing.semantic_search._model import run as search
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+    run as integrate,
+)
+from evertree.processes.self_semantic_processing.self_semantic_search._model import run as search
 
 # Edit these inputs; KnowledgeIntegration chooses their graph representation.
 USER_TASK = (

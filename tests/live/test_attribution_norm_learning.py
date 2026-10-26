@@ -26,10 +26,12 @@ from evertree.core.semantics import api as semantics
 from evertree.core.semantics.service import SemanticService
 from evertree.core.semantics.tools import READ_TOOLS, validate_action
 from evertree.core.values import UNKNOWN, json_value
-from evertree.processes.learning.evidence_assessment.graph_evidence_assessment._exec import (
+from evertree.processes.self_learning.self_evidence_assessment.self_graph_evidence_assessment._exec import (
     run as assess,
 )
-from evertree.processes.semantic_processing.knowledge_integration._exec import run as integrate
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+    run as integrate,
+)
 from tests.support.component import component_app
 from tests.support.live_semantics import (
     RecordedProvider,

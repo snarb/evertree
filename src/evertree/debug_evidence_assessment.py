@@ -38,17 +38,19 @@ from evertree.core.graph.types import RelationInstance
 from evertree.core.semantics.reading import fact_nodes
 from evertree.core.values import json_value
 from evertree.debug_integration import DebugSession, load_debug_environment
-from evertree.processes.learning.evidence_assessment._exec import run as assess
-from evertree.processes.learning.evidence_assessment.graph_evidence_assessment._exec import (
+from evertree.processes.self_learning.self_evidence_assessment._exec import run as assess
+from evertree.processes.self_learning.self_evidence_assessment.self_graph_evidence_assessment._exec import (
     INSTRUCTIONS,
 )
-from evertree.processes.learning.evidence_assessment.graph_evidence_assessment._exec import (
+from evertree.processes.self_learning.self_evidence_assessment.self_graph_evidence_assessment._exec import (
     run as assess_graph,
 )
-from evertree.processes.learning.evidence_assessment.program_evidence_assessment._exec import (
+from evertree.processes.self_learning.self_evidence_assessment.self_program_evidence_assessment._exec import (
     run as assess_programs,
 )
-from evertree.processes.semantic_processing.knowledge_integration._exec import run as integrate
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+    run as integrate,
+)
 
 USER_TASK = (
     "Запомни историю работы насоса Н-1: когда он был выключен и когда работал. "

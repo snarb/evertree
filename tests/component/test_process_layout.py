@@ -38,19 +38,20 @@ def update(graph, node, **properties):
 def test_own_process_tree_preserves_general_process_and_role_semantics(seed_tree):
     graph, sources = seed_tree
     validate_process_layout(graph, sources, sources.__getitem__)
-    assert [node.name for node in graph.ancestors(graph.find("Planning").id)] == [
-        "TaskManagement",
+    assert [node.name for node in graph.ancestors(graph.find("SelfPlanning").id)] == [
+        "SelfTaskManagement",
         "SelfProcess",
         "Process",
     ]
     assert (
-        process_directory(graph, graph.find("Planning").id) == PREFIX + "task_management/planning"
+        process_directory(graph, graph.find("SelfPlanning").id)
+        == PREFIX + "self_task_management/self_planning"
     )
     assert graph.find("Self").id not in {
         node.id for node in graph.ancestors(graph.find("Process").id)
     }
-    assert graph.find("SemanticSearch.model").properties["role"] == "model"
-    assert graph.find("KnowledgeIntegration.exec").properties["role"] == "exec"
+    assert graph.find("SelfSemanticSearch.model").properties["role"] == "model"
+    assert graph.find("SelfKnowledgeIntegration.exec").properties["role"] == "exec"
 
 
 @pytest.mark.parametrize(
@@ -59,7 +60,7 @@ def test_own_process_tree_preserves_general_process_and_role_semantics(seed_tree
 )
 def test_source_graph_drift_is_rejected(seed_tree, damage):
     graph, sources = seed_tree
-    program = graph.find("Planning.exec")
+    program = graph.find("SelfPlanning.exec")
     path = program.properties["git_path"]
     if damage == "missing":
         sources.pop(path)
@@ -68,12 +69,14 @@ def test_source_graph_drift_is_rejected(seed_tree, damage):
     elif damage == "entrypoint":
         sources[path] = "def wrong(): return 1"
     elif damage == "binding":
-        update(graph, graph.find("Planning"), active_exec=None)
+        update(graph, graph.find("SelfPlanning"), active_exec=None)
     elif damage == "role":
         update(graph, program, role="model", roles=("model",))
-        update(graph, graph.find("Planning"), active_exec=None, active_model=program.id)
+        update(graph, graph.find("SelfPlanning"), active_exec=None, active_model=program.id)
     elif damage == "taxonomy_init":
-        sources[PREFIX + "task_management/__init__.py"] = "from .planning._exec import run"
+        sources[PREFIX + "self_task_management/__init__.py"] = (
+            "from .self_planning._exec import run"
+        )
     else:
         root = graph.find("SelfProcess")
         fact = next(fact for fact in graph.facts("PART_WHOLE") if fact.args["part"] == root.id)
@@ -84,11 +87,11 @@ def test_source_graph_drift_is_rejected(seed_tree, damage):
 
 def test_model_and_exec_are_distinct_programs_with_one_version_per_role(seed_tree):
     graph, sources = seed_tree
-    process = graph.find("Planning")
+    process = graph.find("SelfPlanning")
     path = process_directory(graph, process.id) + "/_model.py"
     model = Node(
         graph.reserve_id(),
-        "Planning.model",
+        "SelfPlanning.model",
         kind="program",
         properties={
             "process": process.id,
@@ -114,7 +117,7 @@ def test_model_and_exec_are_distinct_programs_with_one_version_per_role(seed_tre
 
 def test_role_package_allows_helpers_and_inactive_proposal_does_not_require_main_code(seed_tree):
     graph, sources = seed_tree
-    program = graph.find("Planning.exec")
+    program = graph.find("SelfPlanning.exec")
     old = program.properties["git_path"]
     new = old.removesuffix(".py") + "/implementation.py"
     sources[new] = sources.pop(old)
@@ -138,7 +141,7 @@ def test_role_package_allows_helpers_and_inactive_proposal_does_not_require_main
 @pytest.mark.parametrize("registered_package", [False, True])
 def test_role_cannot_have_both_file_and_package(seed_tree, registered_package):
     graph, sources = seed_tree
-    program = graph.find("Planning.exec")
+    program = graph.find("SelfPlanning.exec")
     path = program.properties["git_path"]
     package_entrypoint = path.removesuffix(".py") + "/implementation.py"
     sources[package_entrypoint] = sources[path]
@@ -150,8 +153,8 @@ def test_role_cannot_have_both_file_and_package(seed_tree, registered_package):
 
 def test_candidate_subtype_keeps_parent_directory_with_inactive_parent_program(seed_tree):
     graph, sources = seed_tree
-    parent = graph.find("Planning")
-    parent_program = graph.find("Planning.exec")
+    parent = graph.find("SelfPlanning")
+    parent_program = graph.find("SelfPlanning.exec")
     update(graph, parent_program, lifecycle_status="candidate")
     sources.pop(parent_program.properties["git_path"])
     child = Prototype(graph.reserve_id(), "BudgetPlanning", properties={"process": True})
@@ -195,7 +198,7 @@ def test_candidate_subtype_keeps_parent_directory_with_inactive_parent_program(s
 )
 def test_core_called_program_must_accept_core_api_arguments(seed_tree, signature, accepted):
     graph, sources = seed_tree
-    path = graph.find("CreditAssignment.exec").properties["git_path"]
+    path = graph.find("SelfCreditAssignment.exec").properties["git_path"]
     sources[path] = f"async def run({signature}):\n    return None\n"
     if accepted:
         validate_process_layout(graph, sources, sources.__getitem__)
@@ -206,10 +209,10 @@ def test_core_called_program_must_accept_core_api_arguments(seed_tree, signature
 
 def test_alternative_candidate_takes_its_slot_only_in_the_validated_commit(seed_tree):
     graph, sources = seed_tree
-    active = graph.find("Planning.exec")
+    active = graph.find("SelfPlanning.exec")
     alternative = Node(
         graph.reserve_id(),
-        "Planning.exec.search",
+        "SelfPlanning.exec.search",
         kind="program",
         properties={
             **active.properties,

@@ -82,7 +82,7 @@ def register_integration(graph, revision):
             creates=(
                 Node(
                     2,
-                    "KnowledgeIntegration.exec",
+                    "SelfKnowledgeIntegration.exec",
                     kind="program",
                     properties={
                         "git_path": INTEGRATION_PATH,

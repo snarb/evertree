@@ -310,7 +310,7 @@ source, including participant roles, measured quantity and qualifications.
 > [!important]
 > Principle: **there is one fact**. “Inverses” and “directions” are **views/projections** (queries), not separate relation instances.
 
-`RelationType` participates in the abstraction ladder like all other concepts.
+`RelationType` participates in the abstraction ladder like all other types. Abstract relation categories are ordinary `Prototype` nodes without signatures. Concrete predicates have nonempty signatures; specialization stores an explicit role projection and an entailment rationale. These declarations do not enable automatic parent-fact inference. See [[Taxonomy and Relation Governance]].
 
 Use a small set of basic relations; add domain-specific `RelationType`s under the [[Core data structures#Concept Canonicalization and Semantic Linking|shared rules for reusing and creating concepts]].
 
@@ -335,9 +335,10 @@ semantically faithful predicate remains the responsibility of the writer.
 ```
 
 - `label` is a technical key (addressing + versioning), **not a concept**.
-- `ConceptSlot` is one Concept that defines the semantic type or role of a position:
-  - usually a `Role` concept (`Parent`, `Owner`, etc.);
-  - sometimes a non-role concept (`Person`, `Entity`) when defining a role is not worthwhile.
+- `value_type` is the technical storage type (`node`, `number`, `string`, etc.).
+- `value_concept` references the semantic class of permitted values, such as `AutonomousAgent`.
+- `role_concept` references the contextual role, such as `AgentRole`. A role and its permitted value class are distinct.
+- The starter template requires both semantic references and role descriptions. Core validates reference existence and technical types; it does not prove arbitrary semantic argument membership.
 
 **Storing arguments in a relation instance:**
 
@@ -455,7 +456,9 @@ RelationType: <SemanticNode> {
 ```python
 Slot: <InternalNode> {
   label: <string>           "stable slot key (versioning contract)",
-  concept: <Concept>        "semantic type or role of the position; its contract defines the allowed argument type",
+  value_type: <string>      "technical storage type",
+  value_concept?: <Prototype> "semantic class of values",
+  role_concept?: <Prototype>  "meaning of this contextual position",
   arity: <enum>             "one | optional | list0 | list1",
   description?: <string>    "minimal semantic contract (what it is / is not)"
 }

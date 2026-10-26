@@ -102,7 +102,7 @@ async def test_developer_binds_prediction_criteria_without_weakening_core_checks
 @pytest.mark.parametrize("parent_by_id", [False, True])
 async def test_program_proposal_uses_selected_taxonomy_parent(agent, parent_by_id):
     """Exercise the application lifecycle with private Git publication and real state owners."""
-    parent = agent.graph.find("Planning")
+    parent = agent.graph.find("SelfPlanning")
     proposal = agent.propose_program(
         "BudgetPlanning",
         parent=parent.id if parent_by_id else parent.name,
@@ -112,35 +112,37 @@ async def test_program_proposal_uses_selected_taxonomy_parent(agent, parent_by_i
     )
     program = proposal["program"]
     assert program["properties"]["git_path"] == (
-        "src/evertree/processes/task_management/planning/budget_planning/_exec.py"
+        "src/evertree/processes/self_task_management/self_planning/budget_planning/_exec.py"
     )
     assert agent.graph.ancestors(program["properties"]["process"])[0].id == parent.id
     assert proposal["candidate"]["git_ref"] == (
-        "codex/program/Self/Process/TaskManagement/Planning/BudgetPlanning/exec/respect-budget"
+        "codex/program/Self/Process/SelfTaskManagement/SelfPlanning/BudgetPlanning/exec/respect-budget"
     )
 
 
 async def test_program_proposal_adds_missing_role_without_replacing_process(agent):
     """Exercise the application lifecycle with private Git publication and real state owners."""
-    process = agent.graph.find("Planning")
+    process = agent.graph.find("SelfPlanning")
     active_exec = process.properties["active_exec"]
     ancestors = agent.graph.ancestors(process.id)
     proposal = agent.propose_program(
-        "Planning", role="model", claim="Predict plan cost", candidate_name="predict cost"
+        "SelfPlanning", role="model", claim="Predict plan cost", candidate_name="predict cost"
     )
     props = proposal["program"]["properties"]
     assert props["process"] == process.id
-    assert props["git_path"] == "src/evertree/processes/task_management/planning/_model.py"
+    assert (
+        props["git_path"] == "src/evertree/processes/self_task_management/self_planning/_model.py"
+    )
     assert props["lifecycle_status"] == "candidate"
     assert agent.graph.ancestors(process.id) == ancestors
     assert agent.graph.get(process.id).properties["active_exec"] == active_exec
     assert agent.graph.get(process.id).properties.get("active_model") is None
     assert proposal["candidate"]["git_ref"] == (
-        "codex/program/Self/Process/TaskManagement/Planning/model/predict-cost"
+        "codex/program/Self/Process/SelfTaskManagement/SelfPlanning/model/predict-cost"
     )
     # An inactive proposal reserves its role too; improve it through a candidate.
     with pytest.raises(ValueError, match="already has this Program role"):
-        agent.propose_program("Planning", role="model", claim="Another model")
+        agent.propose_program("SelfPlanning", role="model", claim="Another model")
 
 
 async def test_cancel_stops_real_worker_waiting_inside_provider_gateway(tmp_path):

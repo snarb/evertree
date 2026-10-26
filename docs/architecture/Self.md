@@ -2,11 +2,16 @@
 #topic_core
 
 (def_id:: et.Self)
-> [!definition] **Self** — a persistent `Concept` representing the identity of the current agent in its own world model. ^def-Self
+> [!definition] **Self** — a persistent `Instance` representing the current software agent typed as `SoftwareAgent` under the `AutonomousAgent` taxonomy in its own world model. ^def-Self
 
 It is the primary semantic anchor for knowledge and processes concerning the agent itself.
 
-The agent's own implemented processes are organized in **Self/Process** (`SelfProcess`): `PART_WHOLE(SelfProcess, Self)` denotes membership in the agent, while `SUBTYPE_OF(SelfProcess, Process)` preserves the link to the general process taxonomy. The subtypes `TaskManagement`, `CognitiveControl`, `MemoryProcessing`, and `Learning` group existing processes; program roles are represented by `_exec.py` and `_model.py`. The general `Process` root also continues to describe processes in the external world.
+The agent's own implemented processes are organized in **Self/Process** (`SelfProcess`): `PART_WHOLE(SelfProcess, Self)` denotes membership in the agent, while `SUBTYPE_OF(SelfProcess, Process)` preserves the link to the general process taxonomy. The subtypes `SelfSemanticProcessing`, `SelfTaskManagement`, `SelfCognitiveControl`, `SelfMemoryProcessing`, and `SelfLearning` group existing processes; program roles are represented by `_exec.py` and `_model.py`. Own processes use explicit names such as `SelfReflection` and `SelfPlanning`, leaving general world meanings distinct. The general `Process` root also continues to describe processes in the external world.
+
+The [taxonomy governance policy](Taxonomy%20and%20Relation%20Governance.md#processes-and-self)
+defines identity, single-parent classification and protection of incident relations. A name
+or directory change preserves process and Program identities; a semantic reference to a
+general process does not create a second inheritance path.
 
 Conceptually, the Self domain is divided as follows:
 
@@ -15,13 +20,13 @@ Self
 ├─<─ MODELS ───────── SelfModel
 │
 └─<─ REGULATES ────── SelfRegulation
-                      ├─<─ PART_WHOLE ── GoalManagement
-                      ├─<─ PART_WHOLE ── AttentionControl
-                      ├─<─ PART_WHOLE ── CognitionControl
-                      ├─<─ PART_WHOLE ── ResourceControl
-                      ├─<─ PART_WHOLE ── Verification
-                      ├─<─ PART_WHOLE ── Reflection
-                      └─<─ PART_WHOLE ── ProgramImprovement
+                      ├─<─ PART_WHOLE ── SelfGoalManagement
+                      ├─<─ PART_WHOLE ── SelfAttentionControl
+                      ├─<─ PART_WHOLE ── SelfCognitionControl
+                      ├─<─ PART_WHOLE ── SelfResourceControl
+                      ├─<─ PART_WHOLE ── SelfVerification
+                      ├─<─ PART_WHOLE ── SelfReflection
+                      └─<─ PART_WHOLE ── SelfProgramImprovement
 ```
 
 `SelfModel` answers **“How am I actually structured and how do I work?”** `SelfRegulation` answers **“How do I manage myself and improve my work?”** Its main subprocesses are linked through `PART_WHOLE`.

@@ -16,7 +16,9 @@ from evertree.core.graph.types import (
 )
 from evertree.core.semantics.reading import describe, read_property
 from evertree.core.values import ContractError, json_value
-from evertree.processes.semantic_processing.knowledge_integration._exec import _describe_for_model
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+    _describe_for_model,
+)
 from tests.support.semantics import EmptyIndex, context, semantic_world
 
 
@@ -342,7 +344,7 @@ def test_describe_filters_relations_by_facet_time_and_removed_definitions():
 
 
 async def test_integration_can_disambiguate_by_id_without_a_disposition():
-    from evertree.processes.semantic_processing.knowledge_integration._exec import run
+    from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 
     world = semantic_world()
     input_run = world.memory.start_run("input", "revision", {})

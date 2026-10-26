@@ -1,0 +1,1619 @@
+{
+  "nodes": [
+    {
+      "key": "sumo.entity",
+      "name": "Entity",
+      "kind": "prototype",
+      "definition": "Anything in the domain of discourse; the universal root of the accepted type taxonomy.",
+      "aliases": {
+        "en": [
+          "Entity"
+        ],
+        "ru": [
+          "сущность"
+        ]
+      },
+      "parent": null,
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Entity",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [
+        "An organism, a proposition and a process are all entities."
+      ],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.physical",
+      "name": "Physical",
+      "kind": "prototype",
+      "definition": "An entity located in space and time, including objects and occurring processes.",
+      "aliases": {
+        "en": [
+          "Physical"
+        ],
+        "ru": [
+          "физическая сущность"
+        ]
+      },
+      "parent": "sumo.entity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Physical",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.abstract",
+      "name": "Abstract",
+      "kind": "prototype",
+      "definition": "An entity independent of a particular physical embodiment, such as a quantity, proposition or relation.",
+      "aliases": {
+        "en": [
+          "Abstract"
+        ],
+        "ru": [
+          "абстрактная сущность"
+        ]
+      },
+      "parent": "sumo.entity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Abstract",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.object",
+      "name": "Object",
+      "kind": "prototype",
+      "definition": "A physical entity treated as persisting through time and divided primarily into spatial parts.",
+      "aliases": {
+        "en": [
+          "Object"
+        ],
+        "ru": [
+          "объект"
+        ]
+      },
+      "parent": "sumo.physical",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Object",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.process",
+      "name": "Process",
+      "kind": "prototype",
+      "definition": "Something that occurs and has temporal stages; an occurrence rather than the specification or program describing it.",
+      "aliases": {
+        "en": [
+          "Process"
+        ],
+        "ru": [
+          "процесс"
+        ]
+      },
+      "parent": "sumo.physical",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Process",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [
+        "One compiler execution is a process occurrence."
+      ],
+      "counterexamples": [
+        "A compiler executable is an artifact, not its execution."
+      ],
+      "links": []
+    },
+    {
+      "key": "sumo.attribute",
+      "name": "Attribute",
+      "kind": "prototype",
+      "definition": "A quality or characteristic represented independently of its particular bearer.",
+      "aliases": {
+        "en": [
+          "Attribute"
+        ],
+        "ru": [
+          "атрибут",
+          "характеристика"
+        ]
+      },
+      "parent": "sumo.abstract",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Attribute",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.quantity",
+      "name": "Quantity",
+      "kind": "prototype",
+      "definition": "A specification of how many or how much, encompassing numbers and dimensional quantities.",
+      "aliases": {
+        "en": [
+          "Quantity"
+        ],
+        "ru": [
+          "величина"
+        ]
+      },
+      "parent": "sumo.abstract",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Quantity",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.finite_quantity",
+      "name": "FiniteQuantity",
+      "kind": "prototype",
+      "definition": "A quantity bounded in magnitude.",
+      "aliases": {
+        "en": [
+          "Finite Quantity"
+        ],
+        "ru": [
+          "конечная величина"
+        ]
+      },
+      "parent": "sumo.quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "FiniteQuantity",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.number",
+      "name": "Number",
+      "kind": "prototype",
+      "definition": "A numerical value expressing how many or how much independently of a measurement unit.",
+      "aliases": {
+        "en": [
+          "Number"
+        ],
+        "ru": [
+          "число"
+        ]
+      },
+      "parent": "sumo.finite_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Number",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.real_number",
+      "name": "RealNumber",
+      "kind": "prototype",
+      "definition": "A number that has a position on the real number line and a possibly infinite decimal representation.",
+      "aliases": {
+        "en": [
+          "Real Number"
+        ],
+        "ru": [
+          "вещественное число"
+        ]
+      },
+      "parent": "sumo.number",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "RealNumber",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.rational_number",
+      "name": "RationalNumber",
+      "kind": "prototype",
+      "definition": "A real number expressible as the quotient of two integers with nonzero denominator.",
+      "aliases": {
+        "en": [
+          "Rational Number"
+        ],
+        "ru": [
+          "рациональное число"
+        ]
+      },
+      "parent": "sumo.real_number",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "RationalNumber",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.integer",
+      "name": "Integer",
+      "kind": "prototype",
+      "definition": "A negative, zero or positive whole number.",
+      "aliases": {
+        "en": [
+          "Integer"
+        ],
+        "ru": [
+          "целое число"
+        ]
+      },
+      "parent": "sumo.rational_number",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Integer",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.nonnegative_integer",
+      "name": "NonnegativeInteger",
+      "kind": "prototype",
+      "definition": "An integer greater than or equal to zero.",
+      "aliases": {
+        "en": [
+          "Nonnegative Integer"
+        ],
+        "ru": [
+          "неотрицательное целое число"
+        ]
+      },
+      "parent": "sumo.integer",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "NonnegativeInteger",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": {
+        "kind": "single_parent",
+        "reason": "The SUMO source lists Integer, NonnegativeRealNumber. This profile selects sumo.integer as the single universal-inclusion route; omitted source inheritance is documented, not silently reintroduced as another parent."
+      },
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.physical_quantity",
+      "name": "PhysicalQuantity",
+      "kind": "prototype",
+      "definition": "A quantity associated with a measurement dimension; this includes nonmaterial dimensions such as currency.",
+      "aliases": {
+        "en": [
+          "Physical Quantity"
+        ],
+        "ru": [
+          "размерная величина",
+          "физическая величина"
+        ]
+      },
+      "parent": "sumo.finite_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "PhysicalQuantity",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.constant_quantity",
+      "name": "ConstantQuantity",
+      "kind": "prototype",
+      "definition": "A dimensional quantity with a fixed value, expressible as a magnitude with a unit.",
+      "aliases": {
+        "en": [
+          "Constant Quantity"
+        ],
+        "ru": [
+          "постоянная величина"
+        ]
+      },
+      "parent": "sumo.physical_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "ConstantQuantity",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.length_measure",
+      "name": "LengthMeasure",
+      "kind": "prototype",
+      "definition": "A constant quantity measuring length.",
+      "aliases": {
+        "en": [
+          "Length Measure"
+        ],
+        "ru": [
+          "длина"
+        ]
+      },
+      "parent": "sumo.constant_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "LengthMeasure",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.mass_measure",
+      "name": "MassMeasure",
+      "kind": "prototype",
+      "definition": "A constant quantity measuring the amount of matter in an object.",
+      "aliases": {
+        "en": [
+          "Mass Measure"
+        ],
+        "ru": [
+          "масса"
+        ]
+      },
+      "parent": "sumo.constant_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "MassMeasure",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.time_measure",
+      "name": "TimeMeasure",
+      "kind": "prototype",
+      "definition": "A constant quantity specifying temporal duration or position.",
+      "aliases": {
+        "en": [
+          "Time Measure"
+        ],
+        "ru": [
+          "временная величина"
+        ]
+      },
+      "parent": "sumo.constant_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "TimeMeasure",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.angle_measure",
+      "name": "AngleMeasure",
+      "kind": "prototype",
+      "definition": "A constant quantity specifying a plane or solid angle.",
+      "aliases": {
+        "en": [
+          "Angle Measure"
+        ],
+        "ru": [
+          "угловая величина"
+        ]
+      },
+      "parent": "sumo.constant_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "AngleMeasure",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.temperature_measure",
+      "name": "TemperatureMeasure",
+      "kind": "prototype",
+      "definition": "A constant quantity specifying temperature on a declared scale.",
+      "aliases": {
+        "en": [
+          "Temperature Measure"
+        ],
+        "ru": [
+          "температура"
+        ]
+      },
+      "parent": "sumo.constant_quantity",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "TemperatureMeasure",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.relation",
+      "name": "Relation",
+      "kind": "prototype",
+      "definition": "A relation represented by ordered tuples of arguments; SUMO includes predicates and functions within this class.",
+      "aliases": {
+        "en": [
+          "Relation"
+        ],
+        "ru": [
+          "отношение"
+        ]
+      },
+      "parent": "sumo.abstract",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Relation",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.proposition",
+      "name": "Proposition",
+      "kind": "prototype",
+      "definition": "Content expressing a complete thought that can be asserted or questioned, distinct from the physical representation carrying it.",
+      "aliases": {
+        "en": [
+          "Proposition"
+        ],
+        "ru": [
+          "пропозиция",
+          "суждение"
+        ]
+      },
+      "parent": "sumo.abstract",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Proposition",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.set_or_class",
+      "name": "SetOrClass",
+      "kind": "prototype",
+      "definition": "An abstract collection with elements or instances, distinguished from a physical collection whose membership can change.",
+      "aliases": {
+        "en": [
+          "Set Or Class"
+        ],
+        "ru": [
+          "множество или класс"
+        ]
+      },
+      "parent": "sumo.abstract",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "SetOrClass",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.collection",
+      "name": "Collection",
+      "kind": "prototype",
+      "definition": "A collection located in space and time whose members may change without necessarily changing its identity.",
+      "aliases": {
+        "en": [
+          "Collection"
+        ],
+        "ru": [
+          "совокупность"
+        ]
+      },
+      "parent": "sumo.physical",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Collection",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [
+        "A team may retain its identity as membership changes."
+      ],
+      "counterexamples": [
+        "A mathematical set is not a physical collection."
+      ],
+      "links": []
+    },
+    {
+      "key": "sumo.self_connected_object",
+      "name": "SelfConnectedObject",
+      "kind": "prototype",
+      "definition": "An object not composed of two or more disconnected parts.",
+      "aliases": {
+        "en": [
+          "Self Connected Object"
+        ],
+        "ru": [
+          "связный объект"
+        ]
+      },
+      "parent": "sumo.object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "SelfConnectedObject",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.corpuscular_object",
+      "name": "CorpuscularObject",
+      "kind": "prototype",
+      "definition": "A connected object whose parts have properties not possessed by the whole.",
+      "aliases": {
+        "en": [
+          "Corpuscular Object"
+        ],
+        "ru": [
+          "составной материальный объект"
+        ]
+      },
+      "parent": "sumo.self_connected_object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "CorpuscularObject",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.organic_object",
+      "name": "OrganicObject",
+      "kind": "prototype",
+      "definition": "An organism, a bodily part, or an object produced nonintentionally by an organism.",
+      "aliases": {
+        "en": [
+          "Organic Object"
+        ],
+        "ru": [
+          "органический объект"
+        ]
+      },
+      "parent": "sumo.corpuscular_object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "OrganicObject",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": {
+        "kind": "single_parent",
+        "reason": "The SUMO source lists CorpuscularObject, OrganicThing. This profile selects sumo.corpuscular_object as the single universal-inclusion route; omitted source inheritance is documented, not silently reintroduced as another parent."
+      },
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.organism",
+      "name": "Organism",
+      "kind": "prototype",
+      "definition": "An individual living entity, including plants and animals.",
+      "aliases": {
+        "en": [
+          "Organism"
+        ],
+        "ru": [
+          "организм"
+        ]
+      },
+      "parent": "sumo.organic_object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Organism",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": {
+        "kind": "single_parent",
+        "reason": "The SUMO source lists OrganicObject, AutonomousAgent. This profile selects sumo.organic_object as the single universal-inclusion route; omitted source inheritance is documented, not silently reintroduced as another parent."
+      },
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.agent",
+      "name": "AutonomousAgent",
+      "kind": "prototype",
+      "definition": "An entity capable of acting on its own and producing changes in the world.",
+      "aliases": {
+        "en": [
+          "Autonomous Agent"
+        ],
+        "ru": [
+          "автономный агент",
+          "агент"
+        ]
+      },
+      "parent": "sumo.object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "AutonomousAgent",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.artifact",
+      "name": "Artifact",
+      "kind": "prototype",
+      "definition": "An object produced through an act of making.",
+      "aliases": {
+        "en": [
+          "Artifact"
+        ],
+        "ru": [
+          "артефакт",
+          "изделие"
+        ]
+      },
+      "parent": "sumo.object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Artifact",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.device",
+      "name": "Device",
+      "kind": "prototype",
+      "definition": "An artifact intended to function as an instrument in a kind of process.",
+      "aliases": {
+        "en": [
+          "Device"
+        ],
+        "ru": [
+          "устройство",
+          "прибор"
+        ]
+      },
+      "parent": "sumo.artifact",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Device",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.content_bearing_physical",
+      "name": "ContentBearingPhysical",
+      "kind": "prototype",
+      "definition": "A physical carrier that expresses content; this profile follows the source Object parent and does not use this branch to type process occurrences.",
+      "aliases": {
+        "en": [
+          "Content Bearing Physical"
+        ],
+        "ru": [
+          "физический носитель содержания"
+        ]
+      },
+      "parent": "sumo.object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "ContentBearingPhysical",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": {
+        "kind": "semantic_correction",
+        "reason": "The source definition includes Object and Process while its explicit parent is Object. The profile retains the Object parent and restricts this carrier meaning to objects. Content-bearing process occurrences remain Process types, preventing an invalid Object inference."
+      },
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.content_bearing_object",
+      "name": "ContentBearingObject",
+      "kind": "prototype",
+      "definition": "A connected material object that expresses content, such as a text carrier or a representational token.",
+      "aliases": {
+        "en": [
+          "Content Bearing Object"
+        ],
+        "ru": [
+          "объект носитель содержания"
+        ]
+      },
+      "parent": "sumo.corpuscular_object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "ContentBearingObject",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": {
+        "kind": "single_parent",
+        "reason": "The SUMO source lists CorpuscularObject, ContentBearingPhysical. This profile selects sumo.corpuscular_object as the single universal-inclusion route; omitted source inheritance is documented, not silently reintroduced as another parent."
+      },
+      "examples": [
+        "A printed document carrying a specification."
+      ],
+      "counterexamples": [
+        "The specification content independently of any carrier."
+      ],
+      "links": []
+    },
+    {
+      "key": "sumo.internal_change",
+      "name": "InternalChange",
+      "kind": "prototype",
+      "definition": "A process altering an internal property of an object, rather than only its relation to another object.",
+      "aliases": {
+        "en": [
+          "Internal Change"
+        ],
+        "ru": [
+          "внутреннее изменение"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "InternalChange",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.biological_process",
+      "name": "BiologicalProcess",
+      "kind": "prototype",
+      "definition": "A process embodied in an organism.",
+      "aliases": {
+        "en": [
+          "Biological Process"
+        ],
+        "ru": [
+          "биологический процесс"
+        ]
+      },
+      "parent": "sumo.internal_change",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "BiologicalProcess",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.psychological_process",
+      "name": "PsychologicalProcess",
+      "kind": "prototype",
+      "definition": "A biological process taking place in the mind or brain of an organism and possibly manifested in its behavior.",
+      "aliases": {
+        "en": [
+          "Psychological Process"
+        ],
+        "ru": [
+          "психологический процесс"
+        ]
+      },
+      "parent": "sumo.biological_process",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "PsychologicalProcess",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.intentional_process",
+      "name": "IntentionalProcess",
+      "kind": "prototype",
+      "definition": "A process performed by an autonomous agent for a purpose.",
+      "aliases": {
+        "en": [
+          "Intentional Process"
+        ],
+        "ru": [
+          "целенаправленный процесс"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "IntentionalProcess",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.intentional_psychological_process",
+      "name": "IntentionalPsychologicalProcess",
+      "kind": "prototype",
+      "definition": "A purposeful process realizable wholly within the mind or brain of an organism.",
+      "aliases": {
+        "en": [
+          "Intentional Psychological Process"
+        ],
+        "ru": [
+          "целенаправленный психический процесс"
+        ]
+      },
+      "parent": "sumo.psychological_process",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "IntentionalPsychologicalProcess",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": {
+        "kind": "single_parent",
+        "reason": "The SUMO source lists IntentionalProcess, ContentBearingProcess, PsychologicalProcess. This profile selects sumo.psychological_process as the single universal-inclusion route; omitted source inheritance is documented, not silently reintroduced as another parent."
+      },
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.learning",
+      "name": "Learning",
+      "kind": "prototype",
+      "definition": "An intentional psychological process involving acquisition of information; machine parameter updates use a separately defined generalized learning type.",
+      "aliases": {
+        "en": [
+          "Learning"
+        ],
+        "ru": [
+          "обучение организма"
+        ]
+      },
+      "parent": "sumo.intentional_psychological_process",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Learning",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [
+        "A person intentionally acquiring information by studying."
+      ],
+      "counterexamples": [
+        "An optimizer changing model parameters is not a biological psychological process."
+      ],
+      "links": []
+    },
+    {
+      "key": "sumo.reasoning",
+      "name": "Reasoning",
+      "kind": "prototype",
+      "definition": "An intentional psychological process concluding, from deductive or inductive evidence, that a proposition or sentence is true.",
+      "aliases": {
+        "en": [
+          "Reasoning"
+        ],
+        "ru": [
+          "рассуждение организма"
+        ]
+      },
+      "parent": "sumo.intentional_psychological_process",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Reasoning",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.region",
+      "name": "Region",
+      "kind": "prototype",
+      "definition": "A spatial region with a location and extent.",
+      "aliases": {
+        "en": [
+          "Region"
+        ],
+        "ru": [
+          "область пространства"
+        ]
+      },
+      "parent": "sumo.object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Region",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.geographic_area",
+      "name": "GeographicArea",
+      "kind": "prototype",
+      "definition": "A three-dimensional geographic region of Earth, generally with identifiable boundaries; the source meaning excludes other astronomical bodies and lower-dimensional regions.",
+      "aliases": {
+        "en": [
+          "Geographic Area"
+        ],
+        "ru": [
+          "географическая область"
+        ]
+      },
+      "parent": "sumo.region",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "GeographicArea",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.land_area",
+      "name": "LandArea",
+      "kind": "prototype",
+      "definition": "A geographic area occupied by land.",
+      "aliases": {
+        "en": [
+          "Land Area"
+        ],
+        "ru": [
+          "участок суши"
+        ]
+      },
+      "parent": "sumo.geographic_area",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "LandArea",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.water_area",
+      "name": "WaterArea",
+      "kind": "prototype",
+      "definition": "A geographic area occupied by a body of water.",
+      "aliases": {
+        "en": [
+          "Water Area"
+        ],
+        "ru": [
+          "водная область"
+        ]
+      },
+      "parent": "sumo.geographic_area",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "WaterArea",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.substance",
+      "name": "Substance",
+      "kind": "prototype",
+      "definition": "A connected material object whose arbitrary pieces share the relevant properties of the whole, while allowing local variation in properties such as composition or temperature.",
+      "aliases": {
+        "en": [
+          "Substance"
+        ],
+        "ru": [
+          "вещество"
+        ]
+      },
+      "parent": "sumo.self_connected_object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Substance",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.pure_substance",
+      "name": "PureSubstance",
+      "kind": "prototype",
+      "definition": "A substance with a uniform chemical composition, comprising elemental or compound substances.",
+      "aliases": {
+        "en": [
+          "Pure Substance"
+        ],
+        "ru": [
+          "чистое вещество"
+        ]
+      },
+      "parent": "sumo.substance",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "PureSubstance",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.elemental_substance",
+      "name": "ElementalSubstance",
+      "kind": "prototype",
+      "definition": "A pure substance consisting of one chemical element.",
+      "aliases": {
+        "en": [
+          "Elemental Substance"
+        ],
+        "ru": [
+          "простое вещество"
+        ]
+      },
+      "parent": "sumo.pure_substance",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "ElementalSubstance",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.compound_substance",
+      "name": "CompoundSubstance",
+      "kind": "prototype",
+      "definition": "A pure substance composed of chemically combined elements.",
+      "aliases": {
+        "en": [
+          "Compound Substance"
+        ],
+        "ru": [
+          "химическое соединение"
+        ]
+      },
+      "parent": "sumo.pure_substance",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "CompoundSubstance",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.mixture",
+      "name": "Mixture",
+      "kind": "prototype",
+      "definition": "A substance made from multiple constituent substances without requiring a single fixed chemical composition.",
+      "aliases": {
+        "en": [
+          "Mixture"
+        ],
+        "ru": [
+          "смесь"
+        ]
+      },
+      "parent": "sumo.substance",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Mixture",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.atom",
+      "name": "Atom",
+      "kind": "prototype",
+      "definition": "A material unit of a chemical element with a nucleus and an associated electronic structure.",
+      "aliases": {
+        "en": [
+          "Atom"
+        ],
+        "ru": [
+          "атом"
+        ]
+      },
+      "parent": "sumo.corpuscular_object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Atom",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.molecule",
+      "name": "Molecule",
+      "kind": "prototype",
+      "definition": "A connected group of atoms held together by chemical bonds.",
+      "aliases": {
+        "en": [
+          "Molecule"
+        ],
+        "ru": [
+          "молекула"
+        ]
+      },
+      "parent": "sumo.corpuscular_object",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "Molecule",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.social_interaction",
+      "name": "SocialInteraction",
+      "kind": "prototype",
+      "definition": "An intentional process involving interaction among agents in a social context.",
+      "aliases": {
+        "en": [
+          "Social Interaction"
+        ],
+        "ru": [
+          "социальное взаимодействие"
+        ]
+      },
+      "parent": "sumo.intentional_process",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "SocialInteraction",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "sumo.relational_attribute",
+      "name": "RelationalAttribute",
+      "kind": "prototype",
+      "definition": "An attribute whose possession depends on the bearer standing in a relation to another entity or context.",
+      "aliases": {
+        "en": [
+          "Relational Attribute"
+        ],
+        "ru": [
+          "относительный атрибут"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "sumo-core",
+        "source_id": "RelationalAttribute",
+        "revision": "070e44b746a8a87ca675a2051b2bd910016b2c2f"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.information_content",
+      "name": "InformationContent",
+      "kind": "prototype",
+      "definition": "Representable content distinguished from its physical encoding, storage medium and the activity that produced it.",
+      "aliases": {
+        "en": [
+          "information",
+          "content"
+        ],
+        "ru": [
+          "информационное содержание"
+        ]
+      },
+      "parent": "sumo.abstract",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.information_content",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.procedure",
+      "name": "Procedure",
+      "kind": "prototype",
+      "definition": "A specification of steps or constraints for performing a task; it may allow choices and need not be executable.",
+      "aliases": {
+        "en": [
+          "procedure specification"
+        ],
+        "ru": [
+          "процедура",
+          "методика"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.procedure",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.algorithm",
+      "name": "Algorithm",
+      "kind": "prototype",
+      "definition": "An abstract, effective procedure specifying computational steps for a class of inputs; it is distinct from source code implementing it and a particular execution.",
+      "aliases": {
+        "en": [
+          "computational algorithm"
+        ],
+        "ru": [
+          "алгоритм"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.algorithm",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "Binary search specified independently of a language."
+      ],
+      "counterexamples": [
+        "A Python implementation, its run, and its output are separate meanings."
+      ],
+      "links": []
+    },
+    {
+      "key": "local.state",
+      "name": "State",
+      "kind": "prototype",
+      "definition": "A condition of an entity over an interval or at a reference time, requiring a bearer and temporal scope for a factual assertion.",
+      "aliases": {
+        "en": [
+          "temporal condition"
+        ],
+        "ru": [
+          "состояние"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.state",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "A server being unavailable during a measured interval."
+      ],
+      "counterexamples": [
+        "A server is an enduring entity; availability is its scoped condition."
+      ],
+      "links": []
+    },
+    {
+      "key": "local.role",
+      "name": "Role",
+      "kind": "prototype",
+      "definition": "A context-dependent function or position borne by an entity; acquiring or losing it need not change the entity identity or intrinsic class.",
+      "aliases": {
+        "en": [
+          "contextual role"
+        ],
+        "ru": [
+          "роль"
+        ]
+      },
+      "parent": "sumo.relational_attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.role",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "A person acting as reviewer for a particular change."
+      ],
+      "counterexamples": [
+        "A reviewer role does not make the person intrinsically a subclass of review."
+      ],
+      "links": []
+    },
+    {
+      "key": "local.event",
+      "name": "Event",
+      "kind": "prototype",
+      "definition": "A temporally situated occurrence treated as a bounded episode for a stated analysis; the event type is distinct from a specific occurrence.",
+      "aliases": {
+        "en": [
+          "occurrence"
+        ],
+        "ru": [
+          "событие"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.event",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.observation",
+      "name": "Observation",
+      "kind": "prototype",
+      "definition": "An acquisition of information through sensing, measurement or inspection, with an observer or instrument and conditions.",
+      "aliases": {
+        "en": [
+          "observing"
+        ],
+        "ru": [
+          "наблюдение"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.observation",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "Measuring latency with a clock during a run."
+      ],
+      "counterexamples": [
+        "The latency log is a result, not the observing occurrence."
+      ],
+      "links": []
+    },
+    {
+      "key": "local.evidence",
+      "name": "Evidence",
+      "kind": "prototype",
+      "definition": "Information used to assess a particular claim under a stated interpretation; evidential weight depends on source, scope and dependencies.",
+      "aliases": {
+        "en": [
+          "evidential information"
+        ],
+        "ru": [
+          "свидетельство",
+          "доказательные данные"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.evidence",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "A test report used to assess a specific compatibility claim."
+      ],
+      "counterexamples": [
+        "Two copied reports from one run are not independent corroboration."
+      ],
+      "links": []
+    },
+    {
+      "key": "local.belief",
+      "name": "Belief",
+      "kind": "prototype",
+      "definition": "A representation of an agent epistemic commitment to a proposition within a scope, including uncertainty rather than asserting the proposition as established fact.",
+      "aliases": {
+        "en": [
+          "epistemic commitment"
+        ],
+        "ru": [
+          "убеждение"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.belief",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "An agent commitment that an API supports a feature, with uncertainty."
+      ],
+      "counterexamples": [
+        "The commitment is neither the API nor proof of the feature."
+      ],
+      "links": []
+    },
+    {
+      "key": "local.identity",
+      "name": "IdentityDescription",
+      "kind": "prototype",
+      "definition": "Information specifying which particular entity is being referred to and the criteria used to distinguish it across observations.",
+      "aliases": {
+        "en": [
+          "identity record"
+        ],
+        "ru": [
+          "описание идентичности"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.identity",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "A record distinguishing two people who share a name."
+      ],
+      "counterexamples": [
+        "Equal display names do not establish identity."
+      ],
+      "links": [
+        {
+          "relation": "rel.about",
+          "target": "sumo.entity"
+        }
+      ]
+    },
+    {
+      "key": "local.field_of_study",
+      "name": "FieldOfStudy",
+      "kind": "prototype",
+      "definition": "An organized body of questions, methods and knowledge concerning a subject; its topic is a semantic link, not the parent of all entities studied.",
+      "aliases": {
+        "en": [
+          "discipline",
+          "academic field"
+        ],
+        "ru": [
+          "область знаний"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.field_of_study",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    }
+  ]
+}

@@ -103,7 +103,7 @@ confirmed by the controller after independent verification and delivery.
 
 ## Remember useful work
 The trace is the saved log of inputs, operations and results. The graph holds selected,
-structured knowledge. KnowledgeIntegration preserves nearly every distinct assertion in this
+structured knowledge. SelfKnowledgeIntegration preserves nearly every distinct assertion in this
 step's experience, with shared participants, roles and qualifications. Express useful emphasis
 and importance naturally in the text; this changes priority, not baseline coverage. Incomplete
 processing remains explicit when an error or resource limit leaves material pending.
@@ -141,7 +141,7 @@ main allowance. Modify agent state and reusable Programs only through EverTree t
 For reusable code changes, load program_development_tools and follow candidate development,
 evaluation and selection. A read-only sandbox of this invocation limits only your own native
 commands; develop_candidate and other EverTree tools write in their own authorized checkouts,
-which is the sanctioned way to change Programs. Any evaluation of a Program slot, including one run by a meta Program such as ProgramImprovement, spends that slot's holdout for candidates opened afterwards. Change a slot through either a meta Program or the development tools, never both, and follow the lifecycle tools the task names directly. Native coding tools operate in the task workspace; use absolute
+which is the sanctioned way to change Programs. Any evaluation of a Program slot, including one run by a meta Program such as SelfProgramImprovement, spends that slot's holdout for candidates opened afterwards. Change a slot through either a meta Program or the development tools, never both, and follow the lifecycle tools the task names directly. Native coding tools operate in the task workspace; use absolute
 file paths. This workspace is deleted when the task ends. Save lasting artifacts under
 artifacts/ in a candidate through those development tools. After restart, recover missing
 temporary files and check saved action receipts before repeating external effects.
@@ -479,13 +479,13 @@ def semantic_tools():
             ),
             define(
                 "graph.describe",
-                "Describe an object with up to 7 properties and 7 relations. properties_total/relations_total precede truncated lists. focus=properties or relations returns that full list, without invoking computation. Other text filters both lists, with at most 7 relations and all matching properties. Prototype parent is one card or null; children lists up to 7 direct subtype names, preceded by children_total only when shortened. at is world time, defaults to now.",
+                "Describe an object with up to 7 properties and 7 relations. properties_total/relations_total precede truncated lists. focus=properties or relations returns that full list, without invoking computation. focus=children returns every direct subtype for taxonomy traversal. Other text filters properties and relations. Parent is one card or null for class, process and relation types; default children lists up to 7 subtype names, preceded by children_total when shortened. at is world time, defaults to now.",
                 {"subject": reference, "focus": string, "at": string},
                 ["subject"],
             ),
             define(
                 "graph.integrate",
-                "Ask KnowledgeIntegration to preserve distinct assertions from saved experience as connected graph knowledge. Supply source_ref values or references returned by record_analysis. The controller provides task requirements. Focus sets priority without excluding the remaining assertions; unfinished processing stays explicit.",
+                "Ask SelfKnowledgeIntegration to preserve distinct assertions from saved experience as connected graph knowledge. Supply source_ref values or references returned by record_analysis. The controller provides task requirements. Focus sets priority without excluding the remaining assertions; unfinished processing stays explicit.",
                 {
                     "experience_refs": {
                         "type": "array",

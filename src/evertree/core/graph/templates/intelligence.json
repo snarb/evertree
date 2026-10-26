@@ -1,0 +1,4560 @@
+{
+  "nodes": [
+    {
+      "key": "local.cognitive_process",
+      "name": "CognitiveProcess",
+      "kind": "prototype",
+      "definition": "A process organizing, acquiring, interpreting, or using information for perception, reasoning, memory, learning, or action selection in an agent or modeled cognitive system.",
+      "aliases": {
+        "en": [
+          "cognitive process"
+        ],
+        "ru": [
+          "когнитивный процесс"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.cognitive_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.learning_process",
+      "name": "LearningProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process producing a relatively retained change in knowledge, skill, or behavior through experience, instruction, or data; implementation and substrate are not fixed by this class.",
+      "aliases": {
+        "en": [
+          "learning process"
+        ],
+        "ru": [
+          "процесс обучения"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.learning_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Learning a skill from practice",
+        "Training a model from data"
+      ],
+      "counterexamples": [
+        "Merely executing a fixed model",
+        "An isolated parameter change without a learning objective"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.reasoning_process",
+      "name": "ReasoningProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process transforming represented premises, observations, or constraints into candidate conclusions under stated inference practices.",
+      "aliases": {
+        "en": [
+          "reasoning process"
+        ],
+        "ru": [
+          "процесс рассуждения"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.reasoning_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.reflection_process",
+      "name": "ReflectionProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process examining prior reasoning, behavior, or outcomes to form judgments or possible improvements.",
+      "aliases": {
+        "en": [
+          "reflection process"
+        ],
+        "ru": [
+          "рефлексия"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.reflection_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Reviewing why a plan failed"
+      ],
+      "counterexamples": [
+        "Executing the plan",
+        "The particular SelfReflection process owned by one agent"
+      ],
+      "links": [
+        {
+          "relation": "rel.about",
+          "target": "local.reasoning_process"
+        }
+      ]
+    },
+    {
+      "key": "local.planning_process",
+      "name": "PlanningProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process constructing or revising a proposed course of action to achieve goals under constraints.",
+      "aliases": {
+        "en": [
+          "planning process"
+        ],
+        "ru": [
+          "планирование"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.planning_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Designing a sequence of actions"
+      ],
+      "counterexamples": [
+        "The plan document",
+        "The specific SelfPlanning process of one agent"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.perception_process",
+      "name": "PerceptionProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process interpreting sensory or input signals as information about entities, events, or conditions.",
+      "aliases": {
+        "en": [
+          "perception process"
+        ],
+        "ru": [
+          "восприятие"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.perception_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.attention_process",
+      "name": "AttentionProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process selecting or weighting information or activity for limited processing resources.",
+      "aliases": {
+        "en": [
+          "attention process"
+        ],
+        "ru": [
+          "внимание"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.attention_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.attention_control",
+      "name": "AttentionControl",
+      "kind": "prototype",
+      "definition": "A cognitive process regulating the focus, persistence, or switching of attention according to goals or feedback.",
+      "aliases": {
+        "en": [
+          "attention control"
+        ],
+        "ru": [
+          "управление вниманием"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.attention_control",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.metacognition",
+      "name": "Metacognition",
+      "kind": "prototype",
+      "definition": "A cognitive process representing or evaluating one's own cognitive activity and its limitations.",
+      "aliases": {
+        "en": [
+          "metacognition"
+        ],
+        "ru": [
+          "метапознание"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.metacognition",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.metacognitive_control",
+      "name": "MetacognitiveControl",
+      "kind": "prototype",
+      "definition": "Metacognition that adjusts reasoning, learning, or information-seeking strategies using assessments of cognitive performance.",
+      "aliases": {
+        "en": [
+          "metacognitive control"
+        ],
+        "ru": [
+          "метакогнитивное управление"
+        ]
+      },
+      "parent": "local.metacognition",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.metacognitive_control",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.generalization",
+      "name": "Generalization",
+      "kind": "prototype",
+      "definition": "A learning process deriving or applying a pattern beyond the particular cases that directly established it, with an explicit intended scope.",
+      "aliases": {
+        "en": [
+          "generalization"
+        ],
+        "ru": [
+          "обобщение"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.generalization",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Inferring a rule from several varied cases"
+      ],
+      "counterexamples": [
+        "Copying a case verbatim",
+        "Treating a typical property as a defining subtype condition"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.abstraction",
+      "name": "CognitiveAbstraction",
+      "kind": "prototype",
+      "definition": "A cognitive process representing selected common structure while omitting details irrelevant to an intended use.",
+      "aliases": {
+        "en": [
+          "cognitive abstraction"
+        ],
+        "ru": [
+          "абстрагирование"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.abstraction",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.categorization",
+      "name": "Categorization",
+      "kind": "prototype",
+      "definition": "A cognitive process assigning representations to categories according to explicit or learned criteria.",
+      "aliases": {
+        "en": [
+          "categorization"
+        ],
+        "ru": [
+          "категоризация"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.categorization",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.concept_formation",
+      "name": "ConceptFormation",
+      "kind": "prototype",
+      "definition": "A learning process establishing or revising a category representation and its criteria of application.",
+      "aliases": {
+        "en": [
+          "concept formation"
+        ],
+        "ru": [
+          "формирование понятий"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.concept_formation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.analogy",
+      "name": "AnalogicalReasoning",
+      "kind": "prototype",
+      "definition": "A reasoning process transferring candidate structure or expectations between situations through a proposed correspondence.",
+      "aliases": {
+        "en": [
+          "analogical reasoning"
+        ],
+        "ru": [
+          "мышление по аналогии"
+        ]
+      },
+      "parent": "local.reasoning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.analogy",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.deduction",
+      "name": "DeductiveReasoning",
+      "kind": "prototype",
+      "definition": "A reasoning process deriving conclusions intended to follow necessarily from premises under specified inference rules.",
+      "aliases": {
+        "en": [
+          "deductive reasoning"
+        ],
+        "ru": [
+          "дедукция"
+        ]
+      },
+      "parent": "local.reasoning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.deduction",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.induction",
+      "name": "InductiveReasoning",
+      "kind": "prototype",
+      "definition": "A reasoning process drawing defeasible general conclusions from observations or instances.",
+      "aliases": {
+        "en": [
+          "inductive reasoning"
+        ],
+        "ru": [
+          "индукция"
+        ]
+      },
+      "parent": "local.reasoning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.induction",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.abduction",
+      "name": "AbductiveReasoning",
+      "kind": "prototype",
+      "definition": "A reasoning process proposing explanations that could account for observations without establishing their truth by entailment.",
+      "aliases": {
+        "en": [
+          "abductive reasoning"
+        ],
+        "ru": [
+          "абдукция"
+        ]
+      },
+      "parent": "local.reasoning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.abduction",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.causal_reasoning",
+      "name": "CausalReasoning",
+      "kind": "prototype",
+      "definition": "A reasoning process evaluating how interventions or mechanisms could affect outcomes under a causal model.",
+      "aliases": {
+        "en": [
+          "causal reasoning"
+        ],
+        "ru": [
+          "причинное рассуждение"
+        ]
+      },
+      "parent": "local.reasoning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.causal_reasoning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.counterfactual_reasoning",
+      "name": "CounterfactualReasoning",
+      "kind": "prototype",
+      "definition": "A reasoning process evaluating what would follow under a specified alternative condition while respecting a model of relevant dependencies.",
+      "aliases": {
+        "en": [
+          "counterfactual reasoning"
+        ],
+        "ru": [
+          "контрфактическое рассуждение"
+        ]
+      },
+      "parent": "local.reasoning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.counterfactual_reasoning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.probabilistic_reasoning",
+      "name": "ProbabilisticReasoning",
+      "kind": "prototype",
+      "definition": "A reasoning process using probability models to represent or update uncertainty about propositions or outcomes.",
+      "aliases": {
+        "en": [
+          "probabilistic reasoning"
+        ],
+        "ru": [
+          "вероятностное рассуждение"
+        ]
+      },
+      "parent": "local.reasoning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.probabilistic_reasoning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.decision_process",
+      "name": "DecisionProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process selecting an option under represented goals, available information, and applicable decision criteria.",
+      "aliases": {
+        "en": [
+          "decision process"
+        ],
+        "ru": [
+          "принятие решения"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.decision_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.problem_solving",
+      "name": "ProblemSolving",
+      "kind": "prototype",
+      "definition": "A cognitive process seeking a way to satisfy a goal when the required procedure or answer is not immediately available.",
+      "aliases": {
+        "en": [
+          "problem solving"
+        ],
+        "ru": [
+          "решение задач"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.problem_solving",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.creativity_process",
+      "name": "CreativeGeneration",
+      "kind": "prototype",
+      "definition": "A cognitive process generating candidate ideas or artifacts that are novel relative to a stated context and intended to serve a purpose.",
+      "aliases": {
+        "en": [
+          "creative generation"
+        ],
+        "ru": [
+          "творческая генерация"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.creativity_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.mental_simulation",
+      "name": "MentalSimulation",
+      "kind": "prototype",
+      "definition": "A cognitive process representing possible situations and their evolution without enacting them directly.",
+      "aliases": {
+        "en": [
+          "mental simulation"
+        ],
+        "ru": [
+          "мысленное моделирование"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.mental_simulation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.knowledge_representation",
+      "name": "KnowledgeRepresentation",
+      "kind": "prototype",
+      "definition": "An information structure used to express entities, relations, constraints, or claims for interpretation or reasoning.",
+      "aliases": {
+        "en": [
+          "knowledge representation"
+        ],
+        "ru": [
+          "представление знаний"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.knowledge_representation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.mental_model",
+      "name": "MentalModel",
+      "kind": "prototype",
+      "definition": "A knowledge representation used by an agent to anticipate or interpret a system, situation, or process.",
+      "aliases": {
+        "en": [
+          "mental model"
+        ],
+        "ru": [
+          "ментальная модель"
+        ]
+      },
+      "parent": "local.knowledge_representation",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.mental_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.world_model",
+      "name": "WorldModel",
+      "kind": "prototype",
+      "definition": "A knowledge representation of environmental entities, dynamics, and regularities used for prediction or action.",
+      "aliases": {
+        "en": [
+          "world model"
+        ],
+        "ru": [
+          "модель мира"
+        ]
+      },
+      "parent": "local.knowledge_representation",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.world_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_self_model",
+      "name": "AgentSelfModel",
+      "kind": "prototype",
+      "definition": "A representation of an agent's own identity, capabilities, commitments, state, or limitations.",
+      "aliases": {
+        "en": [
+          "agent self model"
+        ],
+        "ru": [
+          "модель агента о себе"
+        ]
+      },
+      "parent": "local.knowledge_representation",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_self_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "A description of the agent's tool permissions"
+      ],
+      "counterexamples": [
+        "The agent identity itself",
+        "An unverified claim that the agent has a capability"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.goal_representation",
+      "name": "GoalRepresentation",
+      "kind": "prototype",
+      "definition": "An information representation of a desired condition or outcome used to guide evaluation or action.",
+      "aliases": {
+        "en": [
+          "goal representation"
+        ],
+        "ru": [
+          "представление цели"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.goal_representation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.plan",
+      "name": "Plan",
+      "kind": "prototype",
+      "definition": "A proposed organization of actions, dependencies, and conditions intended to achieve a goal.",
+      "aliases": {
+        "en": [
+          "plan"
+        ],
+        "ru": [
+          "план"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.plan",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.strategy",
+      "name": "CognitiveStrategy",
+      "kind": "prototype",
+      "definition": "A reusable procedure for organizing cognitive effort toward a class of goals under stated conditions.",
+      "aliases": {
+        "en": [
+          "cognitive strategy"
+        ],
+        "ru": [
+          "когнитивная стратегия"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.strategy",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.heuristic",
+      "name": "Heuristic",
+      "kind": "prototype",
+      "definition": "A procedure using simplified rules to guide search or judgment without a general guarantee of optimality or correctness.",
+      "aliases": {
+        "en": [
+          "heuristic"
+        ],
+        "ru": [
+          "эвристика"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.heuristic",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.human_memory",
+      "name": "HumanMemory",
+      "kind": "prototype",
+      "definition": "A human capacity to encode, retain, and retrieve information through biological cognitive mechanisms.",
+      "aliases": {
+        "en": [
+          "human memory"
+        ],
+        "ru": [
+          "память человека"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.human_memory",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "A person's ability to recall learned material"
+      ],
+      "counterexamples": [
+        "A RAM module",
+        "An agent memory database"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.memory_process",
+      "name": "MemoryProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process encoding, retaining, transforming, or retrieving information over time.",
+      "aliases": {
+        "en": [
+          "memory process"
+        ],
+        "ru": [
+          "мнемический процесс"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.memory_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.memory_encoding",
+      "name": "MemoryEncoding",
+      "kind": "prototype",
+      "definition": "A memory process transforming information into a representation that can be retained for later use.",
+      "aliases": {
+        "en": [
+          "memory encoding"
+        ],
+        "ru": [
+          "кодирование памяти"
+        ]
+      },
+      "parent": "local.memory_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.memory_encoding",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.memory_retrieval",
+      "name": "MemoryRetrieval",
+      "kind": "prototype",
+      "definition": "A memory process accessing retained information for current use.",
+      "aliases": {
+        "en": [
+          "memory retrieval"
+        ],
+        "ru": [
+          "извлечение из памяти"
+        ]
+      },
+      "parent": "local.memory_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.memory_retrieval",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.memory_consolidation",
+      "name": "MemoryConsolidation",
+      "kind": "prototype",
+      "definition": "A memory process stabilizing or reorganizing retained information across time or representational systems.",
+      "aliases": {
+        "en": [
+          "memory consolidation"
+        ],
+        "ru": [
+          "консолидация памяти"
+        ]
+      },
+      "parent": "local.memory_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.memory_consolidation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.memory_forgetting",
+      "name": "MemoryForgetting",
+      "kind": "prototype",
+      "definition": "A memory process reducing the availability or accessibility of previously retained information.",
+      "aliases": {
+        "en": [
+          "memory forgetting"
+        ],
+        "ru": [
+          "забывание"
+        ]
+      },
+      "parent": "local.memory_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.memory_forgetting",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.working_memory",
+      "name": "WorkingMemoryCapacity",
+      "kind": "prototype",
+      "definition": "A capacity to retain and manipulate task-relevant information over a limited interval.",
+      "aliases": {
+        "en": [
+          "working memory capacity"
+        ],
+        "ru": [
+          "оперативная когнитивная память"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.working_memory",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.episodic_memory",
+      "name": "EpisodicMemoryContent",
+      "kind": "prototype",
+      "definition": "Retained information organized around experienced events and their contextual details.",
+      "aliases": {
+        "en": [
+          "episodic memory content"
+        ],
+        "ru": [
+          "содержание эпизодической памяти"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.episodic_memory",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.semantic_memory",
+      "name": "SemanticMemoryContent",
+      "kind": "prototype",
+      "definition": "Retained information organized as facts, meanings, or general knowledge independently of a single recalled episode.",
+      "aliases": {
+        "en": [
+          "semantic memory content"
+        ],
+        "ru": [
+          "содержание семантической памяти"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.semantic_memory",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.procedural_memory",
+      "name": "ProceduralMemoryContent",
+      "kind": "prototype",
+      "definition": "Retained information expressed through learned procedures or skills, whether or not readily verbalized.",
+      "aliases": {
+        "en": [
+          "procedural memory content"
+        ],
+        "ru": [
+          "содержание процедурной памяти"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.procedural_memory",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_memory",
+      "name": "AgentMemory",
+      "kind": "prototype",
+      "definition": "An agent-managed information artifact retaining records or representations for later retrieval, reasoning, or learning.",
+      "aliases": {
+        "en": [
+          "agent memory"
+        ],
+        "ru": [
+          "память агента"
+        ]
+      },
+      "parent": "local.software_artifact",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_memory",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "An agent's store of retained task episodes"
+      ],
+      "counterexamples": [
+        "Physical RAM",
+        "Human biological memory capacity"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.memory_record",
+      "name": "MemoryRecord",
+      "kind": "prototype",
+      "definition": "A retained information unit carrying content and sufficient context for later interpretation or retrieval.",
+      "aliases": {
+        "en": [
+          "memory record"
+        ],
+        "ru": [
+          "запись памяти"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.memory_record",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.retrieval_cue",
+      "name": "RetrievalCue",
+      "kind": "prototype",
+      "definition": "Information used to select or activate relevant retained information.",
+      "aliases": {
+        "en": [
+          "retrieval cue"
+        ],
+        "ru": [
+          "ключ извлечения памяти"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.retrieval_cue",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.spaced_practice",
+      "name": "SpacedPractice",
+      "kind": "prototype",
+      "definition": "A learning process distributing practice episodes over separated intervals under a specified schedule.",
+      "aliases": {
+        "en": [
+          "spaced practice"
+        ],
+        "ru": [
+          "интервальная практика"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.spaced_practice",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.retrieval_practice",
+      "name": "RetrievalPractice",
+      "kind": "prototype",
+      "definition": "A learning process using attempts to recall retained information as a learning activity.",
+      "aliases": {
+        "en": [
+          "retrieval practice"
+        ],
+        "ru": [
+          "практика извлечения"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.retrieval_practice",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.deliberate_practice",
+      "name": "DeliberatePractice",
+      "kind": "prototype",
+      "definition": "A learning process using focused tasks, feedback, and correction directed at specific performance weaknesses.",
+      "aliases": {
+        "en": [
+          "deliberate practice"
+        ],
+        "ru": [
+          "целенаправленная практика"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.deliberate_practice",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.feedback_learning",
+      "name": "FeedbackLearning",
+      "kind": "prototype",
+      "definition": "A learning process using information about performance or outcomes to revise later behavior or understanding.",
+      "aliases": {
+        "en": [
+          "feedback learning"
+        ],
+        "ru": [
+          "обучение с обратной связью"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.feedback_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.observational_learning",
+      "name": "ObservationalLearning",
+      "kind": "prototype",
+      "definition": "A learning process using observation of another agent's behavior and outcomes.",
+      "aliases": {
+        "en": [
+          "observational learning"
+        ],
+        "ru": [
+          "обучение через наблюдение"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.observational_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.transfer_learning",
+      "name": "TransferLearning",
+      "kind": "prototype",
+      "definition": "A learning process using knowledge, representations, or skills acquired in one setting to support learning in another.",
+      "aliases": {
+        "en": [
+          "transfer learning"
+        ],
+        "ru": [
+          "перенос обучения"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.transfer_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.self_regulated_learning",
+      "name": "SelfRegulatedLearning",
+      "kind": "prototype",
+      "definition": "A learning process in which the learner monitors progress and adjusts goals, strategies, or effort.",
+      "aliases": {
+        "en": [
+          "self regulated learning"
+        ],
+        "ru": [
+          "саморегулируемое обучение"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.self_regulated_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.skill_acquisition",
+      "name": "SkillAcquisition",
+      "kind": "prototype",
+      "definition": "A learning process improving the ability to perform a class of tasks through retained changes in procedure or control.",
+      "aliases": {
+        "en": [
+          "skill acquisition"
+        ],
+        "ru": [
+          "приобретение навыка"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.skill_acquisition",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.belief_update",
+      "name": "BeliefUpdate",
+      "kind": "prototype",
+      "definition": "A cognitive process revising the content or assessed support of a belief in response to specified information or reasoning.",
+      "aliases": {
+        "en": [
+          "belief update"
+        ],
+        "ru": [
+          "обновление убеждения"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.belief_update",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Revising confidence after an independent observation"
+      ],
+      "counterexamples": [
+        "Changing model weights solely to reduce a training loss",
+        "Renaming a concept without new evidence"
+      ],
+      "links": [
+        {
+          "relation": "rel.about",
+          "target": "local.belief"
+        }
+      ]
+    },
+    {
+      "key": "local.concept_revision",
+      "name": "ConceptRevision",
+      "kind": "prototype",
+      "definition": "A learning process changing category definitions, boundaries, or representations in response to identified inadequacy.",
+      "aliases": {
+        "en": [
+          "concept revision"
+        ],
+        "ru": [
+          "пересмотр понятия"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.concept_revision",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.error_analysis",
+      "name": "CognitiveErrorAnalysis",
+      "kind": "prototype",
+      "definition": "Reflection that examines incorrect reasoning or performance to identify contributing mechanisms and conditions.",
+      "aliases": {
+        "en": [
+          "cognitive error analysis"
+        ],
+        "ru": [
+          "анализ когнитивной ошибки"
+        ]
+      },
+      "parent": "local.reflection_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.error_analysis",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.calibration_process",
+      "name": "ConfidenceCalibration",
+      "kind": "prototype",
+      "definition": "Reflection that compares stated confidence with appropriate outcome frequencies or scoring criteria and revises confidence practices.",
+      "aliases": {
+        "en": [
+          "confidence calibration"
+        ],
+        "ru": [
+          "калибровка уверенности"
+        ]
+      },
+      "parent": "local.reflection_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.calibration_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.cognitive_bias",
+      "name": "CognitiveBias",
+      "kind": "prototype",
+      "definition": "A tendency in cognitive judgment that systematically departs from an identified normative or task-relevant criterion under specified conditions.",
+      "aliases": {
+        "en": [
+          "cognitive bias"
+        ],
+        "ru": [
+          "когнитивное искажение"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.cognitive_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.confirmation_bias",
+      "name": "ConfirmationBias",
+      "kind": "prototype",
+      "definition": "A cognitive bias favoring information or interpretation supporting an existing belief relative to relevant alternatives.",
+      "aliases": {
+        "en": [
+          "confirmation bias"
+        ],
+        "ru": [
+          "предвзятость подтверждения"
+        ]
+      },
+      "parent": "local.cognitive_bias",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.confirmation_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.anchoring_bias",
+      "name": "AnchoringBias",
+      "kind": "prototype",
+      "definition": "A cognitive bias in which an initial value or representation disproportionately influences subsequent judgment.",
+      "aliases": {
+        "en": [
+          "anchoring bias"
+        ],
+        "ru": [
+          "эффект якоря"
+        ]
+      },
+      "parent": "local.cognitive_bias",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.anchoring_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.availability_bias",
+      "name": "AvailabilityBias",
+      "kind": "prototype",
+      "definition": "A cognitive bias in which ease of recall is given inappropriate weight when judging frequency, probability, or importance.",
+      "aliases": {
+        "en": [
+          "availability bias"
+        ],
+        "ru": [
+          "эвристика доступности"
+        ]
+      },
+      "parent": "local.cognitive_bias",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.availability_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.overconfidence_bias",
+      "name": "OverconfidenceBias",
+      "kind": "prototype",
+      "definition": "A cognitive bias in which expressed certainty or estimated ability exceeds what is warranted by an applicable evaluation criterion.",
+      "aliases": {
+        "en": [
+          "overconfidence bias"
+        ],
+        "ru": [
+          "избыточная уверенность"
+        ]
+      },
+      "parent": "local.cognitive_bias",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.overconfidence_bias",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.machine_learning",
+      "name": "MachineLearning",
+      "kind": "prototype",
+      "definition": "A learning process in which a computational system derives or adjusts a model or behavior using data or experience under an explicit learning procedure.",
+      "aliases": {
+        "en": [
+          "machine learning"
+        ],
+        "ru": [
+          "машинное обучение",
+          "ML"
+        ]
+      },
+      "parent": "local.learning_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.machine_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Fitting a predictor from training data"
+      ],
+      "counterexamples": [
+        "Running a fixed predictor",
+        "A parameter edit without data or a learning objective"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.supervised_learning",
+      "name": "SupervisedLearning",
+      "kind": "prototype",
+      "definition": "Machine learning using training examples with target outputs or labels to guide a model's learning objective.",
+      "aliases": {
+        "en": [
+          "supervised learning"
+        ],
+        "ru": [
+          "обучение с учителем"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.supervised_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.unsupervised_learning",
+      "name": "UnsupervisedLearning",
+      "kind": "prototype",
+      "definition": "Machine learning seeking structure in data without target labels defining the intended output for each training example.",
+      "aliases": {
+        "en": [
+          "unsupervised learning"
+        ],
+        "ru": [
+          "обучение без учителя"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.unsupervised_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.self_supervised_learning",
+      "name": "SelfSupervisedLearning",
+      "kind": "prototype",
+      "definition": "Machine learning deriving training targets from the structure or transformations of the available data itself.",
+      "aliases": {
+        "en": [
+          "self supervised learning"
+        ],
+        "ru": [
+          "самообучение по данным"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.self_supervised_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.reinforcement_learning",
+      "name": "ReinforcementLearning",
+      "kind": "prototype",
+      "definition": "Machine learning of behavior through interaction or recorded interaction using a reward-based objective and environment dynamics.",
+      "aliases": {
+        "en": [
+          "reinforcement learning"
+        ],
+        "ru": [
+          "обучение с подкреплением",
+          "RL"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.reinforcement_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.imitation_learning",
+      "name": "ImitationLearning",
+      "kind": "prototype",
+      "definition": "Machine learning of behavior from demonstrations or examples of another policy's actions.",
+      "aliases": {
+        "en": [
+          "imitation learning"
+        ],
+        "ru": [
+          "имитационное обучение"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.imitation_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.online_learning",
+      "name": "OnlineLearning",
+      "kind": "prototype",
+      "definition": "Machine learning that incrementally updates a model as a sequence of new observations becomes available.",
+      "aliases": {
+        "en": [
+          "online learning"
+        ],
+        "ru": [
+          "онлайн-обучение"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.online_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.batch_learning",
+      "name": "BatchLearning",
+      "kind": "prototype",
+      "definition": "Machine learning that learns from a designated collected dataset within a bounded training procedure.",
+      "aliases": {
+        "en": [
+          "batch learning"
+        ],
+        "ru": [
+          "пакетное обучение"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.batch_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.continual_learning",
+      "name": "ContinualLearning",
+      "kind": "prototype",
+      "definition": "Machine learning that adapts over a sequence of changing tasks or data distributions while addressing retention of earlier capabilities.",
+      "aliases": {
+        "en": [
+          "continual learning"
+        ],
+        "ru": [
+          "непрерывное обучение"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.continual_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.federated_learning",
+      "name": "FederatedLearning",
+      "kind": "prototype",
+      "definition": "Machine learning coordinating model updates across data holders without requiring their raw training records to be centrally pooled.",
+      "aliases": {
+        "en": [
+          "federated learning"
+        ],
+        "ru": [
+          "федеративное обучение"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.federated_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.meta_learning",
+      "name": "MetaLearning",
+      "kind": "prototype",
+      "definition": "Machine learning that learns representations, initializations, or learning procedures intended to improve adaptation across tasks.",
+      "aliases": {
+        "en": [
+          "meta learning"
+        ],
+        "ru": [
+          "метаобучение"
+        ]
+      },
+      "parent": "local.machine_learning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.meta_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.model_training",
+      "name": "ModelTraining",
+      "kind": "prototype",
+      "definition": "A computational process executing a specified learning procedure over training data or interactions to produce a learned model.",
+      "aliases": {
+        "en": [
+          "model training"
+        ],
+        "ru": [
+          "обучение модели"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.model_training",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "One training run with recorded data and objective"
+      ],
+      "counterexamples": [
+        "The learning algorithm",
+        "A fixed-model inference call"
+      ],
+      "links": [
+        {
+          "relation": "rel.about",
+          "target": "local.machine_learning"
+        }
+      ]
+    },
+    {
+      "key": "local.parameter_optimization",
+      "name": "ParameterOptimization",
+      "kind": "prototype",
+      "definition": "A computational process adjusting parameters to improve a stated objective according to an optimization procedure.",
+      "aliases": {
+        "en": [
+          "parameter optimization"
+        ],
+        "ru": [
+          "оптимизация параметров"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.parameter_optimization",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Gradient steps minimizing a loss"
+      ],
+      "counterexamples": [
+        "Revising confidence in a factual claim",
+        "Learning merely by storing an observation"
+      ],
+      "links": [
+        {
+          "relation": "rel.about",
+          "target": "local.optimization_algorithm"
+        }
+      ]
+    },
+    {
+      "key": "local.gradient_descent",
+      "name": "GradientDescent",
+      "kind": "prototype",
+      "definition": "An optimization algorithm updating parameters in a direction determined by a local gradient estimate of an objective.",
+      "aliases": {
+        "en": [
+          "gradient descent"
+        ],
+        "ru": [
+          "градиентный спуск"
+        ]
+      },
+      "parent": "local.optimization_algorithm",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.gradient_descent",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.stochastic_gradient_descent",
+      "name": "StochasticGradientDescent",
+      "kind": "prototype",
+      "definition": "Gradient descent using gradients estimated from sampled components or examples of the objective.",
+      "aliases": {
+        "en": [
+          "stochastic gradient descent"
+        ],
+        "ru": [
+          "стохастический градиентный спуск"
+        ]
+      },
+      "parent": "local.gradient_descent",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.stochastic_gradient_descent",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.backpropagation",
+      "name": "Backpropagation",
+      "kind": "prototype",
+      "definition": "An algorithm computing derivatives through a composed computational graph using the chain rule in reverse dependency order.",
+      "aliases": {
+        "en": [
+          "backpropagation"
+        ],
+        "ru": [
+          "обратное распространение ошибки"
+        ]
+      },
+      "parent": "local.algorithm",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.backpropagation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.hyperparameter_search",
+      "name": "HyperparameterSearch",
+      "kind": "prototype",
+      "definition": "A computational process evaluating candidate learning configurations to select hyperparameters under a validation criterion.",
+      "aliases": {
+        "en": [
+          "hyperparameter search"
+        ],
+        "ru": [
+          "поиск гиперпараметров"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.hyperparameter_search",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.machine_learning_model",
+      "name": "MachineLearningModel",
+      "kind": "prototype",
+      "definition": "An executable or evaluable model whose behavior is determined in part by parameters or structure learned from data or experience.",
+      "aliases": {
+        "en": [
+          "machine learning model"
+        ],
+        "ru": [
+          "модель машинного обучения"
+        ]
+      },
+      "parent": "local.software_artifact",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.machine_learning_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.neural_network",
+      "name": "NeuralNetwork",
+      "kind": "prototype",
+      "definition": "A machine-learning model organized as interconnected parameterized transformations conventionally called neurons or layers.",
+      "aliases": {
+        "en": [
+          "neural network"
+        ],
+        "ru": [
+          "нейронная сеть"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.neural_network",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.transformer_model",
+      "name": "TransformerModel",
+      "kind": "prototype",
+      "definition": "A neural network using attention-based transformations to contextualize represented elements, together with other architecture components.",
+      "aliases": {
+        "en": [
+          "transformer model"
+        ],
+        "ru": [
+          "трансформер"
+        ]
+      },
+      "parent": "local.neural_network",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.transformer_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.language_model",
+      "name": "LanguageModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model representing or predicting patterns in token or language sequences under a specified objective.",
+      "aliases": {
+        "en": [
+          "language model"
+        ],
+        "ru": [
+          "языковая модель"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.language_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.large_language_model",
+      "name": "LargeLanguageModel",
+      "kind": "prototype",
+      "definition": "A language model designated large relative to a stated scale of capacity, training resources, or deployment context; the threshold must be specified when material.",
+      "aliases": {
+        "en": [
+          "large language model"
+        ],
+        "ru": [
+          "большая языковая модель",
+          "LLM"
+        ]
+      },
+      "parent": "local.language_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.large_language_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.multimodal_model",
+      "name": "MultimodalModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model processing or generating information in multiple representational modalities.",
+      "aliases": {
+        "en": [
+          "multimodal model"
+        ],
+        "ru": [
+          "мультимодальная модель"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.multimodal_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.embedding_model",
+      "name": "EmbeddingModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model mapping inputs into vector representations intended to preserve selected useful relationships.",
+      "aliases": {
+        "en": [
+          "embedding model"
+        ],
+        "ru": [
+          "модель эмбеддингов"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.embedding_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.generative_model",
+      "name": "GenerativeModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model specifying a process or distribution for producing new data representations.",
+      "aliases": {
+        "en": [
+          "generative model"
+        ],
+        "ru": [
+          "генеративная модель"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.generative_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.classifier_model",
+      "name": "ClassifierModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model assigning inputs to categories or estimating category-related scores.",
+      "aliases": {
+        "en": [
+          "classifier model"
+        ],
+        "ru": [
+          "модель классификации"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.classifier_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.regression_model",
+      "name": "PredictiveRegressionModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model predicting numerical response values from supplied inputs.",
+      "aliases": {
+        "en": [
+          "predictive regression model"
+        ],
+        "ru": [
+          "регрессионная предсказательная модель"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.regression_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.policy_model",
+      "name": "PolicyModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model determining an action or action distribution from an available observation or state representation.",
+      "aliases": {
+        "en": [
+          "policy model"
+        ],
+        "ru": [
+          "модель политики"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.policy_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.value_model",
+      "name": "ValueModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model estimating expected return or another specified value for states, actions, or decisions.",
+      "aliases": {
+        "en": [
+          "value model"
+        ],
+        "ru": [
+          "модель ценности"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.value_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.reward_model",
+      "name": "RewardModel",
+      "kind": "prototype",
+      "definition": "A machine-learning model producing reward or preference scores under a specified evaluation interpretation.",
+      "aliases": {
+        "en": [
+          "reward model"
+        ],
+        "ru": [
+          "модель награды"
+        ]
+      },
+      "parent": "local.machine_learning_model",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.reward_model",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.model_parameter",
+      "name": "ModelParameter",
+      "kind": "prototype",
+      "definition": "A value or structured object controlling a model's behavior within a fixed model specification.",
+      "aliases": {
+        "en": [
+          "model parameter"
+        ],
+        "ru": [
+          "параметр модели"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.model_parameter",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.hyperparameter",
+      "name": "Hyperparameter",
+      "kind": "prototype",
+      "definition": "A configuration value governing a model structure or learning procedure rather than being fitted as an ordinary parameter in that procedure.",
+      "aliases": {
+        "en": [
+          "hyperparameter"
+        ],
+        "ru": [
+          "гиперпараметр"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.hyperparameter",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.loss_function",
+      "name": "LossFunction",
+      "kind": "prototype",
+      "definition": "A function assigning a numerical cost to predictions or model behavior relative to specified targets or criteria.",
+      "aliases": {
+        "en": [
+          "loss function"
+        ],
+        "ru": [
+          "функция потерь"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.loss_function",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.training_example",
+      "name": "TrainingExample",
+      "kind": "prototype",
+      "definition": "An information unit selected for a learning procedure, including whatever inputs, targets, or context that procedure requires.",
+      "aliases": {
+        "en": [
+          "training example"
+        ],
+        "ru": [
+          "обучающий пример"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.training_example",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.training_dataset",
+      "name": "TrainingDataset",
+      "kind": "prototype",
+      "definition": "A dataset designated for fitting a model or learning behavior in a specified study or training run.",
+      "aliases": {
+        "en": [
+          "training dataset"
+        ],
+        "ru": [
+          "обучающий набор данных"
+        ]
+      },
+      "parent": "local.dataset",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.training_dataset",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.validation_dataset",
+      "name": "ValidationDataset",
+      "kind": "prototype",
+      "definition": "A dataset designated for selecting or tuning models or procedures under an evaluation design.",
+      "aliases": {
+        "en": [
+          "validation dataset"
+        ],
+        "ru": [
+          "валидационный набор данных"
+        ]
+      },
+      "parent": "local.dataset",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.validation_dataset",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.test_dataset",
+      "name": "HeldOutTestDataset",
+      "kind": "prototype",
+      "definition": "A dataset reserved for evaluating a selected model or procedure under a declared independence and reuse policy.",
+      "aliases": {
+        "en": [
+          "held out test dataset"
+        ],
+        "ru": [
+          "отложенный тестовый набор"
+        ]
+      },
+      "parent": "local.dataset",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.test_dataset",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.data_leakage",
+      "name": "EvaluationDataLeakage",
+      "kind": "prototype",
+      "definition": "A property of an evaluation design or execution in which information unavailable under the intended deployment conditions influences fitting or selection.",
+      "aliases": {
+        "en": [
+          "evaluation data leakage"
+        ],
+        "ru": [
+          "утечка данных при оценке"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.data_leakage",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.overfitting",
+      "name": "ModelOverfitting",
+      "kind": "prototype",
+      "definition": "A property of a fitted model whose adaptation to training-specific variation degrades performance relative to an intended generalization target.",
+      "aliases": {
+        "en": [
+          "model overfitting"
+        ],
+        "ru": [
+          "переобучение"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.overfitting",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.underfitting",
+      "name": "ModelUnderfitting",
+      "kind": "prototype",
+      "definition": "A property of a fitted model insufficiently capturing task-relevant structure under the stated evaluation criterion.",
+      "aliases": {
+        "en": [
+          "model underfitting"
+        ],
+        "ru": [
+          "недообучение"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.underfitting",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.distribution_shift",
+      "name": "DataDistributionShift",
+      "kind": "prototype",
+      "definition": "A change in the data-generating distribution relevant to a model between specified settings or times.",
+      "aliases": {
+        "en": [
+          "data distribution shift"
+        ],
+        "ru": [
+          "сдвиг распределения данных"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.distribution_shift",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.catastrophic_forgetting",
+      "name": "CatastrophicForgetting",
+      "kind": "prototype",
+      "definition": "A substantial loss of previously acquired model capability resulting from subsequent learning under a stated evaluation.",
+      "aliases": {
+        "en": [
+          "catastrophic forgetting"
+        ],
+        "ru": [
+          "катастрофическое забывание"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.catastrophic_forgetting",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.regularization",
+      "name": "RegularizationMethod",
+      "kind": "prototype",
+      "definition": "A procedure constraining or modifying learning to control undesirable model complexity or behavior relative to an objective.",
+      "aliases": {
+        "en": [
+          "regularization method"
+        ],
+        "ru": [
+          "метод регуляризации"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.regularization",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.fine_tuning",
+      "name": "FineTuning",
+      "kind": "prototype",
+      "definition": "Model training that adapts an existing trained model using additional data or objectives.",
+      "aliases": {
+        "en": [
+          "fine tuning"
+        ],
+        "ru": [
+          "дообучение"
+        ]
+      },
+      "parent": "local.model_training",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.fine_tuning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.instruction_tuning",
+      "name": "InstructionTuning",
+      "kind": "prototype",
+      "definition": "Fine-tuning using examples organized around instructions and desired responses or behaviors.",
+      "aliases": {
+        "en": [
+          "instruction tuning"
+        ],
+        "ru": [
+          "дообучение на инструкциях"
+        ]
+      },
+      "parent": "local.fine_tuning",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.instruction_tuning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.preference_optimization",
+      "name": "PreferenceOptimization",
+      "kind": "prototype",
+      "definition": "Model training using preference comparisons or preference-derived objectives to adjust behavior.",
+      "aliases": {
+        "en": [
+          "preference optimization"
+        ],
+        "ru": [
+          "оптимизация по предпочтениям"
+        ]
+      },
+      "parent": "local.model_training",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.preference_optimization",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.model_distillation",
+      "name": "ModelDistillation",
+      "kind": "prototype",
+      "definition": "Model training using outputs or internal representations of another model as learning signals.",
+      "aliases": {
+        "en": [
+          "model distillation"
+        ],
+        "ru": [
+          "дистилляция модели"
+        ]
+      },
+      "parent": "local.model_training",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.model_distillation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.model_inference",
+      "name": "ModelInference",
+      "kind": "prototype",
+      "definition": "A computational process applying a model to inputs to produce outputs without implying that its learned parameters change.",
+      "aliases": {
+        "en": [
+          "model inference"
+        ],
+        "ru": [
+          "инференс модели"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.model_inference",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "Producing an answer with fixed weights"
+      ],
+      "counterexamples": [
+        "A training run",
+        "A claim that the answer is true"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.prompt",
+      "name": "ModelPrompt",
+      "kind": "prototype",
+      "definition": "Information supplied to a model to condition a particular invocation, including instructions and task context.",
+      "aliases": {
+        "en": [
+          "model prompt"
+        ],
+        "ru": [
+          "промпт",
+          "запрос модели"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.prompt",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.system_instruction",
+      "name": "ModelSystemInstruction",
+      "kind": "prototype",
+      "definition": "An instruction represented at a designated controlling level of a model invocation or agent protocol.",
+      "aliases": {
+        "en": [
+          "model system instruction"
+        ],
+        "ru": [
+          "системная инструкция модели"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.system_instruction",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.token",
+      "name": "ModelToken",
+      "kind": "prototype",
+      "definition": "A unit of a model's encoded input or output vocabulary interpreted under a specified tokenizer.",
+      "aliases": {
+        "en": [
+          "model token"
+        ],
+        "ru": [
+          "токен модели"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.token",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.context_window",
+      "name": "ContextWindow",
+      "kind": "prototype",
+      "definition": "The bounded sequence of information made available within a particular model invocation or attention scope.",
+      "aliases": {
+        "en": [
+          "context window"
+        ],
+        "ru": [
+          "контекстное окно"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.context_window",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.embedding_vector",
+      "name": "EmbeddingVector",
+      "kind": "prototype",
+      "definition": "A vector representation of an input produced or selected to encode task-relevant relationships.",
+      "aliases": {
+        "en": [
+          "embedding vector"
+        ],
+        "ru": [
+          "векторное представление",
+          "эмбеддинг"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.embedding_vector",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.retrieval_augmented_generation",
+      "name": "RetrievalAugmentedGeneration",
+      "kind": "prototype",
+      "definition": "A computational process generating output conditioned on information retrieved for the current task.",
+      "aliases": {
+        "en": [
+          "retrieval augmented generation"
+        ],
+        "ru": [
+          "генерация с поиском",
+          "RAG"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.retrieval_augmented_generation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.prompt_injection",
+      "name": "PromptInjectionContent",
+      "kind": "prototype",
+      "definition": "Content attempting to redirect model or agent behavior by presenting instructions through a channel intended as task data or lower-authority input.",
+      "aliases": {
+        "en": [
+          "prompt injection content"
+        ],
+        "ru": [
+          "инъекция промпта"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.prompt_injection",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.model_hallucination",
+      "name": "UnsupportedModelAssertion",
+      "kind": "prototype",
+      "definition": "A model-produced assertion lacking adequate grounding in the applicable sources or world state; fluent presentation does not establish support.",
+      "aliases": {
+        "en": [
+          "unsupported model assertion"
+        ],
+        "ru": [
+          "неподтверждённое утверждение модели",
+          "галлюцинация модели"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.model_hallucination",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_harness",
+      "name": "AgentHarness",
+      "kind": "prototype",
+      "definition": "A software system coordinating model calls, tools, memory, execution boundaries, and evaluation for an agent.",
+      "aliases": {
+        "en": [
+          "agent harness"
+        ],
+        "ru": [
+          "обвязка агента",
+          "harness"
+        ]
+      },
+      "parent": "local.software_system",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_harness",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_tool",
+      "name": "AgentTool",
+      "kind": "prototype",
+      "definition": "A software tool exposed to an agent through an explicit invocation and result contract.",
+      "aliases": {
+        "en": [
+          "agent tool"
+        ],
+        "ru": [
+          "инструмент агента",
+          "tool"
+        ]
+      },
+      "parent": "local.software_tool",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_tool",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.tool_schema",
+      "name": "ToolSchema",
+      "kind": "prototype",
+      "definition": "An interface definition specifying an agent tool's invocation arguments, result structure, and relevant constraints.",
+      "aliases": {
+        "en": [
+          "tool schema"
+        ],
+        "ru": [
+          "схема инструмента"
+        ]
+      },
+      "parent": "local.interface_definition",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.tool_schema",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.tool_call",
+      "name": "ToolInvocation",
+      "kind": "prototype",
+      "definition": "A computational process invoking a tool under its argument, authority, and result contract.",
+      "aliases": {
+        "en": [
+          "tool invocation"
+        ],
+        "ru": [
+          "вызов инструмента"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.tool_call",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.tool_result",
+      "name": "ToolResult",
+      "kind": "prototype",
+      "definition": "Information returned by a particular tool invocation, including its outcome and any declared uncertainty or errors.",
+      "aliases": {
+        "en": [
+          "tool result"
+        ],
+        "ru": [
+          "результат инструмента"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.tool_result",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_loop",
+      "name": "AgentControlLoop",
+      "kind": "prototype",
+      "definition": "A computational process repeatedly selecting actions, observing outcomes, and updating working state under a stopping policy.",
+      "aliases": {
+        "en": [
+          "agent control loop"
+        ],
+        "ru": [
+          "цикл управления агентом"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_loop",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_state",
+      "name": "AgentOperationalState",
+      "kind": "prototype",
+      "definition": "The relevant condition of an agent's goals, working context, resources, and execution status at an identified time.",
+      "aliases": {
+        "en": [
+          "agent operational state"
+        ],
+        "ru": [
+          "операционное состояние агента"
+        ]
+      },
+      "parent": "local.state",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_state",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_run",
+      "name": "AgentRun",
+      "kind": "prototype",
+      "definition": "A bounded execution of an agent's control procedure associated with an initiating task and completion conditions.",
+      "aliases": {
+        "en": [
+          "agent run"
+        ],
+        "ru": [
+          "запуск агента"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_run",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.agent_episode",
+      "name": "AgentEpisodeRecord",
+      "kind": "prototype",
+      "definition": "A retained representation of a bounded sequence of agent observations, decisions, actions, and outcomes.",
+      "aliases": {
+        "en": [
+          "agent episode record"
+        ],
+        "ru": [
+          "запись эпизода агента"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.agent_episode",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.checkpoint",
+      "name": "ExecutionCheckpoint",
+      "kind": "prototype",
+      "definition": "An artifact recording sufficient execution state to resume or inspect a process at a designated boundary.",
+      "aliases": {
+        "en": [
+          "execution checkpoint"
+        ],
+        "ru": [
+          "контрольная точка исполнения"
+        ]
+      },
+      "parent": "local.software_artifact",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.checkpoint",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.model_checkpoint",
+      "name": "ModelCheckpoint",
+      "kind": "prototype",
+      "definition": "An artifact recording model parameters and related state at a specified point in model training or deployment.",
+      "aliases": {
+        "en": [
+          "model checkpoint"
+        ],
+        "ru": [
+          "контрольная точка модели"
+        ]
+      },
+      "parent": "local.software_artifact",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.model_checkpoint",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.approval_policy",
+      "name": "ActionApprovalPolicy",
+      "kind": "prototype",
+      "definition": "A specification of which proposed actions require authorization and what constitutes sufficient authorization.",
+      "aliases": {
+        "en": [
+          "action approval policy"
+        ],
+        "ru": [
+          "политика разрешения действий"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.approval_policy",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.evaluation_suite",
+      "name": "AgentEvaluationSuite",
+      "kind": "prototype",
+      "definition": "A specified collection of scenarios, measurements, and scoring rules used to assess an agent or model under controlled conditions.",
+      "aliases": {
+        "en": [
+          "agent evaluation suite"
+        ],
+        "ru": [
+          "набор оценок агента"
+        ]
+      },
+      "parent": "local.software_artifact",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.evaluation_suite",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.benchmark_case",
+      "name": "BenchmarkCase",
+      "kind": "prototype",
+      "definition": "A specified task instance with inputs, constraints, and scoring criteria used in a comparative evaluation.",
+      "aliases": {
+        "en": [
+          "benchmark case"
+        ],
+        "ru": [
+          "случай бенчмарка"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.benchmark_case",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.trajectory",
+      "name": "DecisionTrajectory",
+      "kind": "prototype",
+      "definition": "An ordered record or representation of states or observations, actions, and outcomes in a sequential decision process.",
+      "aliases": {
+        "en": [
+          "decision trajectory"
+        ],
+        "ru": [
+          "траектория решений"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.trajectory",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.reward_signal",
+      "name": "RewardSignal",
+      "kind": "prototype",
+      "definition": "A value supplied as a feedback component in a reinforcement-learning or decision objective, distinct from an unrestricted statement of human value.",
+      "aliases": {
+        "en": [
+          "reward signal"
+        ],
+        "ru": [
+          "сигнал награды"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.reward_signal",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.return_estimate",
+      "name": "ReturnEstimate",
+      "kind": "prototype",
+      "definition": "An estimate of cumulative reward under a specified horizon, discounting rule, and policy.",
+      "aliases": {
+        "en": [
+          "return estimate"
+        ],
+        "ru": [
+          "оценка возврата"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.return_estimate",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.credit_assignment",
+      "name": "CreditAssignment",
+      "kind": "prototype",
+      "definition": "A cognitive process assigning contribution to actions, representations, or parameters for an observed outcome under an explicit causal or learning model.",
+      "aliases": {
+        "en": [
+          "credit assignment"
+        ],
+        "ru": [
+          "назначение кредита",
+          "атрибуция вклада"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.credit_assignment",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.exploration",
+      "name": "ExploratoryActionSelection",
+      "kind": "prototype",
+      "definition": "A cognitive process selecting actions partly to acquire information or improve future decisions rather than only to maximize immediate estimated value.",
+      "aliases": {
+        "en": [
+          "exploratory action selection"
+        ],
+        "ru": [
+          "исследовательский выбор действий"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.exploration",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.exploitation",
+      "name": "ExploitativeActionSelection",
+      "kind": "prototype",
+      "definition": "A cognitive process selecting actions primarily according to currently estimated value within a decision objective.",
+      "aliases": {
+        "en": [
+          "exploitative action selection"
+        ],
+        "ru": [
+          "использование текущей стратегии"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.exploitation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.experience_replay",
+      "name": "ExperienceReplayTraining",
+      "kind": "prototype",
+      "definition": "Model training that reuses stored interaction transitions or trajectories as learning inputs.",
+      "aliases": {
+        "en": [
+          "experience replay training"
+        ],
+        "ru": [
+          "обучение с воспроизведением опыта"
+        ]
+      },
+      "parent": "local.model_training",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.experience_replay",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.policy_evaluation",
+      "name": "PolicyEvaluation",
+      "kind": "prototype",
+      "definition": "A computational process estimating the behavior or expected return of a specified policy under environment assumptions.",
+      "aliases": {
+        "en": [
+          "policy evaluation"
+        ],
+        "ru": [
+          "оценка политики"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.policy_evaluation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.policy_improvement",
+      "name": "PolicyImprovement",
+      "kind": "prototype",
+      "definition": "A computational process modifying or selecting a policy to improve a declared decision objective.",
+      "aliases": {
+        "en": [
+          "policy improvement"
+        ],
+        "ru": [
+          "улучшение политики"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.policy_improvement",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.temporal_difference",
+      "name": "TemporalDifferenceUpdate",
+      "kind": "prototype",
+      "definition": "A learning-update algorithm using a difference between a current value estimate and a target containing another value estimate.",
+      "aliases": {
+        "en": [
+          "temporal difference update"
+        ],
+        "ru": [
+          "обновление временных различий"
+        ]
+      },
+      "parent": "local.algorithm",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.temporal_difference",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.q_learning",
+      "name": "QLearningUpdate",
+      "kind": "prototype",
+      "definition": "A temporal-difference update estimating action values using a target based on a maximizing subsequent action value under its learning assumptions.",
+      "aliases": {
+        "en": [
+          "qlearning update"
+        ],
+        "ru": [
+          "Q-обучение"
+        ]
+      },
+      "parent": "local.temporal_difference",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.q_learning",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.policy_gradient",
+      "name": "PolicyGradientMethod",
+      "kind": "prototype",
+      "definition": "An optimization algorithm adjusting policy parameters using an estimate of the gradient of a policy objective.",
+      "aliases": {
+        "en": [
+          "policy gradient method"
+        ],
+        "ru": [
+          "метод градиента политики"
+        ]
+      },
+      "parent": "local.optimization_algorithm",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.policy_gradient",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.actor_critic",
+      "name": "ActorCriticMethod",
+      "kind": "prototype",
+      "definition": "A learning algorithm coordinating a parameterized policy with a value estimator that supplies learning information for policy updates.",
+      "aliases": {
+        "en": [
+          "actor critic method"
+        ],
+        "ru": [
+          "метод актор-критик"
+        ]
+      },
+      "parent": "local.algorithm",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.actor_critic",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.markov_decision_process",
+      "name": "MarkovDecisionProcess",
+      "kind": "prototype",
+      "definition": "A formal decision model specifying states, actions, transition probabilities, and rewards with the Markov property relative to its state representation.",
+      "aliases": {
+        "en": [
+          "markov decision process"
+        ],
+        "ru": [
+          "марковский процесс принятия решений",
+          "MDP"
+        ]
+      },
+      "parent": "local.information_content",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.markov_decision_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.partial_observability",
+      "name": "PartialObservability",
+      "kind": "prototype",
+      "definition": "A property of a decision setting in which available observations do not directly identify all state information relevant to the modeled dynamics.",
+      "aliases": {
+        "en": [
+          "partial observability"
+        ],
+        "ru": [
+          "частичная наблюдаемость"
+        ]
+      },
+      "parent": "sumo.attribute",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.partial_observability",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.reward_hacking",
+      "name": "RewardHackingBehavior",
+      "kind": "prototype",
+      "definition": "Behavior improving a specified reward measure while violating or failing the intended task objective under the evaluation context.",
+      "aliases": {
+        "en": [
+          "reward hacking behavior"
+        ],
+        "ru": [
+          "взлом награды"
+        ]
+      },
+      "parent": "sumo.process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.reward_hacking",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.semantic_search",
+      "name": "SemanticSearch",
+      "kind": "prototype",
+      "definition": "A computational process retrieving information using represented meaning or semantic relationships in addition to or instead of exact symbol matching.",
+      "aliases": {
+        "en": [
+          "semantic search"
+        ],
+        "ru": [
+          "семантический поиск"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.semantic_search",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.knowledge_integration",
+      "name": "KnowledgeIntegration",
+      "kind": "prototype",
+      "definition": "A cognitive process reconciling new information with existing representations while preserving attribution, distinctions, and unresolved conflicts.",
+      "aliases": {
+        "en": [
+          "knowledge integration"
+        ],
+        "ru": [
+          "интеграция знаний"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.knowledge_integration",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.task_framing",
+      "name": "TaskFraming",
+      "kind": "prototype",
+      "definition": "A cognitive process identifying a task's intended outcome, relevant context, constraints, and success conditions.",
+      "aliases": {
+        "en": [
+          "task framing"
+        ],
+        "ru": [
+          "формулирование задачи"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.task_framing",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.context_preparation",
+      "name": "ContextPreparation",
+      "kind": "prototype",
+      "definition": "A cognitive process selecting and organizing information needed for a subsequent reasoning or action step.",
+      "aliases": {
+        "en": [
+          "context preparation"
+        ],
+        "ru": [
+          "подготовка контекста"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.context_preparation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.verification_process",
+      "name": "VerificationProcess",
+      "kind": "prototype",
+      "definition": "A cognitive process checking whether a claim, artifact, or result satisfies explicit criteria using appropriate evidence or procedures.",
+      "aliases": {
+        "en": [
+          "verification process"
+        ],
+        "ru": [
+          "проверка результата"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.verification_process",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.goal_management",
+      "name": "GoalManagement",
+      "kind": "prototype",
+      "definition": "A cognitive process maintaining, prioritizing, revising, or retiring goals in response to context and constraints.",
+      "aliases": {
+        "en": [
+          "goal management"
+        ],
+        "ru": [
+          "управление целями"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.goal_management",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.prediction_evaluation",
+      "name": "PredictionEvaluation",
+      "kind": "prototype",
+      "definition": "A cognitive process comparing a recorded prediction with suitable outcomes under its original scope and scoring rule.",
+      "aliases": {
+        "en": [
+          "prediction evaluation"
+        ],
+        "ru": [
+          "оценка предсказания"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.prediction_evaluation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.evidence_assessment",
+      "name": "EvidenceAssessment",
+      "kind": "prototype",
+      "definition": "A cognitive process evaluating how information bears on a proposition, including source dependence, relevance, reliability, and limitations.",
+      "aliases": {
+        "en": [
+          "evidence assessment"
+        ],
+        "ru": [
+          "оценка доказательств"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.evidence_assessment",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.resource_allocation",
+      "name": "CognitiveResourceAllocation",
+      "kind": "prototype",
+      "definition": "A cognitive process assigning available attention, time, computation, or memory to competing activities.",
+      "aliases": {
+        "en": [
+          "cognitive resource allocation"
+        ],
+        "ru": [
+          "распределение когнитивных ресурсов"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.resource_allocation",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.experience_compaction",
+      "name": "ExperienceCompaction",
+      "kind": "prototype",
+      "definition": "A computational process producing a smaller retained representation of experience while preserving specified task-relevant distinctions and provenance.",
+      "aliases": {
+        "en": [
+          "experience compaction"
+        ],
+        "ru": [
+          "сжатие опыта"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.experience_compaction",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.memory_ranking",
+      "name": "MemoryRelevanceRanking",
+      "kind": "prototype",
+      "definition": "A computational process ordering candidate memory records according to relevance and other declared retrieval criteria.",
+      "aliases": {
+        "en": [
+          "memory relevance ranking"
+        ],
+        "ru": [
+          "ранжирование памяти"
+        ]
+      },
+      "parent": "local.computational_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.memory_ranking",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.replay_selection",
+      "name": "ReplaySelection",
+      "kind": "prototype",
+      "definition": "A cognitive process selecting retained episodes or examples for review, evaluation, or learning.",
+      "aliases": {
+        "en": [
+          "replay selection"
+        ],
+        "ru": [
+          "выбор опыта для воспроизведения"
+        ]
+      },
+      "parent": "local.cognitive_process",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.replay_selection",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.learning_schedule",
+      "name": "LearningSchedule",
+      "kind": "prototype",
+      "definition": "A procedure specifying when learning activities occur and how examples, practice, or updates are allocated.",
+      "aliases": {
+        "en": [
+          "learning schedule"
+        ],
+        "ru": [
+          "расписание обучения"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.learning_schedule",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.stopping_rule",
+      "name": "StoppingRule",
+      "kind": "prototype",
+      "definition": "A rule specifying when a search, learning, decision, or sampling process should terminate based on available information.",
+      "aliases": {
+        "en": [
+          "stopping rule"
+        ],
+        "ru": [
+          "правило остановки"
+        ]
+      },
+      "parent": "local.procedure",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.stopping_rule",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "local.software_agent",
+      "name": "SoftwareAgent",
+      "kind": "prototype",
+      "definition": "A situated autonomous agent whose observation handling and action selection are realized by running software, distinguished from the software artifact and from any one execution episode.",
+      "aliases": {
+        "en": [
+          "software agent"
+        ],
+        "ru": [
+          "программный агент"
+        ]
+      },
+      "parent": "sumo.agent",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.software_agent",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "A deployed software-controlled agent interacting with its environment"
+      ],
+      "counterexamples": [
+        "The source code defining the agent",
+        "One task episode"
+      ],
+      "links": []
+    },
+    {
+      "key": "local.llm_agent",
+      "name": "LanguageModelAgent",
+      "kind": "prototype",
+      "definition": "A software agent using a language model as a component of its interpretation, reasoning, or action-selection procedure.",
+      "aliases": {
+        "en": [
+          "language model agent"
+        ],
+        "ru": [
+          "агент на основе языковой модели"
+        ]
+      },
+      "parent": "local.software_agent",
+      "source": {
+        "source": "evertree",
+        "source_id": "local.llm_agent",
+        "revision": "1.0.0"
+      },
+      "coverage_sources": [
+        "cs2023"
+      ],
+      "adaptation": null,
+      "examples": [
+        "An agent combining model calls with authorized tool execution"
+      ],
+      "counterexamples": [
+        "An uninvoked language-model checkpoint"
+      ],
+      "links": []
+    }
+  ]
+}

@@ -10,8 +10,10 @@ from evertree.core.graph.types import GraphDelta
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.semantics.reading import describe
 from evertree.core.values import json_value
-from evertree.processes.learning.evidence_assessment._exec import run as assess_all
-from evertree.processes.learning.evidence_assessment.graph_evidence_assessment._exec import run
+from evertree.processes.self_learning.self_evidence_assessment._exec import run as assess_all
+from evertree.processes.self_learning.self_evidence_assessment.self_graph_evidence_assessment._exec import (
+    run,
+)
 from tests.support.semantics import (
     context,
     recorded_experience,

@@ -8,7 +8,7 @@ from evertree.core.cognition.steps import trace_reference
 from evertree.core.graph.store import GraphStore
 from evertree.core.memory.store import TraceStore
 from evertree.core.values import ContractError
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 from tests.support.semantics import (
     EmptyIndex,
     context,
@@ -656,7 +656,7 @@ def test_program_completion_cannot_authorize_creation():
     refs, metadata = recorded_experience(world, "A pump")
     program = Node(
         world.graph.reserve_id(),
-        "SemanticSearch.model",
+        "SelfSemanticSearch.model",
         kind="program",
         properties={"slug": "semantic_search"},
     )
@@ -704,7 +704,9 @@ def test_core_search_confirmation_survives_restore(complete):
 async def test_default_integration_prioritizes_connected_facts_and_explicit_focus_is_preserved(
     focus,
 ):
-    from evertree.processes.semantic_processing.knowledge_integration._exec import DEFAULT_FOCUS
+    from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+        DEFAULT_FOCUS,
+    )
 
     world = semantic_world()
     refs, _ = recorded_experience(world, "A transfers coolant to B at 12 l/min.")

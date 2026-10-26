@@ -7,9 +7,9 @@ slots. This function is not consulted to route subsequent Program calls.
 from __future__ import annotations
 
 PROCESS_GROUPS = {
-    "semantic_processing": ("SemanticProcessing", ("semantic_search", "knowledge_integration")),
+    "semantic_processing": ("SelfSemanticProcessing", ("semantic_search", "knowledge_integration")),
     "task_management": (
-        "TaskManagement",
+        "SelfTaskManagement",
         (
             "task_framing",
             "task_outcome",
@@ -23,11 +23,11 @@ PROCESS_GROUPS = {
         ),
     ),
     "cognitive_control": (
-        "CognitiveControl",
+        "SelfCognitiveControl",
         ("attention_control", "cognition_control", "resource_control"),
     ),
     "memory_processing": (
-        "MemoryProcessing",
+        "SelfMemoryProcessing",
         (
             "memory_retrieval",
             "memory_ranking",
@@ -38,7 +38,7 @@ PROCESS_GROUPS = {
         ),
     ),
     "learning": (
-        "Learning",
+        "SelfLearning",
         (
             "reflection",
             "skill_development",
@@ -50,6 +50,14 @@ PROCESS_GROUPS = {
             "program_improvement",
         ),
     ),
+}
+
+GROUP_DESCRIPTIONS = {
+    "semantic_processing": "An agent-owned process that retrieves or integrates semantic representations, including their sources and unresolved distinctions.",
+    "task_management": "An agent-owned process that frames, prepares, plans, forecasts, verifies or manages task-directed activity; it need not itself execute the task.",
+    "cognitive_control": "An agent-owned process that regulates attention, cognition or resource use within the agent's execution boundaries.",
+    "memory_processing": "An agent-owned process that retrieves, ranks, validates, compacts, consolidates or selects retained experience.",
+    "learning": "An agent-owned process that prepares, reflects on, assesses, coordinates or applies learning and Program improvement; an occurrence need not itself change knowledge or parameters.",
 }
 
 # Subprocesses are SUBTYPE_OF their parent process and live in its directory.
@@ -244,9 +252,9 @@ def bootstrap_catalog() -> tuple[dict, ...]:
         ),
     )
     parents = {slug: group for group, (_, slugs) in PROCESS_GROUPS.items() for slug in slugs}
-    directories = {slug: f"{group}/{slug}" for slug, group in parents.items()}
+    directories = {slug: f"self_{group}/self_{slug}" for slug, group in parents.items()}
     for slug, parent in SUBPROCESSES.items():
-        directories[slug] = f"{directories[parent]}/{slug}"
+        directories[slug] = f"{directories[parent]}/self_{slug}"
     # Meta Programs build, train or manage other learnable mechanisms.
     meta = {
         "reflection",
@@ -258,7 +266,7 @@ def bootstrap_catalog() -> tuple[dict, ...]:
     }
     return tuple(
         {
-            "name": name,
+            "name": "Self" + name,
             "slug": slug,
             "role": role,
             "roles": (role, "meta") if slug in meta else (role,),
@@ -276,7 +284,12 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
 
     from evertree.core.graph.types import GraphDelta, Node, Prototype
 
-    root = Prototype(graph.reserve_id(), "SelfProcess", properties={"process": True})
+    root = Prototype(
+        graph.reserve_id(),
+        "SelfProcess",
+        description="A process performed within this agent's own implementation and control scope, distinct from a general world process or one particular execution.",
+        properties={"process": True},
+    )
     creates = [
         root,
         graph.new_fact("SUBTYPE_OF", {"type": root.id, "supertype": graph.find("Process").id}),
@@ -284,15 +297,28 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
     ]
     groups = {}
     for slug, (name, _) in PROCESS_GROUPS.items():
-        group = Prototype(graph.reserve_id(), name, properties={"process": True})
+        group = Prototype(
+            graph.reserve_id(),
+            name,
+            description=GROUP_DESCRIPTIONS[slug],
+            properties={"process": True},
+        )
         groups[slug] = group.id
         creates.extend(
             (group, graph.new_fact("SUBTYPE_OF", {"type": group.id, "supertype": root.id}))
         )
     processes = {}
+    group_for_process = {
+        slug: group for group, (_, slugs) in PROCESS_GROUPS.items() for slug in slugs
+    }
     for descriptor in bootstrap_catalog():
         name, role = descriptor["name"], descriptor["role"]
-        process = Prototype(graph.reserve_id(), name, properties={"process": True})
+        process = Prototype(
+            graph.reserve_id(),
+            name,
+            description="Agent-owned process with this contract: " + descriptor["description"],
+            properties={"process": True},
+        )
         program = Node(
             graph.reserve_id(),
             name + "." + role,
@@ -314,7 +340,7 @@ def seed_process_delta(graph, *, self_id: int, revision: str):
         )
         processes[descriptor["slug"]] = process.id
         parent = SUBPROCESSES.get(descriptor["slug"])
-        supertype = processes[parent] if parent else groups[descriptor["git_path"].split("/")[3]]
+        supertype = processes[parent] if parent else groups[group_for_process[descriptor["slug"]]]
         creates.extend(
             (
                 process,

@@ -8,7 +8,7 @@ from evertree.core.provider import LLMEvent, ScriptedProvider
 from evertree.core.semantics.config import SemanticConfig
 from evertree.core.semantics.index import RedisSearchIndex
 from evertree.debug_integration import CONSCIOUS_ANALYSIS, DebugSession, load_debug_environment
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 
 
 def test_load_local_secrets_preserves_environment_and_accepts_test_redis(tmp_path, monkeypatch):

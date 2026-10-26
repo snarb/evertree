@@ -238,15 +238,16 @@ READ_TOOLS = (
             "An Instance's description also lists linked Facets. "
             "Default previews contain up to 7 properties and 7 relations; properties_total/"
             "relations_total precede truncated lists. focus=properties or relations returns "
-            "that full list. A Prototype's parent is one card or null; children lists up to 7 "
-            "direct subtype names, preceded by children_total only when shortened."
+            "that full list. A type's parent is one card or null, including relation and process "
+            "types; children lists up to 7 direct subtype names, preceded by children_total "
+            "when shortened. focus=children returns the complete list for taxonomy traversal."
         ),
         _read_object(
             {
                 "subject": {"type": ["integer", "string"]},
                 "focus": {
                     **_OPTIONAL_TEXT,
-                    "description": "properties: all properties only; relations: all relations only. Other text filters both lists, with at most 7 relations and all matching properties.",
+                    "description": "properties: all properties; relations: all relations; children: every direct subtype. Other text filters properties and relations.",
                 },
                 "at": _OPTIONAL_TEXT,
             },

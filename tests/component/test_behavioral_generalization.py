@@ -13,7 +13,7 @@ from evertree.core.learning.contracts import LearningBinding, LearningObjective,
 from evertree.core.learning.coordinator import LearningCoordinator
 from evertree.core.learning.state import LearningStore
 from evertree.core.memory.store import TraceStore
-from evertree.processes.learning.reflection._exec import run as reflect
+from evertree.processes.self_learning.self_reflection._exec import run as reflect
 
 
 @pytest.mark.parametrize("catalog_id", ["LRN-04", "LRN-08"])

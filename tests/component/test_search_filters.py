@@ -7,7 +7,7 @@ from evertree.core.graph.types import GraphDelta, Node
 from evertree.core.memory.store import TraceStore
 from evertree.core.semantics.searching import search_kinds
 from evertree.core.values import ContractError
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 from tests.support.semantics import (
     EmptyIndex,
     context,

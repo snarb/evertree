@@ -74,7 +74,7 @@ class KnowledgeIntegrationMixin:
         """Derive integration authority and stable write scope from the actual running Program."""
         metadata = dict(metadata)
         program = metadata.get("program", {})
-        process = self.graph.find("KnowledgeIntegration")
+        process = self.graph.find("SelfKnowledgeIntegration")
         node = self.graph.get(program["program_id"])
         run_id = metadata.get("run_id")
         recorded_id = self._run_map.get(run_id)

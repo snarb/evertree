@@ -15,7 +15,7 @@ from evertree.core.memory.store import TraceStore
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.semantics.reading import describe
 from evertree.core.values import UNKNOWN, ContractError
-from evertree.processes.learning.evidence_assessment.graph_evidence_assessment._exec import (
+from evertree.processes.self_learning.self_evidence_assessment.self_graph_evidence_assessment._exec import (
     _assess_properties,
     run,
 )

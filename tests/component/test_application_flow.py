@@ -169,7 +169,7 @@ async def test_changed_request_reframes_and_preserves_spending(app):
     assert len(task.budget_history) == 2
     assert task.execution_budget.resources["active_time_minutes"] == 4
     assert task.spent["active_time_minutes"] >= spent
-    task_framing = app.graph.find("TaskFraming.exec")
+    task_framing = app.graph.find("SelfTaskFraming.exec")
     assert sum(run.program == task_framing.id for run in app.memory.runs) == 2
     assert "r in strawberry" in app.provider.task_requests[2].prompt
 
@@ -192,7 +192,7 @@ async def test_budget_review_cannot_reexecute_a_pending_nonpolicy_program(app):
     task.review_required = True
     app._inputs[task.id] = [{"role": "user", "content": "Continue"}]
     app._pending_programs[task.id] = {
-        "identity": "MemoryRetrieval",
+        "identity": "SelfMemoryRetrieval",
         "arguments": {"query": "retained facts"},
     }
     with pytest.raises(RuntimeError, match="Resume the pending ProgramRun"):

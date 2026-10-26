@@ -11,7 +11,8 @@ from evertree.core.cognition.attention import AttentionRuntime
 from evertree.core.cognition.tasks import TaskSpecification, TaskStore
 from evertree.core.evaluation.store import EvaluationStore
 from evertree.core.graph.store import GraphStore
-from evertree.core.graph.types import GraphDelta, Node
+from evertree.core.graph.template import install_template
+from evertree.core.graph.types import GraphDelta, Instance, Node
 from evertree.core.learning.state import LearningStore
 from evertree.core.memory.store import TraceStore
 
@@ -70,6 +71,7 @@ class PersistenceMixin:
         event = self.memory.record(run, "bootstrap", output={"revision": revision})
         ref = self.memory.output_ref(event)
         ids = self.graph.bootstrap(provenance=ref)
+        template_ids = install_template(self.graph, provenance=ref)
         creates = []
         value_definitions = {
             "EpistemicQuality": "Seek accurate, source-grounded understanding; preserve uncertainty and distinguish observations, hypotheses and conclusions.",
@@ -83,17 +85,30 @@ class PersistenceMixin:
             "AgentCapability",
             "supervisor_feedback_signal",
         ):
-            node = Node(
+            representation = Instance if name == "Self" else Node
+            node = representation(
                 self.graph.reserve_id(),
                 name,
-                kind="value" if name in {"EpistemicQuality", "AgentCapability"} else "concept",
+                kind=(
+                    "instance"
+                    if name == "Self"
+                    else "value"
+                    if name in {"EpistemicQuality", "AgentCapability"}
+                    else "concept"
+                ),
                 description=value_definitions.get(name, ""),
             )
             creates.append(node)
             self._protected_nodes.add(node.id)
         self_id = next(node.id for node in creates if node.name == "Self")
+        creates.append(
+            self.graph.new_fact(
+                "IDENTITY_TYPE", {"instance": self_id, "type": template_ids["local.software_agent"]}
+            )
+        )
         creates.extend(seed_process_delta(self.graph, self_id=self_id, revision=revision).creates)
         self.graph.apply(GraphDelta(creates=tuple(creates)), provenance=ref)
+        self._link_seed_processes(template_ids, ref)
         self._protected_nodes.add(self.graph.find("SelfProcess").id)
         principles = tuple(
             Node(self.graph.reserve_id(), name, kind="principle", description=description)
@@ -105,6 +120,72 @@ class PersistenceMixin:
         for node in self.graph.nodes():
             self.memory.retain(ref, "graph:" + str(node.id))
         self.memory.finish_run(run)
+
+    def _link_seed_processes(self, template_ids, provenance):
+        """Expose world concepts for own processes without adding another inheritance path."""
+        meanings = {
+            "reflection": "local.reflection_process",
+            "planning": "local.planning_process",
+            "memory_retrieval": "local.memory_retrieval",
+            "experience_consolidation": "local.memory_consolidation",
+            "attention_control": "local.attention_control",
+            "cognition_control": "local.metacognitive_control",
+            "resource_control": "local.resource_allocation",
+            "semantic_search": "local.semantic_search",
+            "knowledge_integration": "local.knowledge_integration",
+            "task_framing": "local.task_framing",
+            "context_preparation": "local.context_preparation",
+            "verification": "local.verification_process",
+            "goal_management": "local.goal_management",
+            "prediction_evaluator": "local.prediction_evaluation",
+            "evidence_assessment": "local.evidence_assessment",
+            "credit_assignment": "local.credit_assignment",
+            "task_outcome": "local.probability_model",
+            "argument_preparation": "local.procedure",
+            "episode_step_selection": "local.decision_process",
+            "commitment_control": "local.decision_process",
+            "skill_development": "local.skill_acquisition",
+            "memory_ranking": "local.memory_ranking",
+            "experience_compaction": "local.experience_compaction",
+            "experience_validation": "local.verification_process",
+            "replay_selection": "local.replay_selection",
+            "graph_evidence_assessment": "local.evidence_assessment",
+            "program_evidence_assessment": "local.evidence_assessment",
+            "update_planning": "local.planning_process",
+            "learning_coordinator": "local.learning_process",
+            "program_improvement": "local.software_maintenance",
+        }
+        links = []
+        for program in self.graph.nodes(kind="program"):
+            key = meanings[program.properties["slug"]]
+            for source in (program.properties["process"], program.id):
+                links.append(
+                    self.graph.new_fact(
+                        "ABOUT",
+                        {"source": source, "target": template_ids[key]},
+                    )
+                )
+            links.append(
+                self.graph.new_fact(
+                    "ABOUT",
+                    {"source": program.id, "target": template_ids["local.software_artifact"]},
+                )
+            )
+        groups = {
+            "SelfProcess": "sumo.process",
+            "SelfSemanticProcessing": "local.information_content",
+            "SelfTaskManagement": "local.goal_management",
+            "SelfCognitiveControl": "local.metacognitive_control",
+            "SelfMemoryProcessing": "local.memory_process",
+            "SelfLearning": "local.learning_process",
+        }
+        for name, key in groups.items():
+            links.append(
+                self.graph.new_fact(
+                    "ABOUT", {"source": self.graph.find(name).id, "target": template_ids[key]}
+                )
+            )
+        self.graph.apply(GraphDelta(creates=tuple(links)), provenance=provenance)
 
     def _append_input(self, record):
         # Intake is durable even while another task occupies the runtime.

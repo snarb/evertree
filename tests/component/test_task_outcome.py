@@ -1,4 +1,4 @@
-"""TaskOutcome.model forecasts verification; TaskFraming uses it and Core trains it on outcomes."""
+"""SelfTaskOutcome.model forecasts verification; TaskFraming uses it and Core trains it on outcomes."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ async def test_verified_tasks_train_the_declared_estimator_through_their_forecas
         [framing(), decision(), verification(), framing(), decision(), verification()]
     )
     async with component_app(tmp_path / "agent", provider=provider) as agent:
-        model = agent.graph.find("TaskOutcome.model")
+        model = agent.graph.find("SelfTaskOutcome.model")
         process = agent.graph.get(model.properties["process"])
         target = agent.graph.find("TaskVerified")
         assert any(

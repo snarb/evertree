@@ -13,7 +13,7 @@ from evertree.core.semantics.config import JevConfig, SemanticConfig, load_searc
 from evertree.core.semantics.jev import JevFilter
 from evertree.core.semantics.searching import search_queries
 from evertree.core.values import ContractError
-from evertree.processes.semantic_processing.knowledge_integration._exec import run
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import run
 from tests.support.semantics import (
     EmptyIndex,
     context,

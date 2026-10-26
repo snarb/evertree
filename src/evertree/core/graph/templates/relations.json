@@ -1,0 +1,3114 @@
+{
+  "nodes": [
+    {
+      "key": "relation.structural",
+      "name": "StructuralRelation",
+      "kind": "prototype",
+      "definition": "A relation specifying classification, identity or composition structure.",
+      "aliases": {
+        "en": [
+          "structuralrelation"
+        ],
+        "ru": [
+          "структурное отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.structural",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.semantic",
+      "name": "SemanticRelation",
+      "kind": "prototype",
+      "definition": "A relation specifying meaning, reference or representation without asserting empirical causation.",
+      "aliases": {
+        "en": [
+          "semanticrelation"
+        ],
+        "ru": [
+          "семантическое отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.semantic",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.participation",
+      "name": "ParticipationRelation",
+      "kind": "prototype",
+      "definition": "A relation connecting an unfolding process with a participant, input, output or instrument.",
+      "aliases": {
+        "en": [
+          "participationrelation"
+        ],
+        "ru": [
+          "отношение участия"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.participation",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.temporal",
+      "name": "TemporalRelation",
+      "kind": "prototype",
+      "definition": "A relation constraining the temporal positions or extents of occurrences.",
+      "aliases": {
+        "en": [
+          "temporalrelation"
+        ],
+        "ru": [
+          "временное отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.temporal",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.causal",
+      "name": "CausalRelation",
+      "kind": "prototype",
+      "definition": "A relation asserting a causal contribution or enabling condition under a specified context.",
+      "aliases": {
+        "en": [
+          "causalrelation"
+        ],
+        "ru": [
+          "причинное отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.causal",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.epistemic",
+      "name": "EpistemicRelation",
+      "kind": "prototype",
+      "definition": "A relation connecting claims, observations, evidence or reasoning dependencies.",
+      "aliases": {
+        "en": [
+          "epistemicrelation"
+        ],
+        "ru": [
+          "эпистемическое отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.epistemic",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.computational",
+      "name": "ComputationalRelation",
+      "kind": "prototype",
+      "definition": "A relation concerning specifications, software artifacts, computations or computational resources.",
+      "aliases": {
+        "en": [
+          "computationalrelation"
+        ],
+        "ru": [
+          "вычислительное отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.computational",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.social",
+      "name": "SocialRelation",
+      "kind": "prototype",
+      "definition": "A relation concerning agents, institutions, obligations or contextual social roles.",
+      "aliases": {
+        "en": [
+          "socialrelation"
+        ],
+        "ru": [
+          "социальное отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.social",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "relation.quantitative",
+      "name": "QuantitativeRelation",
+      "kind": "prototype",
+      "definition": "A relation assigning or comparing quantities under specified properties, units and conditions.",
+      "aliases": {
+        "en": [
+          "quantitativerelation"
+        ],
+        "ru": [
+          "количественное отношение"
+        ]
+      },
+      "parent": "sumo.relation",
+      "source": {
+        "source": "evertree",
+        "source_id": "relation.quantitative",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.subject",
+      "name": "SubjectRole",
+      "kind": "prototype",
+      "definition": "The entity whose contextual relationship is being asserted.",
+      "aliases": {
+        "en": [
+          "subjectrole"
+        ],
+        "ru": [
+          "роль субъекта"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.subject",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.object",
+      "name": "ObjectRole",
+      "kind": "prototype",
+      "definition": "The entity to which the asserted contextual relationship is directed.",
+      "aliases": {
+        "en": [
+          "objectrole"
+        ],
+        "ru": [
+          "роль объекта"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.object",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.subtype",
+      "name": "SubtypeRole",
+      "kind": "prototype",
+      "definition": "The narrower class in a universal inclusion statement.",
+      "aliases": {
+        "en": [
+          "subtyperole"
+        ],
+        "ru": [
+          "роль подкласса"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.subtype",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.supertype",
+      "name": "SupertypeRole",
+      "kind": "prototype",
+      "definition": "The broader class in a universal inclusion statement.",
+      "aliases": {
+        "en": [
+          "supertyperole"
+        ],
+        "ru": [
+          "роль надкласса"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.supertype",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.identity",
+      "name": "IdentityRole",
+      "kind": "prototype",
+      "definition": "The continuing identity represented or classified, distinct from its temporary state.",
+      "aliases": {
+        "en": [
+          "identityrole"
+        ],
+        "ru": [
+          "роль идентичности"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.identity",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.type",
+      "name": "TypeRole",
+      "kind": "prototype",
+      "definition": "The class specifying what an identity is, rather than a temporary role it plays.",
+      "aliases": {
+        "en": [
+          "typerole"
+        ],
+        "ru": [
+          "роль типа"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.type",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.state",
+      "name": "StateRole",
+      "kind": "prototype",
+      "definition": "The temporally scoped state of an identified entity.",
+      "aliases": {
+        "en": [
+          "staterole"
+        ],
+        "ru": [
+          "роль состояния"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.state",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.part",
+      "name": "PartRole",
+      "kind": "prototype",
+      "definition": "A constituent in a composition claim; not a subtype merely by being a constituent.",
+      "aliases": {
+        "en": [
+          "partrole"
+        ],
+        "ru": [
+          "роль части"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.part",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.whole",
+      "name": "WholeRole",
+      "kind": "prototype",
+      "definition": "The containing entity in a composition claim.",
+      "aliases": {
+        "en": [
+          "wholerole"
+        ],
+        "ru": [
+          "роль целого"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.whole",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.property",
+      "name": "PropertyRole",
+      "kind": "prototype",
+      "definition": "The attribute or criterion under which a value or classification is asserted.",
+      "aliases": {
+        "en": [
+          "propertyrole"
+        ],
+        "ru": [
+          "роль свойства"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.property",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.value",
+      "name": "ValueRole",
+      "kind": "prototype",
+      "definition": "The measured, estimated or otherwise qualified property value.",
+      "aliases": {
+        "en": [
+          "valuerole"
+        ],
+        "ru": [
+          "роль значения"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.value",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.unit",
+      "name": "UnitRole",
+      "kind": "prototype",
+      "definition": "The scale convention required to interpret a numerical value.",
+      "aliases": {
+        "en": [
+          "unitrole"
+        ],
+        "ru": [
+          "роль единицы"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.unit",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.program",
+      "name": "ProgramRole",
+      "kind": "prototype",
+      "definition": "An executable or predictive mechanism bound to a process under an explicit execution role.",
+      "aliases": {
+        "en": [
+          "programrole"
+        ],
+        "ru": [
+          "роль программы"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.program",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.process",
+      "name": "ProcessRole",
+      "kind": "prototype",
+      "definition": "The unfolding activity whose participants, implementation or dependencies are described.",
+      "aliases": {
+        "en": [
+          "processrole"
+        ],
+        "ru": [
+          "роль процесса"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.process",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.dependent",
+      "name": "DependentRole",
+      "kind": "prototype",
+      "definition": "The claim or artifact whose interpretation or validity depends on the source.",
+      "aliases": {
+        "en": [
+          "dependentrole"
+        ],
+        "ru": [
+          "роль зависимого"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.dependent",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.source",
+      "name": "SourceRole",
+      "kind": "prototype",
+      "definition": "The supporting information, artifact or origin upon which another item depends.",
+      "aliases": {
+        "en": [
+          "sourcerole"
+        ],
+        "ru": [
+          "роль источника"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.source",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.agent",
+      "name": "AgentRole",
+      "kind": "prototype",
+      "definition": "The actor participating in or responsible for a contextual activity.",
+      "aliases": {
+        "en": [
+          "agentrole"
+        ],
+        "ru": [
+          "роль участника"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.agent",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.input",
+      "name": "InputRole",
+      "kind": "prototype",
+      "definition": "A resource or information item consumed or consulted by a process.",
+      "aliases": {
+        "en": [
+          "inputrole"
+        ],
+        "ru": [
+          "роль входа"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.input",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.output",
+      "name": "OutputRole",
+      "kind": "prototype",
+      "definition": "A resource or information item produced by a process.",
+      "aliases": {
+        "en": [
+          "outputrole"
+        ],
+        "ru": [
+          "роль выхода"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.output",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.instrument",
+      "name": "InstrumentRole",
+      "kind": "prototype",
+      "definition": "A tool used to perform a process, distinct from the process and its product.",
+      "aliases": {
+        "en": [
+          "instrumentrole"
+        ],
+        "ru": [
+          "роль инструмента"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.instrument",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.earlier",
+      "name": "EarlierRole",
+      "kind": "prototype",
+      "definition": "The occurrence constrained to precede the other occurrence.",
+      "aliases": {
+        "en": [
+          "earlierrole"
+        ],
+        "ru": [
+          "роль предшествующего"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.earlier",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.later",
+      "name": "LaterRole",
+      "kind": "prototype",
+      "definition": "The occurrence constrained to follow the other occurrence.",
+      "aliases": {
+        "en": [
+          "laterrole"
+        ],
+        "ru": [
+          "роль последующего"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.later",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.cause",
+      "name": "CauseRole",
+      "kind": "prototype",
+      "definition": "A causally relevant occurrence under the stated mechanism and conditions.",
+      "aliases": {
+        "en": [
+          "causerole"
+        ],
+        "ru": [
+          "роль причины"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.cause",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.effect",
+      "name": "EffectRole",
+      "kind": "prototype",
+      "definition": "An occurrence causally affected under the stated mechanism and conditions.",
+      "aliases": {
+        "en": [
+          "effectrole"
+        ],
+        "ru": [
+          "роль следствия"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.effect",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.claim",
+      "name": "ClaimRole",
+      "kind": "prototype",
+      "definition": "The proposition whose epistemic status is being discussed.",
+      "aliases": {
+        "en": [
+          "claimrole"
+        ],
+        "ru": [
+          "роль утверждения"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.claim",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.evidence",
+      "name": "EvidenceRole",
+      "kind": "prototype",
+      "definition": "The observation or information used in a qualified evidential assessment.",
+      "aliases": {
+        "en": [
+          "evidencerole"
+        ],
+        "ru": [
+          "роль свидетельства"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.evidence",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.context",
+      "name": "ContextRole",
+      "kind": "prototype",
+      "definition": "The scope or conditions under which the asserted relation applies.",
+      "aliases": {
+        "en": [
+          "contextrole"
+        ],
+        "ru": [
+          "роль контекста"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.context",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.role",
+      "name": "ContextualRoleRole",
+      "kind": "prototype",
+      "definition": "The temporary capacity played by an entity within a stated context.",
+      "aliases": {
+        "en": [
+          "contextualrolerole"
+        ],
+        "ru": [
+          "роль временной функции"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.role",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "role.specification",
+      "name": "SpecificationRole",
+      "kind": "prototype",
+      "definition": "The description of required behavior or structure being implemented or checked.",
+      "aliases": {
+        "en": [
+          "specificationrole"
+        ],
+        "ru": [
+          "роль спецификации"
+        ]
+      },
+      "parent": "local.role",
+      "source": {
+        "source": "evertree",
+        "source_id": "role.specification",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": []
+    },
+    {
+      "key": "rel.subtype_of",
+      "name": "SUBTYPE_OF",
+      "kind": "relation_type",
+      "definition": "Every member of type is a member of supertype by definition. One immediate parent is selected; this does not imply disjoint siblings, typical properties, parts, roles or topic membership.",
+      "aliases": {
+        "en": [
+          "subtype of"
+        ],
+        "ru": [
+          "подтип"
+        ]
+      },
+      "parent": "relation.structural",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.subtype_of",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "Compiler is a SoftwareArtifact type."
+      ],
+      "counterexamples": [
+        "Compiler is not a subtype of Compilation; it participates in compilation."
+      ],
+      "links": [],
+      "signature": [
+        {
+          "label": "type",
+          "value_type": "prototype",
+          "arity": "one",
+          "value_concept": "sumo.set_or_class",
+          "role_concept": "role.subtype",
+          "description": "The narrower class in a universal inclusion statement."
+        },
+        {
+          "label": "supertype",
+          "value_type": "prototype",
+          "arity": "one",
+          "value_concept": "sumo.set_or_class",
+          "role_concept": "role.supertype",
+          "description": "The broader class in a universal inclusion statement."
+        }
+      ],
+      "subjects": [
+        "sumo.set_or_class"
+      ],
+      "views": [
+        {
+          "name": "get_supertype",
+          "inputs": [
+            "type"
+          ],
+          "outputs": [
+            "supertype"
+          ],
+          "output_arity": "optional"
+        },
+        {
+          "name": "get_subtypes",
+          "inputs": [
+            "supertype"
+          ],
+          "outputs": [
+            "type"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.identity_type",
+      "name": "IDENTITY_TYPE",
+      "kind": "relation_type",
+      "definition": "An identity has exactly one primary defining class. Secondary roles and changing states are separate assertions.",
+      "aliases": {
+        "en": [
+          "identity type"
+        ],
+        "ru": [
+          "тип экземпляра"
+        ]
+      },
+      "parent": "relation.structural",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.identity_type",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "instance",
+          "value_type": "instance",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.identity",
+          "description": "The continuing identity represented or classified, distinct from its temporary state."
+        },
+        {
+          "label": "type",
+          "value_type": "prototype",
+          "arity": "one",
+          "value_concept": "sumo.set_or_class",
+          "role_concept": "role.type",
+          "description": "The class specifying what an identity is, rather than a temporary role it plays."
+        }
+      ],
+      "subjects": [
+        "local.identity",
+        "sumo.set_or_class"
+      ],
+      "views": [
+        {
+          "name": "get_type",
+          "inputs": [
+            "instance"
+          ],
+          "outputs": [
+            "type"
+          ],
+          "output_arity": "one"
+        },
+        {
+          "name": "get_instances",
+          "inputs": [
+            "type"
+          ],
+          "outputs": [
+            "instance"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.state_identity",
+      "name": "STATE_IDENTITY",
+      "kind": "relation_type",
+      "definition": "A temporal facet describes one continuing identity and is not a new independent identity.",
+      "aliases": {
+        "en": [
+          "state identity"
+        ],
+        "ru": [
+          "состояние идентичности"
+        ]
+      },
+      "parent": "relation.structural",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.state_identity",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "facet",
+          "value_type": "facet",
+          "arity": "one",
+          "value_concept": "local.state",
+          "role_concept": "role.state",
+          "description": "The temporally scoped state of an identified entity."
+        },
+        {
+          "label": "instance",
+          "value_type": "instance",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.identity",
+          "description": "The continuing identity represented or classified, distinct from its temporary state."
+        }
+      ],
+      "subjects": [
+        "local.state",
+        "local.identity"
+      ],
+      "views": [
+        {
+          "name": "get_instance",
+          "inputs": [
+            "facet"
+          ],
+          "outputs": [
+            "instance"
+          ],
+          "output_arity": "one"
+        },
+        {
+          "name": "get_facets",
+          "inputs": [
+            "instance"
+          ],
+          "outputs": [
+            "facet"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.part_whole",
+      "name": "PART_WHOLE",
+      "kind": "relation_type",
+      "definition": "Part is a constituent of whole in the asserted composition sense; composition does not entail taxonomic inclusion.",
+      "aliases": {
+        "en": [
+          "part whole"
+        ],
+        "ru": [
+          "часть целого"
+        ]
+      },
+      "parent": "relation.structural",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.part_whole",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "part",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.part",
+          "description": "A constituent in a composition claim; not a subtype merely by being a constituent."
+        },
+        {
+          "label": "whole",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.whole",
+          "description": "The containing entity in a composition claim."
+        }
+      ],
+      "subjects": [
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_parts",
+          "inputs": [
+            "whole"
+          ],
+          "outputs": [
+            "part"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_wholes",
+          "inputs": [
+            "part"
+          ],
+          "outputs": [
+            "whole"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.has_numeric_value",
+      "name": "HAS_NUMERIC_VALUE",
+      "kind": "relation_type",
+      "definition": "Entity has the stated numeric property value under the fact conditions and optional unit; missing assessment is not certainty.",
+      "aliases": {
+        "en": [
+          "has numeric value"
+        ],
+        "ru": [
+          "числовое значение"
+        ]
+      },
+      "parent": "relation.quantitative",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.has_numeric_value",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "entity",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "property",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.attribute",
+          "role_concept": "role.property",
+          "description": "The attribute or criterion under which a value or classification is asserted."
+        },
+        {
+          "label": "value",
+          "value_type": "number",
+          "arity": "one",
+          "value_concept": "sumo.number",
+          "role_concept": "role.value",
+          "description": "The measured, estimated or otherwise qualified property value."
+        },
+        {
+          "label": "unit",
+          "value_type": "string",
+          "arity": "optional",
+          "value_concept": "sumo.abstract",
+          "role_concept": "role.unit",
+          "description": "The scale convention required to interpret a numerical value."
+        }
+      ],
+      "subjects": [
+        "sumo.quantity",
+        "sumo.attribute"
+      ],
+      "views": [
+        {
+          "name": "get_values",
+          "inputs": [
+            "entity",
+            "property"
+          ],
+          "outputs": [
+            "value",
+            "unit"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.classified_as",
+      "name": "CLASSIFIED_AS",
+      "kind": "relation_type",
+      "definition": "Entity satisfies the stated classification criterion in context. This need not be its primary identity type and grants no second taxonomic parent.",
+      "aliases": {
+        "en": [
+          "classified as"
+        ],
+        "ru": [
+          "классифицирован как"
+        ]
+      },
+      "parent": "relation.structural",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.classified_as",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "entity",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "class",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.set_or_class",
+          "role_concept": "role.type",
+          "description": "The class specifying what an identity is, rather than a temporary role it plays."
+        }
+      ],
+      "subjects": [
+        "sumo.set_or_class"
+      ],
+      "views": [
+        {
+          "name": "get_classes",
+          "inputs": [
+            "entity"
+          ],
+          "outputs": [
+            "class"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.program_for_process",
+      "name": "PROGRAM_FOR_PROCESS",
+      "kind": "relation_type",
+      "definition": "Program has an explicitly declared exec or model binding for the process; a predictive model does not execute the process merely by being bound.",
+      "aliases": {
+        "en": [
+          "program for process"
+        ],
+        "ru": [
+          "программа процесса"
+        ]
+      },
+      "parent": "relation.computational",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.program_for_process",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [
+        "A model Program forecasts a process; this does not assert it performs the process."
+      ],
+      "links": [],
+      "signature": [
+        {
+          "label": "program",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.software_artifact",
+          "role_concept": "role.program",
+          "description": "An executable or predictive mechanism bound to a process under an explicit execution role."
+        },
+        {
+          "label": "process",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        }
+      ],
+      "subjects": [
+        "local.software_artifact",
+        "sumo.process"
+      ],
+      "views": [
+        {
+          "name": "get_programs",
+          "inputs": [
+            "process"
+          ],
+          "outputs": [
+            "program"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.evidence_depends_on",
+      "name": "EVIDENCE_DEPENDS_ON",
+      "kind": "relation_type",
+      "definition": "Assessment of dependent relies on source information; invalidating the source requires review of dependent assessments. It is neither temporal precedence nor physical causation.",
+      "aliases": {
+        "en": [
+          "evidence depends on"
+        ],
+        "ru": [
+          "зависимость доказательства"
+        ]
+      },
+      "parent": "relation.epistemic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.evidence_depends_on",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "A conclusion depends on a measurement report."
+      ],
+      "counterexamples": [
+        "A report does not physically cause the event it reports."
+      ],
+      "links": [],
+      "signature": [
+        {
+          "label": "dependent",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.dependent",
+          "description": "The claim or artifact whose interpretation or validity depends on the source."
+        },
+        {
+          "label": "source",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.source",
+          "description": "The supporting information, artifact or origin upon which another item depends."
+        }
+      ],
+      "subjects": [
+        "local.evidence",
+        "sumo.proposition"
+      ],
+      "views": [
+        {
+          "name": "get_sources",
+          "inputs": [
+            "dependent"
+          ],
+          "outputs": [
+            "source"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.relation_subject",
+      "name": "RELATION_SUBJECT",
+      "kind": "relation_type",
+      "definition": "The source predicate concerns target as a subject of its definition. This indexing link grants no inheritance and does not assert a relation instance.",
+      "aliases": {
+        "en": [
+          "relation subject"
+        ],
+        "ru": [
+          "предмет отношения"
+        ]
+      },
+      "parent": "relation.semantic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.relation_subject",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "source",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.relation",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "target",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.object",
+          "description": "The entity to which the asserted contextual relationship is directed."
+        }
+      ],
+      "subjects": [
+        "sumo.relation",
+        "local.information_content"
+      ],
+      "views": [
+        {
+          "name": "get_source",
+          "inputs": [
+            "target"
+          ],
+          "outputs": [
+            "source"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_target",
+          "inputs": [
+            "source"
+          ],
+          "outputs": [
+            "target"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.about",
+      "name": "ABOUT",
+      "kind": "relation_type",
+      "definition": "Source refers to target as a topic or subject. This is an explicit semantic reference, not identity, subtype, evidence or causation.",
+      "aliases": {
+        "en": [
+          "about"
+        ],
+        "ru": [
+          "о понятии"
+        ]
+      },
+      "parent": "relation.semantic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.about",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "source",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "target",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.object",
+          "description": "The entity to which the asserted contextual relationship is directed."
+        }
+      ],
+      "subjects": [
+        "local.information_content",
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_source",
+          "inputs": [
+            "target"
+          ],
+          "outputs": [
+            "source"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_target",
+          "inputs": [
+            "source"
+          ],
+          "outputs": [
+            "target"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.represents",
+      "name": "REPRESENTS",
+      "kind": "relation_type",
+      "definition": "Source encodes or depicts target under the stated representation convention; the representation is not identical to its referent.",
+      "aliases": {
+        "en": [
+          "represents"
+        ],
+        "ru": [
+          "представляет"
+        ]
+      },
+      "parent": "relation.semantic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.represents",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "source",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.information_content",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "target",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.object",
+          "description": "The entity to which the asserted contextual relationship is directed."
+        }
+      ],
+      "subjects": [
+        "local.information_content",
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_source",
+          "inputs": [
+            "target"
+          ],
+          "outputs": [
+            "source"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_target",
+          "inputs": [
+            "source"
+          ],
+          "outputs": [
+            "target"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.has_participant",
+      "name": "HAS_PARTICIPANT",
+      "kind": "relation_type",
+      "definition": "Entity participates in a process without asserting a more specific agent, input or instrument role.",
+      "aliases": {
+        "en": [
+          "has participant"
+        ],
+        "ru": [
+          "участник процесса"
+        ]
+      },
+      "parent": "relation.participation",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.has_participant",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "process",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        },
+        {
+          "label": "participant",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.object",
+          "description": "The entity to which the asserted contextual relationship is directed."
+        }
+      ],
+      "subjects": [
+        "sumo.process",
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_process",
+          "inputs": [
+            "participant"
+          ],
+          "outputs": [
+            "process"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_participant",
+          "inputs": [
+            "process"
+          ],
+          "outputs": [
+            "participant"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.performed_by",
+      "name": "PERFORMED_BY",
+      "kind": "relation_type",
+      "definition": "An agent intentionally performs the process in the stated episode or general specification.",
+      "aliases": {
+        "en": [
+          "performed by"
+        ],
+        "ru": [
+          "выполняется агентом"
+        ]
+      },
+      "parent": "relation.participation",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.performed_by",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "process",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.intentional_process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        },
+        {
+          "label": "agent",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.agent",
+          "role_concept": "role.agent",
+          "description": "The actor participating in or responsible for a contextual activity."
+        }
+      ],
+      "subjects": [
+        "sumo.intentional_process",
+        "sumo.agent"
+      ],
+      "views": [
+        {
+          "name": "get_process",
+          "inputs": [
+            "agent"
+          ],
+          "outputs": [
+            "process"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_agent",
+          "inputs": [
+            "process"
+          ],
+          "outputs": [
+            "agent"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.uses_input",
+      "name": "USES_INPUT",
+      "kind": "relation_type",
+      "definition": "A process consumes or consults input; use alone does not establish correctness or causal sufficiency.",
+      "aliases": {
+        "en": [
+          "uses input"
+        ],
+        "ru": [
+          "использует вход"
+        ]
+      },
+      "parent": "relation.participation",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.uses_input",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "process",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        },
+        {
+          "label": "input",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.input",
+          "description": "A resource or information item consumed or consulted by a process."
+        }
+      ],
+      "subjects": [
+        "sumo.process",
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_process",
+          "inputs": [
+            "input"
+          ],
+          "outputs": [
+            "process"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_input",
+          "inputs": [
+            "process"
+          ],
+          "outputs": [
+            "input"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.produces",
+      "name": "PRODUCES",
+      "kind": "relation_type",
+      "definition": "A process produces an output, distinct from its procedure, executing tool and success assessment.",
+      "aliases": {
+        "en": [
+          "produces"
+        ],
+        "ru": [
+          "производит"
+        ]
+      },
+      "parent": "relation.participation",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.produces",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "process",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        },
+        {
+          "label": "output",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.output",
+          "description": "A resource or information item produced by a process."
+        }
+      ],
+      "subjects": [
+        "sumo.process",
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_process",
+          "inputs": [
+            "output"
+          ],
+          "outputs": [
+            "process"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_output",
+          "inputs": [
+            "process"
+          ],
+          "outputs": [
+            "output"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.uses_instrument",
+      "name": "USES_INSTRUMENT",
+      "kind": "relation_type",
+      "definition": "A process employs an instrument to carry out its activity.",
+      "aliases": {
+        "en": [
+          "uses instrument"
+        ],
+        "ru": [
+          "использует инструмент"
+        ]
+      },
+      "parent": "relation.participation",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.uses_instrument",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "process",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        },
+        {
+          "label": "instrument",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.artifact",
+          "role_concept": "role.instrument",
+          "description": "A tool used to perform a process, distinct from the process and its product."
+        }
+      ],
+      "subjects": [
+        "sumo.process",
+        "sumo.artifact"
+      ],
+      "views": [
+        {
+          "name": "get_process",
+          "inputs": [
+            "instrument"
+          ],
+          "outputs": [
+            "process"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_instrument",
+          "inputs": [
+            "process"
+          ],
+          "outputs": [
+            "instrument"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.precedes",
+      "name": "PRECEDES",
+      "kind": "relation_type",
+      "definition": "Earlier finishes before later begins in the stated temporal frame; this says nothing about cause or evidence.",
+      "aliases": {
+        "en": [
+          "precedes"
+        ],
+        "ru": [
+          "предшествует"
+        ]
+      },
+      "parent": "relation.temporal",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.precedes",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [
+        "Temporal order alone does not imply causation."
+      ],
+      "links": [],
+      "signature": [
+        {
+          "label": "earlier",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.earlier",
+          "description": "The occurrence constrained to precede the other occurrence."
+        },
+        {
+          "label": "later",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.later",
+          "description": "The occurrence constrained to follow the other occurrence."
+        }
+      ],
+      "subjects": [
+        "sumo.process"
+      ],
+      "views": [
+        {
+          "name": "get_earlier",
+          "inputs": [
+            "later"
+          ],
+          "outputs": [
+            "earlier"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_later",
+          "inputs": [
+            "earlier"
+          ],
+          "outputs": [
+            "later"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.immediately_precedes",
+      "name": "IMMEDIATELY_PRECEDES",
+      "kind": "relation_type",
+      "definition": "Earlier precedes later with no intervening occurrence in the explicitly specified sequence; sequence scope is required in fact conditions.",
+      "aliases": {
+        "en": [
+          "immediately precedes"
+        ],
+        "ru": [
+          "непосредственно предшествует"
+        ]
+      },
+      "parent": "rel.precedes",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.immediately_precedes",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "previous",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.earlier",
+          "description": "The occurrence constrained to precede the other occurrence."
+        },
+        {
+          "label": "next",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.later",
+          "description": "The occurrence constrained to follow the other occurrence."
+        }
+      ],
+      "subjects": [
+        "sumo.process"
+      ],
+      "views": [
+        {
+          "name": "get_previous",
+          "inputs": [
+            "next"
+          ],
+          "outputs": [
+            "previous"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_next",
+          "inputs": [
+            "previous"
+          ],
+          "outputs": [
+            "next"
+          ],
+          "output_arity": "list0"
+        }
+      ],
+      "specialization": {
+        "parent": "rel.precedes",
+        "roles": {
+          "earlier": "previous",
+          "later": "next"
+        },
+        "entailment": "Absence of intervening occurrences strengthens, and never removes, the temporal precedence assertion. Preserve sequence and time qualifiers."
+      }
+    },
+    {
+      "key": "rel.overlaps",
+      "name": "TEMPORALLY_OVERLAPS",
+      "kind": "relation_type",
+      "definition": "Two process extents share time in the stated frame, without requiring shared participants or causation.",
+      "aliases": {
+        "en": [
+          "temporally overlaps"
+        ],
+        "ru": [
+          "пересекается во времени"
+        ]
+      },
+      "parent": "relation.temporal",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.overlaps",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "first",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "second",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.object",
+          "description": "The entity to which the asserted contextual relationship is directed."
+        }
+      ],
+      "subjects": [
+        "sumo.process"
+      ],
+      "views": [
+        {
+          "name": "get_first",
+          "inputs": [
+            "second"
+          ],
+          "outputs": [
+            "first"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_second",
+          "inputs": [
+            "first"
+          ],
+          "outputs": [
+            "second"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.causes",
+      "name": "CAUSES",
+      "kind": "relation_type",
+      "definition": "Cause contributes causally to effect under the specified mechanism and conditions; correlation or earlier occurrence alone is insufficient.",
+      "aliases": {
+        "en": [
+          "causes"
+        ],
+        "ru": [
+          "причина"
+        ]
+      },
+      "parent": "relation.causal",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.causes",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [
+        "A particular heating process causes expansion under stated material conditions."
+      ],
+      "counterexamples": [
+        "A diagnostic observation need not cause the observed fault."
+      ],
+      "links": [],
+      "signature": [
+        {
+          "label": "cause",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.cause",
+          "description": "A causally relevant occurrence under the stated mechanism and conditions."
+        },
+        {
+          "label": "effect",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.effect",
+          "description": "An occurrence causally affected under the stated mechanism and conditions."
+        }
+      ],
+      "subjects": [
+        "sumo.process"
+      ],
+      "views": [
+        {
+          "name": "get_cause",
+          "inputs": [
+            "effect"
+          ],
+          "outputs": [
+            "cause"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_effect",
+          "inputs": [
+            "cause"
+          ],
+          "outputs": [
+            "effect"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.enables",
+      "name": "ENABLES",
+      "kind": "relation_type",
+      "definition": "Source makes target process possible under context without asserting that target actually occurs or that source is sufficient.",
+      "aliases": {
+        "en": [
+          "enables"
+        ],
+        "ru": [
+          "делает возможным"
+        ]
+      },
+      "parent": "relation.causal",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.enables",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "source",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "target",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        }
+      ],
+      "subjects": [
+        "sumo.process",
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_source",
+          "inputs": [
+            "target"
+          ],
+          "outputs": [
+            "source"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_target",
+          "inputs": [
+            "source"
+          ],
+          "outputs": [
+            "target"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.supports",
+      "name": "SUPPORTS_CLAIM",
+      "kind": "relation_type",
+      "definition": "Evidence favors a claim under an explicit observation model and context; strength is assessed separately and shared origins are not independent repetitions.",
+      "aliases": {
+        "en": [
+          "supports claim"
+        ],
+        "ru": [
+          "поддерживает утверждение"
+        ]
+      },
+      "parent": "relation.epistemic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.supports",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "evidence",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.evidence",
+          "role_concept": "role.evidence",
+          "description": "The observation or information used in a qualified evidential assessment."
+        },
+        {
+          "label": "claim",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.proposition",
+          "role_concept": "role.claim",
+          "description": "The proposition whose epistemic status is being discussed."
+        }
+      ],
+      "subjects": [
+        "local.evidence",
+        "sumo.proposition"
+      ],
+      "views": [
+        {
+          "name": "get_evidence",
+          "inputs": [
+            "claim"
+          ],
+          "outputs": [
+            "evidence"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_claim",
+          "inputs": [
+            "evidence"
+          ],
+          "outputs": [
+            "claim"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.challenges",
+      "name": "CHALLENGES_CLAIM",
+      "kind": "relation_type",
+      "definition": "Evidence weighs against a claim under a stated interpretation; this does not by itself establish the negation.",
+      "aliases": {
+        "en": [
+          "challenges claim"
+        ],
+        "ru": [
+          "оспаривает утверждение"
+        ]
+      },
+      "parent": "relation.epistemic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.challenges",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "evidence",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.evidence",
+          "role_concept": "role.evidence",
+          "description": "The observation or information used in a qualified evidential assessment."
+        },
+        {
+          "label": "claim",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.proposition",
+          "role_concept": "role.claim",
+          "description": "The proposition whose epistemic status is being discussed."
+        }
+      ],
+      "subjects": [
+        "local.evidence",
+        "sumo.proposition"
+      ],
+      "views": [
+        {
+          "name": "get_evidence",
+          "inputs": [
+            "claim"
+          ],
+          "outputs": [
+            "evidence"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_claim",
+          "inputs": [
+            "evidence"
+          ],
+          "outputs": [
+            "claim"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.derived_from",
+      "name": "DERIVED_FROM",
+      "kind": "relation_type",
+      "definition": "A representation or conclusion was produced from source material; provenance does not automatically confer truth or independent support.",
+      "aliases": {
+        "en": [
+          "derived from"
+        ],
+        "ru": [
+          "получено из"
+        ]
+      },
+      "parent": "relation.epistemic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.derived_from",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "dependent",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.information_content",
+          "role_concept": "role.dependent",
+          "description": "The claim or artifact whose interpretation or validity depends on the source."
+        },
+        {
+          "label": "source",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.source",
+          "description": "The supporting information, artifact or origin upon which another item depends."
+        }
+      ],
+      "subjects": [
+        "local.information_content",
+        "local.evidence"
+      ],
+      "views": [
+        {
+          "name": "get_dependent",
+          "inputs": [
+            "source"
+          ],
+          "outputs": [
+            "dependent"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_source",
+          "inputs": [
+            "dependent"
+          ],
+          "outputs": [
+            "source"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.contradicts",
+      "name": "CONTRADICTS",
+      "kind": "relation_type",
+      "definition": "Two propositions cannot both hold under the same meanings, time, jurisdiction and other conditions. Context mismatch alone is not contradiction.",
+      "aliases": {
+        "en": [
+          "contradicts"
+        ],
+        "ru": [
+          "противоречит"
+        ]
+      },
+      "parent": "relation.epistemic",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.contradicts",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "first",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.proposition",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "second",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.proposition",
+          "role_concept": "role.object",
+          "description": "The entity to which the asserted contextual relationship is directed."
+        }
+      ],
+      "subjects": [
+        "sumo.proposition"
+      ],
+      "views": [
+        {
+          "name": "get_first",
+          "inputs": [
+            "second"
+          ],
+          "outputs": [
+            "first"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_second",
+          "inputs": [
+            "first"
+          ],
+          "outputs": [
+            "second"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.implements",
+      "name": "IMPLEMENTS",
+      "kind": "relation_type",
+      "definition": "A concrete artifact realizes a specification or algorithm under a stated implementation interpretation. An execution run is separate.",
+      "aliases": {
+        "en": [
+          "implements"
+        ],
+        "ru": [
+          "реализует"
+        ]
+      },
+      "parent": "relation.computational",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.implements",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "artifact",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.software_artifact",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "specification",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.information_content",
+          "role_concept": "role.specification",
+          "description": "The description of required behavior or structure being implemented or checked."
+        }
+      ],
+      "subjects": [
+        "local.software_artifact",
+        "local.algorithm"
+      ],
+      "views": [
+        {
+          "name": "get_artifact",
+          "inputs": [
+            "specification"
+          ],
+          "outputs": [
+            "artifact"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_specification",
+          "inputs": [
+            "artifact"
+          ],
+          "outputs": [
+            "specification"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.executes",
+      "name": "EXECUTES",
+      "kind": "relation_type",
+      "definition": "A computational process runs a specified software artifact; source text, tool and execution episode remain distinct.",
+      "aliases": {
+        "en": [
+          "executes"
+        ],
+        "ru": [
+          "исполняет"
+        ]
+      },
+      "parent": "relation.computational",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.executes",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "process",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.computational_process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        },
+        {
+          "label": "program",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.software_artifact",
+          "role_concept": "role.program",
+          "description": "An executable or predictive mechanism bound to a process under an explicit execution role."
+        }
+      ],
+      "subjects": [
+        "local.computational_process",
+        "local.software_artifact"
+      ],
+      "views": [
+        {
+          "name": "get_process",
+          "inputs": [
+            "program"
+          ],
+          "outputs": [
+            "process"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_program",
+          "inputs": [
+            "process"
+          ],
+          "outputs": [
+            "program"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.depends_on",
+      "name": "ARTIFACT_DEPENDS_ON",
+      "kind": "relation_type",
+      "definition": "An artifact requires another artifact for the specified build, execution or deployment context. This is not evidence dependence.",
+      "aliases": {
+        "en": [
+          "artifact depends on"
+        ],
+        "ru": [
+          "зависимость артефакта"
+        ]
+      },
+      "parent": "relation.computational",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.depends_on",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "dependent",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.software_artifact",
+          "role_concept": "role.dependent",
+          "description": "The claim or artifact whose interpretation or validity depends on the source."
+        },
+        {
+          "label": "source",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.software_artifact",
+          "role_concept": "role.source",
+          "description": "The supporting information, artifact or origin upon which another item depends."
+        }
+      ],
+      "subjects": [
+        "local.software_artifact"
+      ],
+      "views": [
+        {
+          "name": "get_dependent",
+          "inputs": [
+            "source"
+          ],
+          "outputs": [
+            "dependent"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_source",
+          "inputs": [
+            "dependent"
+          ],
+          "outputs": [
+            "source"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.satisfies",
+      "name": "SATISFIES_SPECIFICATION",
+      "kind": "relation_type",
+      "definition": "Artifact satisfies the stated specification within an explicit checked scope; a passing example alone does not imply universal correctness.",
+      "aliases": {
+        "en": [
+          "satisfies specification"
+        ],
+        "ru": [
+          "удовлетворяет спецификации"
+        ]
+      },
+      "parent": "relation.computational",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.satisfies",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "artifact",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.software_artifact",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "specification",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.information_content",
+          "role_concept": "role.specification",
+          "description": "The description of required behavior or structure being implemented or checked."
+        }
+      ],
+      "subjects": [
+        "local.software_artifact",
+        "local.information_content"
+      ],
+      "views": [
+        {
+          "name": "get_artifact",
+          "inputs": [
+            "specification"
+          ],
+          "outputs": [
+            "artifact"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_specification",
+          "inputs": [
+            "artifact"
+          ],
+          "outputs": [
+            "specification"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.plays_role",
+      "name": "PLAYS_ROLE",
+      "kind": "relation_type",
+      "definition": "An entity plays a temporary or contextual role within an explicit context. The role is not its identity type or a new taxonomic parent.",
+      "aliases": {
+        "en": [
+          "plays role"
+        ],
+        "ru": [
+          "играет роль"
+        ]
+      },
+      "parent": "relation.social",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.plays_role",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "entity",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "role",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.role",
+          "role_concept": "role.role",
+          "description": "The temporary capacity played by an entity within a stated context."
+        },
+        {
+          "label": "context",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.entity",
+          "role_concept": "role.context",
+          "description": "The scope or conditions under which the asserted relation applies."
+        }
+      ],
+      "subjects": [
+        "local.role",
+        "sumo.entity"
+      ],
+      "views": [
+        {
+          "name": "get_entity",
+          "inputs": [
+            "role",
+            "context"
+          ],
+          "outputs": [
+            "entity"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_role",
+          "inputs": [
+            "entity",
+            "context"
+          ],
+          "outputs": [
+            "role"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_context",
+          "inputs": [
+            "entity",
+            "role"
+          ],
+          "outputs": [
+            "context"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.located_at",
+      "name": "LOCATED_AT",
+      "kind": "relation_type",
+      "definition": "An entity occupies a location during the stated interval and spatial frame. A location is neither a subtype nor a part by this assertion alone.",
+      "aliases": {
+        "en": [
+          "located at"
+        ],
+        "ru": [
+          "расположен в"
+        ]
+      },
+      "parent": "relation.structural",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.located_at",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "entity",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.physical",
+          "role_concept": "role.subject",
+          "description": "The entity whose contextual relationship is being asserted."
+        },
+        {
+          "label": "location",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "sumo.object",
+          "role_concept": "role.object",
+          "description": "The entity to which the asserted contextual relationship is directed."
+        }
+      ],
+      "subjects": [
+        "sumo.physical",
+        "sumo.object"
+      ],
+      "views": [
+        {
+          "name": "get_entity",
+          "inputs": [
+            "location"
+          ],
+          "outputs": [
+            "entity"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_location",
+          "inputs": [
+            "entity"
+          ],
+          "outputs": [
+            "location"
+          ],
+          "output_arity": "list0"
+        }
+      ]
+    },
+    {
+      "key": "rel.training_uses_data",
+      "name": "TRAINING_USES_DATA",
+      "kind": "relation_type",
+      "definition": "A learning process uses an information item as training input; evaluation-only use does not meet this predicate.",
+      "aliases": {
+        "en": [
+          "training uses data"
+        ],
+        "ru": [
+          "обучается на данных"
+        ]
+      },
+      "parent": "rel.uses_input",
+      "source": {
+        "source": "evertree",
+        "source_id": "rel.training_uses_data",
+        "revision": "1.0.0"
+      },
+      "adaptation": null,
+      "examples": [],
+      "counterexamples": [],
+      "links": [],
+      "signature": [
+        {
+          "label": "training",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.learning_process",
+          "role_concept": "role.process",
+          "description": "The unfolding activity whose participants, implementation or dependencies are described."
+        },
+        {
+          "label": "data",
+          "value_type": "node",
+          "arity": "one",
+          "value_concept": "local.information_content",
+          "role_concept": "role.input",
+          "description": "A resource or information item consumed or consulted by a process."
+        }
+      ],
+      "subjects": [
+        "local.learning_process",
+        "local.information_content"
+      ],
+      "views": [
+        {
+          "name": "get_training",
+          "inputs": [
+            "data"
+          ],
+          "outputs": [
+            "training"
+          ],
+          "output_arity": "list0"
+        },
+        {
+          "name": "get_data",
+          "inputs": [
+            "training"
+          ],
+          "outputs": [
+            "data"
+          ],
+          "output_arity": "list0"
+        }
+      ],
+      "specialization": {
+        "parent": "rel.uses_input",
+        "roles": {
+          "process": "training",
+          "input": "data"
+        },
+        "entailment": "Training input use entails process input use with the same provenance and qualifications; it does not imply an independent second fact."
+      }
+    }
+  ]
+}

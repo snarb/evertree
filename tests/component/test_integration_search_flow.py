@@ -1,6 +1,8 @@
 """Graph navigation after retrieval uses real structural links and projected reads."""
 
-from evertree.processes.semantic_processing.knowledge_integration._exec import _describe_for_model
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+    _describe_for_model,
+)
 from tests.support.pump_search import seed_pump_history
 from tests.support.semantics import context, semantic_world
 

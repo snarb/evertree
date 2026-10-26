@@ -1,0 +1,264 @@
+{
+  "evaluation_kind": "curated_structural_routes",
+  "limitations": "These independent authored intentions test representation distinctions and traversable routes; they do not measure LLM navigation, curriculum completeness or task prevalence.",
+  "scenarios": [
+    {
+      "id": "world-math-equation",
+      "intent": "Find the symbolic equality with unknown variables whose admissible values must be determined.",
+      "target": "local.algebraic_equation",
+      "not_targets": [
+        "local.theorem",
+        "local.numeral"
+      ],
+      "expected_ancestors": [
+        "local.mathematical_expression"
+      ]
+    },
+    {
+      "id": "world-math-number-representation",
+      "intent": "Find a notation used to write a number, independently of the number itself.",
+      "target": "local.numeral",
+      "not_targets": [
+        "sumo.number",
+        "local.mathematical_variable"
+      ],
+      "expected_ancestors": [
+        "local.mathematical_expression"
+      ]
+    },
+    {
+      "id": "world-math-circle-boundary",
+      "intent": "Find the plane geometric boundary at a fixed distance from a center.",
+      "target": "local.circle",
+      "not_targets": [
+        "local.disk",
+        "local.sphere"
+      ],
+      "expected_ancestors": [
+        "local.geometric_figure"
+      ]
+    },
+    {
+      "id": "world-physics-energy-motion",
+      "intent": "Find the physical quantity representing energy associated with motion.",
+      "target": "local.kinetic_energy",
+      "not_targets": [
+        "local.velocity",
+        "local.potential_energy"
+      ],
+      "expected_ancestors": [
+        "local.energy",
+        "sumo.physical_quantity"
+      ]
+    },
+    {
+      "id": "world-physics-reflected-light",
+      "intent": "Find the physical process in which incident light returns from a surface.",
+      "target": "local.light_reflection",
+      "not_targets": [
+        "local.reflection_process",
+        "local.light_refraction"
+      ],
+      "expected_ancestors": [
+        "sumo.process"
+      ]
+    },
+    {
+      "id": "world-chemistry-element-category",
+      "intent": "Find the category of atoms sharing a proton number rather than a physical material sample.",
+      "target": "local.chemical_element",
+      "not_targets": [
+        "sumo.atom",
+        "sumo.elemental_substance"
+      ],
+      "expected_ancestors": [
+        "sumo.set_or_class"
+      ]
+    },
+    {
+      "id": "world-chemistry-reaction-description",
+      "intent": "Find the symbolic description of reactants, products and stoichiometry.",
+      "target": "local.chemical_equation",
+      "not_targets": [
+        "local.chemical_reaction",
+        "local.chemical_formula"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "world-biology-population",
+      "intent": "Find a geographically and temporally scoped collection of organisms of one species.",
+      "target": "local.population",
+      "not_targets": [
+        "local.biological_species",
+        "local.biological_community"
+      ],
+      "expected_ancestors": [
+        "sumo.collection"
+      ]
+    },
+    {
+      "id": "world-biology-energy-organelle",
+      "intent": "Find the eukaryotic organelle involved in cellular energy conversion.",
+      "target": "local.mitochondrion",
+      "not_targets": [
+        "local.cell_nucleus",
+        "local.cellular_respiration"
+      ],
+      "expected_ancestors": [
+        "local.organelle",
+        "local.biological_structure"
+      ]
+    },
+    {
+      "id": "world-geography-climate",
+      "intent": "Find a long-period statistical characterization of regional weather.",
+      "target": "local.climate_description",
+      "not_targets": [
+        "local.weather_state",
+        "local.atmosphere"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "world-geography-glacier-body",
+      "intent": "Find the persistent moving body of accumulated land ice.",
+      "target": "local.glacier",
+      "not_targets": [
+        "sumo.land_area",
+        "local.phase_transition"
+      ],
+      "expected_ancestors": [
+        "sumo.corpuscular_object"
+      ]
+    },
+    {
+      "id": "world-psychology-emotion",
+      "intent": "Find a scoped emotional response to a perceived threat.",
+      "target": "local.fear",
+      "not_targets": [
+        "local.personality_trait",
+        "local.motivation_state"
+      ],
+      "expected_ancestors": [
+        "local.emotion",
+        "local.mental_state",
+        "local.state"
+      ]
+    },
+    {
+      "id": "world-psychology-trait",
+      "intent": "Find a relatively enduring disposition in thought, feeling or behavior.",
+      "target": "local.personality_trait",
+      "not_targets": [
+        "local.emotion",
+        "local.mood"
+      ],
+      "expected_ancestors": [
+        "sumo.attribute"
+      ]
+    },
+    {
+      "id": "world-law-contract",
+      "intent": "Find an agreement expressing legally relevant commitments under a jurisdiction.",
+      "target": "local.contract",
+      "not_targets": [
+        "local.legal_obligation",
+        "local.purchase"
+      ],
+      "expected_ancestors": [
+        "local.legal_instrument",
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "world-law-guardian-role",
+      "intent": "Find a legally established contextual role for decisions or duties concerning another person.",
+      "target": "local.legal_guardian_role",
+      "not_targets": [
+        "local.biological_parent_role",
+        "local.human"
+      ],
+      "expected_ancestors": [
+        "local.role"
+      ]
+    },
+    {
+      "id": "world-economy-payment",
+      "intent": "Find the transaction transferring monetary value to discharge an obligation.",
+      "target": "local.payment",
+      "not_targets": [
+        "local.price",
+        "local.purchase"
+      ],
+      "expected_ancestors": [
+        "local.economic_transaction",
+        "sumo.social_interaction"
+      ]
+    },
+    {
+      "id": "world-economy-price",
+      "intent": "Find the monetary amount offered or agreed for an item under transaction conditions.",
+      "target": "local.price",
+      "not_targets": [
+        "local.cost",
+        "local.payment"
+      ],
+      "expected_ancestors": [
+        "sumo.constant_quantity"
+      ]
+    },
+    {
+      "id": "world-news-report",
+      "intent": "Find the published report of selected news claims with attributable sources and editorial framing.",
+      "target": "local.news_report",
+      "not_targets": [
+        "local.public_event",
+        "local.claim"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "world-daily-meal",
+      "intent": "Find an organized episode of eating, including a person eating alone.",
+      "target": "local.meal",
+      "not_targets": [
+        "local.food",
+        "local.cooking"
+      ],
+      "expected_ancestors": [
+        "sumo.intentional_process"
+      ]
+    },
+    {
+      "id": "world-daily-schedule",
+      "intent": "Find an arrangement assigning activities and commitments to times.",
+      "target": "local.schedule",
+      "not_targets": [
+        "local.appointment",
+        "sumo.process"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    },
+    {
+      "id": "world-institution-vs-organization",
+      "intent": "Find the enduring system of social rules and practices rather than a particular staffed organization.",
+      "target": "local.social_institution",
+      "not_targets": [
+        "local.organization",
+        "local.community"
+      ],
+      "expected_ancestors": [
+        "local.information_content"
+      ]
+    }
+  ]
+}

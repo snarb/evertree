@@ -12,7 +12,7 @@ from evertree.core.evaluation.contracts import exact_json_equal
 from evertree.core.evaluation.scoring import evaluate_prediction
 from evertree.core.evaluation.store import EvaluationStore
 from evertree.core.graph.store import GraphStore
-from evertree.core.graph.types import GraphDelta
+from evertree.core.graph.types import GraphDelta, RelationInstance, node_from_dict
 from evertree.core.learning.contracts import LearningCredit, LearningObjective, LearningSignal
 from evertree.core.learning.coordinator import LearningCoordinator
 from evertree.core.learning.declaration import LearningDeclaration
@@ -121,6 +121,7 @@ class CoreOperations:
     ):
         """Apply a provenance-backed semantic delta while protecting lifecycle and prediction records."""
         protect_prediction_delta(self.graph, delta)
+        self._protect_structural_edges(delta)
         binding = self.graph.find("PROGRAM_FOR_PROCESS")
         if binding is not None:
 
@@ -187,6 +188,44 @@ class CoreOperations:
             return result
         finally:
             self.memory.finish_run(run)
+
+    def _protect_structural_edges(self, delta):
+        """Apply identity and lifecycle protection to both old and proposed edge endpoints."""
+        own = {
+            node.id
+            for node in self.graph.nodes()
+            if node.kind in {"program", "process"} or node.properties.get("process")
+        }
+        protected = own | set(self.protected_nodes)
+        candidates = list(delta.creates)
+        for update in delta.updates:
+            original = self.graph.get(update.id)
+            candidates.extend(
+                (original, node_from_dict({**json_value(original), **json_value(update.changes)}))
+            )
+        candidates.extend(self.graph.get(identity) for identity in delta.deletes)
+        for node in candidates:
+            if not isinstance(node, RelationInstance):
+                continue
+            try:
+                name = self.graph.get(node.relation_type).name
+            except KeyError:
+                continue  # Graph validation resolves newly declared predicates.
+            args = node.args
+            blocked = (
+                name == "SUBTYPE_OF"
+                and (args.get("type") in protected or args.get("supertype") in own)
+                or name == "IDENTITY_TYPE"
+                and args.get("instance") in protected
+                or name == "STATE_IDENTITY"
+                and args.get("instance") in protected
+                or name == "PART_WHOLE"
+                and any(value in protected for value in args.values())
+            )
+            if blocked:
+                raise PermissionError(
+                    "Protected Self/Program structure requires its authorized lifecycle"
+                )
 
     def _signal(self, data) -> LearningSignal:
         signal = LearningSignal.from_dict(data)

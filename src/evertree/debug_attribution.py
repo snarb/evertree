@@ -35,8 +35,10 @@ from evertree.core.semantics.tools import READ_TOOLS, TOOLS
 from evertree.core.values import json_value
 from evertree.debug_evidence_assessment import EvidenceSession
 from evertree.debug_integration import load_debug_environment
-from evertree.processes.learning.evidence_assessment._exec import run as assess
-from evertree.processes.semantic_processing.knowledge_integration._exec import run as integrate
+from evertree.processes.self_learning.self_evidence_assessment._exec import run as assess
+from evertree.processes.self_semantic_processing.self_knowledge_integration._exec import (
+    run as integrate,
+)
 
 OBSERVATIONS = (
     "Собака Джек весит 8 кг.",
