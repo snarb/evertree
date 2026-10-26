@@ -69,20 +69,8 @@ def origin_target(origin: str) -> str:
     return f"origin:{origin}"
 
 
-def apply_binary(
-    beliefs: BeliefStore,
-    memory: TraceStore,
-    target: str,
-    prior: float | None,
-    assign: list | tuple,
-    retract: list | tuple,
-    created_by: Any = None,
-) -> dict:
-    """Register a binary target if new, then retract and assign assessed contributions.
-
-    Inputs are validated before any change, so a rejected record leaves beliefs unchanged.
-    Each assignment keeps its basis and retains its source for the target.
-    """
+def binary_items(memory: TraceStore, assign: list | tuple, retract: list | tuple) -> tuple:
+    """Validate binary assign and retract items; return (assignments, retractions)."""
     retractions = [_reference(item) for item in retract]
     assignments = []
     for item in assign:
@@ -105,6 +93,24 @@ def apply_binary(
         )
     if any(reference is None for reference in retractions):
         raise ContractError("Retraction needs a source reference")
+    return assignments, retractions
+
+
+def apply_binary(
+    beliefs: BeliefStore,
+    memory: TraceStore,
+    target: str,
+    prior: float | None,
+    assign: list | tuple,
+    retract: list | tuple,
+    created_by: Any = None,
+) -> dict:
+    """Register a binary target if new, then retract and assign assessed contributions.
+
+    Inputs are validated before any change, so a rejected record leaves beliefs unchanged.
+    Each assignment keeps its basis and retains its source for the target.
+    """
+    assignments, retractions = binary_items(memory, assign, retract)
     try:
         beliefs.target(target)
     except KeyError:
@@ -626,11 +632,12 @@ class GraphEvidence:
         return {"element": element, **result}
 
     def withdraw(self, source_ref: Any, by: Any, keep: list | tuple = ()) -> dict:
-        """Record that a later source withdrew an earlier one and retract it everywhere.
+        """Record that a later source withdrew an earlier one and retract its graph evidence.
 
         A withdrawn source gives no new evidence, and its contributions are retracted from
-        every target except those in keep, where the assessment judged that the
-        correction does not concern them.
+        every graph, origin and scope target except those in keep, where the assessment
+        judged that the correction does not concern them. Program and operator targets
+        are left to Program assessment, which judges whether the correction concerns a run.
         """
         reference, withdrawer = _reference(source_ref), _reference(by)
         if reference is None or withdrawer is None:
@@ -640,7 +647,7 @@ class GraphEvidence:
         self.beliefs.withdraw(reference, withdrawer)
         retracted = []
         for target in self.beliefs.targets_of(reference):
-            if target not in keep:
+            if target not in keep and not target.startswith(("program:", "op:")):
                 self.beliefs.retract(target, reference)
                 retracted.append(target)
         return {

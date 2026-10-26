@@ -89,6 +89,15 @@ class TraceStore:
         """Return stored trace events, including those awaiting final deletion."""
         return tuple(self._events.values())
 
+    def events_since(self, event_id: int) -> tuple[TraceEvent, ...]:
+        """Return stored events recorded after an event identity, in recording order."""
+        with self._lock:
+            return tuple(
+                self._events[identity]
+                for identity in range(max(event_id, 0) + 1, self._next_event)
+                if identity in self._events
+            )
+
     def get_run(self, run_id: int) -> ProgramRun:
         """Return a retained ProgramRun by identity."""
         return self._runs[run_id]

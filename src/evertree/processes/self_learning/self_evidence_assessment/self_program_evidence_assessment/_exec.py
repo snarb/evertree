@@ -3,11 +3,12 @@
 The target is (Program, revision): whether that revision reliably implements its
 intended behaviour (exec) or accurately describes its process (model). Each anchored
 operator use in the revision has its own target. Core pairs new user messages and
-observations of a task with its recent completed runs, which they may concern; outcomes
-recorded with outcome_of stay unseen for lifecycle evaluation. One model call judges the
-batch.
-Evidence goes first to the anchor whose output a source directly checks; the Program
-gets its own stance only when the source bears on the revision as a whole.
+observations of a task with recent completed runs of that task and of the task before
+it, which they may concern; outcomes recorded with outcome_of stay unseen for lifecycle
+evaluation. One model call judges the batch. Evidence goes first to the anchor whose
+output a source directly checks; the Program gets its own stance only when the source
+bears on the revision as a whole. Several runs of one revision share its targets, so a
+source keeps its most discriminating stance per target.
 
 Stances become likelihoods through the shared observation model, weakened by the
 source origin's reliability, which graph evidence assessment keeps current before this
@@ -23,7 +24,14 @@ from evertree.core.learning.api import (
     stale_program_evidence,
 )
 
-REASSESSMENT_ROUNDS = 3
+# Ranks a source's stances when several runs of one revision judge it for one target.
+DISCRIMINATION = {
+    "supports": 2,
+    "opposes": 2,
+    "weak_support": 1,
+    "weak_opposition": 1,
+    "non_discriminating": 0,
+}
 
 INSTRUCTIONS = """You assess evidence for the agent's Programs: code that implements or
 models a process. Each target is one revision of a Program, or one anchored operator in
@@ -34,9 +42,11 @@ Input fields:
   "observation" (a sensor reading, tool result or recorded outcome) or "document"; new
   marks experience not yet assessed; withdrawn_by marks a source its author later
   withdrew. Agent reasoning is never a source.
-- runs: completed Program runs the sources may concern, keyed R1, R2, …. program names
-  the Program, its process and roles; claim states what belief in this revision is
-  about; arguments and result are what the run received and returned; called_by names
+- runs: completed Program runs the sources may concern, keyed R1, R2, …, from the
+  sources' task or the task just before it (a comment on a delivered answer usually
+  opens a new task). program names the Program, its process and roles; claim states
+  what belief in this revision is about; arguments and result are what the run received
+  and returned; finished_at is when it finished; called_by names
   the batch run that called it; operators are the anchored steps the run executed,
   with recorded uses (arguments, output). sources lists the source keys that may
   concern this run; active lists sources already counted for the run's Program target
@@ -64,15 +74,14 @@ Stances:
 - non_discriminating: the source is about the run but would be equally expected whether
   the revision or step is reliable or not (an outcome caused by wrong arguments its
   caller passed, an external failure after the run);
-- not_addressed: the source does not bear on this target. An active source marked
-  not_addressed stops counting.
+- not_addressed: the source does not bear on this target.
 Attribute an outcome to the most direct run: when a called run returned the wrong value
 and its caller used it as intended, the evidence is about the called run, not the caller;
 a caller that misused a correct result is the one opposed. A run or step is responsible
 for the data it loads, looks up or returns: when that output is wrong or outdated for
 its purpose, the source opposes that run or step, even if the data it read was itself
-stale; only the arguments its caller passed are outside its responsibility. Judge what the source says
-about the result, including its conditions; wording that attributes it ("the user says
+stale; only the arguments its caller passed are outside its responsibility. Judge what
+the source says about the result, including its conditions; wording that attributes it ("the user says
 the answer was wrong") does not change what is assessed. A request, instruction or
 question in a source says nothing about a run: not_addressed. Agreement of wording is not
 evidence, and a later run repeating a result does not confirm it. Never use a withdrawn
@@ -155,6 +164,7 @@ def _for_model(batch):
                         "new_target",
                         "arguments",
                         "result",
+                        "finished_at",
                         "called_by",
                         "sources",
                         "active",
@@ -176,93 +186,89 @@ def _for_model(batch):
     }
 
 
-def _assess(entries, allowed, active, sources, reliability, withdrawn):
-    """Turn judged entries for one target into assign items and retracted references.
-
-    Only new sources linked to the run are judged; an active source changes only when a
-    new one withdraws it, so a later batch cannot drift an earlier judgement.
-    """
-    assign, retract = {}, {}
-    for entry in entries:
-        key, stance = entry["source"], entry["stance"]
-        if key not in allowed or key in withdrawn and key not in active:
-            continue
-        earlier = entry["withdraws"]
-        if earlier in active and earlier != key:
-            retract[earlier] = sources[earlier]["ref"]
-        if stance == "not_addressed":
-            if key in active:
-                retract[key] = sources[key]["ref"]
-            continue
-        root = None
-        if entry["repeats"] in sources and entry["repeats"] != key:
-            root = sources[entry["repeats"]]["ref"]
-        source = sources[key]
-        assign[key] = evidence_item(source, stance, reliability.get(source["origin"]), root)
-    for key in retract:
-        assign.pop(key, None)
-    return list(assign.values()), list(retract.values())
-
-
 def _plan(batch, judgement):
-    """Turn the model's judgement into per-target records, ignoring unknown keys."""
+    """Turn the model's judgement into per-target records, ignoring unknown keys.
+
+    Only new sources linked to a run are judged; an active source changes only when a new
+    one withdraws it, so a later batch cannot drift an earlier judgement. Runs of one
+    revision share its targets: each source keeps its most discriminating stance there.
+    """
     sources = {source["key"]: source for source in batch["sources"]}
     withdrawn = {key for key, source in sources.items() if source.get("withdrawn_by")}
-    reliability = batch["origins"]
     answers = {}
     for answer in judgement["runs"]:
         answers.setdefault(answer["run"], answer)
-    records, unresolved = [], []
+    judged, unresolved = {}, []
     for run in batch["runs"]:
         answer = answers.get(run["key"])
         if answer is None:
             continue
         if answer["unresolved"]:
             unresolved.append({"run": run["run"], "reason": answer["unresolved"]})
-        linked = set(run["sources"])
-        targets = [(run["target"], {entry["source"] for entry in run["active"]}, answer["program"])]
+        targets = [(run["target"], run["active"], answer["program"])]
         operators = {operator["op_id"]: operator for operator in run["operators"]}
-        seen = set()
-        for judged in answer["operators"]:
+        for item in answer["operators"]:
             # Unanchored implementation details receive no evidence of their own.
-            operator = operators.get(judged["op_id"])
-            if operator is None or judged["op_id"] in seen:
-                continue
-            seen.add(judged["op_id"])
-            active = {entry["source"] for entry in operator["active"]}
-            targets.append((operator["target"], active, judged["evidence"]))
+            operator = operators.get(item["op_id"])
+            if operator is not None:
+                targets.append((operator["target"], operator["active"], item["evidence"]))
         for target, active, entries in targets:
-            assign, retract = _assess(entries, linked, active, sources, reliability, withdrawn)
-            if assign or retract:
-                records.append({"target": target, "assign": assign, "retract": retract})
+            slot = judged.setdefault(
+                target,
+                {"active": {entry["source"] for entry in active}, "best": {}, "retract": {}},
+            )
+            for entry in entries:
+                key, stance = entry["source"], entry["stance"]
+                if key not in run["sources"] or key in withdrawn:
+                    continue
+                earlier = entry["withdraws"]
+                if earlier in slot["active"] and earlier != key:
+                    slot["retract"][earlier] = sources[earlier]["ref"]
+                best = slot["best"].get(key)
+                if stance != "not_addressed" and (
+                    best is None or DISCRIMINATION[stance] > DISCRIMINATION[best["stance"]]
+                ):
+                    slot["best"][key] = entry
+    records = []
+    for target, slot in judged.items():
+        assign = []
+        for key, entry in slot["best"].items():
+            root = None
+            if entry["repeats"] in sources and entry["repeats"] != key:
+                root = sources[entry["repeats"]]["ref"]
+            source = sources[key]
+            reliability = batch["origins"].get(source["origin"])
+            assign.append(evidence_item(source, entry["stance"], reliability, root))
+        retract = list(slot["retract"].values())
+        if assign or retract:
+            records.append({"target": target, "assign": assign, "retract": retract})
     return records, unresolved
 
 
 async def _reassess(ctx):
-    """Revise contributions whose origin reliability changed since they were judged."""
-    revised = []
-    for _ in range(REASSESSMENT_ROUNDS):
-        stale = await stale_program_evidence(ctx)
-        if not stale:
-            break
-        grouped = {}
-        for item in stale:
-            basis = item["basis"]
-            source = {"kind": basis["kind"], "origin": basis["origin"], "ref": item["source_ref"]}
-            evidence = evidence_item(
-                source, basis["stance"], item["reliability"], basis.get("dependency_root")
-            )
-            grouped.setdefault(item["target"], []).append(evidence)
-        records = [{"target": target, "assign": assign} for target, assign in grouped.items()]
-        revised.append(await record_program_evidence(ctx, None, records))
-    return revised
+    """Revise contributions whose origin reliability changed since they were judged.
+
+    Program evidence never changes an origin's reliability, so one pass suffices.
+    """
+    grouped = {}
+    for item in await stale_program_evidence(ctx):
+        basis = item["basis"]
+        source = {"kind": basis["kind"], "origin": basis["origin"], "ref": item["source_ref"]}
+        evidence = evidence_item(
+            source, basis["stance"], item["reliability"], basis.get("dependency_root")
+        )
+        grouped.setdefault(item["target"], []).append(evidence)
+    if not grouped:
+        return []
+    records = [{"target": target, "assign": assign} for target, assign in grouped.items()]
+    return (await record_program_evidence(ctx, None, records))["recorded"]
 
 
 async def run(ctx):
     """Assess one batch of runs that new experience may concern and record their evidence."""
     batch = await pending_program_evidence(ctx)
     records, unresolved = [], []
-    if batch["runs"] and any(source["new"] for source in batch["sources"]):
+    if batch["runs"]:
         judgement = await ask(ctx, instructions=INSTRUCTIONS, data=_for_model(batch), schema=SCHEMA)
         records, unresolved = _plan(batch, judgement["result"])
     recorded = await record_program_evidence(ctx, batch["through"], records)
