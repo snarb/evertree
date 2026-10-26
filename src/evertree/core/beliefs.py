@@ -41,17 +41,26 @@ def operator_target(program: int, op_id: str, revision: str) -> str:
     return f"op:{program}:{op_id}@{revision}"
 
 
+def behaviour_revision(program: Any) -> str | None:
+    """Return the revision a Program's belief targets name.
+
+    It is the last activated revision that changed behaviour: a revision that edits
+    only comments, such as Code Anchors, runs exactly as its base and keeps its evidence.
+    """
+    return program.properties.get("behaviour_revision") or program.properties.get("revision")
+
+
 def program_belief_target(graph: Any, node: Any) -> str | None:
     """Return the target of a Program's or operator's active revision, if it has one."""
     if node.kind == "program":
-        revision = node.properties.get("revision")
+        revision = behaviour_revision(node)
         return program_target(node.id, revision) if revision else None
     if node.kind == "operator":
         try:
             program = graph.get(node.properties["code_node"])
         except KeyError:
             return None
-        revision = program.properties.get("revision")
+        revision = behaviour_revision(program)
         return (
             operator_target(program.id, node.properties["local_id"], revision) if revision else None
         )

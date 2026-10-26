@@ -79,6 +79,13 @@ def check(state, expectation) -> str | None:
         changed = current != state["setup_revisions"][key]
         if changed != expectation["changed"]:
             return f"Revision changed={changed}, expected {expectation['changed']}"
+        if "behaviour_changed" in expectation:
+            program = state["programs"][str(state["names"][key])]
+            behaviour = program.get("behaviour_revision") or current
+            if (behaviour != state["setup_revisions"][key]) != expectation["behaviour_changed"]:
+                return (
+                    f"Behaviour revision {behaviour} against setup {state['setup_revisions'][key]}"
+                )
     elif kind == "choices":
         ids = {branch["id"] for branch in branches(state, expectation["program"])}
         count = sum(
@@ -267,7 +274,8 @@ def check(state, expectation) -> str | None:
         current = {
             item["op_id"]: item for item in state["operators"] if item["program"] == identity
         }
-        revision = state["programs"][str(identity)].get("revision")
+        program = state["programs"][str(identity)]
+        revision = program.get("behaviour_revision") or program.get("revision")
         setup = state["setup_operators"].get(expectation["program"], {})
         if "ops" in expectation and sorted(current) != sorted(expectation["ops"]):
             return f"Operators are {sorted(current)}"
@@ -284,8 +292,6 @@ def check(state, expectation) -> str | None:
         for op_id in expectation.get("kept", ()):
             if op_id not in current or current[op_id]["id"] != setup.get(op_id):
                 return f"Operator {op_id} did not keep its identity {setup.get(op_id)}"
-            if len(current[op_id]["revisions"]) < 2:
-                return f"Operator {op_id} lists only {current[op_id]['revisions']}"
         for op_id in expectation.get("new", ()):
             if op_id not in current or current[op_id]["id"] in setup.values():
                 return f"Operator {op_id} is not a new operator"

@@ -178,6 +178,7 @@ async def run(ctx, subject, property, valid_at, known_at, parameters):
         memory=world.memory,
         graph=world.graph,
         _run_map={},
+        _operator_seq={},
         tasks=SimpleNamespace(get=lambda _: task),
         _program_source=lambda spec: (tmp_path / "repository" / spec["git_path"]).read_text(),
     )

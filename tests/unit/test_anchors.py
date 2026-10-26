@@ -4,13 +4,7 @@ import inspect
 
 import pytest
 
-from evertree.core.anchors import (
-    AnchorResolver,
-    anchor_at,
-    instrument,
-    operator_changes,
-    parse_anchors,
-)
+from evertree.core.anchors import AnchorResolver, anchor_at, instrument, parse_anchors
 from evertree.core.graph.store import GraphStore
 from evertree.core.values import ContractError
 
@@ -41,12 +35,7 @@ def test_anchor_binds_described_statement_and_ignores_string_comments():
         "Sums price times quantity over the order lines.",
     )
     assert (subtotal.line, subtotal.statement_line, subtotal.end_line) == (2, 4, 6)
-    assert (guard.op_id, guard.kind, guard.statement_line, guard.end_line) == (
-        "free_shipping",
-        "If",
-        10,
-        11,
-    )
+    assert (guard.op_id, guard.statement_line, guard.end_line) == ("free_shipping", 10, 11)
     # A Core call made from any line of a multi-line statement belongs to its anchor.
     assert anchor_at((subtotal, guard), 5) is subtotal
     assert anchor_at((subtotal, guard), 11) is guard
@@ -63,6 +52,7 @@ def test_anchor_binds_described_statement_and_ignores_string_comments():
         ("# et:op=a\n# Counts.\n\nx = 1\n", "follow the description"),
         ("# et:op=a-b\n# Counts.\nx = 1\n", "identifier"),
         ("for i in []:\n    # et:op=a\n    # Skips.\n    continue\n", "no result"),
+        ('def run():\n    # et:op=a\n    # Documents.\n    """Doc."""\n', "no result"),
         ("# et:op=a\n# One.\nx = 1\n# et:op=a\n# Two.\ny = 2\n", "twice"),
     ],
 )
@@ -98,13 +88,13 @@ def test_operator_identity_follows_op_id_across_revisions():
 
 
 def test_renamed_anchor_is_a_deletion_and_a_creation():
-    old = parse("# et:op=a\n# Counts.\nx = 1\n")
-    new = parse("# et:op=b\n# Counts.\nx = 1\n")
     graph = GraphStore()
-    AnchorResolver(graph).sync(4, old, "1" * 40, provenance="one")
-    creates, updates, deletes = operator_changes(AnchorResolver(graph).operators(4), new, "2" * 40)
-    assert [anchor.op_id for anchor, _ in creates] == ["b"]
-    assert not updates and [node.properties["local_id"] for node in deletes] == ["a"]
+    resolver = AnchorResolver(graph)
+    resolver.sync(4, parse("# et:op=a\n# Counts.\nx = 1\n"), "1" * 40, provenance="one")
+    old = resolver.resolve_operator(4, "a")
+    delta = resolver.sync(4, parse("# et:op=b\n# Counts.\nx = 1\n"), "2" * 40, provenance="two")
+    assert [node.name for node in delta.creates] == ["op:4:b"]
+    assert not delta.updates and delta.deletes == (old.id,)
 
 
 def run_instrumented(source, *arguments, uses=None):
@@ -186,3 +176,35 @@ async def run():
     result, uses = run_instrumented(source)
     assert result == {"result": 7, "feedback": None}
     assert uses == [("wait", "completed", 7), ("answer", "completed", result)]
+
+
+def test_one_line_compound_statement_records_one_use():
+    source = """\
+def run(x):
+    y = 0
+    # et:op=guard
+    # Decides whether x is positive.
+    if x > 0: y = 1
+    return {"result": y, "feedback": None}
+"""
+    result, uses = run_instrumented(source, 5)
+    assert result["result"] == 1 and uses == [("guard", "completed", True)]
+
+
+def test_augmented_item_target_is_not_evaluated_twice():
+    source = """\
+calls = []
+
+def key():
+    calls.append(1)
+    return "n"
+
+def run():
+    counts = {"n": 1}
+    # et:op=bump
+    # Increments the counter.
+    counts[key()] += 1
+    return {"result": [counts["n"], len(calls)], "feedback": None}
+"""
+    result, uses = run_instrumented(source)
+    assert result["result"] == [2, 1] and uses == [("bump", "completed", None)]

@@ -49,6 +49,8 @@ class PersistenceMixin:
         self._inputs: dict[str, list[dict]] = {}
         self._sessions: dict[str, dict] = {}
         self._run_map: dict[str, int] = {}
+        # Highest recorded operator use per running worker run.
+        self._operator_seq: dict[str, int] = {}
         self._seen_inputs: dict[str, str] = {}
         self._protected_nodes: set[int] = set()
         self._evaluation_bindings: dict[str, dict] = {}
@@ -246,6 +248,7 @@ class PersistenceMixin:
             "inputs": self._inputs,
             "sessions": self._sessions,
             "run_map": self._run_map,
+            "operator_seq": self._operator_seq,
             "seen_inputs": self._seen_inputs,
             "protected_nodes": sorted(self._protected_nodes),
             "results": self._results,
@@ -290,6 +293,7 @@ class PersistenceMixin:
             "inputs",
             "sessions",
             "run_map",
+            "operator_seq",
             "seen_inputs",
             "results",
             "evaluation_bindings",

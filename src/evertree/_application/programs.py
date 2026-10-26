@@ -22,6 +22,7 @@ from evertree.core.runtime.controller import ProgramSpec
 from evertree.core.runtime.repository import ProgramFailed, _git
 
 from ..core.anchors import AnchorResolver, parse_anchors
+from ..core.beliefs import behaviour_revision
 from ..core.datasets import EvaluationCase, thaw_json, validate_holdout
 from ..core.learning.declaration import read_learning
 from ..core.memory.types import TraceOutputRef
@@ -137,13 +138,16 @@ class ProgramsMixin:
             if program_active(node):
                 source = self._program_source(dict(node.properties))
                 self._install_learning(node, source, node.properties["revision"])
-                self._sync_operators(node, source, node.properties["revision"])
+                self._sync_operators(
+                    node, source, node.properties["revision"], behaviour_revision(node)
+                )
 
-    def _sync_operators(self, node, source, revision, *, provenance=None):
+    def _sync_operators(self, node, source, revision, behaviour, *, provenance=None):
         """Make the Program's operator nodes match the Code Anchors of its active revision.
 
         An anchor removed from the code is removed from the graph; the statement it
-        marked stays an ordinary implementation detail.
+        marked stays an ordinary implementation detail. Operators list the behaviour
+        revisions they are anchored in, the revisions their belief targets name.
         """
         anchors = parse_anchors(
             source,
@@ -158,7 +162,7 @@ class ProgramsMixin:
             provenance = self._lifecycle_event(
                 "install_operators", {"program": node.id, "revision": revision}
             )
-        resolver.sync(node.id, anchors, revision, provenance=provenance)
+        resolver.sync(node.id, anchors, behaviour, provenance=provenance)
         self.memory.retain(provenance, "graph:" + str(node.id))
 
     def _operators(self, program_id):
@@ -470,7 +474,7 @@ class ProgramsMixin:
                     event.get("arguments", {}),
                     run_mode=event.get("run_mode", "live"),
                     caller_event=caller.id if caller else None,
-                    program_revision=node.properties.get("revision"),
+                    program_revision=behaviour_revision(node),
                     task_id=event.get("task_id"),
                 )
                 self._run_map[identity] = run.id
@@ -480,14 +484,14 @@ class ProgramsMixin:
             run = (
                 self.memory.get_run(self._run_map[identity]) if identity in self._run_map else None
             )
-            # Recovery replays a workflow's statements; each use is recorded once.
-            seen = self.__dict__.setdefault("_operator_uses", {})
+            # Recovery replays a workflow's statements in order from the first; the saved
+            # high-water mark belongs to the same snapshot as the uses it counts.
             if (
                 run is not None
                 and run.status == "running"
-                and event["seq"] not in seen.get(run.id, ())
+                and event["seq"] > self._operator_seq.get(identity, 0)
             ):
-                seen.setdefault(run.id, set()).add(event["seq"])
+                self._operator_seq[identity] = event["seq"]
                 name = f"op:{run.program}:{event['anchor']}"
                 node = self.graph.find(name)
                 self.memory.record(
@@ -510,7 +514,7 @@ class ProgramsMixin:
                     self.memory.finish_run(
                         run, status="completed" if kind == "run_finished" else "failed"
                     )
-                    self.__dict__.get("_operator_uses", {}).pop(run.id, None)
+                    self._operator_seq.pop(identity, None)
                 if kind == "run_finished":
                     product = event.get("result", {}).get("result")
                     slug = self.graph.get(run.program).properties.get("slug")
@@ -546,6 +550,12 @@ class ProgramsMixin:
         role = node.properties["role"]
         process = self.graph.get(node.properties["process"])
         displaced = process.properties.get("active_" + role)
+        # A comment-only revision of the active code keeps the evidence of the code it runs.
+        behaviour = (
+            behaviour_revision(node)
+            if displaced == node.id and self.lifecycle.preserves_behaviour(branch.id)
+            else revision
+        )
         run = self.memory.start_run("EvaluationChoice", revision, {"candidate": branch.id})
         event = self.memory.record(
             run,
@@ -559,6 +569,7 @@ class ProgramsMixin:
                     "properties": {
                         **node.properties,
                         "revision": revision,
+                        "behaviour_revision": behaviour,
                         "lifecycle_status": "active",
                     }
                 },
@@ -585,7 +596,9 @@ class ProgramsMixin:
             self.learning.release(str(displaced))
         source = self._program_source({**node.properties, "revision": revision})
         self._install_learning(node, source, revision)
-        self._sync_operators(node, source, revision, provenance=self.memory.output_ref(event))
+        self._sync_operators(
+            node, source, revision, behaviour, provenance=self.memory.output_ref(event)
+        )
 
     def bind_evaluation(
         self,

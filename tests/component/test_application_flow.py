@@ -262,3 +262,35 @@ async def test_user_input_exposes_stable_integration_source_across_cycles(app):
         assert '"source_ref"' in json.dumps(context)
     ref = app._inputs[next(iter(app._inputs))][0]["source_ref"]
     assert app.memory.resolve(TraceOutputRef(**ref))["content"] == "Remember that cats are animals"
+
+
+async def test_replayed_operator_uses_are_recorded_once_after_restore(app):
+    """A recovered workflow re-sends its uses from seq 1; the saved high-water mark drops repeats."""
+    from evertree.core.anchors import AnchorResolver, CodeAnchor
+
+    program = next(node for node in app.graph.nodes(kind="program"))
+    anchor = CodeAnchor(program.id, "step", program.properties["git_path"], "0" * 40, 1, "Step.")
+    AnchorResolver(app.graph).sync(program.id, (anchor,), "0" * 40, provenance="lifecycle")
+    task = app.tasks.create_task("Run a Program")
+    spec = {"program_id": program.id, "git_path": program.properties["git_path"]}
+    spec.update(revision="0" * 40, entrypoint="run", role="exec", meta=False)
+
+    def use(seq, output):
+        return {"type": "operator", "run_id": "w", "anchor": "step", "seq": seq, "output": output}
+
+    await app._runtime_trace(
+        {"type": "run_started", "run_id": "w", "task_id": task.id, "program": spec}
+    )
+    for seq in (1, 2):
+        await app._runtime_trace({**use(seq, seq), "status": "completed"})
+    saved = json.loads(json.dumps(app._operator_seq))
+    app._operator_seq = saved
+    for seq in (1, 2, 3):
+        await app._runtime_trace({**use(seq, seq), "status": "completed"})
+    operator = app.graph.find(f"op:{program.id}:step")
+    run = app._run_map["w"]
+    assert [
+        event.output
+        for event in app.memory.events
+        if event.program_run == run and event.operator == operator.id
+    ] == [1, 2, 3]

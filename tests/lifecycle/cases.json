@@ -4648,7 +4648,8 @@
       {
         "kind": "revision",
         "program": "ship",
-        "changed": true
+        "changed": true,
+        "behaviour_changed": true
       },
       {
         "kind": "choices",
@@ -4842,7 +4843,8 @@
       {
         "kind": "revision",
         "program": "parcel",
-        "changed": true
+        "changed": true,
+        "behaviour_changed": false
       },
       {
         "kind": "choices",

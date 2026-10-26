@@ -49,7 +49,6 @@ class CodeAnchor:
     description: str = ""
     statement_line: int = 0
     end_line: int = 0
-    kind: str = ""
 
     @property
     def concept_name(self) -> str:
@@ -117,7 +116,9 @@ def parse_anchors(
         statement = statements.get(line + 2)
         if statement is None:
             raise invalid("the anchored statement must follow the description line")
-        if isinstance(statement, _UNANCHORABLE):
+        if isinstance(statement, _UNANCHORABLE) or (
+            isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Constant)
+        ):
             raise invalid(f"{type(statement).__name__} has no result to anchor")
         anchors.append(
             CodeAnchor(
@@ -129,7 +130,6 @@ def parse_anchors(
                 description,
                 line + 2,
                 statement.end_lineno or line + 2,
-                type(statement).__name__,
             )
         )
     return tuple(anchors)
@@ -139,34 +139,6 @@ def anchor_at(anchors, source_line: int) -> CodeAnchor | None:
     """Return the innermost anchored statement whose lines contain a source line."""
     containing = [item for item in anchors if item.statement_line <= source_line <= item.end_line]
     return max(containing, key=lambda item: item.statement_line, default=None)
-
-
-def operator_changes(installed, anchors, revision: str):
-    """Compare a Program's operator nodes with the anchors of its next active revision.
-
-    Identity is the local op id: a moved or redescribed anchor keeps its node and
-    gains the revision; an id no longer present is deleted; a renamed id is a
-    deletion and a creation.
-    """
-    by_id = {node.properties["local_id"]: node for node in installed}
-    creates, updates = [], []
-    for anchor in anchors:
-        node = by_id.pop(anchor.op_id, None)
-        properties = {
-            "code_node": anchor.code_node_id,
-            "local_id": anchor.op_id,
-            "git_path": anchor.git_path,
-            "line": anchor.line,
-            "revision": revision,
-        }
-        if node is None:
-            creates.append((anchor, {**properties, "revisions": [revision]}))
-            continue
-        revisions = list(node.properties.get("revisions", ()))
-        if revision not in revisions:
-            revisions.append(revision)
-        updates.append((node, anchor, {**properties, "revisions": revisions}))
-    return creates, updates, list(by_id.values())
 
 
 class AnchorResolver:
@@ -184,26 +156,47 @@ class AnchorResolver:
         ]
 
     def sync(self, code_node_id: int, anchors, revision: str, *, provenance) -> GraphDelta:
-        """Make the Program's operator nodes match the anchors of its active revision."""
-        creates, updates, deletes = operator_changes(
-            self.operators(code_node_id), anchors, revision
-        )
-        delta = GraphDelta(
-            creates=tuple(
-                Node(
-                    self.graph.reserve_id(),
-                    anchor.concept_name,
-                    kind="operator",
-                    description=anchor.description,
-                    properties=properties,
+        """Make the Program's operator nodes match the anchors of its active revision.
+
+        Identity is the local op id: a moved or redescribed anchor keeps its node and
+        gains the revision; an id no longer present is deleted; a renamed id is a
+        deletion and a creation. revision is the Program's behaviour revision, the
+        one its belief targets name.
+        """
+        installed = {node.properties["local_id"]: node for node in self.operators(code_node_id)}
+        creates, updates = [], []
+        for anchor in anchors:
+            node = installed.pop(anchor.op_id, None)
+            revisions = list(node.properties["revisions"]) if node else []
+            if revision not in revisions:
+                revisions.append(revision)
+            properties = {
+                "code_node": anchor.code_node_id,
+                "local_id": anchor.op_id,
+                "git_path": anchor.git_path,
+                "line": anchor.line,
+                "revisions": revisions,
+            }
+            if node is None:
+                creates.append(
+                    Node(
+                        self.graph.reserve_id(),
+                        anchor.concept_name,
+                        kind="operator",
+                        description=anchor.description,
+                        properties=properties,
+                    )
                 )
-                for anchor, properties in creates
-            ),
-            updates=tuple(
-                NodeUpdate(node.id, {"description": anchor.description, "properties": properties})
-                for node, anchor, properties in updates
-            ),
-            deletes=tuple(node.id for node in deletes),
+            else:
+                updates.append(
+                    NodeUpdate(
+                        node.id, {"description": anchor.description, "properties": properties}
+                    )
+                )
+        delta = GraphDelta(
+            creates=tuple(creates),
+            updates=tuple(updates),
+            deletes=tuple(node.id for node in installed.values()),
         )
         if delta.creates or delta.updates or delta.deletes:
             self.graph.apply(delta, provenance=provenance)
@@ -219,6 +212,7 @@ class AnchorResolver:
 
 class _Instrument(ast.NodeTransformer):
     def __init__(self, anchored: dict[int, str]):
+        # Keyed by node identity: a one-line `if x: y = 1` starts two statements on one line.
         self.anchored = anchored
 
     def _call(self, hook, *arguments):
@@ -243,11 +237,8 @@ class _Instrument(ast.NodeTransformer):
         return ast.Try(body, [handler], [], [])
 
     def visit(self, node):
+        op_id = self.anchored.get(id(node))
         node = super().visit(node)
-        if not isinstance(node, ast.stmt):
-            return node
-        decorators = getattr(node, "decorator_list", ())
-        op_id = self.anchored.get(min([node.lineno, *(item.lineno for item in decorators)]))
         if op_id is None:
             return node
         replaced = self._replace(node, op_id)
@@ -266,7 +257,10 @@ class _Instrument(ast.NodeTransformer):
             node.value = self._use(op_id, node.value)
             return self._guarded(op_id, [node])
         if isinstance(node, ast.AugAssign):
-            target = ast.parse(ast.unparse(node.target), mode="eval").body
+            # Reading back an attribute or item target would repeat its side effects.
+            target = (
+                ast.Name(node.target.id, ast.Load()) if isinstance(node.target, ast.Name) else None
+            )
             return self._guarded(op_id, [node, ast.Expr(self._use(op_id, target))])
         if isinstance(node, (ast.If, ast.While)):
             node.test = self._use(op_id, node.test)
@@ -286,7 +280,8 @@ def instrument(source: str, anchors, filename: str):
     point at the committed file.
     """
     tree = ast.parse(source, filename=filename)
-    anchored = {anchor.statement_line: anchor.op_id for anchor in anchors}
+    statements = _statements(tree)
+    anchored = {id(statements[anchor.statement_line]): anchor.op_id for anchor in anchors}
     tree = _Instrument(anchored).visit(tree)
     ast.fix_missing_locations(tree)
     return compile(tree, filename, "exec")
