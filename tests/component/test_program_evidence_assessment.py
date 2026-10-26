@@ -33,7 +33,8 @@ class Judge:
     """Answer the Program judgement from rules keyed by Program name or (name, op_id).
 
     A rule is (source text, stance, options); options may name repeats or withdraws by
-    source text. Calls are kept, so a test can tell that no model call happened.
+    source text, and result limits the rule to runs whose result contains that text.
+    Calls are kept, so a test can tell that no model call happened.
     """
 
     def __init__(self, rules=None, *, fail=False):
@@ -41,12 +42,12 @@ class Judge:
         self.fail = fail
         self.batches = []
 
-    def _evidence(self, keys, rules):
+    def _evidence(self, keys, rules, card):
         evidence = []
         for text, stance, *options in rules:
-            if text not in keys:
-                continue
             extra = dict(options[0]) if options else {}
+            if text not in keys or extra.get("result", "") not in card["result"]:
+                continue
             evidence.append(
                 {
                     "source": keys[text],
@@ -68,7 +69,7 @@ class Judge:
         for item in batch["runs"]:
             name = item["program"]["name"]
             operators = [
-                {"op_id": op_id, "evidence": self._evidence(keys, rules)}
+                {"op_id": op_id, "evidence": self._evidence(keys, rules, item)}
                 for (program, op_id), rules in (
                     (key, value) for key, value in self.rules.items() if isinstance(key, tuple)
                 )
@@ -77,7 +78,7 @@ class Judge:
             answers.append(
                 {
                     "run": item["key"],
-                    "program": self._evidence(keys, self.rules.get(name, ())),
+                    "program": self._evidence(keys, self.rules.get(name, ()), item),
                     "operators": operators,
                     "unresolved": None,
                 }
@@ -310,13 +311,23 @@ async def test_pea_05_new_revision_starts_without_the_old_revisions_evidence():
     finished(world, scheduler, {"pump": "N-1"}, {"window": "Sun 14:00"}, task="next")
     praise = "Sun 14:00 is right, thanks."
     message(world, praise, task="next")
-    judge = Judge({"PumpScheduler": [(praise, "supports"), (complaint, "opposes")]})
+    judge = Judge(
+        {
+            "PumpScheduler": [
+                (praise, "supports", {"result": "Sun"}),
+                (complaint, "opposes", {"result": "Sun"}),
+            ]
+        }
+    )
     await assess(world, judge)
 
-    # Only the new message is linked to the new run; the old complaint is not shown again.
-    [card] = judge.batches[0]["runs"]
-    assert card["new_target"] is True
-    assert [source["text"] for source in judge.batches[0]["sources"]] == [praise]
+    # The new task's run and the previous task's run are both shown, each with its own
+    # revision; the old complaint is not shown again as a new source.
+    old_card, new_card = judge.batches[0]["runs"]
+    assert old_card["new_target"] is False and new_card["new_target"] is True
+    sources = judge.batches[0]["sources"]
+    assert [source["text"] for source in sources if source["new"]] == [praise]
+    assert old_card["active"] and not new_card["active"]
     assert strength(world, program_target(scheduler, REVISION_A)) == old
     assert strength(world, program_target(scheduler, REVISION_B)) > 0.5
     current = describe(world.graph, world.attribution, scheduler)
@@ -368,7 +379,7 @@ async def test_pea_07_discredited_origin_revises_contributions_without_a_model_c
     )
     target = program_target(scheduler, REVISION_A)
     before = strength(world, target)
-    [calibration] = message(world, "Sensor T-7 is miscalibrated.", task="metrology")
+    [calibration] = message(world, "Sensor T-7 is miscalibrated.", task=None)
     GraphEvidence(world.graph, world.memory, world.beliefs).record_origin(
         "sensor:T-7",
         assign=[{"source_ref": calibration, "likelihoods": {"true": 0.15, "false": 0.85}}],
@@ -444,6 +455,65 @@ async def test_pea_10_irrelevant_sources_and_model_roles():
     assert "simulated" in card["claim"]
     assert result["assessed"] == []
     assert not world.beliefs.known(program_target(forecaster, REVISION_A))
+
+
+async def test_pea_12_verdict_in_the_next_task_reaches_the_delivered_runs():
+    """PEA-12: a delivered answer closes its task, so the verdict arrives in a new one."""
+    world, scheduler = scheduler_world()
+    finished(world, scheduler, {"pump": "N-1"}, {"window": "Mon 02:00"}, task="answered")
+    finished(world, scheduler, {"pump": "N-9"}, {"window": "Tue 03:00"}, task="older")
+    finished(world, scheduler, {"pump": "N-1"}, {"window": "Mon 02:00"}, task="answered")
+    text = "Your last plan for N-1 was wrong: Monday 02:00 is a working shift."
+    message(world, text, task="follow-up")
+    judge = Judge({"PumpScheduler": [(text, "opposes")]})
+
+    await assess(world, judge)
+
+    # Only the task that ran last before the message joins; an older task does not.
+    assert [card["result"] for card in judge.batches[0]["runs"]] == [
+        json.dumps({"window": "Mon 02:00"}),
+        json.dumps({"window": "Mon 02:00"}),
+    ]
+    assert strength(world, program_target(scheduler, REVISION_A)) < 0.5
+
+
+async def test_pea_13_runs_of_one_revision_keep_a_sources_strongest_stance():
+    """PEA-13: two runs share one target; a weaker stance from the later run does not win."""
+    world, scheduler = scheduler_world()
+    finished(world, scheduler, {"pump": "P1"}, {"text": "window A", "pump": "P1"})
+    finished(world, scheduler, {"pump": "P2"}, {"text": "window B", "pump": "P2"})
+    text = "The window for P1 was wrong."
+    message(world, text)
+    judge = Judge(
+        {
+            "PumpScheduler": [
+                (text, "opposes", {"result": "P1"}),
+                (text, "non_discriminating", {"result": "P2"}),
+            ]
+        }
+    )
+
+    await assess(world, judge)
+
+    # Cards show whole results, not only a text field.
+    assert '"pump": "P1"' in judge.batches[0]["runs"][0]["result"]
+    reading = world.beliefs.read(program_target(scheduler, REVISION_A))
+    assert reading.strength == pytest.approx(0.25) and reading.stats.evidence_count == 1
+
+
+async def test_pea_14_a_graph_withdrawal_leaves_program_evidence_to_program_assessment():
+    """PEA-14: correcting a fact in a message does not erase that message's verdict on a run."""
+    world, scheduler = scheduler_world()
+    finished(world, scheduler, {"pump": "N-1"}, {"window": "Sun 14:00"})
+    [complaint] = message(world, "Sun 14:00 is wrong; N-1 is in Kyiv.")
+    await assess(
+        world, Judge({"PumpScheduler": [("Sun 14:00 is wrong; N-1 is in Kyiv.", "opposes")]})
+    )
+    [correction] = message(world, "Sorry, N-1 is in Lviv, not Kyiv.", task=None)
+    result = GraphEvidence(world.graph, world.memory, world.beliefs).withdraw(complaint, correction)
+
+    assert result["retracted"] == []
+    assert strength(world, program_target(scheduler, REVISION_A)) < 0.5
 
 
 async def test_program_cursor_survives_a_snapshot():
@@ -529,3 +599,24 @@ async def test_pea_11_application_records_runs_and_assesses_them_end_to_end(tmp_
         assert recorded["target"] == program_target(node.id, node.properties["revision"])
         listed = next(item for item in agent.programs() if item["id"] == node.id)
         assert listed["belief"]["strength"] < 0.5 and listed["belief"]["evidence_count"] == 1
+
+
+async def test_record_rejects_a_bad_item_before_applying_earlier_records():
+    world, scheduler = scheduler_world()
+    lookup = program(world, "DutyLookup")
+    [source] = message(world, "Wrong window.")
+    good = {"source_ref": source, "likelihoods": {"true": 0.25, "false": 0.75}}
+    bad = {"source_ref": source, "likelihoods": {"true": 0.0, "false": 0.75}}
+    evidence = ProgramEvidence(world.graph, world.memory, world.beliefs)
+    with pytest.raises(ContractError, match="positive"):
+        evidence.record(
+            1,
+            [
+                {"target": program_target(scheduler, REVISION_A), "assign": [good]},
+                {"target": program_target(lookup, REVISION_A), "assign": [bad]},
+            ],
+        )
+    with pytest.raises(ContractError, match="registered Program"):
+        evidence.record(1, [{"target": program_target(9999, REVISION_A), "assign": []}])
+    assert not world.beliefs.known(program_target(scheduler, REVISION_A))
+    assert world.beliefs.cursor("programs") == 0

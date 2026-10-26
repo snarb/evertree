@@ -132,8 +132,9 @@ class EvidenceSession(DebugSession):
         task["specification"] = TaskSpecification(self.task).to_dict()
         self.evidence = []
         self.previous = {}
-        # Programs that program_run steps registered, by name, and whether the task
-        # statement was recorded with the first experience step.
+        # Programs that program_run steps registered, by name; and the task statement:
+        # False before it is recorded, its reference until the first experience step
+        # integrates it, then True.
         self.programs = {}
         self.task_recorded = False
         # Beliefs after each step, for case checks.
@@ -145,10 +146,9 @@ class EvidenceSession(DebugSession):
             "DebugInput", "debug", {}, run_mode="evaluation", task_id=self.metadata["task_id"]
         )
         refs = []
-        if not self.task_recorded:
+        if self.task_recorded is not True:
+            refs.append(self.task_recorded or self.record_task(run))
             self.task_recorded = True
-            event = self.memory.record(run, "user_input", output=self.task)
-            refs.append(json_value(self.memory.output_ref(event)))
         if step["kind"] == "user":
             event = self.memory.record(run, "user_input", output=step["content"])
         else:
@@ -170,10 +170,17 @@ class EvidenceSession(DebugSession):
             refs.append(json_value(note))
         return refs
 
+    def record_task(self, run):
+        """Record the task statement once, before the case's first step."""
+        event = self.memory.record(run, "user_input", output=self.task)
+        return json_value(self.memory.output_ref(event))
+
     def program(self, step):
         """Register a step's Program, or move it to the step's revision as activation would."""
-        name, revision = step["program"], step.get("revision", "a" * 40)
+        name = step["program"]
         identity = self.programs.get(name)
+        default = "a" * 40 if identity is None else self.graph.get(identity).properties["revision"]
+        revision = step.get("revision", default)
         if identity is None:
             roles = step.get("roles", ["exec"])
             process = Prototype(
@@ -374,6 +381,18 @@ class EvidenceSession(DebugSession):
             for index, step in enumerate(self.steps or STEPS):
                 if step["kind"] == "program_run":
                     print(f"\n=== Шаг {index + 1}: запуск {step['program']} ===", flush=True)
+                    if self.task_recorded is False:
+                        # The task is stated before its Programs run; it is integrated
+                        # with the first experience step.
+                        run = self.memory.start_run(
+                            "DebugInput",
+                            "debug",
+                            {},
+                            run_mode="evaluation",
+                            task_id=self.metadata["task_id"],
+                        )
+                        self.task_recorded = self.record_task(run)
+                        self.memory.finish_run(run)
                     self.record_program_run(step)
                     self.history.append(self.snapshot())
                     continue
