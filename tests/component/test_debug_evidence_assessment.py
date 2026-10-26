@@ -3,8 +3,14 @@
 import json
 
 from evertree import debug_evidence_assessment
-from evertree.debug_evidence_assessment import EvidenceSession
-from tests.support.application import completed, is_evidence_request, tool_events
+from evertree.debug_evidence_assessment import CASES, EvidenceSession
+from tests.evidence.checks import check
+from tests.support.application import (
+    completed,
+    is_evidence_request,
+    is_program_evidence_request,
+    tool_events,
+)
 from tests.support.semantics import EmptyIndex
 
 
@@ -70,13 +76,71 @@ async def test_debug_steps_integrate_then_assess_and_save_beliefs(tmp_path, monk
     [(element, belief)] = beliefs.items()
     assert belief["kind"] == "claim" and belief["evidence_count"] == 1
     assert 0.5 < belief["strength"] <= 0.75
-    assert session.evidence[0]["programs"]["status"] == "not_implemented"
+    # No Program ran in the debug task, so Program assessment has nothing to judge.
+    assert session.evidence[0]["programs"]["assessed"] == []
     assert [call["method"] for call in session.calls if "evidence" in call["method"]] == [
         "evidence.pending",
         "evidence.record",
         "evidence.stale",
         "evidence.pending_properties",
+        "evidence.pending_programs",
+        "evidence.record_programs",
+        "evidence.stale_programs",
     ]
     saved = json.loads((tmp_path / "beliefs.json").read_text())
     assert saved["assessed"] == {f"graph:{element}": session.graph.revision}
     assert "Убеждения после шага 1" in capsys.readouterr().out
+
+
+class ProgramCaseProvider(Provider):
+    """Integrate nothing, find no graph evidence, and oppose the anchored loading step."""
+
+    async def run(self, request_id, request, *, tool_handler=None):
+        self.requests.append(request)
+        if is_program_evidence_request(request):
+            batch = json.loads(request.prompt)
+            [card] = batch["runs"]
+            [source] = [item for item in batch["sources"] if "устарел" in item["text"]]
+            entry = {
+                "source": source["key"],
+                "stance": "opposes",
+                "repeats": None,
+                "withdraws": None,
+                "reason": "stale schedule",
+            }
+            answer = {
+                "run": card["key"],
+                "program": [],
+                "operators": [{"op_id": "load_schedule", "evidence": [entry]}],
+                "unresolved": None,
+            }
+            for event in completed({"runs": [answer]}):
+                yield event
+            return
+        if is_evidence_request(request):
+            for event in completed({"targets": [], "origins": [], "scopes": []}):
+                yield event
+            return
+        async for event in tool_events(request_id, request, tool_handler, []):
+            yield event
+
+
+async def test_program_case_checks_run_on_recorded_runs(tmp_path):
+    """A live Program case's steps and checks work offline with a scripted model."""
+    [case] = [
+        item
+        for item in json.loads(CASES.read_text(encoding="utf-8"))
+        if item["id"] == "program-anchored-step-wrong"
+    ]
+    session = EvidenceSession(tmp_path, task=case["task"], steps=case["steps"])
+    session.index = session.service.index = EmptyIndex()
+    session.provider = ProgramCaseProvider()
+    await session.run()
+    [first, second] = session.history
+    assert first["programs"] == {}
+    assert second["programs"][f"PumpScheduler:load_schedule@{'a' * 40}"]["strength"] < 0.5
+    assert [check(session.history, expectation) for expectation in case["expect"]] == [
+        None,
+        None,
+        None,
+    ]

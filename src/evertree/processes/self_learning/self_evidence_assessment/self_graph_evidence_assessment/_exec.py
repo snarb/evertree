@@ -4,8 +4,9 @@ One batch per run: Core selects elements changed since their last assessment, th
 primary sources and nearby elements; search adds elements the new experience may bear
 on without having changed them. One model call judges how each source bears on each
 element. Code converts that judgement into likelihoods through OBSERVATION_MODEL, an
-initial heuristic table to be trained on independently resolved cases, and Core keeps
-its influence under the shared cap for unsupported estimates.
+initial heuristic table shared with Program assessment (evertree.common.evidence_model)
+and to be trained on independently resolved cases, and Core keeps its influence under
+the shared cap for unsupported estimates.
 
 Each source has an origin (the user, a sensor, a journal) whose reliability is itself a
 binary belief: "reports from this origin are correct". Its neutral 0.5 means nothing is
@@ -22,6 +23,7 @@ source gets one assignment over all alternatives, and each member reads as its
 alternative's probability in the scope's Profile.
 """
 
+from evertree.common.evidence_model import PRESUMED_RELIABILITY, STANCES, evidence_item
 from evertree.common.structured import ask
 from evertree.core.learning.api import (
     pending_evidence,
@@ -34,27 +36,6 @@ from evertree.core.learning.api import (
     withdraw_evidence,
 )
 from evertree.core.semantics.api import call_semantic_search
-
-# (P(stance | element true), P(stance | element false)) by source kind and stance, for an
-# origin of presumed reliability; documents report what their authors state.
-OBSERVATION_MODEL = {
-    "user": {
-        "supports": (0.75, 0.25),
-        "weak_support": (0.6, 0.4),
-        "non_discriminating": (0.5, 0.5),
-        "weak_opposition": (0.4, 0.6),
-        "opposes": (0.25, 0.75),
-    },
-    "observation": {
-        "supports": (0.85, 0.15),
-        "weak_support": (0.65, 0.35),
-        "non_discriminating": (0.5, 0.5),
-        "weak_opposition": (0.35, 0.65),
-        "opposes": (0.15, 0.85),
-    },
-}
-OBSERVATION_MODEL["document"] = OBSERVATION_MODEL["observation"]
-STANCES = (*OBSERVATION_MODEL["user"], "not_addressed")
 
 PROPERTY_INSTRUCTIONS = """Assess the declared qualitative properties of recorded subjects.
 Each question has mutually exclusive, exhaustive class alternatives. The numeric reading,
@@ -125,14 +106,6 @@ PROPERTY_SCHEMA = {
     },
     "required": ["scopes"],
 }
-# Reliability of an origin nothing is known against. The table above presumes the
-# cooperative-source correctness of the belief model and applies unchanged at or above it;
-# an origin's reliability belief starts here unless its kind is doubtful. Under the
-# shared cap one unsupported prior and one contrary report only cancel, so a higher
-# starting point would make an origin impossible to discredit by a single report.
-PRESUMED_RELIABILITY = 0.5
-# Reliability at which an origin discriminates nothing, such as a sensor reported faulty.
-DISCREDITED_RELIABILITY = 0.25
 REASSESSMENT_ROUNDS = 3
 QUERY_CHARACTERS = 400
 
@@ -361,49 +334,6 @@ SCHEMA = {
 }
 
 
-def likelihoods(kind, stance, reliability):
-    """Table likelihoods of a stance, moved toward 0.5 for an origin of lower reliability.
-
-    At or above the presumed reliability the table applies unchanged; a discredited
-    origin discriminates nothing.
-    """
-    true, false = OBSERVATION_MODEL.get(kind, OBSERVATION_MODEL["user"])[stance]
-    if reliability is None:
-        reliability = PRESUMED_RELIABILITY
-    span = PRESUMED_RELIABILITY - DISCREDITED_RELIABILITY
-    weight = min(max((reliability - DISCREDITED_RELIABILITY) / span, 0.0), 1.0)
-    return {"true": 0.5 + (true - 0.5) * weight, "false": 0.5 + (false - 0.5) * weight}
-
-
-def _evidence(source, stance, reliability, dependency_root=None):
-    """One assign item with the basis that lets a reliability change revise it.
-
-    stance is one stance, or for a scope a mapping from alternative to stance; a scope
-    alternative's likelihood is P(source says this | that alternative is true).
-    """
-    basis = {
-        "kind": source["kind"],
-        "origin": source["origin"],
-        "reliability": reliability if reliability is not None else PRESUMED_RELIABILITY,
-    }
-    if isinstance(stance, dict):
-        basis["stances"] = stance
-        values = {
-            alternative: 0.5
-            if value == "not_addressed"
-            else likelihoods(source["kind"], value, reliability)["true"]
-            for alternative, value in stance.items()
-        }
-    else:
-        basis["stance"] = stance
-        values = likelihoods(source["kind"], stance, reliability)
-    item = {"source_ref": source["ref"], "likelihoods": values, "basis": basis}
-    if dependency_root is not None:
-        item["dependency_root"] = dependency_root
-        basis["dependency_root"] = dependency_root
-    return item
-
-
 def _for_model(batch):
     """Keep only decision-relevant fields; references stay in code."""
     return {
@@ -539,7 +469,7 @@ def _plan(batch, judgement, reliability, members=frozenset(), withdrawn=frozense
             if entry["repeats"] in sources and entry["repeats"] != key:
                 root = sources[entry["repeats"]]["ref"]
             source = sources[key]
-            assign[key] = _evidence(source, stance, reliability.get(source["origin"]), root)
+            assign[key] = evidence_item(source, stance, reliability.get(source["origin"]), root)
         for key in retract:
             assign.pop(key, None)
         if answer["unresolved"]:
@@ -609,7 +539,7 @@ def _plan_scopes(batch, judgement, reliability, withdrawn=frozenset()):
             if entry["repeats"] in sources and entry["repeats"] != key:
                 root = sources[entry["repeats"]]["ref"]
             source = sources[key]
-            assign[key] = _evidence(source, stances, reliability.get(source["origin"]), root)
+            assign[key] = evidence_item(source, stances, reliability.get(source["origin"]), root)
         for key in retract:
             assign.pop(key, None)
         prior = {str(item["alternative"]): item["probability"] for item in answer["prior"]}
@@ -669,7 +599,7 @@ async def _assess_origins(ctx, batch, judgement):
                 retract.append(withdrawn["ref"])
             if entry["stance"] in {"not_addressed", "non_discriminating"}:
                 continue
-            assign.append(_evidence(source, entry["stance"], reliability.get(source["origin"])))
+            assign.append(evidence_item(source, entry["stance"], reliability.get(source["origin"])))
         # A new origin is registered when first seen, so later experience about it finds
         # it; the user origin only once something is said about it. A prior never starts
         # above the presumption.
@@ -703,7 +633,9 @@ async def _reassess(ctx, revision):
             basis["reliability"] = item["reliability"]
             source = {"kind": basis["kind"], "origin": basis["origin"], "ref": item["source_ref"]}
             stance = basis.get("stances", basis.get("stance"))
-            evidence = _evidence(source, stance, item["reliability"], basis.get("dependency_root"))
+            evidence = evidence_item(
+                source, stance, item["reliability"], basis.get("dependency_root")
+            )
             key = (item.get("element"), item.get("origin"), item.get("scope"))
             grouped.setdefault(key, (item, []))[1].append(evidence)
         for (element, origin, scope), (item, assign) in grouped.items():
@@ -813,7 +745,7 @@ async def _assess_properties(ctx):
             reliability = prior["data"]["strength"] if prior is not None else None
             repeat = sources.get(evidence["repeats"])
             root = repeat["ref"] if repeat is not None else source["dependency_root"]
-            assign.append(_evidence(source, stances, reliability, root))
+            assign.append(evidence_item(source, stances, reliability, root))
         recorded.append(
             await record_property_evidence(
                 ctx,

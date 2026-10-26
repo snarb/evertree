@@ -10,6 +10,7 @@ from evertree.core.memory.types import TraceOutputRef
 
 from ..core.provider import LLMRequest, ToolDefinition
 from ..core.runtime.coordination import semantic_scope
+from ..core.semantics.reading import belief_summary
 from ..core.values import json_value
 from .prompts import CODING_INSTRUCTIONS, LIFECYCLE_TOOLS, TELEMETRY_OPERATORS, bounded_event
 
@@ -193,6 +194,7 @@ class ToolsMixin:
                             "alternative_to",
                         )
                     },
+                    "belief": belief_summary(self.graph, node),
                 }
                 for node in self.graph.nodes(kind="program")
             ]

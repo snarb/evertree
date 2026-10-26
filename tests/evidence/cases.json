@@ -2170,5 +2170,430 @@
         "why": "integration may record only one of the two locations; the scope is checked when both exist"
       }
     ]
+  },
+  {
+    "id": "program-result-disputed",
+    "covers": [
+      "PEA-01"
+    ],
+    "title": "The user disputes a Program's result",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "понедельник 02:00–04:00 UTC"
+        }
+      },
+      {
+        "kind": "user",
+        "content": "Окно в понедельник 02:00 для Н-4 не годится: в это время насос работает в ночную смену. Планировщик выбрал неправильно."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "strength": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "evidence_count": [
+          ">=",
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-result-confirmed",
+    "covers": [
+      "PEA-02"
+    ],
+    "title": "The user confirms a Program's result",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "воскресенье 14:00–16:00 UTC"
+        }
+      },
+      {
+        "kind": "user",
+        "content": "Обслуживание Н-4 в воскресенье в 14:00 прошло отлично: насос в это время действительно простаивал, окно выбрано верно."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "strength": [
+          ">",
+          0.5
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-anchored-step-wrong",
+    "covers": [
+      "PEA-03"
+    ],
+    "title": "One anchored step's output is wrong; the step, not the whole revision, loses belief",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "понедельник 02:00–04:00 UTC"
+        },
+        "anchors": [
+          [
+            "load_schedule",
+            {
+              "насос": "Н-4"
+            },
+            {
+              "простои": [
+                "понедельник 02:00–04:00 UTC"
+              ],
+              "источник": "график 2025 года"
+            }
+          ],
+          [
+            "choose_window",
+            {
+              "простои": [
+                "понедельник 02:00–04:00 UTC"
+              ]
+            },
+            {
+              "окно": "понедельник 02:00–04:00 UTC"
+            }
+          ]
+        ]
+      },
+      {
+        "kind": "user",
+        "content": "График работы Н-4, который ты загрузил, устарел: это график 2025 года, а с октября насос работает по понедельникам ночью, простоя в 02:00 нет. Окно из такого графика ты выбрал логично, проблема только в данных."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "op": "load_schedule",
+        "strength": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "op": "choose_window",
+        "strength": [
+          ">=",
+          0.45
+        ]
+      },
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "strength": [
+          ">=",
+          0.4
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-child-blamed",
+    "covers": [
+      "PEA-04"
+    ],
+    "title": "A called Program returned wrong data; the caller used it as intended",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "понедельник 02:00–04:00 UTC"
+        },
+        "calls": [
+          {
+            "kind": "program_run",
+            "program": "DutyLookup",
+            "description": "Возвращает интервалы простоя насоса из журнала смен.",
+            "process": "Чтение журнала смен насосов.",
+            "arguments": {
+              "насос": "Н-4"
+            },
+            "result": {
+              "простои": [
+                "понедельник 02:00–04:00 UTC"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "user",
+        "content": "Журнал смен выдал для Н-4 неверные простои: в понедельник в 02:00 насос работал. Планировщик просто взял то, что ему вернул журнал, к нему претензий нет."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "DutyLookup",
+        "strength": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "strength": [
+          ">=",
+          0.45
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-revision-improved",
+    "covers": [
+      "PEA-05"
+    ],
+    "title": "A disputed revision is improved; the new revision is judged on its own",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "понедельник 02:00–04:00 UTC"
+        }
+      },
+      {
+        "kind": "user",
+        "content": "Окно в понедельник 02:00 для Н-4 неверное: насос в это время работает. Планировщик ошибся."
+      },
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "воскресенье 14:00–16:00 UTC"
+        },
+        "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      {
+        "kind": "user",
+        "content": "Новое окно для Н-4, воскресенье 14:00, правильное: насос в это время простаивает."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "strength": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "change": [
+          2,
+          4
+        ],
+        "program": "PumpScheduler",
+        "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "strength": "same"
+      },
+      {
+        "at": 4,
+        "program": "PumpScheduler",
+        "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "strength": [
+          ">",
+          0.5
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-complaint-withdrawn",
+    "covers": [
+      "PEA-06"
+    ],
+    "title": "The user withdraws a complaint about a result",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "воскресенье 14:00–16:00 UTC"
+        }
+      },
+      {
+        "kind": "user",
+        "content": "Окно в воскресенье 14:00 для Н-4 неверное, насос тогда работает."
+      },
+      {
+        "kind": "user",
+        "content": "Извини, я перепутал насосы: для Н-4 окно в воскресенье 14:00 правильное, он в это время простаивает."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "strength": [
+          "<",
+          0.5
+        ]
+      },
+      {
+        "change": [
+          2,
+          3
+        ],
+        "program": "PumpScheduler",
+        "strength": "up"
+      },
+      {
+        "at": 3,
+        "program": "PumpScheduler",
+        "strength": [
+          ">=",
+          0.5
+        ]
+      }
+    ]
+  },
+  {
+    "id": "program-unrelated-message",
+    "covers": [
+      "PEA-10"
+    ],
+    "title": "An unrelated statement and an instruction say nothing about a run",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "PumpScheduler",
+        "description": "Выбирает окно обслуживания насоса по графику его работы: окно должно приходиться на простой насоса.",
+        "process": "Планирование окон обслуживания насосов.",
+        "arguments": {
+          "насос": "Н-4"
+        },
+        "result": {
+          "окно": "воскресенье 14:00–16:00 UTC"
+        }
+      },
+      {
+        "kind": "user",
+        "content": "Запомни: ответственный инженер по Н-4 — Петров. И напомни мне завтра про квартальный отчёт."
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "PumpScheduler",
+        "absent": true
+      }
+    ]
+  },
+  {
+    "id": "program-model-forecast-observed",
+    "covers": [
+      "PEA-10"
+    ],
+    "title": "A model Program's forecast is contradicted by a recorded observation",
+    "task": "Помоги спланировать обслуживание насосов участка: выбери окна обслуживания и учти мои замечания.",
+    "steps": [
+      {
+        "kind": "program_run",
+        "program": "LoadForecast",
+        "roles": [
+          "model"
+        ],
+        "description": "Прогнозирует среднюю нагрузку насоса за указанный день по журналу работы.",
+        "process": "Нагрузка насосов участка.",
+        "arguments": {
+          "насос": "Н-4",
+          "день": "2026-10-19"
+        },
+        "result": {
+          "нагрузка_процентов": 70
+        }
+      },
+      {
+        "kind": "observation",
+        "source_id": "sensor:N4-load",
+        "content": {
+          "насос": "Н-4",
+          "дата": "2026-10-19",
+          "средняя_нагрузка_процентов": 28
+        }
+      }
+    ],
+    "expect": [
+      {
+        "at": 2,
+        "program": "LoadForecast",
+        "strength": [
+          "<",
+          0.5
+        ]
+      }
+    ]
   }
 ]

@@ -140,6 +140,8 @@ meta ∈ Program.roles
   on other learnable agent mechanisms.
 ```
 
+Evidence about run results updates this belief through the [[Uncertainty and Belief Tracking in the World Model#MVP Program Evidence Assessment|Program evidence assessment]].
+
 #### Program as a Process-Transition Interface
 
 #topic_core
@@ -1179,7 +1181,7 @@ result BeliefData
 
 For an anchored policy call, operator belief concerns applying the selection mechanism at this point; confidence in estimates of consequences belongs to the results of the corresponding models. A policy does not need to calculate utility estimates for every candidate. A separate selection wrapper is not required for storing belief.
 
-Operator beliefs are updated through the shared evidence / learning lifecycle.
+Operator beliefs are updated through the shared evidence / learning lifecycle; the [[Uncertainty and Belief Tracking in the World Model#MVP Program Evidence Assessment|MVP]] assesses anchored uses together with their Program revision in one batch.
 
 ### OperatorConcept, Code Anchors, and AnchorResolver
 

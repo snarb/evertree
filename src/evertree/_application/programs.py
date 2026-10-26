@@ -35,6 +35,7 @@ from ..core.programs.layout import (
 )
 from ..core.programs.lifecycle import LifecycleError, ProgramLifecycleRuntime, git
 from ..core.provider import LLMRequest, ToolDefinition
+from ..core.semantics.reading import belief_summary
 from ..core.values import json_value
 from .integration import EVIDENCE_ASSESSMENT_SLUGS
 from .prompts import candidate_instructions
@@ -201,7 +202,10 @@ class ProgramsMixin:
 
     def programs(self):
         """List graph-registered Programs as serializable records."""
-        return [json_value(node) for node in self.graph.nodes(kind="program")]
+        return [
+            {**json_value(node), "belief": belief_summary(self.graph, node)}
+            for node in self.graph.nodes(kind="program")
+        ]
 
     def _lifecycle_event(self, name, output):
         """Record a lifecycle decision as trace provenance for the graph change it causes."""
@@ -392,12 +396,15 @@ class ProgramsMixin:
                     if parent_id
                     else None
                 )
+                node = self.graph.get(spec["program_id"])
                 run = self.memory.start_run(
                     spec["program_id"],
                     spec["revision"],
                     event.get("arguments", {}),
                     run_mode=event.get("run_mode", "live"),
                     caller_event=caller.id if caller else None,
+                    program_revision=node.properties.get("revision"),
+                    task_id=event.get("task_id"),
                 )
                 self._run_map[identity] = run.id
                 state = self.tasks.get(event["task_id"])

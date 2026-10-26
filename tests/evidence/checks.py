@@ -1,7 +1,8 @@
 """Evaluate text-based evidence case expectations against per-step belief snapshots.
 
 A snapshot is {"elements": {id: {kind, text, strength, support, evidence_count, scope?}},
-"origins": {origin: {reliability, support, evidence_count}}}, taken after each step.
+"origins": {origin: {reliability, support, evidence_count}}, "programs": {label: {program,
+op, revision, strength, support, evidence_count}}}, taken after each step.
 Elements are selected by kind and keywords because their ids and wording come from a real
 integration run; expectations are ordinal, not exact numbers.
 """
@@ -55,10 +56,55 @@ def _direction(before, after, expected):
 
 
 FIELDS = ("strength", "support", "evidence_count")
+# A Program or operator target that has no belief yet reads as its unassessed prior.
+UNASSESSED = {"strength": 0.5, "support": 0.0, "evidence_count": 0}
+
+
+def _program(snapshot, expectation):
+    """The belief of the expected Program revision or operator, or None if unassessed.
+
+    Without a revision the expectation names the only revision assessed, if any.
+    """
+    found = [
+        item
+        for item in snapshot.get("programs", {}).values()
+        if item["program"] == expectation["program"]
+        and item["op"] == expectation.get("op")
+        and expectation.get("revision") in (None, item["revision"])
+    ]
+    if len(found) > 1:
+        raise ValueError(f"name a revision for {expectation['program']}: {found}")
+    return found[0] if found else None
+
+
+def _check_program(history, expectation):
+    name = expectation["program"] + (f":{expectation['op']}" if expectation.get("op") else "")
+    if "change" in expectation:
+        first, last = expectation["change"]
+        before = _program(history[first - 1], expectation) or UNASSESSED
+        after = _program(history[last - 1], expectation) or UNASSESSED
+        for field in FIELDS:
+            if field in expectation and not _direction(
+                before[field], after[field], expectation[field]
+            ):
+                return (
+                    f"{name} {field} {before[field]} -> {after[field]} is not {expectation[field]}"
+                )
+        return None
+    item = _program(history[expectation["at"] - 1], expectation)
+    if expectation.get("absent"):
+        return None if item is None else f"{name} has a belief: {item}"
+    item = item or UNASSESSED
+    for field in FIELDS:
+        if field in expectation and not _bounded(item[field], expectation[field]):
+            return f"{name} {field} {item[field]} fails {expectation[field]}"
+    return None
 
 
 def check(history, expectation):
     """Return None when an expectation holds, else a description of the failure."""
+    if "program" in expectation:
+        return _check_program(history, expectation)
     if "origin" in expectation:
         origin = history[expectation["at"] - 1]["origins"].get(expectation["origin"])
         if origin is None:

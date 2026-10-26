@@ -224,7 +224,7 @@ def bootstrap_catalog() -> tuple[dict, ...]:
             "ProgramEvidenceAssessment",
             "program_evidence_assessment",
             "exec",
-            "Placeholder for assessing evidence about Program revisions; assesses nothing yet.",
+            "Assess run results as evidence for Program revisions and anchored operators.",
         ),
         (
             "CreditAssignment",

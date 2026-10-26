@@ -1595,13 +1595,13 @@ When a regime changes, previous checks are not automatically transferred to the 
 
 #topic_details
 
-The first implementation covers the most common case: experience stated by a user or recorded as an observation bears on graph elements that integration wrote or that already exist. `EvidenceAssessment.exec` runs after every integration packet, in the same sequential chain, and calls two subprocesses in order: `GraphEvidenceAssessment` and `ProgramEvidenceAssessment`. The latter is a placeholder for `(Program, revision)` targets and assesses nothing yet.
+The first implementation covers the most common case: experience stated by a user or recorded as an observation bears on graph elements that integration wrote or that already exist. `EvidenceAssessment.exec` runs after every integration packet, in the same sequential chain, and calls two subprocesses in order: `GraphEvidenceAssessment` and [[#MVP Program Evidence Assessment|`ProgramEvidenceAssessment`]], which assesses `(Program, revision)` and anchored operator targets. Both convert stances into likelihoods through one shared observation table and origin reliability.
 
 ```text
 KnowledgeIntegration(packet)
 → EvidenceAssessment(packet)
   → GraphEvidenceAssessment: one batch, one model judgement
-  → ProgramEvidenceAssessment: placeholder
+  → ProgramEvidenceAssessment: one batch of runs, one model judgement
 ```
 
 - **Target.** Each assessable element (relation fact, Claim, Note, Facet, Instance, Concept, Prototype) has the binary target `graph:<id>`: the element's assertion, definition or content is correct. An explicit `belief_target` binding, such as a scope-backed property, belongs to its own updater and is skipped. A content change keeps the target; all of the element's sources are reassessed and any that no longer apply are retracted, so confidence in an old version is not carried over.
@@ -1615,7 +1615,27 @@ KnowledgeIntegration(packet)
 - **Failure.** A failed or interrupted assessment marks nothing assessed; pending elements are found again by the next run. Invalid keys in the judgement are ignored. Failures are diagnostics and do not block the conscious step.
 - **Reads.** `belief.read` accepts an element id; fact cards and described subjects include the element's `belief` once assessed.
 
-Not covered yet: domain- or time-scoped source reliability (a sensor faulty only since a date), message-generation models for source reliability, structural scope revision when two alternatives turn out to be compatible, evidence from `EVIDENCE_DEPENDS_ON`, training the observation table, RelationType definitions, deleted elements and Program targets. Text-based end-to-end cases for these behaviors live in `tests/evidence`.
+Not covered yet: domain- or time-scoped source reliability (a sensor faulty only since a date), message-generation models for source reliability, structural scope revision when two alternatives turn out to be compatible, evidence from `EVIDENCE_DEPENDS_ON`, training the observation table, RelationType definitions and deleted elements. Text-based end-to-end cases for these behaviors live in `tests/evidence`.
+
+#### MVP Program Evidence Assessment
+
+#topic_details
+
+`ProgramEvidenceAssessment` covers the most common evidence about a Program after activation: a user's or an observation's verdict on the result of a run in the same task.
+
+- **Targets.** `program:<id>@<revision>` is the binary target for [[Process Plane/Program Layer#Belief About a Program|the Program revision]]. Its claim follows the roles: for `exec`, the revision reliably implements its intended behaviour; for `model`, it accurately describes its process. `simulation` and `meta` add their requirements. `op:<id>:<op_id>@<revision>` is the target for an [[Process Plane/Program Layer#“Training” Operators and Transitions|anchored operator use]] in that revision. The revision is the Program's own accepted revision, recorded on each `ProgramRun` as `program_revision`, not the repository HEAD. An activated improvement is therefore a new target with no evidence; the old revision keeps its record. Program and operator cards show the belief of the active revision.
+- **What is assessed.** Core keeps a cursor over memory events. New sources are user messages and observations recorded by the host in a task. Each new source is paired with up to six recent completed live runs of that task that finished before it. Runs of integration and evidence assessment, and the runs they call, are excluded: they keep knowledge current and are not the result being judged. An observation recorded with `outcome_of` is never shown. Lifecycle keeps such outcomes unseen so it can [[Process Plane/Program Lifecycle and Evolution|hold them out]] as evaluation cases, and assessing them would expose them. Tool results inside a step are not sources: they record the agent's own actions.
+- **Run card.** The card shows the Program, its process, roles and claim, arguments and result, the batch run that called it, and the anchored operators it executed with up to three recorded uses each. It also lists the sources already active for the run's targets. Identities, revisions and target ids stay in code.
+- **Judgement.** One model call per batch returns, for each run, a stance per source for the Program (`program`) and for anchored operators (`operators`), with `repeats`, `withdraws` and `unresolved`.
+  - Only new sources are judged. Sources already active for a run's targets are shown so that a new source can repeat or withdraw them; an earlier verdict changes only through such a withdrawal or a reliability revision.
+  - Evidence goes first to the anchor whose output a source directly checks. The Program gets its own stance only when the source bears on the revision as a whole; when one anchored step already explains the verdict, the revision gets at most a weak stance.
+  - A run or step answers for the data it loads, looks up or returns, even when that data was stale where it read it. Only the arguments its caller passed are outside its responsibility.
+  - An outcome is attributed to the most direct run in the call tree. A called run that returned a wrong value is opposed, and a caller that used it as intended is not.
+  - Code ignores unknown keys, operator ids that are not anchors of the run (unanchored details get no evidence), sources not linked to the run, and withdrawn sources where they are not active. `withdraws` retracts the earlier source from that target.
+- **Observation model and reliability.** These follow the graph rules: the shared `(source kind, stance)` table, likelihoods weakened by the origin's reliability, and a stored basis. Code revises contributions whose origin reliability changed, without another model call. Graph assessment runs first and keeps reliabilities current. All contributions are unsupported, so the shared cap applies, and the prior is `0.5`.
+- **Failure.** Recording the batch and moving the cursor happen in one call. A failed judgement records nothing, and the same sources come back in the next run. A batch with nothing to judge makes no model call.
+
+Not covered yet for Programs: failed runs as evidence, prediction `EvaluationResult`s and lifecycle evaluation receipts, result `BeliefData` of semantic outputs, and transfer of evidence to more general Claims. Deterministic scenarios PEA-01…11 live in `tests/component/test_program_evidence_assessment.py`; text-based live cases are in `tests/evidence`.
 
 #### Evidence for TRIGGER and CONDITION
 

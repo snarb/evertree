@@ -31,6 +31,33 @@ def element_target(element: Any) -> str:
     return getattr(element, "belief_target", None) or f"graph:{element.id}"
 
 
+def program_target(program: int, revision: str) -> str:
+    """Return the belief target of one Program revision: (Program, program_revision)."""
+    return f"program:{program}@{revision}"
+
+
+def operator_target(program: int, op_id: str, revision: str) -> str:
+    """Return the belief target of an anchored operator use in one Program revision."""
+    return f"op:{program}:{op_id}@{revision}"
+
+
+def program_belief_target(graph: Any, node: Any) -> str | None:
+    """Return the target of a Program's or operator's active revision, if it has one."""
+    if node.kind == "program":
+        revision = node.properties.get("revision")
+        return program_target(node.id, revision) if revision else None
+    if node.kind == "operator":
+        try:
+            program = graph.get(node.properties["code_node"])
+        except KeyError:
+            return None
+        revision = program.properties.get("revision")
+        return (
+            operator_target(program.id, node.properties["local_id"], revision) if revision else None
+        )
+    return None
+
+
 def _sigmoid(value: float) -> float:
     if value >= 0:
         return 1.0 / (1.0 + math.exp(-value))
@@ -150,6 +177,8 @@ class BeliefStore:
         # sequence below which every assessable change has been assessed.
         self._assessed: dict[str, int] = {}
         self._assessment_cursor = 0
+        # Other assessment families' positions in their own histories, by family name.
+        self._cursors: dict[str, int] = {}
         # How each active contribution was judged (stance, source origin and the origin's
         # reliability then), so a change in that reliability can revise it.
         self._basis: dict[str, dict[str, Any]] = {}
@@ -247,6 +276,15 @@ class BeliefStore:
         """Move the assessment cursor forward; it never moves back."""
         with self._lock:
             self._assessment_cursor = max(self._assessment_cursor, seq)
+
+    def cursor(self, name: str) -> int:
+        """Return the position up to which an assessment family has assessed its history."""
+        return self._cursors.get(name, 0)
+
+    def advance_cursor(self, name: str, position: int) -> None:
+        """Move a named assessment cursor forward; it never moves back."""
+        with self._lock:
+            self._cursors[name] = max(self._cursors.get(name, 0), position)
 
     def set_basis(self, target: str, source_ref: Any, basis: Mapping[str, Any] | None) -> None:
         """Record how an active contribution was judged, or discard it with None."""
@@ -697,6 +735,7 @@ class BeliefStore:
                 "last_changed": self._last_changed.isoformat() if self._last_changed else None,
                 "assessed": dict(self._assessed),
                 "assessment_cursor": self._assessment_cursor,
+                "cursors": dict(self._cursors),
                 "basis": json_value(self._basis),
                 "scopes": json_value(self._scopes),
                 "withdrawn": json_value(self._withdrawn),
@@ -730,6 +769,7 @@ class BeliefStore:
         store._last_changed = timestamp(data["last_changed"]) if data.get("last_changed") else None
         store._assessed = dict(data["assessed"])
         store._assessment_cursor = data["assessment_cursor"]
+        store._cursors = dict(data["cursors"])
         store._scopes = {target: dict(value) for target, value in data["scopes"].items()}
         store._members = dict(data["members"])
         store._withdrawn = {key: freeze(value) for key, value in data["withdrawn"].items()}

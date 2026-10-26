@@ -106,6 +106,8 @@ class TraceStore:
         run_mode: str = "live",
         caller_event: int | TraceEvent | None = None,
         at: datetime | None = None,
+        program_revision: str | None = None,
+        task_id: str | None = None,
     ) -> ProgramRun:
         """Open a ProgramRun with pinned code and input provenance, protecting required dependencies."""
         if run_mode not in {"live", "replay", "simulation", "evaluation", "test"}:
@@ -128,6 +130,8 @@ class TraceStore:
                 run_mode,
                 timestamp(at or utcnow()),
                 caller_event,
+                program_revision=program_revision,
+                task_id=task_id,
             )
             self._runs[run.id] = run
             self._traces[run.id] = []

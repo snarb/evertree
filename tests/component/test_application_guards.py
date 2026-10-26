@@ -20,6 +20,7 @@ from tests.support.application import (
     framing,
     is_evidence_request,
     is_integration_request,
+    is_program_evidence_request,
     verification,
     wait_for_event,
 )
@@ -329,6 +330,7 @@ async def test_input_accepted_during_turn_reaches_controller_before_delivery(tmp
             if (
                 not is_integration_request(request)
                 and not is_evidence_request(request)
+                and not is_program_evidence_request(request)
                 and len(self.task_requests) == pause_at
             ):
                 self.entered.set()

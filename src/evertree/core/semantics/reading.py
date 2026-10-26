@@ -1,7 +1,7 @@
 """Compact named reads shared by consciousness and semantic Programs."""
 
 from ..attribution import validate_parameters
-from ..beliefs import element_target
+from ..beliefs import element_target, program_belief_target
 from ..graph.types import Facet, RelationInstance, RelationType
 from ..values import UNKNOWN, json_value, timestamp, utcnow
 
@@ -79,7 +79,7 @@ def belief_summary(graph, node):
     if graph.belief_reader is None:
         return None
     try:
-        reading = graph.belief_reader(element_target(node))
+        reading = graph.belief_reader(program_belief_target(graph, node) or element_target(node))
     except KeyError:
         return None
     if reading is UNKNOWN:

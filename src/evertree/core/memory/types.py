@@ -35,6 +35,10 @@ class ProgramRun:
     finished_at: datetime | None = None
     status: str = "running"
     revision_changes: tuple[tuple[int, str], ...] = ()
+    # A Program's own revision (its activation commit) and the task it ran for; the
+    # epistemic target of a Program is (Program, program_revision), not the repository HEAD.
+    program_revision: str | None = None
+    task_id: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)

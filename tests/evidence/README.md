@@ -27,6 +27,7 @@ At most two workers: more hit the model's rate limit (HTTP 429). A case usually 
 | `{"at": n, "compare": [S1, ">", S2]}` | the strongest match of `S1` against the strongest of `S2` |
 | `{"at": n, "origin": "sensor:T-7", "reliability": [op, x]}` | reliability belief of a source origin |
 | `{"at": n, "scope": [S1, S2, …]}` | one match of each selector belongs to one competition scope, and their probabilities sum to at most 1 |
+| `{"at": n, "program": P, "op"?: id, "revision"?: sha, "strength": [op, x]}` | belief of a Program revision, or of one of its anchored operators; an unassessed target reads as strength 0.5 and evidence 0; also `change`, and `"absent": true` for no belief |
 
 A selector `S` is `{"kind" or "kinds", "all": [term or [any-of terms]], "none": [terms], "in_scope"?: true}`, matched case-insensitively against the element's name, its description and, for a relation fact, its relation type and participants.
 
@@ -54,5 +55,21 @@ A selector `S` is `{"kind" or "kinds", "all": [term or [any-of terms]], "none": 
 | G1, G2 | A question and a counterfactual assert nothing | `question-and-hypothetical-are-not-evidence` |
 | G3 | Unverified hearsay is weak; a measurement overturns it | `hearsay-then-measurement` |
 | G4 | An instruction ("remember…") is not evidence | every case: the task message is never counted |
+
+### Program cases
+
+A `program_run` step records a live run of a named Program in the case's task, as the application records it: the Program's own revision (`revision`; a new one is an activation), its anchored steps (`anchors`: `[op_id, arguments, output]`) and the runs it calls (`calls`). It is not integrated; the following user messages and observations are, and Program evidence assessment pairs them with the task's runs. The scenarios are the common paths of a Program after activation; their deterministic mirrors PEA-01…11 run in `tests/component/test_program_evidence_assessment.py`.
+
+| ID | Scenario | Case |
+| --- | --- | --- |
+| PEA-01 | The user disputes a run's result; the revision loses belief | `program-result-disputed` |
+| PEA-02 | The user confirms a run's result | `program-result-confirmed` |
+| PEA-03 | One anchored step's output is wrong; the step, not the revision, loses belief | `program-anchored-step-wrong` |
+| PEA-04 | A called Program returned wrong data; the caller is not blamed | `program-child-blamed` |
+| PEA-05 | An improved revision is a new target; the old revision keeps its record | `program-revision-improved` |
+| PEA-06 | The user withdraws a complaint | `program-complaint-withdrawn` |
+| PEA-10 | An unrelated statement or instruction says nothing; a model Program's forecast is contradicted by an observation | `program-unrelated-message`, `program-model-forecast-observed` |
+
+PEA-07 (a discredited origin revises contributions in code), PEA-08 (nothing to judge, hidden `outcome_of` outcomes and service runs make no model call), PEA-09 (a failed judgement is retried) and PEA-11 (the application records runs and runs the whole chain) need no model judgement and are covered only by the component tests.
 
 Not yet covered by a case, and not implemented: reliability scoped to a domain or a time window (a sensor faulty only since a date), and structural revision of a scope whose alternatives turn out to be compatible. Unit and component tests cover redelivery of the same observation (S11) and malformed model output (S12).

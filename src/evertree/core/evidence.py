@@ -69,6 +69,77 @@ def origin_target(origin: str) -> str:
     return f"origin:{origin}"
 
 
+def apply_binary(
+    beliefs: BeliefStore,
+    memory: TraceStore,
+    target: str,
+    prior: float | None,
+    assign: list | tuple,
+    retract: list | tuple,
+    created_by: Any = None,
+) -> dict:
+    """Register a binary target if new, then retract and assign assessed contributions.
+
+    Inputs are validated before any change, so a rejected record leaves beliefs unchanged.
+    Each assignment keeps its basis and retains its source for the target.
+    """
+    retractions = [_reference(item) for item in retract]
+    assignments = []
+    for item in assign:
+        reference, root = _reference(item.get("source_ref")), item.get("dependency_root")
+        likelihoods, basis = item.get("likelihoods"), item.get("basis")
+        if reference is None or root is not None and _reference(root) is None:
+            raise ContractError("Evidence needs a retained source reference")
+        if not isinstance(likelihoods, Mapping) or set(likelihoods) != {"false", "true"}:
+            raise ContractError("Binary likelihoods are keyed by false and true")
+        if not all(
+            isinstance(value, (int, float)) and math.isfinite(value) and value > 0
+            for value in likelihoods.values()
+        ):
+            raise ContractError("Likelihoods must be positive and finite")
+        if basis is not None and not isinstance(basis, Mapping):
+            raise ContractError("An assessment basis is an object")
+        memory.resolve(reference)
+        assignments.append(
+            (reference, dict(likelihoods), _reference(root) if root else None, basis)
+        )
+    if any(reference is None for reference in retractions):
+        raise ContractError("Retraction needs a source reference")
+    try:
+        beliefs.target(target)
+    except KeyError:
+        low, high = PRIOR_BOUNDS
+        value = 0.5 if prior is None else min(max(float(prior), low), high)
+        beliefs.register_binary(target, value)
+    active = {_key(_reference(item.source_ref)) for item in beliefs.active_sources(target)}
+    retracted = []
+    for reference in retractions:
+        if _key(reference) in active:
+            beliefs.retract(target, reference)
+            retracted.append(json_value(reference))
+    created = []
+    for reference, likelihoods, root, basis in assignments:
+        assignment = beliefs.assess_likelihoods(
+            target,
+            reference,
+            likelihoods,
+            # The heuristic observation model is not independently validated,
+            # so its influence stays under the shared unsupported cap.
+            backed=False,
+            dependency_root=root,
+            created_by=created_by,
+        )
+        beliefs.set_basis(target, reference, basis)
+        memory.retain(reference, "evidence:" + target)
+        created.append(assignment.id)
+    return {
+        "target": target,
+        "assignments": created,
+        "retracted": retracted,
+        "belief": json_value(beliefs.read(target)),
+    }
+
+
 class _Sources:
     """Primary evidence sources of one batch, keyed S1, S2, … in order of discovery."""
 
@@ -163,6 +234,22 @@ class _Sources:
         return list(dict.fromkeys(entry["origin"] for entry in self.entries.values()))
 
 
+def active_directions(beliefs: BeliefStore, target: str, sources: _Sources) -> list[dict]:
+    """Sources already counted for a binary target, keyed in the batch, with their direction."""
+    result = []
+    for component in beliefs.active_sources(target):
+        reference = _reference(component.source_ref)
+        if reference is None:
+            continue
+        for key in sources.expand(reference, new=False):
+            effect = component.contribution[0]
+            direction = (
+                "supports" if effect > 0 else "opposes" if effect < 0 else "non_discriminating"
+            )
+            result.append({"source": key, "direction": direction})
+    return result
+
+
 class GraphEvidence:
     """Select graph elements that need evidence assessment and record assessed contributions."""
 
@@ -218,18 +305,7 @@ class GraphEvidence:
         return list(dict.fromkeys(keys))
 
     def _active(self, target: str, sources: _Sources) -> list[dict]:
-        result = []
-        for component in self.beliefs.active_sources(target):
-            reference = _reference(component.source_ref)
-            if reference is None:
-                continue
-            for key in sources.expand(reference, new=False):
-                effect = component.contribution[0]
-                direction = (
-                    "supports" if effect > 0 else "opposes" if effect < 0 else "non_discriminating"
-                )
-                result.append({"source": key, "direction": direction})
-        return result
+        return active_directions(self.beliefs, target, sources)
 
     def _card(self, node) -> dict:
         if "attribution_result" in node.properties:
@@ -545,7 +621,7 @@ class GraphEvidence:
         target = element_target(node)
         if self.beliefs.scope_of(target) is not None:
             raise ContractError("A scope alternative's evidence is recorded for its scope")
-        result = self._apply(target, prior, assign, retract, created_by)
+        result = apply_binary(self.beliefs, self.memory, target, prior, assign, retract, created_by)
         self.beliefs.mark_assessed(target, revision)
         return {"element": element, **result}
 
@@ -587,7 +663,9 @@ class GraphEvidence:
             raise ContractError("An origin is a non-empty name")
         return {
             "origin": origin,
-            **self._apply(origin_target(origin), prior, assign, retract, created_by),
+            **apply_binary(
+                self.beliefs, self.memory, origin_target(origin), prior, assign, retract, created_by
+            ),
         }
 
     def record_scope(
@@ -712,62 +790,5 @@ class GraphEvidence:
             "assignments": created,
             "retracted": retracted,
             "released": released,
-            "belief": json_value(self.beliefs.read(target)),
-        }
-
-    def _apply(self, target: str, prior, assign, retract, created_by) -> dict:
-        retractions = [_reference(item) for item in retract]
-        assignments = []
-        for item in assign:
-            reference, root = _reference(item.get("source_ref")), item.get("dependency_root")
-            likelihoods, basis = item.get("likelihoods"), item.get("basis")
-            if reference is None or root is not None and _reference(root) is None:
-                raise ContractError("Evidence needs a retained source reference")
-            if not isinstance(likelihoods, Mapping) or set(likelihoods) != {"false", "true"}:
-                raise ContractError("Binary likelihoods are keyed by false and true")
-            if not all(
-                isinstance(value, (int, float)) and math.isfinite(value) and value > 0
-                for value in likelihoods.values()
-            ):
-                raise ContractError("Likelihoods must be positive and finite")
-            if basis is not None and not isinstance(basis, Mapping):
-                raise ContractError("An assessment basis is an object")
-            self.memory.resolve(reference)
-            assignments.append(
-                (reference, dict(likelihoods), _reference(root) if root else None, basis)
-            )
-        if any(reference is None for reference in retractions):
-            raise ContractError("Retraction needs a source reference")
-        try:
-            self.beliefs.target(target)
-        except KeyError:
-            low, high = PRIOR_BOUNDS
-            value = 0.5 if prior is None else min(max(float(prior), low), high)
-            self.beliefs.register_binary(target, value)
-        active = {_key(_reference(item.source_ref)) for item in self.beliefs.active_sources(target)}
-        retracted = []
-        for reference in retractions:
-            if _key(reference) in active:
-                self.beliefs.retract(target, reference)
-                retracted.append(json_value(reference))
-        created = []
-        for reference, likelihoods, root, basis in assignments:
-            assignment = self.beliefs.assess_likelihoods(
-                target,
-                reference,
-                likelihoods,
-                # The heuristic observation model is not independently validated,
-                # so its influence stays under the shared unsupported cap.
-                backed=False,
-                dependency_root=root,
-                created_by=created_by,
-            )
-            self.beliefs.set_basis(target, reference, basis)
-            self.memory.retain(reference, "evidence:" + target)
-            created.append(assignment.id)
-        return {
-            "target": target,
-            "assignments": created,
-            "retracted": retracted,
             "belief": json_value(self.beliefs.read(target)),
         }

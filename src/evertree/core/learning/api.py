@@ -272,3 +272,37 @@ async def call_credit_assignment(
     """
     arguments = {"target": target, "observation_ids": observation_ids, "context": context}
     return (await ctx.call("credit_assignment", arguments)).result
+
+
+async def pending_program_evidence(
+    ctx: ProgramContext, *, limit: int = 12, run_limit: int = 6
+) -> Any:
+    """Read new experience after the Program cursor and the runs each source may concern.
+
+    Returns {sources, runs, origins, through, remaining}. A run carries its Program card,
+    claim, revision, target, result, anchored operators with their targets and recorded
+    uses, the run that called it, the keys of the sources it may concern, and the sources
+    already active for its targets.
+    """
+    return await ctx.step("evidence.pending_programs", {"limit": limit, "run_limit": run_limit})
+
+
+async def record_program_evidence(
+    ctx: ProgramContext, through: int | None, records: list[dict] | None = None
+) -> Any:
+    """Record evidence for Program and operator targets, then move the cursor to through.
+
+    Each record is {target, assign, retract} with assign items as for record_evidence;
+    through None revises contributions without moving the cursor.
+    """
+    return await ctx.step(
+        "evidence.record_programs", {"through": through, "records": records or []}
+    )
+
+
+async def stale_program_evidence(ctx: ProgramContext) -> Any:
+    """List Program and operator contributions whose origin's reliability has changed.
+
+    Items are {target, source_ref, basis, reliability}.
+    """
+    return await ctx.step("evidence.stale_programs", {})

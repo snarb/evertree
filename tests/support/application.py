@@ -18,6 +18,12 @@ def is_evidence_request(request):
     return "evidence" in targets.get("items", {}).get("properties", {})
 
 
+def is_program_evidence_request(request):
+    """Recognize the Program evidence assessment judgement by its output schema."""
+    runs = (request.output_schema or {}).get("properties", {}).get("runs", {})
+    return "operators" in runs.get("items", {}).get("properties", {})
+
+
 async def tool_events(request_id, request, handler, calls, *, finish=True):
     """Exercise the provider's native callback boundary with correlated events."""
     declared = {tool.name for tool in request.tools}
@@ -48,7 +54,7 @@ async def tool_events(request_id, request, handler, calls, *, finish=True):
 
 
 class IntegrationScriptedProvider(ScriptedProvider):
-    """Complete automatic selection with no writes and assessment with no evidence.
+    """Complete automatic selection with no writes and assessments with no evidence.
 
     Tests that select knowledge or judge evidence script those requests themselves.
     """
@@ -58,13 +64,20 @@ class IntegrationScriptedProvider(ScriptedProvider):
         return [
             request
             for request in self.requests
-            if not is_integration_request(request) and not is_evidence_request(request)
+            if not is_integration_request(request)
+            and not is_evidence_request(request)
+            and not is_program_evidence_request(request)
         ]
 
     async def run(self, request_id, request, **kwargs):
         if is_evidence_request(request):
             self.requests.append(request)
             for event in completed({"targets": [], "origins": [], "scopes": []}):
+                yield event
+            return
+        if is_program_evidence_request(request):
+            self.requests.append(request)
+            for event in completed({"runs": []}):
                 yield event
             return
         if not is_integration_request(request):

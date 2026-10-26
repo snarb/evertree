@@ -25,6 +25,7 @@ from .attribution import AttributionRuntime
 from .beliefs import BeliefStore, element_target
 from .evidence import GraphEvidence
 from .predictions import PredictionEvaluator, protect_prediction_delta
+from .program_evidence import ProgramEvidence
 from .topology import inspect_topology
 from .values import json_value
 
@@ -501,6 +502,16 @@ class CoreOperations:
             )
         elif method == "evidence.stale":
             result = GraphEvidence(self.graph, self.memory, self.beliefs).stale()
+        elif method == "evidence.pending_programs":
+            result = ProgramEvidence(self.graph, self.memory, self.beliefs).pending(
+                limit=payload.get("limit", 12), run_limit=payload.get("run_limit", 6)
+            )
+        elif method == "evidence.record_programs":
+            result = ProgramEvidence(self.graph, self.memory, self.beliefs).record(
+                payload["through"], payload.get("records", ()), created_by=metadata["run_id"]
+            )
+        elif method == "evidence.stale_programs":
+            result = ProgramEvidence(self.graph, self.memory, self.beliefs).stale()
         elif method == "learning.predict":
             result = self.learning.predict(payload["state_id"], payload.get("inputs"))
         elif method in {"learning.estimate", "learning.statistics"}:
