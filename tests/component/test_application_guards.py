@@ -7,7 +7,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from evertree._application.prompts import RESULTS_PROMPT_CHARS
+from evertree._application.prompts import EVENT_PROMPT_CHARS, RESULTS_PROMPT_CHARS
 from evertree.core.actions import ActionOption
 from evertree.core.evaluation.scoring import evaluate_prediction
 from evertree.core.graph.types import GraphDelta
@@ -151,16 +151,19 @@ def test_conscious_prompt_stays_bounded_whatever_the_trace_holds(agent):
 
     assert results[-1]["output"]["truncated"] is True
     assert results[-1]["output"]["chars"] > 50_000
-    assert len(json.dumps(results)) <= RESULTS_PROMPT_CHARS + 20_000
-    assert results[-1]["output"] != results[0]["output"]
+    assert len(json.dumps(results)) <= RESULTS_PROMPT_CHARS + EVENT_PROMPT_CHARS
+    assert '"index": 39' in results[-1]["output"]["preview"]
+    assert not any('"index": 0,' in item["output"]["preview"] for item in results)
 
 
 async def test_recall_leaves_provider_telemetry_in_the_trace(agent):
     """A recalled provider request would embed an earlier prompt inside the next one."""
     task = prepared_task(agent)
     run = agent.memory.start_run("Consciousness", "commit", {"task_id": task.id})
-    agent.memory.record(run, "provider_request", output={"prompt": "walrus " * 5000})
     agent.memory.record(run, "measurement", output={"note": "walrus count", "blob": "w" * 40_000})
+    # Each request embeds the whole earlier prompt, so it would outrank experience.
+    for index in range(12):
+        agent.memory.record(run, "provider_request", output={"prompt": f"walrus {index} " * 5000})
     agent.memory.finish_run(run)
 
     groups = await agent._dispatch_tool(task.id, "recall", {"query": "walrus"})

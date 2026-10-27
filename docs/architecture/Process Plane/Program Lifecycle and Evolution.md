@@ -294,7 +294,7 @@ An alternative shares the slot's `git_path` and keeps its code on its own branch
 
 The current active Program remains active until `EvaluationChoice`. A candidate Program or ProgramBranch does not replace the active slot automatically.
 
-When `main` moves while a candidate is undecided (another slot's candidate merged, for example), the candidate's base is stale and activation is refused. `refresh_candidate` replays its committed change onto the current `main` as a patch, never a rebase, keeping its identity and holdout lineage. A refreshed candidate is evaluated again. It may meet the holdout it has already seen only if its change is unchanged: the same files with the same pre- and post-image contents. Any other change needs a holdout it has not seen. A patch that no longer applies leaves the candidate paused.
+When `main` moves while a candidate is undecided (another slot's candidate merged, for example), the candidate's base is stale and activation is refused. `refresh_candidate` replays its committed change onto the current `main` as a patch, never a rebase, keeping its identity and holdout lineage. A refreshed candidate is evaluated again. It may meet the holdout it has already seen only if its change is unchanged: the same files with the same pre- and post-image contents. Any other change needs a holdout it has not seen. A patch that no longer applies leaves the candidate as it was; its stale base still blocks activation, so the change is redone in a new candidate.
 
 #### Meta-Program Lifecycle Safety
 

@@ -51,12 +51,20 @@ INSTRUCTIONS = (
     "at the Program's git_path, without assuming hidden evaluation cases."
 )
 
+# Decision words by whether the target holds its slot: a branch of the active Program
+# merges, a new or alternative Program activates.
 DECISIONS = {
-    True: {"activate": "merge_branch", "keep": "continue_branch", "reject": "reject_branch"},
+    True: {
+        "activate": "merge_branch",
+        "keep": "continue_branch",
+        "reject": "reject_branch",
+        "archive": "archive_branch",
+    },
     False: {
         "activate": "activate_program",
         "keep": "keep_alternatives",
         "reject": "reject_program",
+        "archive": "archive_program",
     },
 }
 
@@ -107,9 +115,7 @@ async def run(ctx, program: int, objective: str, max_candidates: int = 2):
         if record["candidate"] == winner:
             decision, reason = words["activate"], "Best verified candidate on the protected holdout"
         elif winner is not None:
-            decision = (
-                "archive_branch" if words["activate"] == "merge_branch" else "archive_program"
-            )
+            decision = words["archive"]
             reason = f"Candidate {winner} was verified and chosen instead"
         elif status == "failed":
             decision = words["reject"]
@@ -118,6 +124,9 @@ async def run(ctx, program: int, objective: str, max_candidates: int = 2):
             decision, reason = words["keep"], "Evidence is insufficient for a decision"
         await choose_candidate(ctx, record["candidate"], decision, reason=reason)
         decisions.append({**record, "decision": decision, "reason": reason})
+        if decision == "activate_program":
+            # The target now holds its slot, so its remaining candidates are branches.
+            words = DECISIONS[True]
     return {
         "result": {"program": program, "winner": winner, "decisions": decisions},
         "feedback": None,

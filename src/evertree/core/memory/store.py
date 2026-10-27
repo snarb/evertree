@@ -25,6 +25,10 @@ from .types import (
     _semantic_value,
 )
 
+# Raw provider traffic embeds earlier prompts verbatim; retrieving it would nest each
+# prompt in the next one and crowd experience out of the ranking.
+PROVIDER_TELEMETRY = frozenset({"provider_request", "provider_event"})
+
 
 class TraceStore:
     def __init__(self, *, policy: RetentionPolicy | None = None) -> None:
@@ -369,7 +373,7 @@ class TraceStore:
     ) -> tuple[MemoryCandidateGroup, ...]:
         """Rank matching experience by reference and text overlap, grouping only identical content.
 
-        Sealed events are never returned.
+        Sealed events and provider telemetry are never returned.
         """
         if limit < 0:
             raise ContractError("retrieval limit must not be negative")
@@ -392,7 +396,11 @@ class TraceStore:
         groups: dict[str, list[TraceEvent]] = {}
         scores: dict[str, float] = {}
         for event in self._events.values():
-            if event.id in self._deleted or event.id in self._sealed:
+            if (
+                event.id in self._deleted
+                or event.id in self._sealed
+                or event.operator in PROVIDER_TELEMETRY
+            ):
                 continue
             run = self._runs[event.program_run]
             if (

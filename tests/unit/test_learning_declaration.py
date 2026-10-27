@@ -70,6 +70,16 @@ def test_absent_literal_declares_nothing():
             "positive",
         ),
         ({"Late": {**target(), "extra": 1}}, {}, "Extra inputs"),
+        (
+            {"Late": target()},
+            {"rate": {"kind": "beta_bernoulli", "target": "Late", "settings": {"alpah": 2}}},
+            "Unknown beta_bernoulli settings",
+        ),
+        (
+            {"Late": target(form="mean", metrics=["squared_error"])},
+            {"rate": {"kind": "mean", "target": "Late"}},
+            "numeric prior",
+        ),
     ],
 )
 def test_invalid_declarations_name_their_error(targets, estimators, match):
@@ -128,6 +138,29 @@ def test_installed_estimators_keep_trained_state_until_their_declaration_changes
     store.release("7")
     assert store.bindings("Late") == []
     assert states["post"] in store.snapshot()["states"]
+
+
+def test_reading_an_estimator_never_rebinds_and_spelling_keeps_its_state():
+    """A read creates only the missing state; equal settings written differently are one state."""
+    store = LearningStore()
+    store.install("7", declaration())
+    revised = read_learning(
+        source(
+            {"Late": target()},
+            {
+                "post": {
+                    "kind": "beta_bernoulli",
+                    "target": "Late",
+                    "settings": {"alpha": 4.0, "beta": 6},
+                }
+            },
+        ),
+        "late.py",
+    )
+    read = store.estimate("8", revised, "post")
+    assert {binding["owner"] for binding in store.bindings("Late")} == {"7"}
+    assert store.statistics(read["state"])["observed_count"] == 0
+    assert store.program_state("7", revised, "post") == store.install("7", declaration())["post"]
 
 
 def test_an_outcome_trains_only_the_estimator_its_forecast_read():

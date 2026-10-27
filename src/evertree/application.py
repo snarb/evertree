@@ -355,16 +355,19 @@ class EverTree(
     def _estimator_provenance(self, forecast_event: int) -> dict:
         """Name the estimator states, and their inputs, that the forecasting run read."""
         run = self.memory.get_event(forecast_event).program_run
-        used = [
-            event
+        inputs = {
+            event.output["state"]: event.arguments.get("inputs")
             for event in self.memory.events
             if event.program_run == run
+            and event.operator == "learning.estimate"
             and isinstance(event.output, Mapping)
-            and set(event.output) == {"value", "state", "revision", "observed_count"}
-        ]
-        context: dict = {"estimator_states": sorted({event.output["state"] for event in used})}
-        if len(used) == 1 and used[0].arguments.get("inputs") is not None:
-            context["features"] = json_value(used[0].arguments["inputs"])
+        }
+        context: dict = {"estimator_states": sorted(inputs)}
+        features = {
+            state: json_value(value) for state, value in inputs.items() if value is not None
+        }
+        if features:
+            context["estimator_features"] = features
         return context
 
     def prediction_evaluator(self):

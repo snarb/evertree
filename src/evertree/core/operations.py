@@ -546,11 +546,14 @@ class CoreOperations:
                 raise ValueError("The calling Program declares no LEARNING estimators")
             declaration = LearningDeclaration.model_validate(metadata["learning"])
             owner = str(metadata["program"]["program_id"])
-            result = self.learning.estimate(
-                owner, declaration, payload["name"], payload.get("inputs")
-            )
             if method == "learning.statistics":
-                result = self.learning.statistics(result["state"])
+                result = self.learning.statistics(
+                    self.learning.program_state(owner, declaration, payload["name"])
+                )
+            else:
+                result = self.learning.estimate(
+                    owner, declaration, payload["name"], payload.get("inputs")
+                )
         elif method == "learning.learn":
             result = LearningCoordinator(self.learning).learn(
                 self._signal(payload["signal"]),

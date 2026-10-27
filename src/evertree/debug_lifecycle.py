@@ -5,8 +5,8 @@ Run this file in PyCharm with the project interpreter and sign in to Codex, or r
 provider are real Codex; Programs run in native workers. The session installs the
 scenario's Programs through the real lifecycle gates, binds the developer holdouts,
 gives the agent the scenario task, then probes the active Programs. It writes
-state.json (graph Programs, operators, branches, receipts, choices, bindings) and result.json
-under tmp/debug-lifecycle/<run>/, also on failure.
+state.json (graph Programs, operators, branches, receipts, choices, bindings) under
+tmp/debug-lifecycle/<run>/, also on failure.
 
 Useful breakpoints:
 - LifecycleSession.install: how a seed Program passes its own gates.
@@ -408,8 +408,7 @@ class LifecycleSession:
             "estimates": [
                 {"run": event.program_run, "state": event.output["state"]}
                 for event in agent.memory.events
-                if isinstance(event.output, Mapping)
-                and set(event.output) == {"value", "state", "revision", "observed_count"}
+                if event.operator == "learning.estimate" and isinstance(event.output, Mapping)
             ],
         }
 

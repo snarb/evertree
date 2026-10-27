@@ -443,7 +443,7 @@ def test_request_identity_cannot_be_reused_with_different_contents():
 
 
 def test_exact_retraction_keeps_history_and_does_not_touch_other_state():
-    store, state, coordinator = learner("mean", "squared_error")
+    store, state, coordinator = learner("mean", "squared_error", prior=0)
     first = coordinator.credit_assignment.assign(
         "target", signal(2, prediction=0, metric="squared_error")
     )

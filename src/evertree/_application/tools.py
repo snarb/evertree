@@ -13,7 +13,7 @@ from ..core.provider import LLMRequest, ToolDefinition
 from ..core.runtime.coordination import semantic_scope
 from ..core.semantics.reading import belief_summary
 from ..core.values import json_value
-from .prompts import CODING_INSTRUCTIONS, LIFECYCLE_TOOLS, TELEMETRY_OPERATORS, bounded_event
+from .prompts import CODING_INSTRUCTIONS, LIFECYCLE_TOOLS, RESULTS_PROMPT_CHARS, bounded_event
 
 # Conscious evaluative-signal tools and the read-only Core operations serving them.
 EVALUATIVE_OPERATIONS = {
@@ -26,10 +26,6 @@ EVALUATIVE_OPERATIONS = {
 
 class ToolsMixin:
     """Internal EverTree method group; state is owned and initialized by EverTree."""
-
-    @staticmethod
-    def _bounded_event(event):
-        return bounded_event(json_value(event))
 
     async def _tool(self, task_id, name, args, *, semantic_tools=None):
         """Apply task and self-improvement resource limits to a tracked conscious tool callback."""
@@ -130,19 +126,19 @@ class ToolsMixin:
         if name.startswith("graph."):
             return await self._graph_tool(task_id, name, args)
         if name == "recall":
-            groups = self.memory.retrieve(args["query"], limit=10)
-            # Provider telemetry holds earlier prompts verbatim; recalling it would nest
-            # each prompt inside the next and grow without bound.
-            events = [
-                [event for event in group.events if event.operator not in TELEMETRY_OPERATORS]
-                for group in groups
-            ]
-            self._surfaced.update(event.id for group in events for event in group)
-            return [
-                {**json_value(group), "events": [self._bounded_event(e) for e in kept]}
-                for group, kept in zip(groups, events, strict=True)
-                if kept
-            ]
+            # Best groups first, within the same budget as recent results.
+            recalled, size = [], 0
+            for group in self.memory.retrieve(args["query"], limit=10):
+                item = {
+                    **json_value(group),
+                    "events": [bounded_event(json_value(event)) for event in group.events],
+                }
+                size += len(json.dumps(item, ensure_ascii=False, default=str))
+                if recalled and size > RESULTS_PROMPT_CHARS:
+                    break
+                recalled.append(item)
+                self._surfaced.update(event.id for event in group.events)
+            return recalled
         if name in EVALUATIVE_OPERATIONS:
             return self._core_operations().evaluative_signal(EVALUATIVE_OPERATIONS[name], args)
         if name == "assign_task_process":
@@ -175,8 +171,8 @@ class ToolsMixin:
     async def _lifecycle_operation(self, task_id, name, args, *, caller=None):
         """Serve one lifecycle operation for consciousness tools or a meta Program.
 
-        caller is the meta Program's id. A meta Program never manages its own
-        candidates: its changes need an independent decision.
+        caller is the meta Program's id. A meta Program never manages candidates of
+        its own slot, alternatives included: its changes need an independent decision.
         """
         if caller is not None:
             target = (
@@ -192,8 +188,9 @@ class ToolsMixin:
             )
             if name == "propose_program" and args.get("alternative_to") is not None:
                 targets.append(args["alternative_to"])
+            own = self._slot(caller)
             if any(
-                self._program(identity, allow_inactive=True).program_id == caller
+                self._slot(self._program(identity, allow_inactive=True).program_id) == own
                 for identity in targets
             ):
                 raise PermissionError("A meta Program cannot manage its own candidates")
