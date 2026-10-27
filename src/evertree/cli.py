@@ -8,9 +8,11 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from evertree.common.logging_setup import configure_logging
 from evertree.core.codex.provider import CodexProvider
+from evertree.core.evaluation.contracts import SupervisorFeedback
 from evertree.core.sandbox.diagnostics import check_sandbox
 from evertree.core.values import json_value
 
@@ -47,6 +49,8 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--max-minutes", type=float, help="Explicit user hard limit for total active minutes"
     )
+    run.add_argument("--deadline", help="Result deadline as an ISO timestamp with timezone")
+    run.add_argument("--process", help="ProcessConcept doing the work (default: Process)")
 
     tasks = command("tasks", "Inspect, resume or cancel persisted Tasks")
     task_commands = tasks.add_subparsers(dest="task_command", required=True)
@@ -59,6 +63,24 @@ def parser() -> argparse.ArgumentParser:
     resume.add_argument("--max-minutes", type=float, help="Explicit replacement hard limit")
     cancel = task_commands.add_parser("cancel", help="Stop an open Task and retain its history")
     cancel.add_argument("task_id")
+    cancel.add_argument("--reason", default="Cancelled by user", help="Decision to withdraw it")
+    feedback = command("feedback", "Record supervisor approval (+) or disapproval (-) of a Task")
+    feedback.add_argument("task_id")
+    feedback.add_argument("value", type=float, help="Evaluation in [-5, 5]")
+    feedback.add_argument("--comment", help="The reason or the desired correction")
+    feedback.add_argument("--source", help="Stable feedback identity; repeats are recorded once")
+    signals = command("signals", "Evaluative signals computed on demand from saved experience")
+    signal_commands = signals.add_subparsers(dest="signal_command", required=True)
+    for name, text in (
+        ("tension", "ExplanatoryTension change between periods (tension_reduction)"),
+        ("tasks", "Task success and on-time rates"),
+        ("feedback", "Supervisor feedback with comments"),
+    ):
+        item = signal_commands.add_parser(name, help=text)
+        item.add_argument("--period", nargs=2, required=True, metavar=("START", "END"))
+        item.add_argument("--process", action="append", default=None, help="Repeatable")
+        if name == "tension":
+            item.add_argument("--baseline", nargs=2, metavar=("START", "END"))
 
     graph = command("graph", "Inspect semantic nodes")
     graph.add_argument("query", nargs="?", help="Case-insensitive name fragment")
@@ -223,7 +245,11 @@ async def dispatch(args: argparse.Namespace) -> int:
                 state = await agent.resume(args.task, prompt, hard_limits=_limits(args.max_minutes))
             else:
                 state = await agent.submit(
-                    prompt, task_id=None, hard_limits=_limits(args.max_minutes)
+                    prompt,
+                    task_id=None,
+                    hard_limits=_limits(args.max_minutes),
+                    deadline=args.deadline,
+                    process=args.process,
                 )
             _, code = await consume(agent, state.id, as_json=args.json)
             return code
@@ -235,7 +261,7 @@ async def dispatch(args: argparse.Namespace) -> int:
             elif args.task_command == "show":
                 emit(agent.tasks.get(args.task_id).to_dict())
             elif args.task_command == "cancel":
-                await agent.cancel(args.task_id)
+                await agent.cancel(args.task_id, reason=args.reason)
                 emit(agent.tasks.get(args.task_id).to_dict())
             elif args.task_command == "resume":
                 state = await agent.resume(
@@ -243,6 +269,22 @@ async def dispatch(args: argparse.Namespace) -> int:
                 )
                 _, code = await consume(agent, state.id, as_json=args.json)
                 return code
+        elif args.command == "feedback":
+            reference = agent.supervisor_feedback(
+                SupervisorFeedback(args.value, args.comment),
+                source_id=args.source or "cli:" + uuid4().hex,
+                task_id=args.task_id,
+            )
+            emit({"task_id": args.task_id, "observation": reference})
+        elif args.command == "signals":
+            period, processes = tuple(args.period), args.process or ["Process"]
+            if args.signal_command == "tension":
+                baseline = tuple(args.baseline) if args.baseline else None
+                emit(agent.tension_reduction(period, processes, baseline))
+            elif args.signal_command == "tasks":
+                emit(agent.task_outcome_stats(period, processes))
+            else:
+                emit(agent.supervisor_feedback_history(period, processes))
         elif args.command == "graph":
             if args.node_id is not None:
                 emit(agent.graph.get(args.node_id))

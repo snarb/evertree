@@ -15,6 +15,10 @@ from ..core.runtime.coordination import semantic_scope
 from ..core.values import ContractError, json_value
 
 
+class BudgetExhausted(RuntimeError):
+    """The Task's allowance ran out; a budget review, not a failure, decides what follows."""
+
+
 class TaskExecutionMixin:
     """Internal EverTree method group; state is owned and initialized by EverTree."""
 
@@ -22,7 +26,7 @@ class TaskExecutionMixin:
     def _remaining_seconds(state):
         remaining = state.remaining("active_time_minutes")
         if remaining is None or remaining <= 0:
-            raise RuntimeError("Consciousness must reassess the task's finite time budget")
+            raise BudgetExhausted("Consciousness must reassess the task's finite time budget")
         return remaining * 60
 
     @contextmanager
@@ -255,6 +259,9 @@ class TaskExecutionMixin:
                             "source_ref": dataclasses.asdict(self.memory.output_ref(trace_event)),
                         }
                     elif event.kind == "error":
+                        # A time limit is an interruption the caller resumes, not a failure.
+                        if event.data.get("type") == "TimeoutError":
+                            raise TimeoutError(event.data["message"])
                         raise RuntimeError(event.data["message"])
                     elif event.kind == "cancelled":
                         raise asyncio.CancelledError()
@@ -337,9 +344,14 @@ class TaskExecutionMixin:
         if not future.done():
             future.set_result(delivered)
 
-    async def cancel(self, task_id):
-        """Cancel a task's provider calls and execution tree, then record its terminal outcome."""
-        self._cancel_requested.add(task_id)
+    async def cancel(self, task_id, *, reason: str = "Cancelled by user"):
+        """Cancel a task's provider calls and execution tree, then record its terminal outcome.
+
+        reason is the saved decision that removes the commitment; it is never blank.
+        """
+        if not reason or not reason.strip():
+            raise ValueError("A cancellation needs the reason for removing the commitment")
+        self._cancel_requested.setdefault(task_id, reason)
         for request_id, owner in list(self._active_requests.items()):
             if owner == task_id:
                 await self.provider.cancel(request_id)
@@ -349,11 +361,13 @@ class TaskExecutionMixin:
         await asyncio.gather(*callbacks, return_exceptions=True)
         await self.runtime.cancel(task_id)
         if self._current_task == task_id and self._pump and not self._pump.done():
-            self._pump.cancel()
+            # A provider ending its turn may already have started the stop in the pump.
+            if task_id not in self._stopping:
+                self._pump.cancel()
             await self._task_stopped[task_id].wait()
         state = self.tasks.get(task_id)
         if not state.terminal:
-            await self._stop_task(state, "cancelled", "Cancelled by user")
+            await self._stop_task(state, "cancelled", self._cancel_requested[task_id])
         for owner, future in self._delivery.values():
             if owner == task_id and not future.done():
                 future.set_result(False)

@@ -10,6 +10,18 @@ from uuid import uuid4
 
 from ..datasets import freeze_json, thaw_json
 
+# Reasons an evaluation, aggregate component or task is omitted; never a substitute value.
+NO_PREDICTION = "no_prediction"
+NO_SUPPORTED_CALIBRATION = "no_supported_calibration"
+COST_NOT_JUSTIFIED = "cost_not_justified"
+INSUFFICIENT_DATA = "insufficient_data"
+INCOMPARABLE_PERIODS = "incomparable_periods"
+MISSING_COMPARISON_BASIS = "missing_comparison_basis"
+UNKNOWN_PROCESS = "unknown_process"
+MISSING_FINAL_OUTCOME = "missing_final_outcome"
+COUNTED_AT_PARENT_TASK_LEVEL = "counted_at_parent_task_level"
+OMISSION_REASONS = frozenset({NO_SUPPORTED_CALIBRATION, COST_NOT_JUSTIFIED})
+
 
 @dataclass(frozen=True)
 class SupervisorFeedback:
@@ -26,6 +38,10 @@ class SupervisorFeedback:
         if self.comment is not None and not isinstance(self.comment, str):
             raise ValueError("Supervisor feedback comment must be text")
         object.__setattr__(self, "value", float(self.value))
+
+    def normalized(self) -> float:
+        """Project the value onto [-1, 1] for consumers that need a unit scale."""
+        return self.value / 5
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize numeric supervisor feedback separately from its explanatory comment."""
@@ -62,6 +78,8 @@ class EvaluationResult:
     process_id: str | None = None
     observed_at: str | None = None
     comparison_key: str | None = None
+    # How prediction_unexpectedness was calculated: method, kind, rule version and norm digest.
+    basis: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.status not in {"evaluated", "not_applicable", "unresolved"}:
@@ -69,6 +87,8 @@ class EvaluationResult:
         for name in ("metric_samples", "outcome_ids", "provenance", "missing_requirements"):
             object.__setattr__(self, name, tuple(getattr(self, name)))
         object.__setattr__(self, "skipped_metrics", freeze_json(dict(self.skipped_metrics)))
+        if self.basis is not None:
+            object.__setattr__(self, "basis", freeze_json(thaw_json(self.basis)))
         if self.status == "evaluated":
             if not self.metric_samples or not self.outcome_ids or not self.provenance:
                 raise ValueError(
@@ -98,6 +118,7 @@ class EvaluationResult:
             "process_id": self.process_id,
             "observed_at": self.observed_at,
             "comparison_key": self.comparison_key,
+            "basis": thaw_json(self.basis),
         }
 
     @classmethod

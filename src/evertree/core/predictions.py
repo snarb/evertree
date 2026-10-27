@@ -34,6 +34,21 @@ def prediction_context(value: Mapping[str, Any]) -> dict[str, Any]:
     return json_value(result)
 
 
+def comparison_key(target: str, calibration: Mapping[str, Any] | None) -> str | None:
+    """Series identity of a forecast's unexpectedness: target, calibration rule and version.
+
+    Model revisions keep the series; a different rule, norm or selection starts a new one.
+    """
+    from .evaluation.scoring import UNEXPECTEDNESS_RULE_VERSION
+
+    if calibration is None:
+        return None
+    rule = calibration.get("kind") or "omit-" + str(calibration.get("omit"))
+    return (
+        f"{target}:{rule}:{content_revision(dict(calibration))[:12]}:{UNEXPECTEDNESS_RULE_VERSION}"
+    )
+
+
 def protect_prediction_delta(graph, delta):
     """Semantic edits cannot backdate or rewrite the protected prediction index."""
     relation = graph.find("PREDICTS")
@@ -111,6 +126,20 @@ class PredictionEvaluator:
         self.observation_ids = observation_ids
         self.run_mode = run_mode
 
+    def context(self, value: Mapping[str, Any]) -> dict[str, Any]:
+        """Normalize a prediction context, naming its process by ProcessConcept identity.
+
+        Evaluations are later grouped by this identity, so a name and an id of one
+        process must never form two series.
+        """
+        from .evaluation.scope import process_node
+
+        result = prediction_context(value)
+        node = process_node(self.graph, result["process_id"])
+        if node is not None:
+            result["process_id"] = str(node.id)
+        return result
+
     def target(self, target: str | int) -> int:
         """Resolve a prediction target to an existing semantic node identity."""
         node = self.graph.get(target) if isinstance(target, int) else self.graph.find(target)
@@ -135,7 +164,7 @@ class PredictionEvaluator:
                 for key in path:
                     selected = selected[key]
                 normalized[identity][part] = list(path)
-        return {"context": prediction_context(context), "projections": normalized}
+        return {"context": self.context(context), "projections": normalized}
 
     def save_prediction(
         self,
@@ -159,7 +188,7 @@ class PredictionEvaluator:
             raise ValueError("Prediction horizon must be a nonempty [start, end) interval")
         definition = {
             "reference": json_value(reference),
-            "context": prediction_context(context),
+            "context": self.context(context),
             "parts": list(parts),
             "period": list(period) if period else None,
             "calibration": json_value(calibration),
@@ -247,7 +276,14 @@ class PredictionEvaluator:
                 self.graph, self.memory, process, name, revision=revision, run_mode=self.run_mode
             )
             path = base + ((target.result,) if target.result else ())
-            fact = self.save_prediction(identity, TraceOutputRef(finished.id, path), context)
+            calibration = target.unexpectedness
+            fact = self.save_prediction(
+                identity,
+                TraceOutputRef(finished.id, path),
+                context,
+                calibration=calibration,
+                comparison_key=comparison_key(name, calibration),
+            )
             indexed.append({"target": name, "prediction": fact.id})
         return indexed
 
@@ -281,7 +317,7 @@ class PredictionEvaluator:
             if (
                 event.status == "completed"
                 and (self.observation_ids is None or event.id in self.observation_ids)
-                and event.operator in {"observation", "supervisor_feedback_signal"}
+                and event.operator == "observation"
                 and isinstance(arguments, Mapping)
                 and exact_json_equal(json_value(arguments.get("context")), context)
             ):
@@ -296,13 +332,13 @@ class PredictionEvaluator:
 
     def match_predictions(self, observations, context):
         """Return original forecasts with all matching old/new observation parts."""
-        context = prediction_context(context)
+        context = self.context(context)
         event_ids = {int(identity) for identity in observations}
         for identity in event_ids:
             event = self.memory.get_event(identity)
             if self.observation_ids is not None and identity not in self.observation_ids:
                 raise PermissionError("An agent-generated trace is not an external observation")
-            if event.operator not in {"observation", "supervisor_feedback_signal"}:
+            if event.operator != "observation":
                 raise ValueError("Prediction evaluation requires retained observations")
             if not exact_json_equal(json_value(event.arguments.get("context")), context):
                 raise ValueError("Observation does not belong to the requested context")
@@ -384,7 +420,8 @@ class PredictionEvaluator:
             result = evaluate_prediction(
                 self.memory.resolve(reference),
                 observed,
-                metrics=tuple(metrics),
+                # Always attempted, so a missing norm is retained as a reason, never a value.
+                metrics=(*metrics, "prediction_unexpectedness"),
                 outcome_ids=sources,
                 provenance=provenance,
                 subject=str(fact.id),
@@ -403,7 +440,7 @@ class PredictionEvaluator:
             raise ValueError("A prediction decision needs explicit necessity and a reason")
         value = {
             "target": str(self.target(target)),
-            "context": prediction_context(context),
+            "context": self.context(context),
             "required": required,
             "reason": reason,
         }
@@ -415,7 +452,7 @@ class PredictionEvaluator:
 
     def handle_unmatched_observations(self, pieces, context, selected_targets):
         """Group unmatched outcome parts into review cases, honoring explicit prediction exemptions."""
-        context = prediction_context(context)
+        context = self.context(context)
         selected = {str(self.target(target)) for target in selected_targets}
         decisions = {}
         for event in self.memory.events:
@@ -458,6 +495,7 @@ class PredictionEvaluator:
 
     def evaluate(self, observations, context, metrics, *, selected_targets=(), revision="core"):
         """Match observations, score forecasts and record unresolved review cases with source provenance."""
+        context = self.context(context)
         matches, unmatched = self.match_predictions(observations, context)
         results = [self.evaluate_prediction(match, metrics) for match in matches]
         cases = self.handle_unmatched_observations(unmatched, context, selected_targets)

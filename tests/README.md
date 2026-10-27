@@ -15,6 +15,7 @@ Complex behavior does not require expensive infrastructure. Most tests should ex
 | `live` | Compatibility with the signed-in SDK and external model | Explicit opt-in; may use account resources |
 | `evidence` | Text-based end-to-end belief cases: integration then evidence assessment ([catalog](evidence/README.md)) | Explicit opt-in; real model, Redis Search and embeddings |
 | `lifecycle` | End-to-end Program lifecycle scenarios solved by the real agent ([catalog](lifecycle/README.md)); `native/test_lifecycle_mirror.py` replays the same cases with scripted coding | Explicit opt-in; real Codex agent and native workers |
+| `evaluative` | Evaluative-control scenarios worked on by the real conscious agent ([catalog](evaluative/README.md)); `component/test_evaluative_control.py` covers the same signals with a scripted model | Explicit opt-in; real Codex agent and native workers |
 
 `pytest` selects only `unit` and `component` by default. A subprocess audit guard covers their setup, execution, and teardown, including subprocess aliases and asyncio subprocess launches; sandbox construction is also rejected. The pytest-xdist worker processes are created outside these test boundaries.
 
@@ -111,12 +112,14 @@ The following inventory preserves the behavioral scenario IDs and acceptance bou
 | ACT-04, ACT-05 | `test_behavioral_control` | Real ActionGateway: current immutable commands; acceptance is distinct from an Observation or success. |
 | ACT-06 | `test_behavioral_control` | Unknown receipt does not trigger resending; pending/reconciliation survive snapshots. Automatic receipt acquisition is absent. |
 | EVA-01–04 | `test_behavioral_evaluation` | Statuses, proper scoring, frozen evaluation, hidden outcomes, and refusal without independent evidence. |
+| EVC-01–26 | `test_evaluative_control`, `test_debug_evaluative_control` | Evaluative signals through the real coordinator, gateway and conscious tools: supervisor feedback as a channel value with its comment through provenance, calibrated `prediction_unexpectedness` with its basis and omission reasons, `ExplanatoryTension`, `tension_reduction` with components and coverage, Task success and on-time statistics with deadline history; used-up allowances, provider time limits and cancellation during a running step stay resumable or reported. History older than a test is seeded as saved results or Task transitions. |
+| EVL-01–10 | `tests/evaluative` | The same signals at different lifecycle stages with the real agent: ordinary and cancelled Tasks, feedback during and after work, tension diagnoses, coverage gaps, deadlines and reflection on the signals. Model answers are checked structurally. |
 | INT-01 | `test_behavioral_memory` | Lessons and evidence remain accessible after compaction; later plan selection is not checked. |
 | INT-02 | `test_behavioral_generalization` | Real estimator learns, passes independent checks, and retains `7 → 8` after compaction/restore. No full Program learning/activation/next-Task selection orchestration. |
 | INT-03, INT-04 | `test_behavioral_beliefs` | Current reads after retract and separate behavior/belief probability in traces; executable policy and plan revision are absent. |
 | INT-05 | `test_behavioral_learning` | Comments stay separate from numeric feedback; a supplied target receives credit or UnresolvedCredit. No automatic causal-target selection from text. |
 
-The catalog contains 96 scenarios: the existing mapping describes full or partial coverage for 87 and gaps for 9. This is a capability inventory, not a claim that every scenario is fully implemented. Module names may occur in more than one suite because business rules and infrastructure boundaries are deliberately separated.
+The catalog contains 132 scenarios: the existing mapping describes full or partial coverage for 123 and gaps for 9. This is a capability inventory, not a claim that every scenario is fully implemented. Module names may occur in more than one suite because business rules and infrastructure boundaries are deliberately separated.
 
 ## Performance evidence
 

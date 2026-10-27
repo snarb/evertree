@@ -97,6 +97,34 @@ async def test_exhausted_budget_leaves_packet_pending_without_an_integration_wai
     assert not app.provider.requests
 
 
+async def test_integration_interrupted_by_exhausted_budget_yields_to_budget_review(
+    app, monkeypatch
+):
+    """The interrupted run waits in its checkpoint, so the budget review is not refused."""
+    task = app.tasks.create_task("Review observations when allowance permits")
+    app.tasks.assign_budget(task.id, {"active_time_minutes": 1}, 0, reason="Review")
+    app._inputs[task.id] = [{"role": "user", "content": task.objective}]
+    source = app._record_analysis(task.id, {"text": "Worth retaining"})
+
+    async def exhausted(task_id, identity, arguments, **kwargs):
+        assert identity == "knowledge_integration"
+        app._pending_programs[task_id] = {
+            "identity": identity,
+            "arguments": arguments,
+            "run_id": "interrupted",
+            "spec": {},
+        }
+        app.tasks.record_usage(task_id, "active_time_minutes", 1, operation_id="exhaust")
+        raise TimeoutError("Task time budget exhausted")
+
+    monkeypatch.setattr(app, "_run_program", exhausted)
+    assert await app._integrate_step(task) is False
+    assert task.id not in app._pending_programs
+    checkpoint = task.step_state["integration"]
+    assert checkpoint["status"] == "interrupted"
+    assert checkpoint["pending_program"]["arguments"]["experience_refs"] == [source]
+
+
 async def test_successful_write_survives_lost_program_reply_without_blocking_answer(
     tmp_path, monkeypatch
 ):

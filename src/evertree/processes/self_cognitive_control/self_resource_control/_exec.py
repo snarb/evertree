@@ -20,6 +20,9 @@ Decision
 Estimate the cost of the remaining necessary work from the available results. Return:
 - execution_budget.active_time_minutes: a finite positive revised TOTAL, including all
   time already spent. It is not an extra allowance and excludes time waiting for the user.
+  Each working step, the knowledge integration that follows it and the independent
+  completion check are separate model calls, each commonly taking about a minute; even a
+  simple task needs room for all three.
 - self_improvement_budget: 0–100 percent of that total for additional improvement work.
   This share is included in the total; zero is valid.
 - budget_reason: what remains to be done and why this allocation is justified.

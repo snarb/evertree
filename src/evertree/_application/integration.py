@@ -10,6 +10,7 @@ from uuid import uuid4
 from ..common.source_sections import section_context, section_value, source_sections
 from ..core.cognition.steps import trace_reference
 from ..core.values import json_value
+from .tools import EVALUATIVE_OPERATIONS
 
 # Service Programs run after integration; their outputs are not experience to integrate.
 EVIDENCE_ASSESSMENT_SLUGS = (
@@ -186,6 +187,9 @@ class KnowledgeIntegrationMixin:
                     continue
                 data = event.output.get("data", {})
                 if data.get("name") in {"graph.integrate", "record_analysis", "run_program"}:
+                    continue
+                # Aggregates are recomputed from saved experience; they are not new evidence.
+                if data.get("name") in EVALUATIVE_OPERATIONS or data.get("name") == "load_tool_set":
                     continue
             if event.operator in {"run_started", "step_started"} or event.output is None:
                 continue
@@ -405,6 +409,12 @@ class KnowledgeIntegrationMixin:
             self._integration_diagnostic(state, checkpoint, exc)
             if state.hard_limit_reached or state.budget_exhausted:
                 checkpoint["status"] = "interrupted"
+                # Budget review runs before the interrupted workflow resumes, as on admission.
+                if (
+                    self._pending_programs.get(state.id, {}).get("identity")
+                    == "knowledge_integration"
+                ):
+                    checkpoint["pending_program"] = self._pending_programs.pop(state.id)
                 await self.backup()
                 return False
             if self._pending_programs.get(state.id, {}).get("identity") == "knowledge_integration":

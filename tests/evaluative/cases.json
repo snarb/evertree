@@ -1,0 +1,184 @@
+[
+  {
+    "id": "EVL-01",
+    "title": "Ordinary task: its verification forecast is scored with calibrated unexpectedness",
+    "task": "How many times does the letter r occur in the word strawberry? Reply with the number and a short explanation.",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "answer_contains_any", "values": ["3", "three"]},
+      {"check": "outcome_unexpectedness", "min": 1, "method": "model", "kind": "bernoulli"},
+      {"check": "stats", "processes": ["Process"], "path": "success_rate.numerator", "equals": 1},
+      {"check": "stats", "processes": ["Process"], "path": "success_rate.denominator", "equals": 1}
+    ]
+  },
+  {
+    "id": "EVL-02",
+    "title": "Supervisor feedback arrives while the task runs and its comment is followed",
+    "task": "Describe in two sentences what a strawberry is.",
+    "during": [
+      {"action": "feedback", "value": -3, "comment": "The answer must be written in French, not English."}
+    ],
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "answer_contains_any", "values": ["fraise", "est un", "est une", "c'est"]},
+      {"check": "feedback_on_task", "value": -3.0}
+    ]
+  },
+  {
+    "id": "EVL-03",
+    "title": "Recall a supervisor's evaluation of an earlier task and its reason",
+    "setup": {
+      "tasks": [
+        {"name": "report", "status": "succeeded", "process": "SelfPlanning", "created_days_ago": 0.2, "completed_days_ago": 0.1, "objective": "Prepare the weekly project report"}
+      ],
+      "feedback": [
+        {"task": "report", "value": -2, "comment": "The report omitted the risks to the delivery deadline."}
+      ]
+    },
+    "task": "Using the supervisor feedback recorded in the last 24 hours for all processes, tell me how the supervisor evaluated task {report} and what reason they gave.",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "tool_called", "name": "supervisor_feedback"},
+      {"check": "answer_contains_any", "values": ["-2", "−2", "minus 2", "negative", "disapprov"]},
+      {"check": "answer_contains_any", "values": ["deadline", "risk"]}
+    ]
+  },
+  {
+    "id": "EVL-04",
+    "title": "Diagnose a rise in explanatory tension and the process driving it",
+    "setup": {
+      "tension": [
+        {"process": "SelfPlanning", "days_ago": 10, "values": [0.2, 0.25, 0.3]},
+        {"process": "SelfPlanning", "days_ago": 3, "values": [0.85, 0.9, 0.8]},
+        {"process": "SelfTaskFraming", "days_ago": 10, "values": [0.5, 0.5]},
+        {"process": "SelfTaskFraming", "days_ago": 3, "values": [0.5, 0.45]}
+      ]
+    },
+    "task": "Compare explanatory tension of the task-management processes (SelfTaskManagement) in the last 7 days with the 7 days before. Did it rise or fall, by how much, and which process drives the change?",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "tool_called", "names": ["tension_reduction", "explanatory_tension"], "processes_include": "SelfTaskManagement"},
+      {"check": "answer_contains_any", "values": ["SelfPlanning", "planning"]},
+      {"check": "answer_contains_any", "values": ["rose", "rise", "increase", "higher", "grew", "worse"]},
+      {"check": "answer_contains_any", "values": ["0.29", "0.287", "0.2875", "0.28"]}
+    ]
+  },
+  {
+    "id": "EVL-05",
+    "title": "A broad reduction across related learning processes is seen in its components",
+    "setup": {
+      "tension": [
+        {"process": "SelfReflection", "days_ago": 10, "values": [0.85, 0.9]},
+        {"process": "SelfReflection", "days_ago": 2, "values": [0.3, 0.35]},
+        {"process": "SelfCreditAssignment", "days_ago": 10, "values": [0.8]},
+        {"process": "SelfCreditAssignment", "days_ago": 2, "values": [0.25, 0.3]},
+        {"process": "SelfUpdatePlanning", "days_ago": 10, "values": [0.9, 0.8]},
+        {"process": "SelfUpdatePlanning", "days_ago": 2, "values": [0.4]}
+      ]
+    },
+    "task": "Over the last 7 days versus the previous 7 days, how did explanatory tension change for the learning processes (SelfLearning)? Is the change broad across several processes or driven by one? Say what this does and does not establish.",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "tool_called", "name": "tension_reduction", "processes_include": "SelfLearning", "result_path": "value", "between": [0.4, 0.6]},
+      {"check": "answer_contains_any", "values": ["decrease", "fell", "lower", "reduc", "dropped", "declin"]},
+      {"check": "answer_contains_count", "values": ["SelfReflection", "SelfCreditAssignment", "SelfUpdatePlanning"], "min": 2}
+    ]
+  },
+  {
+    "id": "EVL-06",
+    "title": "Coverage gaps are reported with their reasons, never as improvement",
+    "setup": {
+      "tension": [
+        {"process": "SelfMemoryRetrieval", "days_ago": 10, "values": [0.6, 0.7]},
+        {"process": "SelfMemoryRetrieval", "days_ago": 2, "values": [0.5, 0.6]},
+        {"process": "SelfExperienceCompaction", "days_ago": 10, "values": [0.95, 0.9]}
+      ],
+      "omissions": [
+        {"process": "SelfMemoryRanking", "days_ago": 10, "reason": "cost_not_justified"},
+        {"process": "SelfMemoryRanking", "days_ago": 2, "reason": "cost_not_justified"}
+      ]
+    },
+    "task": "How did explanatory tension of memory processing (SelfMemoryProcessing) change in the last 7 days versus the 7 days before? List the processes that could not be compared and why.",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "tool_called", "name": "tension_reduction", "processes_include": "SelfMemoryProcessing"},
+      {"check": "answer_contains_any", "values": ["SelfMemoryRanking", "ranking"]},
+      {"check": "answer_contains_any", "values": ["SelfExperienceCompaction", "compaction"]},
+      {"check": "answer_contains_any", "values": ["cost"]},
+      {"check": "answer_contains_any", "values": ["insufficient", "no data", "missing", "only", "no evaluations", "absent", "lack"]}
+    ]
+  },
+  {
+    "id": "EVL-07",
+    "title": "On-time rate counts open overdue tasks and excludes early cancellations",
+    "setup": {
+      "tasks": [
+        {"status": "succeeded", "process": "SelfPlanning", "created_days_ago": 6, "completed_days_ago": 4, "deadline_days_ago": 3},
+        {"status": "succeeded", "process": "SelfPlanning", "created_days_ago": 6, "completed_days_ago": 2, "deadline_days_ago": 3},
+        {"status": null, "process": "SelfPlanning", "created_days_ago": 6, "deadline_days_ago": 3},
+        {"status": "cancelled", "process": "SelfPlanning", "created_days_ago": 6, "completed_days_ago": 4, "deadline_days_ago": 3},
+        {"status": "failed", "process": "SelfPlanning", "created_days_ago": 6, "completed_days_ago": 2}
+      ]
+    },
+    "task": "Of the SelfPlanning tasks whose deadline fell within the last 7 days, what share met the deadline? Give the numerator and the denominator, and the overall success rate of SelfPlanning tasks in the same period.",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "tool_called", "name": "task_outcome_stats", "processes_include": "SelfPlanning", "result_path": "on_time_rate.denominator", "equals": 3},
+      {"check": "answer_contains_any", "values": ["1/3", "1 of 3", "1 out of 3", "33"]},
+      {"check": "answer_contains_any", "values": ["2/3", "2 of 3", "2 out of 3", "67", "66"]}
+    ]
+  },
+  {
+    "id": "EVL-08",
+    "title": "A task submitted with a deadline and finished in time counts as on time",
+    "task": "What is 17 multiplied by 3? Reply with the number.",
+    "deadline_minutes": 90,
+    "process": "SelfPlanning",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "answer_contains_any", "values": ["51"]},
+      {"check": "task_field", "path": "deadline", "present": true},
+      {"check": "stats", "processes": ["SelfPlanning"], "days_after": 1, "path": "on_time_rate.numerator", "equals": 1},
+      {"check": "stats", "processes": ["SelfPlanning"], "days_after": 1, "path": "on_time_rate.denominator", "equals": 1}
+    ]
+  },
+  {
+    "id": "EVL-09",
+    "title": "Cancellation with a saved decision is not an outcome and is reported apart",
+    "task": "Write a detailed 3000-word essay on the history of strawberry cultivation in Europe, with sources.",
+    "during": [
+      {"action": "cancel", "delay_seconds": 5, "reason": "The supervisor withdrew the request"}
+    ],
+    "expect": [
+      {"check": "status", "equals": "cancelled"},
+      {"check": "task_field", "path": "outcome_reason", "equals": "The supervisor withdrew the request"},
+      {"check": "outcome_unexpectedness", "max": 0},
+      {"check": "stats", "processes": ["Process"], "path": "cancelled", "equals": 1},
+      {"check": "stats", "processes": ["Process"], "path": "success_rate.denominator", "equals": 0}
+    ]
+  },
+  {
+    "id": "EVL-10",
+    "title": "Reflection receives the signals and proposes checkable hypotheses",
+    "setup": {
+      "tasks": [
+        {"status": "succeeded", "count": 4, "process": "SelfPlanning", "created_days_ago": 11, "completed_days_ago": 10},
+        {"status": "succeeded", "process": "SelfPlanning", "created_days_ago": 4, "completed_days_ago": 3},
+        {"status": "failed", "count": 3, "process": "SelfPlanning", "created_days_ago": 4, "completed_days_ago": 3}
+      ],
+      "tension": [
+        {"process": "SelfPlanning", "days_ago": 10, "values": [0.3, 0.35]},
+        {"process": "SelfPlanning", "days_ago": 3, "values": [0.9, 0.85]}
+      ]
+    },
+    "task": "Task success in SelfTaskManagement seems to have dropped this week. Get the task outcome statistics and the explanatory tension change for SelfTaskManagement for the last 7 days versus the 7 days before. Then run the SelfReflection Program with these results in its context under evaluative_signals, and report its hypotheses together with how each could be independently checked.",
+    "expect": [
+      {"check": "status", "equals": "succeeded"},
+      {"check": "tool_called", "name": "task_outcome_stats", "processes_include": "SelfTaskManagement"},
+      {"check": "tool_called", "name": "tension_reduction", "processes_include": "SelfTaskManagement"},
+      {"check": "program_run", "program": "SelfReflection.exec", "context_has": "evaluative_signals", "result_has": "hypotheses"},
+      {"check": "answer_contains_any", "values": ["SelfPlanning", "planning"]},
+      {"check": "answer_contains_any", "values": ["check", "verify", "test", "compare"]}
+    ]
+  }
+]

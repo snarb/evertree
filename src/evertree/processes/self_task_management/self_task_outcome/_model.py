@@ -22,6 +22,7 @@ LEARNING = {
             "check": "Core records succeeded as 1 and failed as 0 when the task stops; "
             "cancelled tasks have no outcome.",
             "metrics": ["brier", "log_loss"],
+            "unexpectedness": {"kind": "bernoulli"},
         }
     },
     "estimators": {

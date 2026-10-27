@@ -56,7 +56,7 @@ async def test_restart_replays_interrupted_integration_without_repeating_graph_w
     home = tmp_path / "agent"
     runtime = partial(Runtime, process_factory=TestProcess)
     first_provider = SaveExplanationProvider(
-        [framing(), decision("Checked explanation")], pause_after_write=True
+        [framing(), decision("Checked explanation"), verification()], pause_after_write=True
     )
     async with EverTree(home, provider=first_provider, runtime_factory=runtime) as first:
         task = await first.submit("Explain the observed failure")
@@ -173,7 +173,7 @@ async def test_restored_search_child_authorizes_creation_only_in_resumed_invocat
     home = tmp_path / "agent"
     runtime = partial(Runtime, process_factory=TestProcess)
     first_index = Index()
-    provider = Provider([framing(), decision("Categorized")], pause=True)
+    provider = Provider([framing(), decision("Categorized"), verification()], pause=True)
     async with EverTree(
         home, provider=provider, runtime_factory=runtime, search_index=first_index
     ) as first:

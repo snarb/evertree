@@ -71,9 +71,35 @@ def test_run_outputs_then_acknowledges_and_passes_explicit_user_limit(transport,
     assert "task-one: succeeded" in out.err
     assert transport[0].received == (
         "Compute the answer",
-        {"task_id": None, "hard_limits": {"active_time_minutes": 17.0}},
+        {
+            "task_id": None,
+            "hard_limits": {"active_time_minutes": 17.0},
+            "deadline": None,
+            "process": None,
+        },
     )
     assert transport[0].approval_handler is cli.approve
+
+
+def test_run_passes_result_deadline_and_working_process(transport, tmp_path):
+    deadline = "2026-01-02T00:00:00+00:00"
+    argv = [
+        "--home",
+        str(tmp_path),
+        "run",
+        "Plan",
+        "--deadline",
+        deadline,
+        "--process",
+        "SelfPlanning",
+    ]
+    assert cli.main(argv) == 0
+    assert transport[0].received[1] | {"hard_limits": None} == {
+        "task_id": None,
+        "hard_limits": None,
+        "deadline": deadline,
+        "process": "SelfPlanning",
+    }
 
 
 def test_run_reads_complete_stdin_without_assuming_approval(transport, monkeypatch, capsys):

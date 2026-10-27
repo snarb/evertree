@@ -197,6 +197,8 @@ No additional normalization is needed in the MVP: `prediction_unexpectedness` al
 - `by_process` — for each included process, its mean `before`, mean `after`, their difference `delta`, and the number of source values in each period.
 - `skipped` — selected processes, after subtree expansion, that were omitted, with reasons such as no supported calibration method, unjustified calculation cost, insufficient data, or incomparable periods.
 - `period`, `baseline_period` — the intervals actually used.
+- `tension_before`, `tension_after` — both `ExplanatoryTension` values over `comparable_processes`.
+- `coverage` — counts of selected, covered and skipped processes. Subtypes that no saved check has ever measured are counted, not listed, so a broad selection such as `[Process]` stays readable; the selected concepts themselves and every measured process are always listed in `skipped` when omitted.
 
 Rules for comparison over time:
 ^tension-comparison

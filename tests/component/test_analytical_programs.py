@@ -37,6 +37,7 @@ async def test_analytical_programs_keep_partial_insights_and_original_trace_sour
             **proposal,
             "analysis": {
                 "text": "A and B support the hypothesis, but C is still unexplained.",
+                "kind": "note",
                 "source_refs": [reference],
             },
             "findings": [
@@ -59,8 +60,10 @@ async def test_reflection_rejects_invented_source_instead_of_making_it_memory_ev
         {
             "analysis": {
                 "text": "The parser is wrong.",
+                "kind": "note",
                 "source_refs": [{"event_ref": 999, "output_path": []}],
             },
+            "findings": [],
             "incidents": [],
             "hypotheses": [],
             "proposed_changes": [],

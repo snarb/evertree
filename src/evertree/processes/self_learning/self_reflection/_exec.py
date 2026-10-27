@@ -71,6 +71,13 @@ Work in this order
 3. Propose changes only where the expected benefit justifies the cost. State how an independent
    check could disprove the explanation or reveal harm from the change.
 
+When the input includes evaluative_signals (tension_reduction, explanatory_tension,
+task_outcome_stats, supervisor_feedback), treat them as diagnostics that select what to
+investigate. Name the by_process components behind an overall change, the counts or
+denominators supporting it and the skipped processes with their reasons. An aggregate trend
+proves neither improvement nor a causal effect, a missing process is not an improvement, and
+lower unexpectedness is not itself a goal; a supervisor comment is evidence of the reason.
+
 Output categories
 - incidents: description, supporting source_ids and causal_scope. Use self when the proposed
   cause is within the agent; environment when external; interaction when both contribute;

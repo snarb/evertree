@@ -13,6 +13,7 @@ from uuid import uuid4
 from evertree.core.evaluation.acceptance import VerificationResult
 
 from ..datasets import freeze_json, thaw_json
+from ..values import timestamp
 from .steps import ConsciousStepSpec, trace_reference
 
 TERMINAL_STATUSES = frozenset({"succeeded", "failed", "cancelled"})
@@ -122,6 +123,8 @@ class TaskState:
     created_at: str = field(default_factory=utc_now)
     completed_at: str | None = None
     deadline: str | None = None
+    # Each deadline in force and when it took effect; a revision never erases a passed miss.
+    deadline_history: list[dict[str, Any]] = field(default_factory=list)
     outcome_reason: str | None = None
     review_required: bool = False
     execution_stopped: bool = True
@@ -264,6 +267,11 @@ class TaskStore:
             hard_limits=dict(hard_limits or {}),
             deadline=deadline,
         )
+        if deadline is not None:
+            timestamp(deadline)
+            state.deadline_history = [
+                {"deadline": deadline, "since": state.created_at, "reason": "initial"}
+            ]
         with self._lock:
             if state.id in self._tasks:
                 raise ValueError("Task identity is already registered")
@@ -416,6 +424,45 @@ class TaskStore:
         state.waiting_for = list(waiting_for)
         state.progress = reason
         state.execution_stopped = True
+
+    def revise_deadline(
+        self, task_id: str, deadline: str | None, *, reason: str, at: str | None = None
+    ) -> None:
+        """Change an open task's result deadline, keeping the earlier deadline and the reason."""
+        state = self.get(task_id)
+        if state.terminal or not reason:
+            raise ValueError("A deadline revision needs an open task and a reason")
+        if deadline is not None:
+            timestamp(deadline)
+        since = at or utc_now()
+        state.deadline = deadline
+        state.deadline_history.append({"deadline": deadline, "since": since, "reason": reason})
+        self._events.append(
+            {
+                "kind": "deadline_revised",
+                "task_id": task_id,
+                "deadline": deadline,
+                "reason": reason,
+                "at": since,
+            }
+        )
+
+    def assign_process(self, task_id: str, process_id: str, *, reason: str) -> None:
+        """Attribute an open task to the process doing its evaluated work."""
+        state = self.get(task_id)
+        if state.terminal or not reason or not process_id:
+            raise ValueError("A process assignment needs an open task, a process and a reason")
+        previous, state.process_id = state.process_id, process_id
+        self._events.append(
+            {
+                "kind": "process_assigned",
+                "task_id": task_id,
+                "process_id": process_id,
+                "previous": previous,
+                "reason": reason,
+                "at": utc_now(),
+            }
+        )
 
     def finish(
         self,

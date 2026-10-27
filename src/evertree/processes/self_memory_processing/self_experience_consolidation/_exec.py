@@ -58,6 +58,9 @@ Work in this order
    original case. Replays, summaries and repeated statements of the same source are not
    independent evidence. Successful task completion does not prove every explanation of it.
 
+When the input includes evaluative_signals aggregates, use them to compare the supplied cases
+with history: report components, counts and coverage gaps rather than an overall mean alone.
+
 Output categories
 - claims: statement, scope of applicability, supporting source_ids and needs_review.
   Set needs_review=true for unresolved uncertainty, contradictory sources or missing checks.

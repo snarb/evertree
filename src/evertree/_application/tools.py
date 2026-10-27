@@ -8,11 +8,20 @@ import json
 
 from evertree.core.memory.types import TraceOutputRef
 
+from ..core.evaluation.scope import canonical_process
 from ..core.provider import LLMRequest, ToolDefinition
 from ..core.runtime.coordination import semantic_scope
 from ..core.semantics.reading import belief_summary
 from ..core.values import json_value
 from .prompts import CODING_INSTRUCTIONS, LIFECYCLE_TOOLS, TELEMETRY_OPERATORS, bounded_event
+
+# Conscious evaluative-signal tools and the read-only Core operations serving them.
+EVALUATIVE_OPERATIONS = {
+    "explanatory_tension": "evaluation.explanatory_tension",
+    "tension_reduction": "evaluation.tension_reduction",
+    "supervisor_feedback": "evaluation.feedback",
+    "task_outcome_stats": "tasks.outcome_stats",
+}
 
 
 class ToolsMixin:
@@ -134,6 +143,16 @@ class ToolsMixin:
                 for group, kept in zip(groups, events, strict=True)
                 if kept
             ]
+        if name in EVALUATIVE_OPERATIONS:
+            return self._core_operations().evaluative_signal(EVALUATIVE_OPERATIONS[name], args)
+        if name == "assign_task_process":
+            process = canonical_process(self.graph, args["process"])
+            self.tasks.assign_process(task_id, process, reason=args["reason"])
+            return {
+                "task_id": task_id,
+                "process_id": process,
+                "process": self.graph.get(int(process)).name,
+            }
         if name == "read_source":
             return await self._semantics().execute("memory.read_source", args, {"task_id": task_id})
         if name in LIFECYCLE_TOOLS:
@@ -307,6 +326,7 @@ class ToolsMixin:
             self.learning,
             self._observations,
             self._protected_nodes,
+            self.tasks,
         )
 
     def _apply_delta(self, task_id, delta):

@@ -25,6 +25,14 @@ FORM_METRICS = {
     "median": frozenset({"absolute_error"}),
     "value": frozenset({"exact_match"}),
 }
+# Calibration rules whose predictive distribution each forecast form can express.
+UNEXPECTEDNESS_FORMS = {
+    "bernoulli": {"probability"},
+    "categorical": {"distribution"},
+    "normal": {"mean", "median"},
+    "deterministic": {"value"},
+    "empirical_rank": {"mean", "median"},
+}
 ESTIMATOR_FORMS = {
     "beta_bernoulli": "probability",
     "categorical": "distribution",
@@ -49,6 +57,12 @@ class ForecastTarget(BaseModel):
     check: str = Field(min_length=1, description="How the observed outcome is obtained.")
     metrics: list[str] = Field(min_length=1)
     categories: list[str] | None = None
+    unexpectedness: dict[str, Any] | None = Field(
+        default=None,
+        description="Calibration rule for prediction_unexpectedness, e.g. {'kind': 'bernoulli'}, "
+        "or {'omit': 'cost_not_justified' | 'no_supported_calibration'} to record why it is "
+        "not calculated. Absent means no supported rule.",
+    )
 
     @model_validator(mode="after")
     def _compatible(self) -> ForecastTarget:
@@ -59,6 +73,15 @@ class ForecastTarget(BaseModel):
             )
         if (self.form == "distribution") != (self.categories is not None):
             raise ValueError("Declare categories exactly for distribution forecasts")
+        if self.unexpectedness is not None:
+            from ..evaluation.scoring import calibration_omission
+
+            kind = self.unexpectedness.get("kind")
+            fitting = UNEXPECTEDNESS_FORMS.get(kind)
+            if "omit" in self.unexpectedness:
+                calibration_omission(self.unexpectedness)
+            elif fitting is None or self.form not in fitting:
+                raise ValueError(f"{self.form} forecasts cannot use unexpectedness kind {kind!r}")
         if self.categories is not None and (
             not self.categories or len(set(self.categories)) != len(self.categories)
         ):

@@ -23,6 +23,10 @@ from evertree.core.memory.types import TraceOutputRef
 
 from .attribution import AttributionRuntime
 from .beliefs import BeliefStore, element_target
+from .cognition.control import get_task_outcome_stats
+from .cognition.tasks import TaskStore
+from .evaluation.feedback import supervisor_feedback_history
+from .evaluation.scope import process_scope
 from .evidence import GraphEvidence
 from .predictions import PredictionEvaluator, protect_prediction_delta
 from .program_evidence import ProgramEvidence
@@ -60,6 +64,10 @@ MODEL_OPERATIONS = frozenset(
         "learning.statistics",
         "learning.prepare",
         "evaluation.predict",
+        "evaluation.explanatory_tension",
+        "evaluation.tension_reduction",
+        "evaluation.feedback",
+        "tasks.outcome_stats",
         "attribution.read",
         "attribution.measure",
         "attribution.normalize",
@@ -96,9 +104,28 @@ class CoreOperations:
     learning: LearningStore
     observation_ids: set[int] | frozenset[int]
     protected_nodes: set[int] | frozenset[int] = field(default_factory=frozenset)
+    # Absent in isolated experiments, which see no live Task outcomes.
+    tasks: TaskStore | None = None
 
     def __post_init__(self):
         self.attribution.memory = self.memory
+
+    def evaluative_signal(self, method: str, payload: dict) -> dict:
+        """Compute an on-demand aggregate over the saved experience of a process scope."""
+        period = tuple(payload["period"])
+        scope = process_scope(self.graph, payload["processes"])
+        if method == "evaluation.explanatory_tension":
+            return self.evaluations.explanatory_tension(period, scope).to_dict()
+        if method == "evaluation.tension_reduction":
+            baseline = payload.get("baseline_period")
+            return self.evaluations.get_tension_reduction(
+                period, scope, tuple(baseline) if baseline else None
+            ).to_dict()
+        if method == "evaluation.feedback":
+            return supervisor_feedback_history(self.evaluations, self.memory, scope, period)
+        if self.tasks is None:
+            raise PermissionError("Task outcomes are unavailable in this execution")
+        return get_task_outcome_stats(self.tasks.all(), period, scope)
 
     def predictions(self, run_mode="live") -> PredictionEvaluator:
         """Build a prediction evaluator using this gateway's stores and observation authority."""
@@ -574,6 +601,13 @@ class CoreOperations:
             result = self.predictions(run_mode).record_decision(**payload, revision=revision)
         elif method == "evaluation.review":
             result = self.review(payload, task_id=task_id, revision=revision, run_mode=run_mode)
+        elif method in {
+            "evaluation.explanatory_tension",
+            "evaluation.tension_reduction",
+            "evaluation.feedback",
+            "tasks.outcome_stats",
+        }:
+            result = self.evaluative_signal(method, payload)
         else:
             raise PermissionError("Unsupported core operation: " + method)
         return json_value(result)

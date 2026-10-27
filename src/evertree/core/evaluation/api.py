@@ -56,3 +56,50 @@ async def match(
 async def review(ctx: ProgramContext, *, cases: list[UnmatchedCase], credits: list) -> Any:
     """Route unmatched prediction cases and their credit results to review."""
     return await ctx.step("evaluation.review", {"cases": cases, "credits": credits})
+
+
+# Aggregates are journaled: experience keeps growing, and a replayed run must see the
+# same result it acted on.
+
+
+async def explanatory_tension(
+    ctx: ProgramContext, period: list[str], processes: list[str | int]
+) -> dict:
+    """Mean calibrated unexpectedness in [start, end) over processes and their subtypes.
+
+    Returns {value, by_process, skipped, period}; value is None without covered processes.
+    """
+    return await ctx.step(
+        "evaluation.explanatory_tension", {"period": period, "processes": processes}
+    )
+
+
+async def tension_reduction(
+    ctx: ProgramContext,
+    period: list[str],
+    processes: list[str | int],
+    baseline_period: list[str] | None = None,
+) -> dict:
+    """Change of ExplanatoryTension against the baseline; positive means tension decreased.
+
+    by_process and skipped show composition and coverage; inspect them before any
+    conclusion. A trend alone proves neither improvement nor a causal effect.
+    """
+    return await ctx.step(
+        "evaluation.tension_reduction",
+        {"period": period, "processes": processes, "baseline_period": baseline_period},
+    )
+
+
+async def supervisor_feedback(
+    ctx: ProgramContext, period: list[str], processes: list[str | int]
+) -> dict:
+    """Supervisor evaluations in [start, end) with their comments, per process."""
+    return await ctx.step("evaluation.feedback", {"period": period, "processes": processes})
+
+
+async def task_outcome_stats(
+    ctx: ProgramContext, period: list[str], processes: list[str | int]
+) -> dict:
+    """Task success_rate and on_time_rate with numerators, denominators and omissions."""
+    return await ctx.step("tasks.outcome_stats", {"period": period, "processes": processes})

@@ -77,6 +77,21 @@ that solves tasks over successive iterations.
 - recovered_program_result, when present: a saved routine result recovered after interruption.
 - programs: reusable routines available through run_program. Inspect a Program with
   graph.describe when you need more information about its interface.
+- state.now is the current time; state.deadline is the Task's result deadline, if any;
+  state.process is the ProcessConcept this Task's outcome is attributed to.
+- An observation message with supervisor_feedback is an external evaluation of your
+  behavior: value in [-5, 5] (negative disapproves) and an optional comment with the reason
+  or desired correction. Address the comment in further work; the value alone states no rule.
+
+## Evaluative signals
+Load evaluative_signals to analyze saved experience on demand: explanatory_tension,
+tension_reduction, supervisor_feedback and task_outcome_stats over a period and a process
+group (subtypes included; ['Process'] is everything). Report the value together with
+by_process components, counts, denominators and skipped processes with reasons. A material
+change is a reason to inspect components, experience and conditions, not proof of
+improvement or of a cause; a missing process is never an improvement, and lower tension is
+not a goal in itself. For reflection or consolidation, pass these results in the Program's
+context as evaluative_signals.
 
 ## Perform the step
 Work toward state.current_step, respecting specification. A plan, partial analysis,
@@ -432,6 +447,13 @@ def _all_tools():
             ("candidate", "decision", "reason"),
         ),
         tool(
+            "assign_task_process",
+            "Attribute this Task to the ProcessConcept doing its evaluated work, so its outcome is "
+            "counted for that process. Tasks start under the general Process.",
+            {"process": {"type": ["string", "integer"]}, "reason": string},
+            ("process", "reason"),
+        ),
+        tool(
             "list_actions",
             "List unchanged ready commands from the task's connected environment.",
             {"session": string},
@@ -624,6 +646,86 @@ def tool_sets():
             "external_action_tools",
             "Inspect and request approved external actions.",
             tuple(t for t in catalog if t.name in {"list_actions", "take_action"}),
+        ),
+        ToolSet(
+            "evaluative_signals",
+            "On-demand aggregates of saved experience for a process group: explanatory tension and "
+            "its change, supervisor feedback, and Task success and on-time rates. Use them to decide "
+            "which components, experience and conditions to investigate.",
+            evaluative_tools(),
+        ),
+    )
+
+
+def evaluative_tools():
+    """Read-only on-demand evaluation aggregates; every result reports components and omissions."""
+    period = {
+        "type": "array",
+        "items": {"type": "string"},
+        "minItems": 2,
+        "maxItems": 2,
+        "description": "Half-open [start, end) as ISO timestamps with timezone, e.g. ending at "
+        "state.now. Results are assigned by when the evaluated outcome occurred.",
+    }
+    processes = {
+        "type": "array",
+        "items": {"type": ["string", "integer"]},
+        "minItems": 1,
+        "description": "ProcessConcept names or IDs; each includes all its SUBTYPE_OF "
+        "descendants. ['Process'] covers the whole taxonomy.",
+    }
+
+    def define(name, description, properties, required):
+        return ToolDefinition(
+            name,
+            description,
+            {
+                "type": "object",
+                "properties": properties,
+                "required": list(required),
+                "additionalProperties": False,
+            },
+            read_only=True,
+        )
+
+    scope = {"period": period, "processes": processes}
+    return (
+        define(
+            "explanatory_tension",
+            "Mean calibrated prediction_unexpectedness in one period: first per process, then "
+            "across covered processes with equal weights. Value is None without data; skipped "
+            "lists omitted processes and why. Not an overall agent score or a learning objective.",
+            scope,
+            ("period", "processes"),
+        ),
+        define(
+            "tension_reduction",
+            "Change of explanatory tension: baseline mean minus period mean over processes "
+            "comparable in both periods. Positive means discrepancies became less unusual. "
+            "baseline_period defaults to the preceding interval of equal length. Read by_process "
+            "for which processes drive the change and skipped for coverage gaps; a missing process "
+            "is never an improvement, and a trend alone proves no causal effect.",
+            {
+                **scope,
+                "baseline_period": {**period, "description": "Optional comparison interval."},
+            },
+            ("period", "processes"),
+        ),
+        define(
+            "supervisor_feedback",
+            "Supervisor evaluations in the period, each with its value in [-5, 5], the stated "
+            "comment, the evaluated subject (usually a Task ID) and process.",
+            scope,
+            ("period", "processes"),
+        ),
+        define(
+            "task_outcome_stats",
+            "Task success_rate among Tasks with a final outcome in the period and on_time_rate "
+            "among Tasks whose deadline falls in it (open overdue Tasks count as missed), each "
+            "with numerator and denominator, plus cancellations, open Tasks, by_process and "
+            "omissions.",
+            scope,
+            ("period", "processes"),
         ),
     )
 

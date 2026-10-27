@@ -15,7 +15,15 @@ from typing import Any
 from uuid import uuid4
 
 from evertree.core.codex.provider import CodexProvider
-from evertree.core.evaluation.contracts import SupervisorFeedback, exact_json_equal
+from evertree.core.cognition.control import get_task_outcome_stats
+from evertree.core.evaluation.contracts import (
+    EvaluatedResult,
+    MetricSample,
+    SupervisorFeedback,
+    exact_json_equal,
+)
+from evertree.core.evaluation.feedback import supervisor_feedback_history
+from evertree.core.evaluation.scope import canonical_process, process_scope
 from evertree.core.memory.types import TraceOutputRef
 from evertree.core.runtime.controller import Runtime
 
@@ -138,7 +146,10 @@ class EverTree(
         self._active_requests: dict[str, str] = {}
         self._tool_tasks: dict[str, set] = {}
         self._task_stopped: dict[str, asyncio.Event] = {}
-        self._cancel_requested: set[str] = set()
+        # A cancellation is a saved decision; its reason is the Task's recorded outcome reason.
+        self._cancel_requested: dict[str, str] = {}
+        # Tasks whose stop has begun; cancelling them again would cut off its report.
+        self._stopping: set[str] = set()
         self._current_task: str | None = None
         self._delivery: dict[str, tuple[str, asyncio.Future]] = {}
         self._results: dict[str, dict] = {}
@@ -393,7 +404,7 @@ class EverTree(
                 raise ValueError("Feedback needs a task or an explicit process context")
             task = self.tasks.get(task_id)
             context = {
-                "process_id": "Consciousness",
+                "process_id": task.process_id or canonical_process(self.graph, "Process"),
                 "subject": task_id,
                 "episode": task.episode_ids[-1] if task.episode_ids else task_id,
             }
@@ -404,6 +415,7 @@ class EverTree(
             context=context,
             projections={"supervisor_feedback_signal": {"value": ["value"]}},
         )
+        self._record_feedback(feedback, ref)
         if task_id is not None and not self.tasks.get(task_id).terminal:
             messages = self._inputs.setdefault(task_id, [])
             if not any(item.get("source_id") == source_id for item in messages):
@@ -426,6 +438,57 @@ class EverTree(
                 )
         return ref
 
+    def _record_feedback(self, feedback: SupervisorFeedback, ref: TraceOutputRef) -> None:
+        """Retain the feedback value on its channel; the comment stays in the observation."""
+        event = self.memory.get_event(ref.event_ref)
+        context = event.arguments["context"]
+        source = str(event.id)
+        result = EvaluatedResult(
+            (MetricSample("supervisor_feedback", feedback.value, "supervisor_feedback_signal"),),
+            (source,),
+            evaluated_subject=context["subject"],
+            provenance=(source,),
+            id="supervisor_feedback:" + source,
+            process_id=context["process_id"],
+            observed_at=event.occurred_at.isoformat(),
+        )
+        self.memory.retain(event.id, "evaluation:" + result.id)
+        self.evaluations.add(result)
+
+    def supervisor_feedback_history(
+        self, period: tuple[str, str], processes: list[str | int]
+    ) -> dict:
+        """List supervisor evaluations in [start, end) for a process scope, with comments."""
+        return supervisor_feedback_history(
+            self.evaluations,
+            self.memory,
+            process_scope(self.graph, processes),
+            period,
+        )
+
+    def explanatory_tension(self, period: tuple[str, str], processes: list[str | int]) -> dict:
+        """Mean calibrated unexpectedness of a process group within one window."""
+        return self.evaluations.explanatory_tension(
+            period, process_scope(self.graph, processes)
+        ).to_dict()
+
+    def tension_reduction(
+        self,
+        period: tuple[str, str],
+        processes: list[str | int],
+        baseline_period: tuple[str, str] | None = None,
+    ) -> dict:
+        """Change of ExplanatoryTension against the baseline; positive means it decreased."""
+        return self.evaluations.get_tension_reduction(
+            period, process_scope(self.graph, processes), baseline_period
+        ).to_dict()
+
+    def task_outcome_stats(self, period: tuple[str, str], processes: list[str | int]) -> dict:
+        """Success and on-time rates of Tasks attributed to a process scope."""
+        return get_task_outcome_stats(
+            self.tasks.all(), period, process_scope(self.graph, processes)
+        )
+
     async def submit(
         self,
         text: str,
@@ -433,8 +496,14 @@ class EverTree(
         task_id: str | None = None,
         source_id: str | None = None,
         hard_limits: dict | None = None,
+        deadline: str | None = None,
+        process: str | int | None = None,
     ):
-        """Record user input and queue a new or open task; source_id deduplicates intake."""
+        """Record user input and queue a new or open task; source_id deduplicates intake.
+
+        deadline is the Task's result deadline, distinct from runtime limits. process names
+        the ProcessConcept doing the work; conscious work defaults to the general Process.
+        """
         await self.start()
         if self._closed or not text.strip():
             raise ValueError("A nonempty input and an open agent are required")
@@ -446,7 +515,12 @@ class EverTree(
                 self.tasks.get(task_id)
                 if task_id
                 else self.tasks.create_task(
-                    text, episode_id=uuid4().hex, source_ids=(source_id,), hard_limits=hard_limits
+                    text,
+                    episode_id=uuid4().hex,
+                    source_ids=(source_id,),
+                    hard_limits=hard_limits,
+                    deadline=deadline,
+                    process_id=canonical_process(self.graph, process or "Process"),
                 )
             )
             if state.terminal:

@@ -33,6 +33,9 @@ that resolves the ambiguity instead of inventing a requirement.
 Budget
 - execution_budget.active_time_minutes: a finite positive TOTAL for this task, including
   time already spent. Waiting for the user does not count. Respect context.hard_limits.
+  Each working step, the knowledge integration that follows it and the independent
+  completion check are separate model calls, each commonly taking about a minute; even a
+  simple task needs room for all three.
 - self_improvement_budget: 0–100 percent of that total reserved for additional work that
   improves future performance. It is included in the total; zero is valid.
 - budget_reason: explain the estimate using the scope, urgency and expected work.

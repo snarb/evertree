@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from datetime import UTC, datetime
 
+from evertree.common.task_context import fit_total_budget
 from evertree.core.cognition.steps import ConsciousStepResult, ConsciousStepSpec, trace_reference
 from evertree.core.cognition.tasks import TaskSpecification
 from evertree.core.contracts import task_outcome_context
@@ -14,6 +16,7 @@ from evertree.core.memory.types import MemoryQuery, TraceOutputRef
 from ..core.programs.layout import program_active
 from ..core.provider import LLMRequest
 from ..core.values import bounded, json_value
+from .execution import BudgetExhausted
 from .integration import EVIDENCE_ASSESSMENT_SLUGS
 from .prompts import (
     ANSWER_VERIFICATION_INSTRUCTIONS,
@@ -87,7 +90,7 @@ class ConsciousnessMixin:
             except asyncio.CancelledError:
                 if not state.terminal:
                     if identity in self._cancel_requested:
-                        await self._stop_task(state, "cancelled", "Cancelled by user")
+                        await self._stop_task(state, "cancelled", self._cancel_requested[identity])
                     else:
                         await self.runtime.cancel(state.id, finalize=False)
                         self.tasks.set_waiting(
@@ -98,13 +101,27 @@ class ConsciousnessMixin:
                         )
                 if self._closed:
                     raise
+            except BudgetExhausted as exc:
+                # The open Task waits for a budget review on resume instead of failing.
+                if not state.terminal:
+                    if identity in self._cancel_requested:
+                        await self._stop_task(state, "cancelled", self._cancel_requested[identity])
+                    else:
+                        await self.runtime.cancel(state.id, finalize=False)
+                        self.tasks.set_waiting(
+                            state.id,
+                            waiting_for=["resume"],
+                            reason=str(exc),
+                            execution_stopped=True,
+                        )
+                        await self._publish("task_waiting", state.id, {"reason": str(exc)})
             except Exception as exc:  # noqa: BLE001 -- controller failures become explicit task failures
                 if not state.terminal:
                     cancelled = identity in self._cancel_requested
                     await self._stop_task(
                         state,
                         "cancelled" if cancelled else "failed",
-                        "Cancelled by user" if cancelled else str(exc),
+                        self._cancel_requested[identity] if cancelled else str(exc),
                     )
             finally:
                 if self.attention.running_task == identity:
@@ -164,7 +181,11 @@ class ConsciousnessMixin:
             state.specification.source_ids
         ):
             identity = "task_framing"
-            arguments = {"request": self._inputs[state.id][-1]["content"], "context": context}
+            # Observations such as supervisor feedback may follow the request; frame the request.
+            request = next(
+                item for item in reversed(self._inputs[state.id]) if item["role"] == "user"
+            )
+            arguments = {"request": request["content"], "context": context}
         else:
             identity = "resource_control"
             arguments = {"task_state": context, "evidence": {"trace": self._recent_trace(state.id)}}
@@ -186,7 +207,8 @@ class ConsciousnessMixin:
         data = result["result"]
         self.tasks.assign_budget(
             state.id,
-            data["execution_budget"],
+            # The review itself spends time, so a total can fall below spending by acceptance.
+            fit_total_budget(data["execution_budget"], state.spent),
             data["self_improvement_budget"],
             reason=data["budget_reason"],
         )
@@ -326,7 +348,10 @@ class ConsciousnessMixin:
                 state.plan = record["plan"]
                 state.unresolved_questions = decision.unresolved_questions
                 await self.backup()
-                await self._integrate_step(state)
+                # A completion proposal is checked first; integration drains after the
+                # check so it cannot spend the allowance the verification needs.
+                if decision.disposition != "propose_completion":
+                    await self._integrate_step(state)
             if (
                 version != self._input_version(state)
                 or work.get("specification_revision") != state.specification.revision
@@ -466,6 +491,7 @@ class ConsciousnessMixin:
 
     async def _stop_task(self, state, status, reason, verification=None):
         """Finalize a stopped task and record its outcome, evaluation and learning signals."""
+        self._stopping.add(state.id)
         integration_status = self._integration_status(state)
         reviewed = {
             json.dumps(ref, sort_keys=True)
@@ -598,6 +624,11 @@ class ConsciousnessMixin:
             recent.append(item)
         return recent[::-1]
 
+    def _task_process(self, state):
+        if state.process_id is None:
+            return None
+        return {"id": int(state.process_id), "name": self.graph.get(int(state.process_id)).name}
+
     def _conscious_context(self, state, admitted_step):
         """Build decision context from retained task progress and substantive operation results."""
         work = state.step_state
@@ -610,6 +641,9 @@ class ConsciousnessMixin:
             "incoming": inputs[-1],
             "messages": inputs[:-1],
             "state": {
+                "now": datetime.now(UTC).isoformat(),
+                "deadline": state.deadline,
+                "process": self._task_process(state),
                 "current_step": admitted_step,
                 "plan": state.plan,
                 "progress": state.progress,

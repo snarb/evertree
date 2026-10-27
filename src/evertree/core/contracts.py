@@ -55,7 +55,7 @@ class ProgramContext(Protocol):
 
 def task_outcome_context(task_id: str) -> dict:
     """Prediction context Core uses when it observes whether a task passed verification."""
-    return {"process_id": "TaskOutcome", "subject": task_id, "episode": task_id}
+    return {"process_id": "SelfTaskOutcome", "subject": task_id, "episode": task_id}
 
 
 # Core API wrappers call these Programs by slug with exactly these arguments.

@@ -33,6 +33,19 @@ def task_context(state: dict) -> dict:
     return result
 
 
+def fit_total_budget(proposed: dict, spent: dict | None) -> dict:
+    """Read a total below what is already spent as the remaining allowance on top of it.
+
+    Budgets are totals including spent time; a smaller total cannot be meant literally
+    and would otherwise fail the Task instead of continuing it.
+    """
+    spent = spent or {}
+    return {
+        resource: value + spent[resource] if value < spent.get(resource, 0) else value
+        for resource, value in proposed.items()
+    }
+
+
 def budget_evidence(evidence: dict) -> dict:
     """Retain budget-review evidence while projecting trace entries to operations and outputs."""
     result = dict(evidence)

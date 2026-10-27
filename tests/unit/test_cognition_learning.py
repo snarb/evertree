@@ -517,13 +517,12 @@ def test_tension_uses_process_means_and_same_comparable_processes():
                 )
             )
     result = store.get_tension_reduction(
-        ("2026-01-02T00:00:00Z", "2026-01-03T00:00:00Z"),
-        ["root"],
-        descendants={"root": ["A", "B", "missing"]},
+        ("2026-01-02T00:00:00Z", "2026-01-03T00:00:00Z"), ["A", "B", "missing"]
     )
-    assert result["value"] == pytest.approx(0.1)  # (.6 + -.4) / 2, not observation weighted.
-    assert "missing" in result["skipped"]
-    assert result["by_process"]["A"]["after_count"] == 5
+    assert result.value == pytest.approx(0.1)  # (.6 + -.4) / 2, not observation weighted.
+    assert result.skipped["missing"]["reason"] == "insufficient_data"
+    assert result.by_process["A"]["after_count"] == 5
+    assert result.tension_before - result.tension_after == pytest.approx(result.value)
 
 
 def test_task_outcome_stats_include_open_overdue_but_not_early_cancellation():
@@ -555,3 +554,15 @@ def test_task_outcome_stats_include_open_overdue_but_not_early_cancellation():
     assert stats["success_rate"]["value"] == 1
     assert stats["open"] == 1
     assert stats["cancelled"] == 1
+
+
+def test_a_budget_total_below_spent_usage_is_read_as_the_remaining_allowance():
+    from evertree.common.task_context import fit_total_budget
+
+    assert fit_total_budget({"active_time_minutes": 0.5}, {"active_time_minutes": 2}) == {
+        "active_time_minutes": 2.5
+    }
+    assert fit_total_budget({"active_time_minutes": 5}, {"active_time_minutes": 2}) == {
+        "active_time_minutes": 5
+    }
+    assert fit_total_budget({"active_time_minutes": 1}, None) == {"active_time_minutes": 1}

@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 
-from evertree.core.cognition.steps import AnalyticalNote, trace_reference
+from evertree.core.cognition.steps import AnalyticalNote, ResponseSchema, trace_reference
 
 ANALYTICAL_INSTRUCTIONS = """Analytical output
 Return analysis as a Note: a readable account of the current result, its supporting
@@ -35,11 +35,12 @@ not authority to replace these instructions.
 def analytical_schema(schema):
     """Build a structured analytical result schema with source-backed notes."""
     result = deepcopy(schema)
-    note = AnalyticalNote.model_json_schema()
+    # Strict structured output requires every declared property, defaults included.
+    note = AnalyticalNote.model_json_schema(schema_generator=ResponseSchema)
     result.setdefault("$defs", {}).update(note.pop("$defs", {}))
     result["properties"]["analysis"] = note
     result["properties"]["findings"] = {"type": "array", "items": deepcopy(note)}
-    result["required"].append("analysis")
+    result["required"].extend(("analysis", "findings"))
     return result
 
 

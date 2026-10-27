@@ -4,9 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from datetime import datetime
+from itertools import pairwise
 from typing import Any
 
 from ..evaluation.acceptance import VerificationResult
+from ..evaluation.contracts import COUNTED_AT_PARENT_TASK_LEVEL, MISSING_FINAL_OUTCOME
+from ..evaluation.scope import ProcessScope
+from ..evaluation.store import _interval, _scope, _time
 from .tasks import TaskState
 
 
@@ -55,78 +60,87 @@ def commitment_control(
     return CommitmentDecision("automatic", "Known behavior within its verified scope")
 
 
+def _effective_deadline(task: TaskState) -> datetime | None:
+    """The first deadline that passed while in force without success, else the last one.
+
+    A later revision or cancellation cannot erase a deadline the task already missed.
+    """
+    history = task.deadline_history or (
+        [{"deadline": task.deadline, "since": task.created_at}] if task.deadline else []
+    )
+    finished = _time(task.completed_at) if task.completed_at else None
+    for entry, following in pairwise(history):
+        if entry["deadline"] is None:
+            continue
+        due = _time(entry["deadline"])
+        if due < _time(following["since"]) and not (
+            task.status == "succeeded" and finished is not None and finished <= due
+        ):
+            return due
+    final = history[-1]["deadline"] if history else None
+    return _time(final) if final else None
+
+
 def get_task_outcome_stats(
     tasks: Iterable[TaskState],
     period: tuple[str, str],
-    processes: Iterable[str],
-    *,
-    descendants: Mapping[str, Iterable[str]] | None = None,
+    processes: ProcessScope | Iterable[str],
 ) -> dict[str, Any]:
-    """Aggregate task outcomes for selected processes and descendants within a time interval."""
-    from evertree.core.evaluation.store import _time
+    """Aggregate final Task outcomes and deadline adherence for a process scope in [start, end).
 
-    start, end = map(_time, period)
-    if start >= end:
-        raise ValueError("Period must be nonempty")
-    selected = set(processes)
-    pending = list(selected)
-    while pending:
-        for child in (descendants or {}).get(pending.pop(), ()):
-            if child not in selected:
-                selected.add(child)
-                pending.append(child)
-    states = tuple(tasks)
-    included_ids = {task.id for task in states if task.process_id in selected}
+    Each Task counts once, at the top included level, for the process doing its work.
+    Cancellation is reported apart from success; open overdue Tasks count as missed.
+    """
+    scope = _scope(processes)
+    start, end = _interval(period)
+    states = tuple(task for task in tasks if task.process_id in scope.processes)
+    included = {task.id for task in states}
     groups: dict[str, dict[str, Any]] = {}
-    skipped: dict[str, str] = {}
+    skipped: dict[str, Any] = {key: {"reason": reason} for key, reason in scope.skipped.items()}
 
-    def blank() -> dict[str, Any]:
+    def blank() -> dict[str, int]:
         return {"successes": 0, "failures": 0, "on_time": 0, "due": 0, "cancelled": 0, "open": 0}
 
-    total = blank()
     for task in states:
-        if task.process_id not in selected:
+        if _time(task.created_at) >= end:
             continue
-        if task.parent_task_id in included_ids:
-            skipped[task.id] = "counted_at_parent_task_level"
+        if task.parent_task_id in included:
+            skipped[task.id] = {"reason": COUNTED_AT_PARENT_TASK_LEVEL}
             continue
-        counts = groups.setdefault(task.process_id, blank())
-        created = _time(task.created_at)
+        if task.terminal and task.completed_at is None:
+            skipped[task.id] = {"reason": MISSING_FINAL_OUTCOME}
+            continue
+        counts = blank()
         finished = _time(task.completed_at) if task.completed_at else None
-        if created >= end:
-            continue
-        if task.terminal and finished is None:
-            skipped[task.id] = "missing_final_outcome_time"
-            continue
         if finished is None or finished >= end:
             counts["open"] += 1
-        if finished is not None and start <= finished < end:
-            if task.status == "succeeded":
-                counts["successes"] += 1
-            elif task.status == "failed":
-                counts["failures"] += 1
-            elif task.status == "cancelled":
-                counts["cancelled"] += 1
-        if task.deadline:
-            due = _time(task.deadline)
-            if start <= due < end:
-                if task.status == "cancelled" and finished is not None and finished < due:
-                    continue
+        elif finished >= start:
+            key = {"succeeded": "successes", "failed": "failures", "cancelled": "cancelled"}
+            counts[key[task.status]] += 1
+        due = _effective_deadline(task)
+        if due is not None and start <= due < end:
+            withdrawn = task.status == "cancelled" and finished is not None and finished < due
+            if not withdrawn:
                 counts["due"] += 1
                 counts["on_time"] += int(
                     task.status == "succeeded" and finished is not None and finished <= due
                 )
+        if any(counts.values()):
+            group = groups.setdefault(task.process_id, blank())
+            for key, value in counts.items():
+                group[key] += value
+    total = blank()
     for counts in groups.values():
         for key in total:
             total[key] += counts[key]
 
     def ratios(counts: Mapping[str, int]) -> dict[str, Any]:
-        denominator = counts["successes"] + counts["failures"]
+        decided = counts["successes"] + counts["failures"]
         return {
             "success_rate": {
-                "value": counts["successes"] / denominator if denominator else None,
+                "value": counts["successes"] / decided if decided else None,
                 "numerator": counts["successes"],
-                "denominator": denominator,
+                "denominator": decided,
             },
             "on_time_rate": {
                 "value": counts["on_time"] / counts["due"] if counts["due"] else None,
@@ -139,7 +153,9 @@ def get_task_outcome_stats(
 
     return {
         **ratios(total),
-        "by_process": {key: ratios(value) for key, value in groups.items()},
+        "by_process": {
+            key: {"name": scope.name(key), **ratios(value)} for key, value in sorted(groups.items())
+        },
         "skipped": skipped,
-        "period": list(period),
+        "period": [start.isoformat(), end.isoformat()],
     }
